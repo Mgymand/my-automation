@@ -202,10 +202,10 @@
       zoomControl: true,
       preferCanvas: true,
     });
-    // CartoDB Positron - lightweight, minimal tile style
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 19,
+    // 国土地理院 淡色地図 - 軽量かつ駅・路線・地名を表示
+    L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", {
+      attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>',
+      maxZoom: 18,
       updateWhenIdle: true,
       updateWhenZooming: false,
     }).addTo(map);
