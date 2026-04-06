@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物件マップ</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+
+    #app { display: flex; height: 100vh; }
+
+    #map { flex: 1; }
+
+    #sidebar {
+      width: 480px;
+      background: #fff;
+      border-left: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.3s;
+    }
+    #sidebar.collapsed { width: 0; border: none; }
+
+    .sidebar-header {
+      padding: 12px 16px;
+      background: #2563eb;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-header h2 { font-size: 16px; font-weight: 600; }
+    .sidebar-header button {
+      background: none; border: none; color: #fff;
+      font-size: 20px; cursor: pointer; padding: 0 4px;
+    }
+
+    .sidebar-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+    .prop-info h3 { font-size: 18px; margin-bottom: 8px; color: #1e293b; }
+    .prop-info .address { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+
+    .details-grid {
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 4px 12px; font-size: 13px; margin-bottom: 16px;
+    }
+    .details-grid dt { color: #64748b; font-weight: 500; }
+    .details-grid dd { color: #1e293b; }
+
+    .memo-section { margin-bottom: 16px; }
+    .memo-section label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .memo-section textarea {
+      width: 100%; height: 80px; border: 1px solid #d1d5db;
+      border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical;
+      font-family: inherit;
+    }
+    .memo-section textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+    .memo-saved { color: #16a34a; font-size: 11px; margin-top: 2px; opacity: 0; transition: opacity 0.3s; }
+    .memo-saved.show { opacity: 1; }
+
+    .pdf-viewer { margin-top: 12px; }
+    .pdf-viewer iframe {
+      width: 100%; height: 500px; border: 1px solid #e5e7eb; border-radius: 6px;
+    }
+
+    .placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; color: #94a3b8;
+    }
+    .placeholder svg { width: 64px; height: 64px; margin-bottom: 12px; }
+    .placeholder p { font-size: 14px; }
+
+    /* Upload area */
+    .upload-area {
+      position: fixed; top: 12px; left: 60px; z-index: 1000;
+    }
+    .upload-btn {
+      background: #2563eb; color: #fff; border: none;
+      padding: 8px 16px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .upload-btn:hover { background: #1d4ed8; }
+
+    /* Toggle sidebar button */
+    .toggle-btn {
+      position: fixed; top: 12px; right: 12px; z-index: 1000;
+      background: #fff; border: 1px solid #ddd; border-radius: 8px;
+      padding: 8px 12px; cursor: pointer; font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Drop overlay */
+    .drop-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(37,99,235,0.15); z-index: 9999;
+      border: 3px dashed #2563eb;
+      align-items: center; justify-content: center;
+    }
+    .drop-overlay.active { display: flex; }
+    .drop-overlay p { font-size: 24px; color: #2563eb; font-weight: 600; }
+
+    /* Upload modal */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 10000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px; padding: 24px;
+      width: 420px; max-width: 90vw;
+    }
+    .modal h3 { margin-bottom: 16px; font-size: 18px; }
+    .modal label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
+    .modal input[type="text"] {
+      width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 14px; margin-bottom: 12px;
+    }
+    .modal input:focus { outline: none; border-color: #2563eb; }
+    .modal .extracted-info { background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
+    .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal .btn {
+      padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 14px; font-weight: 500;
+    }
+    .modal .btn-primary { background: #2563eb; color: #fff; }
+    .modal .btn-primary:hover { background: #1d4ed8; }
+    .modal .btn-secondary { background: #f1f5f9; color: #374151; }
+
+    .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <h2 id="sidebar-title">物件情報</h2>
+        <button onclick="closeSidebar()">&times;</button>
+      </div>
+      <div class="sidebar-content" id="sidebar-content">
+        <div class="placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
+          </svg>
+          <p>地図上のピンをクリックすると<br>物件情報が表示されます</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload button -->
+  <div class="upload-area">
+    <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      PDFインポート
+    </button>
+    <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFileSelect(event)">
+  </div>
+
+  <!-- Drop overlay -->
+  <div class="drop-overlay" id="drop-overlay">
+    <p>PDFファイルをドロップしてインポート</p>
+  </div>
+
+  <!-- Upload modal -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal">
+      <h3>PDFインポート</h3>
+      <div id="upload-extracted" class="extracted-info" style="display:none"></div>
+      <label for="upload-name">物件名</label>
+      <input type="text" id="upload-name" placeholder="自動抽出されます">
+      <label for="upload-address">住所</label>
+      <input type="text" id="upload-address" placeholder="自動抽出されます">
+      <div id="upload-status" class="loading" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeUploadModal()">キャンセル</button>
+        <button class="btn btn-primary" id="upload-confirm" onclick="confirmUpload()">登録</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize map centered on Shibuya
+    const map = L.map("map").setView([35.6595, 139.7005], 16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    let markers = {};
+    let properties = [];
+    let currentUploadFile = null;
+    let memoSaveTimer = null;
+
+    // Custom icon
+    function createIcon(color = "#2563eb") {
+      return L.divIcon({
+        className: "custom-marker",
+        html: `<svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 0C6.716 0 0 6.716 0 15c0 10.969 15 27 15 27s15-16.031 15-27C30 6.716 23.284 0 15 0z" fill="${color}"/>
+          <circle cx="15" cy="14" r="7" fill="#fff"/>
+        </svg>`,
+        iconSize: [30, 42],
+        iconAnchor: [15, 42],
+        popupAnchor: [0, -42],
+      });
+    }
+
+    async function loadProperties() {
+      const res = await fetch("/api/properties");
+      properties = await res.json();
+      renderMarkers();
+    }
+
+    function renderMarkers() {
+      // Clear existing
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      markers = {};
+
+      properties.forEach(prop => {
+        const marker = L.marker([prop.lat, prop.lon], { icon: createIcon() })
+          .addTo(map)
+          .bindTooltip(prop.name, { direction: "top", offset: [0, -42] });
+
+        marker.on("click", () => showProperty(prop));
+        markers[prop.id] = marker;
+      });
+
+      // Fit bounds if multiple markers
+      if (properties.length > 1) {
+        const group = L.featureGroup(Object.values(markers));
+        map.fitBounds(group.getBounds().pad(0.3), { maxZoom: 17 });
+      } else if (properties.length === 1) {
+        map.setView([properties[0].lat, properties[0].lon], 16);
+      }
+    }
+
+    function showProperty(prop) {
+      const content = document.getElementById("sidebar-content");
+      document.getElementById("sidebar").classList.remove("collapsed");
+      document.getElementById("sidebar-title").textContent = prop.name;
+
+      let detailsHtml = "";
+      if (prop.details) {
+        detailsHtml = '<dl class="details-grid">';
+        for (const [key, val] of Object.entries(prop.details)) {
+          detailsHtml += `<dt>${escHtml(key)}</dt><dd>${escHtml(val)}</dd>`;
+        }
+        detailsHtml += "</dl>";
+      }
+
+      content.innerHTML = `
+        <div class="prop-info">
+          <h3>${escHtml(prop.name)}</h3>
+          <div class="address">${escHtml(prop.address)}</div>
+          ${detailsHtml}
+          <div class="memo-section">
+            <label>メモ</label>
+            <textarea id="memo-input" placeholder="メモを入力...">${escHtml(prop.memo || "")}</textarea>
+            <div class="memo-saved" id="memo-saved">保存しました</div>
+          </div>
+          <div class="pdf-viewer">
+            <object data="/pdf/${encodeURIComponent(prop.filename)}" type="application/pdf" width="100%" height="500" style="border:1px solid #e5e7eb; border-radius:6px;">
+              <p style="padding:20px; text-align:center; color:#64748b;">
+                PDFを表示できません。
+                <a href="/pdf/${encodeURIComponent(prop.filename)}" target="_blank" style="color:#2563eb;">こちらから開いてください</a>
+              </p>
+            </object>
+            <div style="margin-top:6px; text-align:center;">
+              <a href="/pdf/${encodeURIComponent(prop.filename)}" target="_blank" style="color:#2563eb; font-size:13px; text-decoration:none;">
+                PDFを新しいタブで開く
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Auto-save memo
+      const textarea = document.getElementById("memo-input");
+      textarea.addEventListener("input", () => {
+        clearTimeout(memoSaveTimer);
+        memoSaveTimer = setTimeout(() => saveMemo(prop.id, textarea.value), 500);
+      });
+    }
+
+    async function saveMemo(propId, memo) {
+      await fetch(`/api/properties/${propId}/memo`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo }),
+      });
+      const saved = document.getElementById("memo-saved");
+      if (saved) {
+        saved.classList.add("show");
+        setTimeout(() => saved.classList.remove("show"), 2000);
+      }
+      // Update local data
+      const prop = properties.find(p => p.id === propId);
+      if (prop) prop.memo = memo;
+    }
+
+    function closeSidebar() {
+      document.getElementById("sidebar").classList.add("collapsed");
+      setTimeout(() => map.invalidateSize(), 300);
+    }
+
+    // File upload handling
+    function handleFileSelect(event) {
+      const files = event.target.files;
+      if (files.length > 0) uploadFile(files[0]);
+      event.target.value = "";
+    }
+
+    async function uploadFile(file) {
+      currentUploadFile = file;
+      const modal = document.getElementById("upload-modal");
+      const status = document.getElementById("upload-status");
+      const extracted = document.getElementById("upload-extracted");
+
+      // Reset
+      document.getElementById("upload-name").value = "";
+      document.getElementById("upload-address").value = "";
+      extracted.style.display = "none";
+      status.style.display = "block";
+      status.textContent = "PDFを解析中...";
+      modal.classList.add("active");
+
+      // Upload for extraction
+      const formData = new FormData();
+      formData.append("pdf", file);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (data.status === "ok") {
+          // Success - auto-registered
+          status.style.display = "none";
+          modal.classList.remove("active");
+          properties.push(data.property);
+          renderMarkers();
+          showProperty(data.property);
+          return;
+        }
+
+        // Need manual input
+        status.style.display = "none";
+        if (data.extracted) {
+          document.getElementById("upload-name").value = data.extracted.name || "";
+          document.getElementById("upload-address").value = data.extracted.address || "";
+          if (data.extracted.details && Object.keys(data.extracted.details).length) {
+            extracted.style.display = "block";
+            extracted.innerHTML = Object.entries(data.extracted.details)
+              .map(([k, v]) => `<strong>${escHtml(k)}:</strong> ${escHtml(v)}`)
+              .join("<br>");
+          }
+        }
+        if (data.message) {
+          status.style.display = "block";
+          status.textContent = data.message;
+          status.style.color = "#dc2626";
+        }
+      } catch (err) {
+        status.style.display = "block";
+        status.textContent = "エラーが発生しました: " + err.message;
+        status.style.color = "#dc2626";
+      }
+    }
+
+    async function confirmUpload() {
+      const name = document.getElementById("upload-name").value.trim();
+      const address = document.getElementById("upload-address").value.trim();
+      const status = document.getElementById("upload-status");
+
+      if (!address) {
+        status.style.display = "block";
+        status.textContent = "住所を入力してください";
+        status.style.color = "#dc2626";
+        return;
+      }
+
+      status.style.display = "block";
+      status.textContent = "ジオコーディング中...";
+      status.style.color = "#64748b";
+
+      const formData = new FormData();
+      formData.append("pdf", currentUploadFile);
+      formData.append("address", address);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (data.status === "ok") {
+          if (name && data.property) data.property.name = name;
+          closeUploadModal();
+          properties.push(data.property);
+          renderMarkers();
+          showProperty(data.property);
+        } else {
+          status.textContent = data.message || "登録に失敗しました";
+          status.style.color = "#dc2626";
+        }
+      } catch (err) {
+        status.textContent = "エラー: " + err.message;
+        status.style.color = "#dc2626";
+      }
+    }
+
+    function closeUploadModal() {
+      document.getElementById("upload-modal").classList.remove("active");
+      currentUploadFile = null;
+    }
+
+    // Drag and drop
+    document.addEventListener("dragenter", e => {
+      e.preventDefault();
+      document.getElementById("drop-overlay").classList.add("active");
+    });
+    document.getElementById("drop-overlay").addEventListener("dragleave", e => {
+      e.preventDefault();
+      document.getElementById("drop-overlay").classList.remove("active");
+    });
+    document.getElementById("drop-overlay").addEventListener("dragover", e => {
+      e.preventDefault();
+    });
+    document.getElementById("drop-overlay").addEventListener("drop", e => {
+      e.preventDefault();
+      document.getElementById("drop-overlay").classList.remove("active");
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].name.endsWith(".pdf")) {
+        uploadFile(files[0]);
+      }
+    });
+
+    function escHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Init
+    loadProperties();
+  </script>
+</body>
+</html>
