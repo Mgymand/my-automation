@@ -47,16 +47,34 @@ def save_properties(props):
     _properties_mtime = os.path.getmtime(PROPERTIES_FILE)
 
 
+def normalize_address(address):
+    """Convert 渋谷区渋谷3-1-6 style to 渋谷区渋谷三丁目1-6 for GSI API."""
+    import unicodedata
+    # Normalize fullwidth digits to halfwidth
+    address = unicodedata.normalize("NFKC", address)
+    # Convert X-Y-Z pattern to X丁目Y-Z (Japanese address convention)
+    chome_map = {"1": "一", "2": "二", "3": "三", "4": "四", "5": "五",
+                 "6": "六", "7": "七", "8": "八", "9": "九", "10": "十"}
+    import re as _re
+    def replace_chome(m):
+        chome = chome_map.get(m.group(1), m.group(1))
+        return f"{chome}丁目{m.group(2)}-{m.group(3)}"
+    address = _re.sub(r"(\d+)-(\d+)-(\d+)", replace_chome, address)
+    return address
+
+
 def geocode_address(address):
-    """Nominatim geocoding (free, no API key)."""
-    query = urllib.parse.urlencode({"q": address, "format": "json", "limit": 1})
-    url = f"https://nominatim.openstreetmap.org/search?{query}"
+    """国土地理院 Geocoding API (番地レベル対応)."""
+    normalized = normalize_address(address)
+    query = urllib.parse.urlencode({"q": normalized})
+    url = f"https://msearch.gsi.go.jp/address-search/AddressSearch?{query}"
     req = urllib.request.Request(url, headers={"User-Agent": "PropertyMapApp/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=10, context=SSL_CTX) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if data:
-                return float(data[0]["lat"]), float(data[0]["lon"])
+                coords = data[0]["geometry"]["coordinates"]
+                return float(coords[1]), float(coords[0])  # [lon, lat] -> (lat, lon)
     except Exception as e:
         print(f"Geocoding failed for {address}: {e}")
     return None, None
