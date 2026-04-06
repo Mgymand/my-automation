@@ -211,6 +211,18 @@ def upload_pdf():
     return jsonify({"status": "ok", "property": new_prop})
 
 
+@app.route("/api/properties/<prop_id>/details", methods=["PUT"])
+def update_details(prop_id):
+    details = request.json.get("details", {})
+    props = load_properties()
+    for p in props:
+        if p["id"] == prop_id:
+            p["details"] = details
+            save_properties(props)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
+
+
 @app.route("/api/properties/<prop_id>", methods=["DELETE"])
 def delete_property(prop_id):
     props = [p for p in load_properties() if p["id"] != prop_id]

@@ -30,12 +30,42 @@
     /* Property info */
     .prop-info h3 { font-size: 18px; margin-bottom: 8px; color: #1e293b; }
     .prop-info .address { color: #64748b; font-size: 13px; margin-bottom: 12px; }
-    .details-grid {
-      display: grid; grid-template-columns: 70px 1fr;
-      gap: 4px 12px; font-size: 13px; margin-bottom: 16px;
+    .details-section { margin-bottom: 16px; }
+    .details-section .section-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
     }
-    .details-grid dt { color: #64748b; font-weight: 500; }
-    .details-grid dd { color: #1e293b; }
+    .details-section .section-header label { font-size: 13px; font-weight: 600; color: #374151; }
+    .detail-row {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px;
+    }
+    .detail-key {
+      width: 70px; flex-shrink: 0; padding: 4px 6px;
+      border: 1px solid transparent; border-radius: 4px; color: #64748b; font-weight: 500;
+      background: none; font-size: 13px; font-family: inherit;
+    }
+    .detail-val {
+      flex: 1; padding: 4px 6px;
+      border: 1px solid transparent; border-radius: 4px; color: #1e293b;
+      background: none; font-size: 13px; font-family: inherit;
+    }
+    .detail-key:hover, .detail-val:hover { border-color: #e2e8f0; background: #f8fafc; }
+    .detail-key:focus, .detail-val:focus {
+      outline: none; border-color: #2563eb; background: #fff;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+    }
+    .detail-del {
+      width: 20px; height: 20px; border: none; background: none;
+      color: #94a3b8; cursor: pointer; font-size: 14px; padding: 0;
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    }
+    .detail-del:hover { color: #dc2626; background: #fef2f2; }
+    .detail-add {
+      font-size: 12px; color: #2563eb; background: none; border: 1px dashed #cbd5e1;
+      border-radius: 4px; padding: 3px 10px; cursor: pointer;
+    }
+    .detail-add:hover { background: #eff6ff; border-color: #2563eb; }
+    .details-saved { color: #16a34a; font-size: 11px; opacity: 0; transition: opacity 0.3s; margin-left: 8px; }
+    .details-saved.show { opacity: 1; }
 
     /* Memo */
     .memo-section { margin-bottom: 16px; }
@@ -281,13 +311,15 @@
       sidebar.classList.remove("collapsed");
       document.getElementById("sidebar-title").textContent = prop.name;
 
-      let details = "";
+      let detailRows = "";
       if (prop.details) {
-        details = '<dl class="details-grid">';
         for (const [k, v] of Object.entries(prop.details)) {
-          details += `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`;
+          detailRows += `<div class="detail-row">
+            <input class="detail-key" value="${esc(k)}" data-orig-key="${esc(k)}">
+            <input class="detail-val" value="${esc(v)}">
+            <button class="detail-del" title="削除">&times;</button>
+          </div>`;
         }
-        details += "</dl>";
       }
 
       const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
@@ -307,7 +339,14 @@
             <label>ピン色</label>
             ${colorDotsHtml}
           </div>
-          ${details}
+          <div class="details-section">
+            <div class="section-header">
+              <label>物件情報</label>
+              <span class="details-saved" id="details-saved">保存しました</span>
+            </div>
+            <div id="details-list">${detailRows}</div>
+            <button class="detail-add" id="detail-add-btn">+ 項目を追加</button>
+          </div>
           <div class="memo-section">
             <label>メモ</label>
             <textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
@@ -346,6 +385,49 @@
             body: JSON.stringify({ color }),
           });
         });
+      });
+
+      // Details editing
+      let detailsTimer = null;
+      function collectAndSaveDetails() {
+        clearTimeout(detailsTimer);
+        detailsTimer = setTimeout(() => {
+          const newDetails = {};
+          document.querySelectorAll("#details-list .detail-row").forEach(row => {
+            const key = row.querySelector(".detail-key").value.trim();
+            const val = row.querySelector(".detail-val").value.trim();
+            if (key) newDetails[key] = val;
+          });
+          prop.details = newDetails;
+          fetch(`/api/properties/${prop.id}/details`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ details: newDetails }),
+          }).then(() => {
+            const el = document.getElementById("details-saved");
+            if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); }
+          });
+        }, 800);
+      }
+
+      // Delegate input events on details list
+      document.getElementById("details-list").addEventListener("input", collectAndSaveDetails);
+
+      // Delete detail row
+      document.getElementById("details-list").addEventListener("click", e => {
+        if (e.target.classList.contains("detail-del")) {
+          e.target.closest(".detail-row").remove();
+          collectAndSaveDetails();
+        }
+      });
+
+      // Add detail row
+      document.getElementById("detail-add-btn").addEventListener("click", () => {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        row.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
+        document.getElementById("details-list").appendChild(row);
+        row.querySelector(".detail-key").focus();
       });
 
       // Lazy PDF embed button
