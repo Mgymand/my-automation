@@ -141,6 +141,34 @@
     .modal .btn-secondary { background: #f1f5f9; color: #374151; }
     .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
 
+    /* Comparison panel */
+    .compare-panel {
+      position: fixed; top: 12px; left: 220px; z-index: 1000;
+      background: #fff; border-radius: 8px; padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .compare-panel label {
+      font-size: 12px; font-weight: 600; color: #374151; white-space: nowrap;
+    }
+    .compare-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+    .compare-chip {
+      font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer;
+      border: 1px solid #d1d5db; background: #fff; color: #374151;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .compare-chip:hover { border-color: #2563eb; color: #2563eb; }
+    .compare-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    /* Info labels on markers */
+    .marker-label {
+      background: rgba(30,41,59,0.88); color: #fff;
+      font-size: 11px; padding: 2px 6px; border-radius: 4px;
+      white-space: nowrap; text-align: center;
+      pointer-events: none; font-weight: 500;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
     /* Marker styling */
     .pin-marker { background: none; border: none; }
 
@@ -169,6 +197,11 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="compare-panel" id="compare-panel">
+    <label>条件比較</label>
+    <div class="compare-chips" id="compare-chips"></div>
   </div>
 
   <div class="upload-area">
@@ -300,6 +333,11 @@
       } else if (vals.length === 1) {
         const p = properties.find(p => markers[p.id]);
         if (p) map.setView([p.lat, p.lon], 16);
+      }
+      // Refresh compare chips & labels
+      if (typeof buildCompareChips === "function") {
+        buildCompareChips();
+        if (activeCompareKey) showInfoLabels(activeCompareKey);
       }
     }
 
@@ -588,11 +626,70 @@
     const _escDiv = document.createElement("div");
     function esc(s) { _escDiv.textContent = s; return _escDiv.innerHTML; }
 
+    // --- 条件比較 ---
+    let activeCompareKey = null;
+    let infoLabels = [];  // Leaflet markers for info labels
+
+    function buildCompareChips() {
+      // Collect all unique detail keys across properties
+      const keys = new Set();
+      for (const p of properties) {
+        if (p.details) Object.keys(p.details).forEach(k => keys.add(k));
+      }
+      const container = document.getElementById("compare-chips");
+      container.innerHTML = "";
+      for (const key of keys) {
+        const chip = document.createElement("span");
+        chip.className = "compare-chip" + (key === activeCompareKey ? " active" : "");
+        chip.textContent = key;
+        chip.addEventListener("click", () => toggleCompare(key));
+        container.appendChild(chip);
+      }
+    }
+
+    function toggleCompare(key) {
+      if (activeCompareKey === key) {
+        activeCompareKey = null;
+        clearInfoLabels();
+      } else {
+        activeCompareKey = key;
+        showInfoLabels(key);
+      }
+      // Update chip active states
+      document.querySelectorAll(".compare-chip").forEach(c => {
+        c.classList.toggle("active", c.textContent === activeCompareKey);
+      });
+    }
+
+    function clearInfoLabels() {
+      infoLabels.forEach(m => map.removeLayer(m));
+      infoLabels = [];
+    }
+
+    function showInfoLabels(key) {
+      clearInfoLabels();
+      for (const prop of properties) {
+        if (!prop.lat || !prop.lon) continue;
+        const val = prop.details && prop.details[key];
+        const text = val || "—";
+        const label = L.marker([prop.lat, prop.lon], {
+          icon: L.divIcon({
+            className: "",
+            html: `<div class="marker-label">${esc(text)}</div>`,
+            iconSize: null,
+            iconAnchor: [0, 38],  // position above pin
+          }),
+          interactive: false,
+          zIndexOffset: 1000,
+        }).addTo(map);
+        infoLabels.push(label);
+      }
+    }
+
     // --- Init ---
-    // Ensure map size is correct before fitting bounds
     requestAnimationFrame(() => {
       map.invalidateSize();
-      loadProperties();
+      loadProperties().then(() => buildCompareChips());
     });
   </script>
 </body>
