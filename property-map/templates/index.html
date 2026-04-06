@@ -5,52 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>物件マップ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
-
     #app { display: flex; height: 100vh; }
+    #map { flex: 1; min-width: 0; }
 
-    #map { flex: 1; }
-
+    /* Sidebar */
     #sidebar {
-      width: 480px;
-      background: #fff;
-      border-left: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: width 0.3s;
+      width: 480px; background: #fff; border-left: 1px solid #ddd;
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.2s ease;
     }
     #sidebar.collapsed { width: 0; border: none; }
-
     .sidebar-header {
-      padding: 12px 16px;
-      background: #2563eb;
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 12px 16px; background: #2563eb; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
     }
     .sidebar-header h2 { font-size: 16px; font-weight: 600; }
-    .sidebar-header button {
-      background: none; border: none; color: #fff;
-      font-size: 20px; cursor: pointer; padding: 0 4px;
-    }
-
+    .sidebar-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
     .sidebar-content { flex: 1; overflow-y: auto; padding: 16px; }
 
+    /* Property info */
     .prop-info h3 { font-size: 18px; margin-bottom: 8px; color: #1e293b; }
     .prop-info .address { color: #64748b; font-size: 13px; margin-bottom: 12px; }
-
     .details-grid {
-      display: grid; grid-template-columns: auto 1fr;
+      display: grid; grid-template-columns: 70px 1fr;
       gap: 4px 12px; font-size: 13px; margin-bottom: 16px;
     }
     .details-grid dt { color: #64748b; font-weight: 500; }
     .details-grid dd { color: #1e293b; }
 
+    /* Memo */
     .memo-section { margin-bottom: 16px; }
     .memo-section label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
     .memo-section textarea {
@@ -62,22 +49,26 @@
     .memo-saved { color: #16a34a; font-size: 11px; margin-top: 2px; opacity: 0; transition: opacity 0.3s; }
     .memo-saved.show { opacity: 1; }
 
-    .pdf-viewer { margin-top: 12px; }
-    .pdf-viewer iframe {
-      width: 100%; height: 500px; border: 1px solid #e5e7eb; border-radius: 6px;
+    /* PDF */
+    .pdf-section { margin-top: 12px; }
+    .pdf-open-btn {
+      display: block; width: 100%; padding: 10px; text-align: center;
+      background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+      color: #2563eb; font-size: 13px; cursor: pointer; text-decoration: none;
+      margin-bottom: 8px;
     }
+    .pdf-open-btn:hover { background: #e2e8f0; }
+    .pdf-embed { width: 100%; height: 500px; border: 1px solid #e5e7eb; border-radius: 6px; }
 
+    /* Placeholder */
     .placeholder {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; height: 100%; color: #94a3b8;
+      justify-content: center; height: 100%; color: #94a3b8; text-align: center;
     }
-    .placeholder svg { width: 64px; height: 64px; margin-bottom: 12px; }
-    .placeholder p { font-size: 14px; }
+    .placeholder p { font-size: 14px; line-height: 1.6; }
 
-    /* Upload area */
-    .upload-area {
-      position: fixed; top: 12px; left: 60px; z-index: 1000;
-    }
+    /* Upload */
+    .upload-area { position: fixed; top: 12px; left: 60px; z-index: 1000; }
     .upload-btn {
       background: #2563eb; color: #fff; border: none;
       padding: 8px 16px; border-radius: 8px; cursor: pointer;
@@ -87,17 +78,9 @@
     }
     .upload-btn:hover { background: #1d4ed8; }
 
-    /* Toggle sidebar button */
-    .toggle-btn {
-      position: fixed; top: 12px; right: 12px; z-index: 1000;
-      background: #fff; border: 1px solid #ddd; border-radius: 8px;
-      padding: 8px 12px; cursor: pointer; font-size: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
     /* Drop overlay */
     .drop-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; position: fixed; inset: 0;
       background: rgba(37,99,235,0.15); z-index: 9999;
       border: 3px dashed #2563eb;
       align-items: center; justify-content: center;
@@ -105,17 +88,14 @@
     .drop-overlay.active { display: flex; }
     .drop-overlay p { font-size: 24px; color: #2563eb; font-weight: 600; }
 
-    /* Upload modal */
+    /* Modal */
     .modal-overlay {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.5); z-index: 10000;
       align-items: center; justify-content: center;
     }
     .modal-overlay.active { display: flex; }
-    .modal {
-      background: #fff; border-radius: 12px; padding: 24px;
-      width: 420px; max-width: 90vw;
-    }
+    .modal { background: #fff; border-radius: 12px; padding: 24px; width: 420px; max-width: 90vw; }
     .modal h3 { margin-bottom: 16px; font-size: 18px; }
     .modal label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
     .modal input[type="text"] {
@@ -125,15 +105,14 @@
     .modal input:focus { outline: none; border-color: #2563eb; }
     .modal .extracted-info { background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
     .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
-    .modal .btn {
-      padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer;
-      font-size: 14px; font-weight: 500;
-    }
+    .modal .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; }
     .modal .btn-primary { background: #2563eb; color: #fff; }
     .modal .btn-primary:hover { background: #1d4ed8; }
     .modal .btn-secondary { background: #f1f5f9; color: #374151; }
-
     .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
+
+    /* Marker styling - keep SVG lightweight */
+    .pin-marker { background: none; border: none; }
   </style>
 </head>
 <body>
@@ -146,33 +125,22 @@
       </div>
       <div class="sidebar-content" id="sidebar-content">
         <div class="placeholder">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
-          </svg>
           <p>地図上のピンをクリックすると<br>物件情報が表示されます</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Upload button -->
   <div class="upload-area">
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       PDFインポート
     </button>
     <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFileSelect(event)">
   </div>
 
-  <!-- Drop overlay -->
-  <div class="drop-overlay" id="drop-overlay">
-    <p>PDFファイルをドロップしてインポート</p>
-  </div>
+  <div class="drop-overlay" id="drop-overlay"><p>PDFをドロップしてインポート</p></div>
 
-  <!-- Upload modal -->
   <div class="modal-overlay" id="upload-modal">
     <div class="modal">
       <h3>PDFインポート</h3>
@@ -184,38 +152,44 @@
       <div id="upload-status" class="loading" style="display:none"></div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="closeUploadModal()">キャンセル</button>
-        <button class="btn btn-primary" id="upload-confirm" onclick="confirmUpload()">登録</button>
+        <button class="btn btn-primary" onclick="confirmUpload()">登録</button>
       </div>
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Initialize map centered on Shibuya
-    const map = L.map("map").setView([35.6595, 139.7005], 16);
+    // --- State ---
+    let properties = [];
+    let markers = {};
+    let currentUploadFile = null;
+    let memoTimer = null;
+    let selectedPropId = null;
+
+    // --- Map init (deferred tile loading for speed) ---
+    const map = L.map("map", {
+      center: [35.6595, 139.7005],
+      zoom: 16,
+      zoomControl: true,
+      preferCanvas: true  // Canvas renderer for better perf with many markers
+    });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap contributors',
+      attribution: '&copy; OpenStreetMap',
       maxZoom: 19,
+      updateWhenIdle: true,      // Only load tiles when map stops moving
+      updateWhenZooming: false,  // Don't reload during zoom animation
     }).addTo(map);
 
-    let markers = {};
-    let properties = [];
-    let currentUploadFile = null;
-    let memoSaveTimer = null;
+    // --- Reusable icon (single instance, not re-created per marker) ---
+    const pinIcon = L.divIcon({
+      className: "pin-marker",
+      html: '<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="#2563eb"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>',
+      iconSize: [28, 40],
+      iconAnchor: [14, 40],
+      popupAnchor: [0, -40],
+    });
 
-    // Custom icon
-    function createIcon(color = "#2563eb") {
-      return L.divIcon({
-        className: "custom-marker",
-        html: `<svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 0C6.716 0 0 6.716 0 15c0 10.969 15 27 15 27s15-16.031 15-27C30 6.716 23.284 0 15 0z" fill="${color}"/>
-          <circle cx="15" cy="14" r="7" fill="#fff"/>
-        </svg>`,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42],
-        popupAnchor: [0, -42],
-      });
-    }
-
+    // --- Load & render ---
     async function loadProperties() {
       const res = await fetch("/api/properties");
       properties = await res.json();
@@ -223,102 +197,115 @@
     }
 
     function renderMarkers() {
-      // Clear existing
       Object.values(markers).forEach(m => map.removeLayer(m));
       markers = {};
 
-      properties.forEach(prop => {
-        const marker = L.marker([prop.lat, prop.lon], { icon: createIcon() })
+      for (const prop of properties) {
+        if (prop.lat == null || prop.lon == null) continue;
+        const m = L.marker([prop.lat, prop.lon], { icon: pinIcon })
           .addTo(map)
-          .bindTooltip(prop.name, { direction: "top", offset: [0, -42] });
+          .bindTooltip(prop.name, { direction: "top", offset: [0, -40] });
+        m.on("click", () => showProperty(prop));
+        markers[prop.id] = m;
+      }
 
-        marker.on("click", () => showProperty(prop));
-        markers[prop.id] = marker;
-      });
-
-      // Fit bounds if multiple markers
-      if (properties.length > 1) {
-        const group = L.featureGroup(Object.values(markers));
-        map.fitBounds(group.getBounds().pad(0.3), { maxZoom: 17 });
-      } else if (properties.length === 1) {
-        map.setView([properties[0].lat, properties[0].lon], 16);
+      const vals = Object.values(markers);
+      if (vals.length > 1) {
+        map.fitBounds(L.featureGroup(vals).getBounds().pad(0.3), { maxZoom: 17 });
+      } else if (vals.length === 1) {
+        const p = properties.find(p => markers[p.id]);
+        if (p) map.setView([p.lat, p.lon], 16);
       }
     }
 
+    // --- Show property (lazy PDF load) ---
     function showProperty(prop) {
+      selectedPropId = prop.id;
+      const sidebar = document.getElementById("sidebar");
       const content = document.getElementById("sidebar-content");
-      document.getElementById("sidebar").classList.remove("collapsed");
+      sidebar.classList.remove("collapsed");
       document.getElementById("sidebar-title").textContent = prop.name;
 
-      let detailsHtml = "";
+      let details = "";
       if (prop.details) {
-        detailsHtml = '<dl class="details-grid">';
-        for (const [key, val] of Object.entries(prop.details)) {
-          detailsHtml += `<dt>${escHtml(key)}</dt><dd>${escHtml(val)}</dd>`;
+        details = '<dl class="details-grid">';
+        for (const [k, v] of Object.entries(prop.details)) {
+          details += `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`;
         }
-        detailsHtml += "</dl>";
+        details += "</dl>";
       }
 
+      const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
+
+      // Build HTML without embedding PDF yet (lazy load)
       content.innerHTML = `
         <div class="prop-info">
-          <h3>${escHtml(prop.name)}</h3>
-          <div class="address">${escHtml(prop.address)}</div>
-          ${detailsHtml}
+          <h3>${esc(prop.name)}</h3>
+          <div class="address">${esc(prop.address)}</div>
+          ${details}
           <div class="memo-section">
             <label>メモ</label>
-            <textarea id="memo-input" placeholder="メモを入力...">${escHtml(prop.memo || "")}</textarea>
+            <textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
             <div class="memo-saved" id="memo-saved">保存しました</div>
           </div>
-          <div class="pdf-viewer">
-            <object data="/pdf/${encodeURIComponent(prop.filename)}" type="application/pdf" width="100%" height="500" style="border:1px solid #e5e7eb; border-radius:6px;">
-              <p style="padding:20px; text-align:center; color:#64748b;">
-                PDFを表示できません。
-                <a href="/pdf/${encodeURIComponent(prop.filename)}" target="_blank" style="color:#2563eb;">こちらから開いてください</a>
-              </p>
-            </object>
-            <div style="margin-top:6px; text-align:center;">
-              <a href="/pdf/${encodeURIComponent(prop.filename)}" target="_blank" style="color:#2563eb; font-size:13px; text-decoration:none;">
-                PDFを新しいタブで開く
-              </a>
-            </div>
+          <div class="pdf-section">
+            <a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFを新しいタブで開く</a>
+            <button class="pdf-open-btn" id="pdf-embed-btn" style="background:#2563eb;color:#fff;border:none;">サイドバーにPDFを表示</button>
+            <div id="pdf-container"></div>
           </div>
         </div>
       `;
 
-      // Auto-save memo
+      // Memo auto-save with debounce
       const textarea = document.getElementById("memo-input");
       textarea.addEventListener("input", () => {
-        clearTimeout(memoSaveTimer);
-        memoSaveTimer = setTimeout(() => saveMemo(prop.id, textarea.value), 500);
+        clearTimeout(memoTimer);
+        memoTimer = setTimeout(() => saveMemo(prop.id, textarea.value), 800);
       });
+
+      // Lazy PDF embed button
+      document.getElementById("pdf-embed-btn").addEventListener("click", function() {
+        this.style.display = "none";
+        document.getElementById("pdf-container").innerHTML =
+          `<object data="${pdfUrl}" type="application/pdf" class="pdf-embed">
+            <p style="padding:20px;text-align:center;color:#64748b;">
+              PDFを表示できません。<a href="${pdfUrl}" target="_blank" style="color:#2563eb;">こちらから開く</a>
+            </p>
+          </object>`;
+      });
+
+      // Recalculate map size after sidebar opens
+      requestAnimationFrame(() => map.invalidateSize());
     }
 
     async function saveMemo(propId, memo) {
-      await fetch(`/api/properties/${propId}/memo`, {
+      const res = await fetch(`/api/properties/${propId}/memo`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memo }),
       });
-      const saved = document.getElementById("memo-saved");
-      if (saved) {
-        saved.classList.add("show");
-        setTimeout(() => saved.classList.remove("show"), 2000);
+      if (res.ok) {
+        const el = document.getElementById("memo-saved");
+        if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); }
+        const p = properties.find(x => x.id === propId);
+        if (p) p.memo = memo;
       }
-      // Update local data
-      const prop = properties.find(p => p.id === propId);
-      if (prop) prop.memo = memo;
     }
 
     function closeSidebar() {
       document.getElementById("sidebar").classList.add("collapsed");
-      setTimeout(() => map.invalidateSize(), 300);
+      selectedPropId = null;
+      // Remove PDF embed to free memory
+      const container = document.getElementById("pdf-container");
+      if (container) container.innerHTML = "";
+      setTimeout(() => map.invalidateSize(), 200);
     }
 
-    // File upload handling
-    function handleFileSelect(event) {
-      const files = event.target.files;
+    // --- File upload ---
+    function handleFileSelect(e) {
+      const files = e.target.files;
       if (files.length > 0) uploadFile(files[0]);
-      event.target.value = "";
+      e.target.value = "";
     }
 
     async function uploadFile(file) {
@@ -327,24 +314,22 @@
       const status = document.getElementById("upload-status");
       const extracted = document.getElementById("upload-extracted");
 
-      // Reset
       document.getElementById("upload-name").value = "";
       document.getElementById("upload-address").value = "";
       extracted.style.display = "none";
       status.style.display = "block";
       status.textContent = "PDFを解析中...";
+      status.style.color = "#64748b";
       modal.classList.add("active");
 
-      // Upload for extraction
-      const formData = new FormData();
-      formData.append("pdf", file);
+      const fd = new FormData();
+      fd.append("pdf", file);
 
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
 
         if (data.status === "ok") {
-          // Success - auto-registered
           status.style.display = "none";
           modal.classList.remove("active");
           properties.push(data.property);
@@ -353,7 +338,6 @@
           return;
         }
 
-        // Need manual input
         status.style.display = "none";
         if (data.extracted) {
           document.getElementById("upload-name").value = data.extracted.name || "";
@@ -361,8 +345,7 @@
           if (data.extracted.details && Object.keys(data.extracted.details).length) {
             extracted.style.display = "block";
             extracted.innerHTML = Object.entries(data.extracted.details)
-              .map(([k, v]) => `<strong>${escHtml(k)}:</strong> ${escHtml(v)}`)
-              .join("<br>");
+              .map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`).join("<br>");
           }
         }
         if (data.message) {
@@ -372,7 +355,7 @@
         }
       } catch (err) {
         status.style.display = "block";
-        status.textContent = "エラーが発生しました: " + err.message;
+        status.textContent = "エラー: " + err.message;
         status.style.color = "#dc2626";
       }
     }
@@ -393,14 +376,13 @@
       status.textContent = "ジオコーディング中...";
       status.style.color = "#64748b";
 
-      const formData = new FormData();
-      formData.append("pdf", currentUploadFile);
-      formData.append("address", address);
+      const fd = new FormData();
+      fd.append("pdf", currentUploadFile);
+      fd.append("address", address);
 
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
-
         if (data.status === "ok") {
           if (name && data.property) data.property.name = name;
           closeUploadModal();
@@ -422,35 +404,29 @@
       currentUploadFile = null;
     }
 
-    // Drag and drop
-    document.addEventListener("dragenter", e => {
+    // --- Drag & drop ---
+    let dragCounter = 0;
+    document.addEventListener("dragenter", e => { e.preventDefault(); dragCounter++; document.getElementById("drop-overlay").classList.add("active"); });
+    document.addEventListener("dragleave", e => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; document.getElementById("drop-overlay").classList.remove("active"); }});
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => {
       e.preventDefault();
-      document.getElementById("drop-overlay").classList.add("active");
-    });
-    document.getElementById("drop-overlay").addEventListener("dragleave", e => {
-      e.preventDefault();
-      document.getElementById("drop-overlay").classList.remove("active");
-    });
-    document.getElementById("drop-overlay").addEventListener("dragover", e => {
-      e.preventDefault();
-    });
-    document.getElementById("drop-overlay").addEventListener("drop", e => {
-      e.preventDefault();
+      dragCounter = 0;
       document.getElementById("drop-overlay").classList.remove("active");
       const files = e.dataTransfer.files;
-      if (files.length > 0 && files[0].name.endsWith(".pdf")) {
-        uploadFile(files[0]);
-      }
+      if (files.length > 0 && files[0].name.endsWith(".pdf")) uploadFile(files[0]);
     });
 
-    function escHtml(str) {
-      const div = document.createElement("div");
-      div.textContent = str;
-      return div.innerHTML;
-    }
+    // --- Util ---
+    const _escDiv = document.createElement("div");
+    function esc(s) { _escDiv.textContent = s; return _escDiv.innerHTML; }
 
-    // Init
-    loadProperties();
+    // --- Init ---
+    // Ensure map size is correct before fitting bounds
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+      loadProperties();
+    });
   </script>
 </body>
 </html>
