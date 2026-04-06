@@ -111,8 +111,18 @@
     .modal .btn-secondary { background: #f1f5f9; color: #374151; }
     .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
 
-    /* Marker styling - keep SVG lightweight */
+    /* Marker styling */
     .pin-marker { background: none; border: none; }
+
+    /* Color picker */
+    .color-picker { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; }
+    .color-picker label { font-size: 13px; font-weight: 600; color: #374151; margin-right: 4px; }
+    .color-dot {
+      width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; transition: border-color 0.15s;
+    }
+    .color-dot:hover { opacity: 0.8; }
+    .color-dot.active { border-color: #1e293b; }
   </style>
 </head>
 <body>
@@ -166,28 +176,39 @@
     let memoTimer = null;
     let selectedPropId = null;
 
-    // --- Map init (deferred tile loading for speed) ---
+    // --- Pin colors ---
+    const PIN_COLORS = {
+      blue:  { fill: "#2563eb", label: "青" },
+      red:   { fill: "#dc2626", label: "赤" },
+      green: { fill: "#16a34a", label: "緑" },
+    };
+
+    // Pre-build one icon per color (reused across all markers of same color)
+    const pinIcons = {};
+    for (const [key, c] of Object.entries(PIN_COLORS)) {
+      pinIcons[key] = L.divIcon({
+        className: "pin-marker",
+        html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`,
+        iconSize: [28, 40],
+        iconAnchor: [14, 40],
+        popupAnchor: [0, -40],
+      });
+    }
+
+    // --- Map init ---
     const map = L.map("map", {
       center: [35.6595, 139.7005],
       zoom: 16,
       zoomControl: true,
-      preferCanvas: true  // Canvas renderer for better perf with many markers
+      preferCanvas: true,
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap',
+    // CartoDB Positron - lightweight, minimal tile style
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       maxZoom: 19,
-      updateWhenIdle: true,      // Only load tiles when map stops moving
-      updateWhenZooming: false,  // Don't reload during zoom animation
+      updateWhenIdle: true,
+      updateWhenZooming: false,
     }).addTo(map);
-
-    // --- Reusable icon (single instance, not re-created per marker) ---
-    const pinIcon = L.divIcon({
-      className: "pin-marker",
-      html: '<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="#2563eb"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>',
-      iconSize: [28, 40],
-      iconAnchor: [14, 40],
-      popupAnchor: [0, -40],
-    });
 
     // --- Load & render ---
     async function loadProperties() {
@@ -202,7 +223,9 @@
 
       for (const prop of properties) {
         if (prop.lat == null || prop.lon == null) continue;
-        const m = L.marker([prop.lat, prop.lon], { icon: pinIcon })
+        const color = prop.color || "blue";
+        const icon = pinIcons[color] || pinIcons.blue;
+        const m = L.marker([prop.lat, prop.lon], { icon })
           .addTo(map)
           .bindTooltip(prop.name, { direction: "top", offset: [0, -40] });
         m.on("click", () => showProperty(prop));
@@ -237,11 +260,21 @@
 
       const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
 
-      // Build HTML without embedding PDF yet (lazy load)
+      const currentColor = prop.color || "blue";
+      let colorDotsHtml = "";
+      for (const [key, c] of Object.entries(PIN_COLORS)) {
+        const active = key === currentColor ? " active" : "";
+        colorDotsHtml += `<div class="color-dot${active}" data-color="${key}" style="background:${c.fill};" title="${c.label}"></div>`;
+      }
+
       content.innerHTML = `
         <div class="prop-info">
           <h3>${esc(prop.name)}</h3>
           <div class="address">${esc(prop.address)}</div>
+          <div class="color-picker">
+            <label>ピン色</label>
+            ${colorDotsHtml}
+          </div>
           ${details}
           <div class="memo-section">
             <label>メモ</label>
@@ -261,6 +294,26 @@
       textarea.addEventListener("input", () => {
         clearTimeout(memoTimer);
         memoTimer = setTimeout(() => saveMemo(prop.id, textarea.value), 800);
+      });
+
+      // Color picker
+      content.querySelectorAll(".color-dot").forEach(dot => {
+        dot.addEventListener("click", () => {
+          const color = dot.dataset.color;
+          prop.color = color;
+          // Update active state
+          content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active"));
+          dot.classList.add("active");
+          // Update marker icon
+          const marker = markers[prop.id];
+          if (marker) marker.setIcon(pinIcons[color] || pinIcons.blue);
+          // Save to server
+          fetch(`/api/properties/${prop.id}/color`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ color }),
+          });
+        });
       });
 
       // Lazy PDF embed button

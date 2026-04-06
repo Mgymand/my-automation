@@ -146,6 +146,20 @@ def update_memo(prop_id):
     return jsonify({"error": "not found"}), 404
 
 
+@app.route("/api/properties/<prop_id>/color", methods=["PUT"])
+def update_color(prop_id):
+    color = request.json.get("color", "blue")
+    if color not in ("blue", "red", "green"):
+        color = "blue"
+    props = load_properties()
+    for p in props:
+        if p["id"] == prop_id:
+            p["color"] = color
+            save_properties(props)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
+
+
 @app.route("/api/upload", methods=["POST"])
 def upload_pdf():
     if "pdf" not in request.files:
