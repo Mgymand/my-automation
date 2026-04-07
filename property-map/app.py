@@ -351,6 +351,39 @@ def delete_property(prop_id):
     return jsonify({"status": "ok"})
 
 
+# --- Station geocoding ---
+
+# Major terminal stations get larger radius
+MAJOR_STATIONS = {"渋谷", "新宿", "池袋", "東京", "品川", "上野", "横浜", "大宮", "千葉", "立川", "町田", "吉祥寺", "北千住", "大手町", "秋葉原"}
+
+@app.route("/api/geocode-station")
+def geocode_station():
+    """駅名 → 緯度経度を自動取得 (Nominatim)."""
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    # Ensure it ends with 駅
+    search_name = name if name.endswith("駅") else name + "駅"
+    query = urllib.parse.urlencode({
+        "q": search_name, "format": "json", "limit": 1, "countrycodes": "jp",
+    })
+    url = f"https://nominatim.openstreetmap.org/search?{query}"
+    req = urllib.request.Request(url, headers={"User-Agent": "PropertyMapApp/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=10, context=SSL_CTX) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data:
+                lat = float(data[0]["lat"])
+                lon = float(data[0]["lon"])
+                # Auto radius based on station size
+                base_name = search_name.replace("駅", "")
+                radius = 180 if base_name in MAJOR_STATIONS else 120
+                return jsonify({"status": "ok", "lat": lat, "lon": lon, "r": radius, "name": search_name})
+    except Exception as e:
+        print(f"Station geocoding failed: {e}")
+    return jsonify({"error": "not_found", "message": f"「{search_name}」が見つかりませんでした"})
+
+
 # --- PDF serving ---
 
 @app.route("/pdf/<path:filename>")

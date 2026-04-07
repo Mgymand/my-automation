@@ -104,14 +104,21 @@
     .modal .btn-danger:hover { background: #b91c1c; }
     .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
 
-    /* Station editor table */
-    .station-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
-    .station-table th { text-align: left; padding: 4px 6px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e5e7eb; }
-    .station-table td { padding: 3px 4px; }
-    .station-table input { width: 100%; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; font-family: inherit; }
-    .station-table input:focus { outline: none; border-color: #2563eb; }
-    .station-table .del-btn { width: 22px; height: 22px; border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; border-radius: 4px; }
-    .station-table .del-btn:hover { color: #dc2626; background: #fef2f2; }
+    /* Station editor */
+    .station-list { margin-bottom: 8px; }
+    .station-item { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .station-item .st-name { font-weight: 500; color: #1e293b; min-width: 90px; }
+    .station-item .st-coord { color: #64748b; font-size: 11px; }
+    .station-item .st-radius { color: #64748b; font-size: 11px; }
+    .station-item .del-btn { width: 22px; height: 22px; border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; border-radius: 4px; margin-left: auto; }
+    .station-item .del-btn:hover { color: #dc2626; background: #fef2f2; }
+    .station-add-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+    .station-add-row input { flex: 1; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: inherit; }
+    .station-add-row input:focus { outline: none; border-color: #2563eb; }
+    .station-add-row .search-btn { padding: 6px 12px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .station-add-row .search-btn:hover { background: #1d4ed8; }
+    .station-add-row .search-btn:disabled { opacity: 0.5; cursor: default; }
+    .station-add-status { font-size: 12px; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -172,11 +179,12 @@
       <label>ワークスペース名</label>
       <input type="text" id="ws-name" placeholder="例: 渋谷店用">
       <label>登録駅</label>
-      <table class="station-table">
-        <thead><tr><th>駅名</th><th style="width:75px">緯度</th><th style="width:75px">経度</th><th style="width:50px">半径m</th><th style="width:28px"></th></tr></thead>
-        <tbody id="ws-stations"></tbody>
-      </table>
-      <button class="detail-add" onclick="addStationRow()">+ 駅を追加</button>
+      <div class="station-list" id="ws-stations"></div>
+      <div class="station-add-row">
+        <input type="text" id="station-name-input" placeholder="駅名を入力（例: 渋谷）" style="margin-bottom:0" onkeydown="if(event.key==='Enter'){event.preventDefault();searchStation();}">
+        <button class="search-btn" id="station-search-btn" onclick="searchStation()">検索して追加</button>
+      </div>
+      <div class="station-add-status" id="station-add-status"></div>
       <div class="btn-row" id="ws-modal-btns"></div>
     </div>
   </div>
@@ -407,45 +415,76 @@
       const modal = document.getElementById("ws-modal");
       const title = document.getElementById("ws-modal-title");
       const nameInput = document.getElementById("ws-name");
-      const stBody = document.getElementById("ws-stations");
       const btns = document.getElementById("ws-modal-btns");
-      stBody.innerHTML = "";
+      document.getElementById("station-name-input").value = "";
+      document.getElementById("station-add-status").textContent = "";
 
       if (mode === "create") {
         title.textContent = "新規ワークスペース";
         nameInput.value = "";
+        editingStations = [];
         btns.innerHTML = `<button class="btn btn-secondary" onclick="closeWsModal()">キャンセル</button><button class="btn btn-primary" onclick="createWorkspace()">作成</button>`;
       } else {
         title.textContent = "ワークスペース設定";
         const ws = getActiveWs();
         nameInput.value = ws ? ws.name : "";
-        if (ws && ws.stations) ws.stations.forEach(s => addStationRow(s));
+        editingStations = ws && ws.stations ? ws.stations.map(s => ({...s})) : [];
         btns.innerHTML = `<button class="btn btn-danger" onclick="deleteWorkspace()">削除</button><div style="flex:1"></div><button class="btn btn-secondary" onclick="closeWsModal()">キャンセル</button><button class="btn btn-primary" onclick="saveWsSettings()">保存</button>`;
       }
+      renderStationList();
       modal.classList.add("active");
     }
 
     function closeWsModal() { document.getElementById("ws-modal").classList.remove("active"); }
 
-    function addStationRow(st) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td><input type="text" value="${st ? esc(st.name) : ""}" placeholder="駅名"></td>
-        <td><input type="number" step="0.0001" value="${st ? st.lat : ""}" placeholder="35.xxx"></td>
-        <td><input type="number" step="0.0001" value="${st ? st.lon : ""}" placeholder="139.xxx"></td>
-        <td><input type="number" value="${st ? st.r || 120 : 120}" placeholder="120"></td>
-        <td><button class="del-btn" onclick="this.closest('tr').remove()">&times;</button></td>`;
-      document.getElementById("ws-stations").appendChild(tr);
+    // Station data held in memory during modal editing
+    let editingStations = [];
+
+    function renderStationList() {
+      const container = document.getElementById("ws-stations");
+      container.innerHTML = "";
+      editingStations.forEach((st, i) => {
+        const div = document.createElement("div");
+        div.className = "station-item";
+        div.innerHTML = `<span class="st-name">${esc(st.name)}</span>
+          <span class="st-coord">${st.lat.toFixed(4)}, ${st.lon.toFixed(4)}</span>
+          <span class="st-radius">半径${st.r}m</span>
+          <button class="del-btn" title="削除">&times;</button>`;
+        div.querySelector(".del-btn").addEventListener("click", () => { editingStations.splice(i, 1); renderStationList(); });
+        container.appendChild(div);
+      });
     }
 
-    function collectStations() {
-      const stations = [];
-      document.querySelectorAll("#ws-stations tr").forEach(tr => {
-        const inputs = tr.querySelectorAll("input");
-        const name = inputs[0].value.trim(), lat = parseFloat(inputs[1].value), lon = parseFloat(inputs[2].value), r = parseInt(inputs[3].value) || 120;
-        if (name && !isNaN(lat) && !isNaN(lon)) stations.push({ name, lat, lon, r });
-      });
-      return stations;
+    async function searchStation() {
+      const input = document.getElementById("station-name-input");
+      const btn = document.getElementById("station-search-btn");
+      const status = document.getElementById("station-add-status");
+      const name = input.value.trim();
+      if (!name) return;
+
+      btn.disabled = true; btn.textContent = "検索中...";
+      status.textContent = ""; status.style.color = "#64748b";
+
+      try {
+        const res = await fetch(`/api/geocode-station?name=${encodeURIComponent(name)}`);
+        const data = await res.json();
+        if (data.status === "ok") {
+          editingStations.push({ name: data.name, lat: data.lat, lon: data.lon, r: data.r });
+          renderStationList();
+          input.value = "";
+          status.textContent = `${data.name} を追加しました`;
+          status.style.color = "#16a34a";
+        } else {
+          status.textContent = data.message || "見つかりませんでした";
+          status.style.color = "#dc2626";
+        }
+      } catch (e) {
+        status.textContent = "検索エラー"; status.style.color = "#dc2626";
+      }
+      btn.disabled = false; btn.textContent = "検索して追加";
     }
+
+    function collectStations() { return [...editingStations]; }
 
     async function createWorkspace() {
       const name = document.getElementById("ws-name").value.trim();
