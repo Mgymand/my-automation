@@ -316,9 +316,12 @@
       document.getElementById("sidebar-title").textContent = prop.name;
       const content = document.getElementById("sidebar-content");
 
+      // Separate 備考 from other details
       let detailRows = "";
+      let bikoValue = "";
       if (prop.details) {
         for (const [k, v] of Object.entries(prop.details)) {
+          if (k === "備考") { bikoValue = v; continue; }
           detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
@@ -334,6 +337,7 @@
         <div class="color-picker"><label>ピン色</label>${colorDots}</div>
         <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
           <div id="details-list">${detailRows}</div><button class="detail-add" id="detail-add-btn">+ 項目を追加</button></div>
+        <div class="memo-section" style="margin-bottom:8px"><label>備考</label><textarea id="biko-input" style="height:120px" placeholder="備考を入力...">${esc(bikoValue)}</textarea></div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
         <div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>
         <div class="prop-actions">
@@ -344,6 +348,22 @@
           <button class="prop-action-delete" id="delete-prop-btn">削除</button>
         </div>
       </div>`;
+
+      // 備考 auto-save (saved into details.備考)
+      let bikoTimer = null;
+      document.getElementById("biko-input").addEventListener("input", function() {
+        clearTimeout(bikoTimer);
+        const val = this.value;
+        bikoTimer = setTimeout(() => {
+          if (!prop.details) prop.details = {};
+          prop.details["備考"] = val;
+          // Rebuild full details for save
+          const d = {};
+          document.querySelectorAll("#details-list .detail-row").forEach(r => { const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim(); if (k) d[k] = v; });
+          d["備考"] = val;
+          fetch(`/api/properties/${prop.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: d }) });
+        }, 800);
+      });
 
       // Memo
       document.getElementById("memo-input").addEventListener("input", function() {

@@ -222,12 +222,25 @@ def extract_property_info(pdf_path):
         if m:
             details["交通"] = m.group(1)
 
-    # --- 備考 ---
+    # --- 管理会社・TEL・FAX ---
+    # GT-works format: 株式会社GT-works ... TEL: xxx / FAX: xxx
+    # Infosheet format: 株式会社xxx ... TEL: xxx / FAX: xxx
+    company_match = re.search(r"(株式会社\S+|有限会社\S+)", text)
+    if company_match:
+        details["管理会社"] = company_match.group(1)
+    tel_match = re.search(r"TEL[:：]?\s*([\d-]+)", text)
+    if tel_match:
+        details["TEL"] = tel_match.group(1)
+    fax_match = re.search(r"FAX[:：]?\s*([\d-]+)", text)
+    if fax_match:
+        details["FAX"] = fax_match.group(1)
+
+    # --- 備考 (最後に配置) ---
     if remarks:
         details["備考"] = " / ".join(remarks)
 
     # --- 必須項目のデフォルト ---
-    for key in ["賃料", "共益費", "面積", "築年数", "敷金/保証金", "礼金"]:
+    for key in ["賃料", "共益費", "面積", "築年数", "敷金/保証金", "礼金", "管理会社", "TEL"]:
         if key not in details:
             details[key] = "-"
 
