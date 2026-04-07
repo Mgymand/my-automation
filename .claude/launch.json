@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "property-map",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
+      "runtimeArgs": ["property-map/app.py"],
+      "port": 5000
+    }
+  ]
+}
