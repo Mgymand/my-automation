@@ -14,7 +14,7 @@
     /* Sidebar */
     #sidebar { width: 480px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; transition: width 0.2s ease; }
     #sidebar.collapsed { width: 0; border: none; }
-    .sidebar-header { padding: 12px 16px; background: #2563eb; color: #fff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .sidebar-header { padding: 12px 16px; background: #2563eb; color: #fff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: relative; z-index: 1001; }
     .sidebar-header h2 { font-size: 16px; font-weight: 600; }
     .sidebar-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
     .sidebar-content { flex: 1; overflow-y: auto; padding: 16px; }
@@ -94,6 +94,7 @@
       padding: 8px 10px; border-bottom: 1px solid #f1f5f9;
       max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .list-table td.expanded { white-space: normal; overflow: visible; max-width: none; word-break: break-all; }
     .list-table tr { cursor: pointer; }
     .list-table tr:hover { background: #eff6ff; }
     .list-table tr.selected { background: #dbeafe; }
@@ -103,6 +104,16 @@
     .list-table .del-cell { text-align: center; }
     .list-table .row-del { border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
     .list-table .row-del:hover { color: #dc2626; background: #fef2f2; }
+    .list-memo-row td { padding: 0 !important; border-bottom: 2px solid #2563eb !important; }
+    .list-memo-panel { padding: 12px 16px; background: #f8fafc; display: flex; gap: 12px; align-items: flex-start; }
+    .list-memo-panel textarea { flex: 1; height: 60px; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical; font-family: inherit; }
+    .list-memo-panel textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .list-memo-panel .memo-info { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #64748b; min-width: 80px; }
+    .list-memo-panel .memo-saved-msg { color: #16a34a; font-size: 11px; opacity: 0; transition: opacity 0.3s; }
+    .list-memo-panel .memo-saved-msg.show { opacity: 1; }
+    .list-memo-panel .memo-status-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; font-family: inherit; }
+    .list-memo-panel .view-detail-btn { padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
+    .list-memo-panel .view-detail-btn:hover { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
 
     /* View toggle */
     .view-toggle { display: flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
@@ -178,6 +189,115 @@
     .station-add-row .search-btn:hover { background: #1d4ed8; }
     .station-add-row .search-btn:disabled { opacity: 0.5; cursor: default; }
     .station-add-status { font-size: 12px; margin-top: 4px; }
+
+    /* Map controls - bottom right */
+    .map-controls { position: fixed; bottom: 20px; left: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .zoom-row { display: flex; gap: 4px; }
+    .map-ctrl-btn { width: 36px; height: 36px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: #374151; box-shadow: 0 2px 8px rgba(0,0,0,0.15); user-select: none; }
+    .map-ctrl-btn:hover { background: #f1f5f9; }
+    .map-ctrl-btn:active { background: #e2e8f0; }
+    .map-controls-panel { flex-direction: column; align-items: center; gap: 4px; }
+    .arrow-pad { flex-direction: column; align-items: center; gap: 2px; }
+    .arrow-mid-row { display: flex; gap: 2px; }
+
+    /* Manual add button */
+    .manual-add-btn { background: #16a34a; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 5px; }
+    .manual-add-btn:hover { background: #15803d; }
+
+    /* Agent/Schedule buttons */
+    .agent-btn { background: #7c3aed; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 5px; }
+    .agent-btn:hover { background: #6d28d9; }
+    .schedule-btn { background: #ea580c; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 5px; }
+    .schedule-btn:hover { background: #c2410c; }
+
+    /* Agent list in modal */
+    .agent-list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .agent-list-item:last-child { border-bottom: none; }
+    .agent-info { flex: 1; }
+    .agent-info .name { font-weight: 600; color: #1e293b; }
+    .agent-info .sub { color: #64748b; font-size: 12px; margin-top: 2px; }
+    .agent-actions { display: flex; gap: 4px; }
+    .agent-actions button { padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; }
+    .agent-actions button:hover { background: #f1f5f9; }
+    .agent-actions .del { color: #dc2626; border-color: #fecaca; }
+    .agent-actions .del:hover { background: #fef2f2; }
+
+    /* Agent view */
+    #agent-view input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
+    #agent-view input[type="text"]:focus { outline: none; border-color: #7c3aed; }
+    #agent-view label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
+    #agent-view .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; }
+    #agent-view .btn-primary { background: #7c3aed; color: #fff; }
+    #agent-view .btn-primary:hover { background: #6d28d9; }
+    #agent-view .btn-secondary { background: #f1f5f9; color: #374151; }
+    #agent-view .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+    .agent-card { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; }
+    .agent-card:hover { background: #f1f5f9; }
+    .agent-card.selected { background: #eff6ff; border-color: #2563eb; }
+    .agent-card .name { font-weight: 600; font-size: 14px; color: #1e293b; }
+    .agent-card .sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .area-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .area-chip { font-size: 12px; padding: 4px 12px; border-radius: 16px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #374151; transition: all 0.15s; }
+    .area-chip:hover { border-color: #7c3aed; color: #7c3aed; }
+    .area-chip.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .agent-props-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .agent-props-table th { text-align: left; padding: 6px 8px; font-weight: 600; color: #64748b; border-bottom: 2px solid #e5e7eb; font-size: 12px; }
+    .agent-props-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
+    .agent-props-table tr:hover { background: #f8fafc; }
+
+    /* Calendar */
+    #calendar-view { display: none; position: fixed; inset: 0; background: #f8fafc; z-index: 2000; flex-direction: column; }
+    #calendar-view.active { display: flex; }
+    .cal-toolbar { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .cal-toolbar h2 { font-size: 16px; font-weight: 600; margin: 0; min-width: 160px; }
+    .cal-nav-btn { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; }
+    .cal-nav-btn:hover { background: #f1f5f9; }
+    .cal-nav-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .cal-close-btn { margin-left: auto; padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; }
+    .cal-close-btn:hover { background: #f1f5f9; }
+    .cal-grid { flex: 1; display: grid; grid-template-columns: repeat(7,1fr); overflow-y: auto; }
+    .cal-header { background: #f1f5f9; padding: 6px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e5e7eb; }
+    .cal-day { min-height: 90px; border: 1px solid #e5e7eb; padding: 4px; font-size: 12px; cursor: pointer; background: #fff; }
+    .cal-day:hover { background: #eff6ff; }
+    .cal-day.other-month { background: #f8fafc; color: #94a3b8; }
+    .cal-day.today { background: #eff6ff; border-color: #2563eb; }
+    .cal-day-num { font-weight: 600; margin-bottom: 2px; font-size: 13px; }
+    .cal-event { font-size: 10px; padding: 1px 4px; border-radius: 3px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+    .cal-event.type-内見 { background: #dbeafe; color: #1d4ed8; }
+    .cal-event.type-調査 { background: #fef3c7; color: #92400e; }
+    .cal-event.type-打合せ { background: #d1fae5; color: #065f46; }
+    .cal-event.type-その他 { background: #f1f5f9; color: #374151; }
+
+    /* Week view */
+    .cal-week { flex: 1; display: grid; grid-template-columns: 60px repeat(7,1fr); overflow-y: auto; }
+    .cal-week-time { font-size: 11px; color: #94a3b8; text-align: right; padding: 2px 6px; border-right: 1px solid #e5e7eb; height: 40px; }
+    .cal-week-cell { border: 1px solid #f1f5f9; min-height: 40px; position: relative; cursor: pointer; }
+    .cal-week-cell:hover { background: #eff6ff; }
+    .cal-week-event { position: absolute; left: 2px; right: 2px; font-size: 10px; padding: 1px 3px; border-radius: 3px; overflow: hidden; z-index: 1; }
+
+    /* Dancing cat - BPM 140 = 0.429s per beat */
+    @keyframes catBounce {
+      0%   { transform: translateY(0) rotate(0deg); }
+      25%  { transform: translateY(-6px) rotate(-5deg); }
+      50%  { transform: translateY(0) rotate(0deg); }
+      75%  { transform: translateY(-6px) rotate(5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+    @keyframes catWaveL {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(-20deg); }
+      100% { transform: rotate(0deg); }
+    }
+    @keyframes catWaveR {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(20deg); }
+      100% { transform: rotate(0deg); }
+    }
+    @keyframes catTail {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(15deg); }
+      100% { transform: rotate(0deg); }
+    }
   </style>
 </head>
 <body>
@@ -195,9 +315,10 @@
         </table>
       </div>
     </div>
-    <div id="sidebar">
+    <div id="sidebar" class="collapsed">
       <div class="sidebar-header">
         <h2 id="sidebar-title">物件情報</h2>
+        <span id="sidebar-agent" style="font-size:12px;opacity:0.85;margin-left:auto;margin-right:8px;white-space:nowrap;"></span>
         <button onclick="closeSidebar()">&times;</button>
       </div>
       <div class="sidebar-content" id="sidebar-content">
@@ -223,13 +344,157 @@
       PDF
     </button>
     <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFileSelect(event)">
+    <button class="manual-add-btn" onclick="openManualAddModal()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      手動入力
+    </button>
+    <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
+    <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
+    <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
+    <div id="dancing-cat" style="display:none;pointer-events:none;">
+      <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
+        <!-- body -->
+        <ellipse cx="40" cy="52" rx="16" ry="12" fill="#fcd34d"/>
+        <!-- belly -->
+        <ellipse cx="40" cy="54" rx="10" ry="8" fill="#fef3c7"/>
+        <!-- head -->
+        <circle cx="40" cy="30" r="14" fill="#fcd34d"/>
+        <!-- ears -->
+        <polygon points="28,20 22,4 34,16" fill="#fcd34d"/>
+        <polygon points="52,20 58,4 46,16" fill="#fcd34d"/>
+        <polygon points="29,18 24,6 33,15" fill="#fecaca"/>
+        <polygon points="51,18 56,6 47,15" fill="#fecaca"/>
+        <!-- eyes - big cute -->
+        <ellipse cx="34" cy="28" rx="4" ry="4.5" fill="#1e293b"/>
+        <ellipse cx="46" cy="28" rx="4" ry="4.5" fill="#1e293b"/>
+        <circle cx="32.5" cy="26.5" r="1.8" fill="#fff"/>
+        <circle cx="44.5" cy="26.5" r="1.8" fill="#fff"/>
+        <circle cx="35" cy="29" r="0.8" fill="#fff"/>
+        <circle cx="47" cy="29" r="0.8" fill="#fff"/>
+        <!-- blush -->
+        <ellipse cx="27" cy="33" rx="4" ry="2.5" fill="#fecaca" opacity="0.6"/>
+        <ellipse cx="53" cy="33" rx="4" ry="2.5" fill="#fecaca" opacity="0.6"/>
+        <!-- nose -->
+        <ellipse cx="40" cy="32" rx="2" ry="1.5" fill="#fb923c"/>
+        <!-- mouth -->
+        <path d="M37,34 Q40,38 43,34" fill="none" stroke="#92400e" stroke-width="0.8" stroke-linecap="round"/>
+        <!-- whiskers -->
+        <line x1="18" y1="30" x2="32" y2="31" stroke="#d4a" stroke-width="0.6" opacity="0.4"/>
+        <line x1="18" y1="34" x2="32" y2="34" stroke="#d4a" stroke-width="0.6" opacity="0.4"/>
+        <line x1="48" y1="31" x2="62" y2="30" stroke="#d4a" stroke-width="0.6" opacity="0.4"/>
+        <line x1="48" y1="34" x2="62" y2="34" stroke="#d4a" stroke-width="0.6" opacity="0.4"/>
+        <!-- arms waving -->
+        <g style="animation:catWaveL 0.429s ease-in-out infinite;">
+          <path d="M24,48 Q16,38 12,42" fill="none" stroke="#fcd34d" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g style="animation:catWaveR 0.429s ease-in-out infinite;">
+          <path d="M56,48 Q64,38 68,42" fill="none" stroke="#fcd34d" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <!-- legs -->
+        <ellipse cx="32" cy="63" rx="5" ry="4" fill="#fcd34d"/>
+        <ellipse cx="48" cy="63" rx="5" ry="4" fill="#fcd34d"/>
+        <!-- paw pads -->
+        <ellipse cx="32" cy="64" rx="3" ry="2.5" fill="#fecaca"/>
+        <ellipse cx="48" cy="64" rx="3" ry="2.5" fill="#fecaca"/>
+        <!-- tail -->
+        <path d="M56,54 Q68,46 64,34" fill="none" stroke="#fcd34d" stroke-width="4" stroke-linecap="round" style="animation:catTail 0.858s ease-in-out infinite;transform-origin:56px 54px;"/>
+      </svg>
+    </div>
+    <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
     <div class="compare-panel" id="compare-panel">
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
     </div>
   </div>
 
+  <!-- Map controls (bottom-right) -->
+  <div class="map-controls">
+    <div class="map-controls-panel" id="map-controls-panel" style="display:none;">
+      <div class="arrow-pad" id="arrow-pad" style="display:none;">
+        <button class="map-ctrl-btn" onclick="panMap('up')" title="上へ">&#9650;</button>
+        <div class="arrow-mid-row">
+          <button class="map-ctrl-btn" onclick="panMap('left')" title="左へ">&#9664;</button>
+          <button class="map-ctrl-btn" onclick="panMap('right')" title="右へ">&#9654;</button>
+        </div>
+        <button class="map-ctrl-btn" onclick="panMap('down')" title="下へ">&#9660;</button>
+      </div>
+      <div class="zoom-row">
+        <button class="map-ctrl-btn" onclick="map.zoomIn()" title="拡大">+</button>
+        <button class="map-ctrl-btn" onclick="map.zoomOut()" title="縮小">&minus;</button>
+        <button class="map-ctrl-btn" id="arrow-toggle" onclick="toggleArrowPad()" title="移動">&#10138;</button>
+      </div>
+    </div>
+    <button class="map-ctrl-btn" id="controls-toggle" onclick="toggleControls()" title="操作パネル" style="font-size:16px;">&#9881;</button>
+  </div>
+
   <div class="drop-overlay" id="drop-overlay"><p>PDFをドロップしてインポート</p></div>
+
+  <!-- Agent view (full screen) -->
+  <div id="agent-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
+    <div class="cal-toolbar">
+      <h2 style="min-width:auto;">エージェント管理</h2>
+      <button class="cal-nav-btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="showAgentForm()">+ 新規登録</button>
+      <button class="cal-close-btn" onclick="closeAgentView()">&times; 閉じる</button>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden;">
+      <!-- Left: agent list -->
+      <div id="agent-left" style="width:320px;border-right:1px solid #e5e7eb;overflow-y:auto;background:#fff;padding:12px;"></div>
+      <!-- Right: detail or form -->
+      <div id="agent-right" style="flex:1;overflow-y:auto;padding:24px;">
+        <div style="color:#94a3b8;text-align:center;margin-top:100px;">左の一覧からエージェントを選択するか、新規登録してください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar view -->
+  <div id="calendar-view">
+    <div class="cal-toolbar">
+      <button class="cal-nav-btn" onclick="calNav(-1)">&larr;</button>
+      <h2 id="cal-title"></h2>
+      <button class="cal-nav-btn" onclick="calNav(1)">&rarr;</button>
+      <button class="cal-nav-btn" onclick="calToday()">今日</button>
+      <button class="cal-nav-btn" id="cal-month-btn" onclick="setCalView('month')">月</button>
+      <button class="cal-nav-btn" id="cal-week-btn" onclick="setCalView('week')">週</button>
+      <button class="cal-nav-btn" style="background:#2563eb;color:#fff;" onclick="openScheduleModal()">+ 予定を追加</button>
+      <button class="cal-close-btn" onclick="closeCalendar()">&times; 閉じる</button>
+    </div>
+    <div id="cal-day-headers" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
+    <div id="cal-body" style="flex:1;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Schedule modal -->
+  <div class="modal-overlay" id="schedule-modal">
+    <div class="modal">
+      <h3 id="schedule-modal-title">予定を追加</h3>
+      <input type="hidden" id="sch-edit-id">
+      <label>タイトル <span style="color:#dc2626">*</span></label>
+      <input type="text" id="sch-title" placeholder="例: TMSビル 内見">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label>種類</label><select id="sch-type" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+          <option value="内見">内見</option><option value="調査">調査</option><option value="打合せ">打合せ</option><option value="その他">その他</option>
+        </select></div>
+        <div><label>日付 <span style="color:#dc2626">*</span></label><input type="date" id="sch-date"></div>
+        <div><label>開始時間</label><input type="time" id="sch-start" value="10:00"></div>
+        <div><label>終了時間</label><input type="time" id="sch-end" value="11:00"></div>
+      </div>
+      <label>エージェント</label>
+      <select id="sch-agent" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+        <option value="">選択なし</option>
+      </select>
+      <label>物件</label>
+      <select id="sch-property" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+        <option value="">選択なし</option>
+      </select>
+      <label>メモ</label>
+      <input type="text" id="sch-memo" placeholder="メモ（任意）">
+      <div id="sch-status" class="loading" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeScheduleModal()">キャンセル</button>
+        <a class="btn btn-primary" id="sch-gcal-link" href="#" target="_blank" style="background:#16a34a;text-decoration:none;display:none;">Googleカレンダーに追加</a>
+        <button class="btn btn-primary" onclick="saveSchedule()">保存</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Upload modal -->
   <div class="modal-overlay" id="upload-modal">
@@ -244,6 +509,35 @@
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="closeUploadModal()">キャンセル</button>
         <button class="btn btn-primary" onclick="confirmUpload()">登録</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual add modal -->
+  <div class="modal-overlay" id="manual-add-modal">
+    <div class="modal">
+      <h3>物件を手動登録</h3>
+      <label for="manual-name">物件名 <span style="color:#dc2626">*</span></label>
+      <input type="text" id="manual-name" placeholder="例: 渋谷ビル3F">
+      <label for="manual-address">住所 <span style="color:#dc2626">*</span></label>
+      <input type="text" id="manual-address" placeholder="例: 東京都渋谷区渋谷1-1-1">
+      <label>物件情報（任意）</label>
+      <div id="manual-details">
+        <div class="detail-row"><input class="detail-key" value="賃料" style="width:100px"><input class="detail-val" placeholder="例: 30万円"></div>
+        <div class="detail-row"><input class="detail-key" value="面積" style="width:100px"><input class="detail-val" placeholder="例: 50.5坪"></div>
+        <div class="detail-row"><input class="detail-key" value="築年数" style="width:100px"><input class="detail-val" placeholder="例: 築10年"></div>
+      </div>
+      <button class="detail-add" onclick="addManualDetailRow()" style="margin-top:6px">+ 項目を追加</button>
+      <label style="margin-top:12px">PDF（任意）</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('manual-pdf-input').click()" style="font-size:12px;padding:6px 12px;">PDFを選択</button>
+        <span id="manual-pdf-name" style="font-size:12px;color:#64748b;">未選択</span>
+        <input type="file" id="manual-pdf-input" accept=".pdf" style="display:none" onchange="onManualPdfSelect(event)">
+      </div>
+      <div id="manual-add-status" class="loading" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="closeManualAddModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="confirmManualAdd()">登録</button>
       </div>
     </div>
   </div>
@@ -281,14 +575,14 @@
     let wsModalMode = "create";
 
     // === Pin icons ===
-    const PIN_COLORS = { blue: { fill: "#2563eb", label: "青" }, red: { fill: "#dc2626", label: "赤" }, green: { fill: "#16a34a", label: "緑" } };
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
       pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
     }
 
     // === Map ===
-    const map = L.map("map", { center: [35.6595, 139.7005], zoom: 16, zoomControl: true, preferCanvas: true });
+    const map = L.map("map", { center: [35.6595, 139.7005], zoom: 16, zoomControl: false, preferCanvas: true });
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       maxZoom: 19, subdomains: "abcd", updateWhenIdle: true, updateWhenZooming: false,
@@ -337,6 +631,7 @@
       clearInfoLabels();
       activeCompareKey = null;
       await loadProperties();
+      if (currentView === "list") renderListView();
     }
 
     // === Stations ===
@@ -391,6 +686,12 @@
       selectedPropId = prop.id;
       document.getElementById("sidebar").classList.remove("collapsed");
       document.getElementById("sidebar-title").textContent = prop.name;
+      const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
+      document.querySelector(".sidebar-header").style.background = pinColor;
+      // Show agent name for this workspace
+      const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
+      const agentEl = document.getElementById("sidebar-agent");
+      agentEl.textContent = assignedAgents.length ? assignedAgents.map(a => a.name).join(", ") : "";
       const content = document.getElementById("sidebar-content");
 
       // Separate 備考, 管理会社, TEL, FAX from other details
@@ -412,12 +713,12 @@
       const currentColor = prop.color || "blue";
       let colorDots = "";
       for (const [key, c] of Object.entries(PIN_COLORS)) {
-        colorDots += `<div class="color-dot${key === currentColor ? " active" : ""}" data-color="${key}" style="background:${c.fill};" title="${c.label}"></div>`;
+        colorDots += `<div class="color-dot${key === currentColor ? " active" : ""}" data-color="${key}" style="background:${c.fill};" title="${c.label}"></div><span style="font-size:11px;color:#64748b;margin-right:8px;">${c.label}</span>`;
       }
 
       content.innerHTML = `<div class="prop-info">
         <h3>${esc(prop.name)}</h3><div class="address">${esc(prop.address)}</div>
-        <div class="color-picker"><label>ピン色</label>${colorDots}</div>
+        <div class="color-picker"><label>ステータス</label>${colorDots}</div>
         <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
           <div style="margin-bottom:8px"><label style="font-size:12px;color:#64748b;margin-bottom:2px;display:block;">備考</label><textarea id="biko-input" style="width:100%;height:100px;border:1px solid #d1d5db;border-radius:6px;padding:8px;font-size:12px;resize:vertical;font-family:inherit;" placeholder="備考...">${esc(bikoValue)}</textarea></div>
           <div id="details-list">${detailRows}</div>
@@ -425,7 +726,7 @@
           ${companyRows ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #e5e7eb;"><label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block;">管理会社情報</label><div id="company-list">${companyRows}</div></div>` : ''}
         </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
-        <div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>
+        ${prop.filename ? `<div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>` : `<div class="pdf-section"><p style="text-align:center;color:#94a3b8;font-size:13px;">PDFなし</p></div>`}
         <div class="prop-actions">
           <select class="move-select" id="move-to-ws">
             <option value="" disabled selected>他エリアに移動...</option>
@@ -456,6 +757,7 @@
           const color = dot.dataset.color; prop.color = color;
           content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active")); dot.classList.add("active");
           if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
+          document.querySelector(".sidebar-header").style.background = PIN_COLORS[color]?.fill || "#2563eb";
           fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
         });
       });
@@ -497,13 +799,15 @@
         r.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
         document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
-      // PDF images
-      const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
-      const pdfEl = document.getElementById("pdf-pages");
-      pdfEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
-      fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
-        .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
-        .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
+      // PDF images (only if file exists)
+      if (prop.filename) {
+        const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
+        const pdfEl = document.getElementById("pdf-pages");
+        pdfEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
+        fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
+          .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
+          .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
+      }
       // Move to another workspace
       document.getElementById("move-to-ws").addEventListener("change", async function() {
         const targetWsId = this.value;
@@ -518,11 +822,7 @@
       });
 
       // Delete property
-      document.getElementById("delete-prop-btn").addEventListener("click", async () => {
-        if (!confirm(`「${prop.name}」を削除しますか？この操作は取り消せません。`)) return;
-        await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
-        closeSidebar(); await loadProperties();
-      });
+      document.getElementById("delete-prop-btn").addEventListener("click", () => deleteProperty(prop));
 
       requestAnimationFrame(() => map.invalidateSize());
     }
@@ -530,6 +830,14 @@
     async function saveMemo(propId, memo) {
       const res = await fetch(`/api/properties/${propId}/memo?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memo }) });
       if (res.ok) { const el = document.getElementById("memo-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } const p = properties.find(x => x.id === propId); if (p) p.memo = memo; }
+    }
+
+    async function deleteProperty(prop) {
+      if (!confirm(`「${prop.name}」を削除しますか？この操作は取り消せません。`)) return;
+      await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
+      if (selectedPropId === prop.id) closeSidebar();
+      await loadProperties();
+      if (currentView === "list") renderListView();
     }
 
     function closeSidebar() {
@@ -697,6 +1005,7 @@
       { key: "礼金", label: "礼金", detail: true },
       { key: "交通", label: "交通", detail: true },
       { key: "管理会社", label: "管理会社", detail: true },
+      { key: "TEL", label: "TEL", detail: true },
     ];
 
     function setView(mode) {
@@ -704,6 +1013,7 @@
       document.getElementById("view-map-btn").classList.toggle("active", mode === "map");
       document.getElementById("view-list-btn").classList.toggle("active", mode === "list");
       document.getElementById("list-view").classList.toggle("active", mode === "list");
+      document.getElementById("compare-panel").style.display = mode === "list" ? "none" : "";
       if (mode === "list") renderListView();
       else setTimeout(() => map.invalidateSize(), 100);
     }
@@ -758,24 +1068,81 @@
 
       document.getElementById("list-count").textContent = `${filtered.length}件`;
 
-      // Row click → show property
+      // Row click → toggle inline memo panel
       body.querySelectorAll("tr").forEach(tr => {
         tr.addEventListener("click", e => {
-          if (e.target.classList.contains("row-del")) return;
+          if (e.target.classList.contains("row-del") || e.target.closest(".list-memo-row")) return;
           const prop = properties.find(p => p.id === tr.dataset.id);
-          if (prop) { showProperty(prop); body.querySelectorAll("tr").forEach(r => r.classList.remove("selected")); tr.classList.add("selected"); }
+          if (!prop) return;
+          // Remove existing memo rows
+          body.querySelectorAll(".list-memo-row").forEach(r => r.remove());
+          body.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
+          // If clicking same row, just close
+          if (tr.classList.contains("was-selected")) { tr.classList.remove("was-selected"); return; }
+          body.querySelectorAll("tr").forEach(r => r.classList.remove("was-selected"));
+          tr.classList.add("selected", "was-selected");
+          // Insert memo row below
+          const memoRow = document.createElement("tr");
+          memoRow.className = "list-memo-row";
+          const colSpan = LIST_COLUMNS.length + 1;
+          const statusLabel = PIN_COLORS[prop.color || "blue"]?.label || "未内見";
+          // Show sidebar with agent name
+          showProperty(prop);
+          const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
+          const agentNames = assignedAgents.map(a => a.name).join(", ");
+          memoRow.innerHTML = `<td colspan="${colSpan}"><div class="list-memo-panel">
+            <div class="memo-info" style="min-width:auto;">
+              <select class="memo-status-select" data-propid="${prop.id}">
+                ${Object.entries(PIN_COLORS).map(([k,v]) => `<option value="${k}"${k===(prop.color||"blue")?" selected":""}>${v.label}</option>`).join("")}
+              </select>
+              <button class="view-detail-btn" onclick="setView('map');showProperty(properties.find(p=>p.id==='${prop.id}'))">地図で詳細を見る</button>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+              <textarea class="list-memo-input" data-propid="${prop.id}" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
+              <span class="memo-saved-msg" id="list-memo-saved-${prop.id}">保存しました</span>
+            </div>
+          </div></td>`;
+          tr.after(memoRow);
+          // Memo auto-save
+          const textarea = memoRow.querySelector(".list-memo-input");
+          let timer = null;
+          textarea.addEventListener("input", () => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+              await saveMemo(prop.id, textarea.value);
+              prop.memo = textarea.value;
+              const msg = document.getElementById(`list-memo-saved-${prop.id}`);
+              if (msg) { msg.classList.add("show"); setTimeout(() => msg.classList.remove("show"), 2000); }
+            }, 800);
+          });
+          textarea.addEventListener("click", e => e.stopPropagation());
+          // Status change
+          const statusSel = memoRow.querySelector(".memo-status-select");
+          statusSel.addEventListener("change", async () => {
+            const color = statusSel.value;
+            prop.color = color;
+            if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
+            await fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ color }) });
+            renderListView();
+          });
+          statusSel.addEventListener("click", e => e.stopPropagation());
+        });
+      });
+
+      // Double-click cell → toggle full text
+      body.querySelectorAll("td").forEach(td => {
+        td.addEventListener("dblclick", e => {
+          e.stopPropagation();
+          td.classList.toggle("expanded");
         });
       });
 
       // Delete buttons
       body.querySelectorAll(".row-del").forEach(btn => {
-        btn.addEventListener("click", async e => {
+        btn.addEventListener("click", e => {
           e.stopPropagation();
           const prop = properties.find(p => p.id === btn.dataset.id);
-          if (!prop || !confirm(`「${prop.name}」を削除しますか？`)) return;
-          await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
-          await loadProperties();
-          renderListView();
+          if (prop) deleteProperty(prop);
         });
       });
 
@@ -800,9 +1167,486 @@
     function clearInfoLabels() { infoLabels.forEach(m => map.removeLayer(m)); infoLabels = []; }
     function showInfoLabels(key) { clearInfoLabels(); for (const p of properties) { if (!p.lat || !p.lon) continue; const v = p.details && p.details[key]; const l = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "", html: `<div class="marker-label">${esc(v || "—")}</div>`, iconSize: null, iconAnchor: [0, 38] }), interactive: false, zIndexOffset: 1000 }).addTo(map); infoLabels.push(l); } }
 
+    // === Map controls ===
+    function toggleControls() {
+      const panel = document.getElementById("map-controls-panel");
+      const visible = panel.style.display !== "none";
+      panel.style.display = visible ? "none" : "flex";
+      if (visible) document.getElementById("arrow-pad").style.display = "none";
+    }
+    function toggleArrowPad() {
+      const pad = document.getElementById("arrow-pad");
+      const open = pad.style.display !== "none";
+      pad.style.display = open ? "none" : "flex";
+    }
+    function panMap(dir) {
+      const offset = 150;
+      const d = { up: [0, -offset], down: [0, offset], left: [-offset, 0], right: [offset, 0] };
+      map.panBy(d[dir], { animate: true, duration: 0.25 });
+    }
+
+    // === Manual add ===
+    let manualPdfFile = null;
+
+    function openManualAddModal() {
+      document.getElementById("manual-name").value = "";
+      document.getElementById("manual-address").value = "";
+      document.getElementById("manual-pdf-name").textContent = "未選択";
+      document.getElementById("manual-add-status").style.display = "none";
+      manualPdfFile = null;
+      document.getElementById("manual-pdf-input").value = "";
+      const details = document.getElementById("manual-details");
+      details.innerHTML = `
+        <div class="detail-row"><input class="detail-key" value="賃料" style="width:100px"><input class="detail-val" placeholder="例: 30万円"></div>
+        <div class="detail-row"><input class="detail-key" value="面積" style="width:100px"><input class="detail-val" placeholder="例: 50.5坪"></div>
+        <div class="detail-row"><input class="detail-key" value="築年数" style="width:100px"><input class="detail-val" placeholder="例: 築10年"></div>`;
+      document.getElementById("manual-add-modal").classList.add("active");
+    }
+
+    function closeManualAddModal() {
+      document.getElementById("manual-add-modal").classList.remove("active");
+      manualPdfFile = null;
+    }
+
+    function addManualDetailRow() {
+      const r = document.createElement("div"); r.className = "detail-row";
+      r.innerHTML = `<input class="detail-key" placeholder="項目名" style="width:100px"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除" onclick="this.closest('.detail-row').remove()">&times;</button>`;
+      document.getElementById("manual-details").appendChild(r);
+      r.querySelector(".detail-key").focus();
+    }
+
+    function onManualPdfSelect(e) {
+      if (e.target.files.length > 0) {
+        manualPdfFile = e.target.files[0];
+        document.getElementById("manual-pdf-name").textContent = manualPdfFile.name;
+      }
+    }
+
+    async function confirmManualAdd() {
+      const name = document.getElementById("manual-name").value.trim();
+      const address = document.getElementById("manual-address").value.trim();
+      const status = document.getElementById("manual-add-status");
+
+      if (!name) { status.style.display = "block"; status.textContent = "物件名を入力してください"; status.style.color = "#dc2626"; return; }
+      if (!address) { status.style.display = "block"; status.textContent = "住所を入力してください"; status.style.color = "#dc2626"; return; }
+
+      // Collect details
+      const details = {};
+      document.querySelectorAll("#manual-details .detail-row").forEach(r => {
+        const k = r.querySelector(".detail-key").value.trim();
+        const v = r.querySelector(".detail-val").value.trim();
+        if (k && v) details[k] = v;
+      });
+
+      status.style.display = "block"; status.textContent = "登録中..."; status.style.color = "#64748b";
+
+      try {
+        if (manualPdfFile) {
+          // Upload with PDF
+          const fd = new FormData();
+          fd.append("pdf", manualPdfFile);
+          fd.append("address", address);
+          const res = await fetch(`/api/upload?ws=${activeWorkspaceId}`, { method: "POST", body: fd });
+          const data = await res.json();
+          if (data.status === "ok") {
+            data.property.name = name;
+            if (Object.keys(details).length) data.property.details = { ...details, ...(data.property.details || {}) };
+            // Save name & details
+            await fetch(`/api/properties/${data.property.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: data.property.details }) });
+            closeManualAddModal(); properties.push(data.property); renderMarkers(); showProperty(data.property);
+          } else { status.textContent = data.message || "登録に失敗しました"; status.style.color = "#dc2626"; }
+        } else {
+          // Manual add without PDF
+          const res = await fetch(`/api/properties/manual?ws=${activeWorkspaceId}`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, address, details })
+          });
+          const data = await res.json();
+          if (data.status === "ok") {
+            closeManualAddModal(); properties.push(data.property); renderMarkers(); showProperty(data.property);
+          } else { status.textContent = data.message || "登録に失敗しました"; status.style.color = "#dc2626"; }
+        }
+      } catch (err) { status.textContent = "エラー: " + err.message; status.style.color = "#dc2626"; }
+    }
+
+    // === BGM ===
+    function toggleBgm() {
+      const audio = document.getElementById("bgm-audio");
+      const btn = document.getElementById("bgm-btn");
+      const cat = document.getElementById("dancing-cat");
+      if (audio.paused) { audio.play(); btn.innerHTML = "&#9724;"; btn.title = "BGM停止"; cat.style.display = "block"; }
+      else { audio.pause(); btn.innerHTML = "&#9654;"; btn.title = "BGM再生"; cat.style.display = "none"; }
+    }
+
     // === Util ===
     const _escDiv = document.createElement("div");
     function esc(s) { _escDiv.textContent = s; return _escDiv.innerHTML; }
+
+    // === Agents ===
+    let agentsData = [];
+    let selectedAgentId = null;
+    let agentFormAreaIds = [];
+
+    async function loadAgents() {
+      const res = await fetch("/api/agents");
+      agentsData = await res.json();
+    }
+
+    async function openAgentView() {
+      await loadWorkspaces();
+      await loadAgents();
+      const view = document.getElementById("agent-view");
+      view.style.display = "flex";
+      renderAgentLeftPanel();
+      showAgentForm();
+    }
+    function closeAgentView() { document.getElementById("agent-view").style.display = "none"; selectedAgentId = null; }
+
+    function renderAgentLeftPanel() {
+      const left = document.getElementById("agent-left");
+      if (!agentsData.length) {
+        left.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;margin-top:20px;">エージェントが<br>登録されていません</p>';
+        return;
+      }
+      left.innerHTML = agentsData.map(a => {
+        const areaNames = getAreaNames(a.area);
+        return `<div class="agent-card${a.id === selectedAgentId ? ' selected' : ''}" onclick="showAgentDetail('${a.id}')">
+          <div class="name">${esc(a.name)}</div>
+          <div class="sub">${esc(a.phone || a.email)}</div>
+          ${areaNames ? `<div class="sub">${esc(areaNames)}</div>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    function getAreaNames(area) {
+      if (!area) return "";
+      const ids = area.split(",").filter(x => x.trim());
+      return ids.map(id => {
+        const ws = workspacesData.workspaces.find(w => w.id === id.trim());
+        return ws ? ws.name : id;
+      }).join(", ");
+    }
+
+    async function showAgentDetail(id) {
+      selectedAgentId = id;
+      renderAgentLeftPanel();
+      const a = agentsData.find(x => x.id === id);
+      if (!a) return;
+      const right = document.getElementById("agent-right");
+      right.innerHTML = `<div style="max-width:800px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <div>
+            <h3 style="font-size:20px;margin-bottom:4px;">${esc(a.name)}</h3>
+            <div style="color:#64748b;font-size:13px;">${esc(a.email)} | ${esc(a.phone || "-")}</div>
+            ${a.memo ? `<div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(a.memo)}</div>` : ""}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="cal-nav-btn" onclick="showAgentForm(agentsData.find(x=>x.id==='${a.id}'))">編集</button>
+            <button class="cal-nav-btn" style="color:#dc2626;border-color:#fecaca;" onclick="deleteAgent('${a.id}')">削除</button>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#374151;">担当エリア</label>
+          <div style="margin-top:4px;">${getAreaNames(a.area) || '<span style="color:#94a3b8">未設定</span>'}</div>
+        </div>
+        <h4 style="font-size:15px;margin-bottom:8px;color:#374151;">担当物件</h4>
+        <div id="agent-props-container"><p style="color:#94a3b8;font-size:13px;">読み込み中...</p></div>
+      </div>`;
+      // Load properties
+      const res = await fetch(`/api/agents/${id}/properties`);
+      const props = await res.json();
+      const container = document.getElementById("agent-props-container");
+      if (!props.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">担当エリア内に物件がありません</p>'; return; }
+      container.innerHTML = `<table class="agent-props-table">
+        <thead><tr><th>物件名</th><th>エリア</th><th>住所</th><th>賃料</th><th>面積</th></tr></thead>
+        <tbody>${props.map(p => `<tr>
+          <td>${esc(p.name)}</td>
+          <td>${esc(p._wsName || "")}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.address)}</td>
+          <td>${esc((p.details && p.details["賃料"]) || "-")}</td>
+          <td>${esc((p.details && p.details["面積"]) || "-")}</td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    }
+
+    function showAgentForm(agent) {
+      selectedAgentId = agent ? agent.id : null;
+      renderAgentLeftPanel();
+      agentFormAreaIds = agent && agent.area ? agent.area.split(",").filter(x => x.trim()) : [];
+      const right = document.getElementById("agent-right");
+      right.innerHTML = `<div style="max-width:600px;">
+        <h3 style="font-size:18px;margin-bottom:16px;">${agent ? "エージェント編集" : "新規エージェント登録"}</h3>
+        <input type="hidden" id="agent-edit-id" value="${agent ? agent.id : ""}">
+        <label>名前 <span style="color:#dc2626">*</span></label>
+        <input type="text" id="agent-name" value="${agent ? esc(agent.name) : ""}" placeholder="例: 田中太郎">
+        <label>メールアドレス <span style="color:#dc2626">*</span></label>
+        <input type="text" id="agent-email" value="${agent ? esc(agent.email) : ""}" placeholder="例: tanaka@example.com">
+        <label>電話番号</label>
+        <input type="text" id="agent-phone" value="${agent ? esc(agent.phone || "") : ""}" placeholder="例: 03-1234-5678">
+        <label>担当エリア（クリックで選択）</label>
+        <div class="area-chips" id="area-chips"></div>
+        <label style="margin-top:12px;">備考</label>
+        <input type="text" id="agent-memo" value="${agent ? esc(agent.memo || "") : ""}" placeholder="メモ">
+        <div id="agent-status" class="loading" style="display:none"></div>
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn btn-secondary" onclick="selectedAgentId?showAgentDetail(selectedAgentId):closeAgentView()">キャンセル</button>
+          <button class="btn btn-primary" onclick="saveAgent()">保存</button>
+        </div>
+      </div>`;
+      renderAreaChips();
+    }
+
+    function renderAreaChips() {
+      const container = document.getElementById("area-chips");
+      if (!container) return;
+      container.innerHTML = workspacesData.workspaces.map(ws => {
+        const active = agentFormAreaIds.includes(ws.id);
+        return `<span class="area-chip${active ? " active" : ""}" data-wsid="${ws.id}" onclick="toggleAreaChip('${ws.id}')">${esc(ws.name)}</span>`;
+      }).join("");
+    }
+
+    function toggleAreaChip(wsId) {
+      const idx = agentFormAreaIds.indexOf(wsId);
+      if (idx >= 0) agentFormAreaIds.splice(idx, 1);
+      else agentFormAreaIds.push(wsId);
+      renderAreaChips();
+    }
+
+    async function saveAgent() {
+      const editId = document.getElementById("agent-edit-id").value;
+      const data = {
+        name: document.getElementById("agent-name").value.trim(),
+        email: document.getElementById("agent-email").value.trim(),
+        phone: document.getElementById("agent-phone").value.trim(),
+        area: agentFormAreaIds.join(","),
+        memo: document.getElementById("agent-memo").value.trim(),
+      };
+      const status = document.getElementById("agent-status");
+      if (!data.name || !data.email) { status.style.display = "block"; status.textContent = "名前とメールアドレスは必須です"; status.style.color = "#dc2626"; return; }
+      const url = editId ? `/api/agents/${editId}` : "/api/agents";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (result.status === "ok") {
+        await loadAgents(); renderAgentLeftPanel();
+        if (editId) showAgentDetail(editId);
+        else showAgentForm();
+      } else { status.style.display = "block"; status.textContent = result.message || "エラー"; status.style.color = "#dc2626"; }
+    }
+
+    async function deleteAgent(id) {
+      const a = agentsData.find(x => x.id === id);
+      if (!confirm(`${a?.name}を削除しますか？`)) return;
+      await fetch(`/api/agents/${id}`, { method: "DELETE" });
+      await loadAgents(); renderAgentLeftPanel(); showAgentForm();
+    }
+
+    // === Calendar / Schedules ===
+    let schedulesData = [];
+    let calViewMode = "month"; // month | week
+    let calDate = new Date(); // current focused date
+
+    async function loadSchedules(month) {
+      const res = await fetch(`/api/schedules?month=${month}`);
+      schedulesData = await res.json();
+    }
+
+    function openCalendar() {
+      calDate = new Date();
+      document.getElementById("calendar-view").classList.add("active");
+      renderCalendar();
+    }
+    function closeCalendar() { document.getElementById("calendar-view").classList.remove("active"); }
+
+    function calNav(dir) {
+      if (calViewMode === "month") calDate.setMonth(calDate.getMonth() + dir);
+      else calDate.setDate(calDate.getDate() + dir * 7);
+      renderCalendar();
+    }
+    function calToday() { calDate = new Date(); renderCalendar(); }
+    function setCalView(mode) {
+      calViewMode = mode;
+      document.getElementById("cal-month-btn").classList.toggle("active", mode === "month");
+      document.getElementById("cal-week-btn").classList.toggle("active", mode === "week");
+      renderCalendar();
+    }
+
+    async function renderCalendar() {
+      const y = calDate.getFullYear(), m = calDate.getMonth();
+      const month = `${y}-${String(m+1).padStart(2,"0")}`;
+      await loadSchedules(month);
+      await loadAgents();
+      document.getElementById("cal-title").textContent = `${y}年${m+1}月`;
+      document.getElementById("cal-month-btn").classList.toggle("active", calViewMode === "month");
+      document.getElementById("cal-week-btn").classList.toggle("active", calViewMode === "week");
+
+      const headers = document.getElementById("cal-day-headers");
+      headers.innerHTML = ["日","月","火","水","木","金","土"].map(d => `<div class="cal-header">${d}</div>`).join("");
+
+      if (calViewMode === "month") renderMonthView(y, m);
+      else renderWeekView();
+    }
+
+    function renderMonthView(y, m) {
+      const body = document.getElementById("cal-body");
+      const first = new Date(y, m, 1), last = new Date(y, m+1, 0);
+      const startDay = first.getDay();
+      const today = new Date(); const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      let html = '<div class="cal-grid">';
+      // Previous month padding
+      const prevLast = new Date(y, m, 0).getDate();
+      for (let i = startDay - 1; i >= 0; i--) {
+        const d = prevLast - i;
+        html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+      }
+      // Current month
+      for (let d = 1; d <= last.getDate(); d++) {
+        const dateStr = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const isToday = dateStr === todayStr;
+        const events = schedulesData.filter(s => s.date === dateStr);
+        html += `<div class="cal-day${isToday ? " today" : ""}" onclick="openScheduleModal('${dateStr}')">`;
+        html += `<div class="cal-day-num">${d}</div>`;
+        for (const ev of events) {
+          const agent = agentsData.find(a => a.id === ev.agentId);
+          html += `<div class="cal-event type-${ev.type}" onclick="event.stopPropagation();editSchedule('${ev.id}')" title="${esc(ev.title)}">${ev.startTime} ${esc(ev.title)}${agent ? " ("+esc(agent.name)+")" : ""}</div>`;
+        }
+        html += `</div>`;
+      }
+      // Next month padding
+      const totalCells = startDay + last.getDate();
+      const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+      for (let i = 1; i <= remaining; i++) {
+        html += `<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+      }
+      html += '</div>';
+      body.innerHTML = html;
+    }
+
+    function renderWeekView() {
+      const body = document.getElementById("cal-body");
+      const d = new Date(calDate);
+      d.setDate(d.getDate() - d.getDay()); // Start of week (Sunday)
+      const weekDates = [];
+      for (let i = 0; i < 7; i++) {
+        const dt = new Date(d);
+        dt.setDate(d.getDate() + i);
+        weekDates.push(dt);
+      }
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      let html = '<div class="cal-week">';
+      // Header row
+      html += '<div></div>';
+      for (const wd of weekDates) {
+        const ds = `${wd.getFullYear()}-${String(wd.getMonth()+1).padStart(2,"0")}-${String(wd.getDate()).padStart(2,"0")}`;
+        html += `<div class="cal-header" style="${ds===todayStr?'color:#2563eb;font-weight:700;':''}">${wd.getMonth()+1}/${wd.getDate()}</div>`;
+      }
+      // Time rows (8-20)
+      for (let h = 8; h <= 20; h++) {
+        html += `<div class="cal-week-time">${h}:00</div>`;
+        for (const wd of weekDates) {
+          const ds = `${wd.getFullYear()}-${String(wd.getMonth()+1).padStart(2,"0")}-${String(wd.getDate()).padStart(2,"0")}`;
+          const events = schedulesData.filter(s => s.date === ds && parseInt(s.startTime) === h);
+          let evHtml = "";
+          for (const ev of events) {
+            evHtml += `<div class="cal-week-event type-${ev.type}" onclick="event.stopPropagation();editSchedule('${ev.id}')">${esc(ev.title)}</div>`;
+          }
+          html += `<div class="cal-week-cell" onclick="openScheduleModal('${ds}')">${evHtml}</div>`;
+        }
+      }
+      html += '</div>';
+      body.innerHTML = html;
+    }
+
+    // === Schedule Modal ===
+    function openScheduleModal(dateStr) {
+      document.getElementById("sch-edit-id").value = "";
+      document.getElementById("schedule-modal-title").textContent = "予定を追加";
+      document.getElementById("sch-title").value = "";
+      document.getElementById("sch-type").value = "内見";
+      document.getElementById("sch-date").value = dateStr || new Date().toISOString().slice(0,10);
+      document.getElementById("sch-start").value = "10:00";
+      document.getElementById("sch-end").value = "11:00";
+      document.getElementById("sch-memo").value = "";
+      document.getElementById("sch-status").style.display = "none";
+      document.getElementById("sch-gcal-link").style.display = "none";
+      // Populate agent dropdown
+      const agentSel = document.getElementById("sch-agent");
+      agentSel.innerHTML = '<option value="">選択なし</option>' + agentsData.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.company||"")})</option>`).join("");
+      // Populate property dropdown
+      const propSel = document.getElementById("sch-property");
+      propSel.innerHTML = '<option value="">選択なし</option>' + properties.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+      document.getElementById("schedule-modal").classList.add("active");
+    }
+
+    function editSchedule(id) {
+      const s = schedulesData.find(x => x.id === id);
+      if (!s) return;
+      openScheduleModal(s.date);
+      document.getElementById("sch-edit-id").value = id;
+      document.getElementById("schedule-modal-title").textContent = "予定を編集";
+      document.getElementById("sch-title").value = s.title;
+      document.getElementById("sch-type").value = s.type;
+      document.getElementById("sch-start").value = s.startTime;
+      document.getElementById("sch-end").value = s.endTime;
+      document.getElementById("sch-agent").value = s.agentId || "";
+      document.getElementById("sch-property").value = s.propertyId || "";
+      document.getElementById("sch-memo").value = s.memo || "";
+      updateGcalLink();
+    }
+
+    function closeScheduleModal() { document.getElementById("schedule-modal").classList.remove("active"); }
+
+    function updateGcalLink() {
+      const title = document.getElementById("sch-title").value.trim();
+      const date = document.getElementById("sch-date").value;
+      const start = document.getElementById("sch-start").value;
+      const end = document.getElementById("sch-end").value;
+      const agentId = document.getElementById("sch-agent").value;
+      const link = document.getElementById("sch-gcal-link");
+      if (!title || !date) { link.style.display = "none"; return; }
+      const startDt = date.replace(/-/g,"") + "T" + start.replace(":","") + "00";
+      const endDt = date.replace(/-/g,"") + "T" + end.replace(":","") + "00";
+      const agent = agentsData.find(a => a.id === agentId);
+      const propId = document.getElementById("sch-property").value;
+      const prop = properties.find(p => p.id === propId);
+      let details = document.getElementById("sch-type").value;
+      if (prop) details += " - " + prop.name + " (" + prop.address + ")";
+      let url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDt}/${endDt}&details=${encodeURIComponent(details)}`;
+      if (agent) url += `&add=${encodeURIComponent(agent.email)}`;
+      link.href = url;
+      link.style.display = "inline-block";
+    }
+
+    async function saveSchedule() {
+      const editId = document.getElementById("sch-edit-id").value;
+      const data = {
+        title: document.getElementById("sch-title").value.trim(),
+        type: document.getElementById("sch-type").value,
+        date: document.getElementById("sch-date").value,
+        startTime: document.getElementById("sch-start").value,
+        endTime: document.getElementById("sch-end").value,
+        agentId: document.getElementById("sch-agent").value,
+        propertyId: document.getElementById("sch-property").value,
+        memo: document.getElementById("sch-memo").value.trim(),
+      };
+      const status = document.getElementById("sch-status");
+      if (!data.title || !data.date) { status.style.display = "block"; status.textContent = "タイトルと日付は必須です"; status.style.color = "#dc2626"; return; }
+      const url = editId ? `/api/schedules/${editId}` : "/api/schedules";
+      const method = editId ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (result.status === "ok") { closeScheduleModal(); renderCalendar(); }
+      else { status.style.display = "block"; status.textContent = result.message || "エラー"; status.style.color = "#dc2626"; }
+    }
+
+    // Auto-update gcal link when form changes
+    document.addEventListener("input", e => {
+      if (e.target.closest("#schedule-modal")) updateGcalLink();
+    });
+    document.addEventListener("change", e => {
+      if (e.target.closest("#schedule-modal")) updateGcalLink();
+    });
 
     // === Init ===
     requestAnimationFrame(async () => {
@@ -819,6 +1663,7 @@
         }
       }
       await loadProperties();
+      await loadAgents();
     });
   </script>
 </body>
