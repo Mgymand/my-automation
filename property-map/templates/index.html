@@ -64,6 +64,56 @@
     .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; text-align: center; }
     .placeholder p { font-size: 14px; line-height: 1.6; }
 
+    /* List view */
+    #list-view {
+      display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: #f8fafc; z-index: 500; overflow: hidden;
+      flex-direction: column;
+    }
+    #list-view.active { display: flex; }
+    .list-toolbar {
+      padding: 56px 16px 12px; display: flex; gap: 8px; align-items: center;
+      background: #fff; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
+    }
+    .list-toolbar input {
+      flex: 1; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; font-family: inherit;
+    }
+    .list-toolbar input:focus { outline: none; border-color: #2563eb; }
+    .list-toolbar .count { font-size: 12px; color: #64748b; white-space: nowrap; }
+    .list-table-wrap { flex: 1; overflow: auto; }
+    .list-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .list-table th {
+      position: sticky; top: 0; background: #fff; padding: 8px 10px;
+      text-align: left; font-weight: 600; color: #64748b; border-bottom: 2px solid #e5e7eb;
+      cursor: pointer; white-space: nowrap; user-select: none;
+    }
+    .list-table th:hover { color: #2563eb; }
+    .list-table th .sort-arrow { font-size: 10px; margin-left: 2px; }
+    .list-table td {
+      padding: 8px 10px; border-bottom: 1px solid #f1f5f9;
+      max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .list-table tr { cursor: pointer; }
+    .list-table tr:hover { background: #eff6ff; }
+    .list-table tr.selected { background: #dbeafe; }
+    .list-table .color-indicator {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+    .list-table .del-cell { text-align: center; }
+    .list-table .row-del { border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+    .list-table .row-del:hover { color: #dc2626; background: #fef2f2; }
+
+    /* View toggle */
+    .view-toggle { display: flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .view-toggle button {
+      padding: 6px 10px; border: none; background: #fff; cursor: pointer;
+      font-size: 13px; color: #374151; display: flex; align-items: center; gap: 3px;
+    }
+    .view-toggle button:first-child { border-right: 1px solid #d1d5db; }
+    .view-toggle button:hover { background: #f1f5f9; }
+    .view-toggle button.active { background: #2563eb; color: #fff; }
+
     /* Top toolbar */
     .toolbar { position: fixed; top: 12px; left: 12px; z-index: 1000; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
 
@@ -133,6 +183,18 @@
 <body>
   <div id="app">
     <div id="map"></div>
+    <div id="list-view">
+      <div class="list-toolbar">
+        <input type="text" id="list-filter" placeholder="物件名・住所で検索..." oninput="renderListView()">
+        <span class="count" id="list-count"></span>
+      </div>
+      <div class="list-table-wrap">
+        <table class="list-table">
+          <thead><tr id="list-header"></tr></thead>
+          <tbody id="list-body"></tbody>
+        </table>
+      </div>
+    </div>
     <div id="sidebar">
       <div class="sidebar-header">
         <h2 id="sidebar-title">物件情報</h2>
@@ -151,6 +213,10 @@
       <button class="ws-btn" onclick="openWsModal('create')" title="新規作成">+</button>
       <button class="ws-btn" onclick="openWsModal('settings')" title="設定">&#9881;</button>
       <button class="ws-btn" onclick="deleteWorkspace()" title="このエリアを削除" style="color:#dc2626;font-size:13px;">&#128465;</button>
+    </div>
+    <div class="view-toggle">
+      <button id="view-map-btn" class="active" onclick="setView('map')">&#x1F5FA; 地図</button>
+      <button id="view-list-btn" onclick="setView('list')">&#x1F4CB; 一覧</button>
     </div>
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -605,6 +671,114 @@
     document.addEventListener("dragleave", e => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; document.getElementById("drop-overlay").classList.remove("active"); }});
     document.addEventListener("dragover", e => e.preventDefault());
     document.addEventListener("drop", e => { e.preventDefault(); dragCounter = 0; document.getElementById("drop-overlay").classList.remove("active"); const f = e.dataTransfer.files; if (f.length > 0 && f[0].name.endsWith(".pdf")) uploadFile(f[0]); });
+
+    // === List View ===
+    let currentView = "map";
+    let listSortKey = null;
+    let listSortAsc = true;
+
+    const LIST_COLUMNS = [
+      { key: "_name", label: "物件名", detail: false },
+      { key: "賃料", label: "賃料", detail: true },
+      { key: "共益費", label: "共益費", detail: true },
+      { key: "面積", label: "面積", detail: true },
+      { key: "築年数", label: "築年数", detail: true },
+      { key: "敷金/保証金", label: "敷金/保証金", detail: true },
+      { key: "礼金", label: "礼金", detail: true },
+      { key: "交通", label: "交通", detail: true },
+      { key: "管理会社", label: "管理会社", detail: true },
+    ];
+
+    function setView(mode) {
+      currentView = mode;
+      document.getElementById("view-map-btn").classList.toggle("active", mode === "map");
+      document.getElementById("view-list-btn").classList.toggle("active", mode === "list");
+      document.getElementById("list-view").classList.toggle("active", mode === "list");
+      if (mode === "list") renderListView();
+      else setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    function renderListView() {
+      const filter = (document.getElementById("list-filter").value || "").toLowerCase();
+
+      // Filter
+      let filtered = properties.filter(p => {
+        if (!filter) return true;
+        const searchable = (p.name + " " + p.address + " " + JSON.stringify(p.details || {})).toLowerCase();
+        return searchable.includes(filter);
+      });
+
+      // Sort
+      if (listSortKey) {
+        filtered.sort((a, b) => {
+          let va, vb;
+          if (listSortKey === "_name") { va = a.name; vb = b.name; }
+          else { va = (a.details && a.details[listSortKey]) || ""; vb = (b.details && b.details[listSortKey]) || ""; }
+          // Try numeric sort for values with numbers
+          const na = parseFloat(va.replace(/[^0-9.]/g, ""));
+          const nb = parseFloat(vb.replace(/[^0-9.]/g, ""));
+          if (!isNaN(na) && !isNaN(nb)) return listSortAsc ? na - nb : nb - na;
+          return listSortAsc ? va.localeCompare(vb, "ja") : vb.localeCompare(va, "ja");
+        });
+      }
+
+      // Header
+      const header = document.getElementById("list-header");
+      header.innerHTML = LIST_COLUMNS.map(col => {
+        const arrow = listSortKey === col.key ? (listSortAsc ? "▲" : "▼") : "";
+        return `<th data-sort="${col.key}">${col.label}<span class="sort-arrow">${arrow}</span></th>`;
+      }).join("") + '<th style="width:36px"></th>';
+
+      // Body
+      const body = document.getElementById("list-body");
+      body.innerHTML = filtered.map(p => {
+        const color = PIN_COLORS[p.color || "blue"]?.fill || "#2563eb";
+        return `<tr data-id="${p.id}">` +
+          LIST_COLUMNS.map(col => {
+            let val;
+            if (col.key === "_name") {
+              val = `<span class="color-indicator" style="background:${color}"></span>${esc(p.name)}`;
+            } else {
+              val = esc((p.details && p.details[col.key]) || "-");
+            }
+            return `<td>${val}</td>`;
+          }).join("") +
+          `<td class="del-cell"><button class="row-del" data-id="${p.id}" title="削除">&times;</button></td></tr>`;
+      }).join("");
+
+      document.getElementById("list-count").textContent = `${filtered.length}件`;
+
+      // Row click → show property
+      body.querySelectorAll("tr").forEach(tr => {
+        tr.addEventListener("click", e => {
+          if (e.target.classList.contains("row-del")) return;
+          const prop = properties.find(p => p.id === tr.dataset.id);
+          if (prop) { showProperty(prop); body.querySelectorAll("tr").forEach(r => r.classList.remove("selected")); tr.classList.add("selected"); }
+        });
+      });
+
+      // Delete buttons
+      body.querySelectorAll(".row-del").forEach(btn => {
+        btn.addEventListener("click", async e => {
+          e.stopPropagation();
+          const prop = properties.find(p => p.id === btn.dataset.id);
+          if (!prop || !confirm(`「${prop.name}」を削除しますか？`)) return;
+          await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
+          await loadProperties();
+          renderListView();
+        });
+      });
+
+      // Header sort
+      header.querySelectorAll("th[data-sort]").forEach(th => {
+        th.onclick = () => {
+          const key = th.dataset.sort;
+          if (listSortKey === key) listSortAsc = !listSortAsc;
+          else { listSortKey = key; listSortAsc = true; }
+          renderListView();
+        };
+      });
+    }
 
     // === Compare ===
     function buildCompareChips() {
