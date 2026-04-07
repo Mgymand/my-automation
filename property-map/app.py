@@ -399,20 +399,21 @@ if __name__ == "__main__":
         def start_tunnel():
             import sys
             print("\n  トンネル接続中...", flush=True)
+            # Cloudflare Tunnel (確認ページなし・直接アクセス可能)
+            cf_path = "/tmp/cloudflared"
             proc = subprocess.Popen(
-                ["ssh", "-T", "-o", "StrictHostKeyChecking=no",
-                 "-o", "ServerAliveInterval=60",
-                 "-R", f"80:localhost:{args.port}", "serveo.net"],
+                [cf_path, "tunnel", "--url", f"http://localhost:{args.port}"],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 stdin=subprocess.DEVNULL)
             for line in proc.stdout:
                 text = line.decode("utf-8", errors="replace")
-                clean = re.sub(r"\x1b\[[0-9;]*m", "", text).strip()
-                urls = re.findall(r"https://\S+", clean)
+                urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", text)
                 if urls:
-                    msg = (f"\n{'='*60}\n  外部公開URL: {urls[0]}\n"
-                           f"  このURLを共有するだけでアクセスできます\n"
-                           f"  ログイン不要・誰でも閲覧/編集可能\n{'='*60}\n")
+                    msg = (f"\n{'='*60}\n"
+                           f"  外部公開URL: {urls[0]}\n"
+                           f"  このURLをコピーして共有してください\n"
+                           f"  確認ページなし・誰でも即アクセス可能\n"
+                           f"{'='*60}\n")
                     sys.stdout.write(msg); sys.stdout.flush(); break
         threading.Thread(target=start_tunnel, daemon=True).start()
 
