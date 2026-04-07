@@ -316,12 +316,18 @@
       document.getElementById("sidebar-title").textContent = prop.name;
       const content = document.getElementById("sidebar-content");
 
-      // Separate 備考 from other details
+      // Separate 備考, 管理会社, TEL, FAX from other details
+      const bottomKeys = new Set(["備考", "管理会社", "TEL", "FAX"]);
       let detailRows = "";
       let bikoValue = "";
+      let companyRows = "";
       if (prop.details) {
         for (const [k, v] of Object.entries(prop.details)) {
           if (k === "備考") { bikoValue = v; continue; }
+          if (k === "管理会社" || k === "TEL" || k === "FAX") {
+            companyRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
+            continue;
+          }
           detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
@@ -336,8 +342,11 @@
         <h3>${esc(prop.name)}</h3><div class="address">${esc(prop.address)}</div>
         <div class="color-picker"><label>ピン色</label>${colorDots}</div>
         <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
-          <div id="details-list">${detailRows}</div><button class="detail-add" id="detail-add-btn">+ 項目を追加</button></div>
-        <div class="memo-section" style="margin-bottom:8px"><label>備考</label><textarea id="biko-input" style="height:120px" placeholder="備考を入力...">${esc(bikoValue)}</textarea></div>
+          <div style="margin-bottom:8px"><label style="font-size:12px;color:#64748b;margin-bottom:2px;display:block;">備考</label><textarea id="biko-input" style="width:100%;height:100px;border:1px solid #d1d5db;border-radius:6px;padding:8px;font-size:12px;resize:vertical;font-family:inherit;" placeholder="備考...">${esc(bikoValue)}</textarea></div>
+          <div id="details-list">${detailRows}</div>
+          <button class="detail-add" id="detail-add-btn">+ 項目を追加</button>
+          ${companyRows ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #e5e7eb;"><label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block;">管理会社情報</label><div id="company-list">${companyRows}</div></div>` : ''}
+        </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
         <div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>
         <div class="prop-actions">
@@ -349,21 +358,14 @@
         </div>
       </div>`;
 
-      // 備考 auto-save (saved into details.備考)
-      let bikoTimer = null;
-      document.getElementById("biko-input").addEventListener("input", function() {
-        clearTimeout(bikoTimer);
-        const val = this.value;
-        bikoTimer = setTimeout(() => {
-          if (!prop.details) prop.details = {};
-          prop.details["備考"] = val;
-          // Rebuild full details for save
-          const d = {};
-          document.querySelectorAll("#details-list .detail-row").forEach(r => { const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim(); if (k) d[k] = v; });
-          d["備考"] = val;
-          fetch(`/api/properties/${prop.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: d }) });
-        }, 800);
-      });
+      // 備考 auto-save
+      document.getElementById("biko-input").addEventListener("input", saveDetails);
+      // Company list auto-save
+      const companyList = document.getElementById("company-list");
+      if (companyList) {
+        companyList.addEventListener("input", saveDetails);
+        companyList.addEventListener("click", e => { if (e.target.classList.contains("detail-del")) { e.target.closest(".detail-row").remove(); saveDetails(); } });
+      }
 
       // Memo
       document.getElementById("memo-input").addEventListener("input", function() {
@@ -380,12 +382,32 @@
           fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
         });
       });
-      // Details
+      // Details - collect all fields including biko and company
       let detailsTimer = null;
+      function collectAllDetails() {
+        const d = {};
+        // 備考 (top)
+        const bikoEl = document.getElementById("biko-input");
+        if (bikoEl && bikoEl.value.trim()) d["備考"] = bikoEl.value.trim();
+        // Main details
+        document.querySelectorAll("#details-list .detail-row").forEach(r => {
+          const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim();
+          if (k) d[k] = v;
+        });
+        // Company details
+        const companyList = document.getElementById("company-list");
+        if (companyList) {
+          companyList.querySelectorAll(".detail-row").forEach(r => {
+            const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim();
+            if (k) d[k] = v;
+          });
+        }
+        return d;
+      }
       function saveDetails() {
         clearTimeout(detailsTimer);
         detailsTimer = setTimeout(() => {
-          const d = {}; document.querySelectorAll("#details-list .detail-row").forEach(r => { const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim(); if (k) d[k] = v; });
+          const d = collectAllDetails();
           prop.details = d;
           fetch(`/api/properties/${prop.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: d }) })
             .then(() => { const el = document.getElementById("details-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } });
