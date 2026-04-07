@@ -351,6 +351,32 @@ def delete_property(prop_id):
     return jsonify({"status": "ok"})
 
 
+@app.route("/api/properties/<prop_id>/move", methods=["PUT"])
+def move_property(prop_id):
+    """物件を別のワークスペースに移動."""
+    ws_id = get_active_ws_id()
+    target_ws_id = request.json.get("targetWs")
+    if not target_ws_id:
+        return jsonify({"error": "targetWs required"}), 400
+    # Find and remove from source
+    src_props = load_properties(ws_id)
+    prop = None
+    remaining = []
+    for p in src_props:
+        if p["id"] == prop_id:
+            prop = p
+        else:
+            remaining.append(p)
+    if not prop:
+        return jsonify({"error": "not found"}), 404
+    save_properties(remaining, ws_id)
+    # Add to target
+    dst_props = load_properties(target_ws_id)
+    dst_props.append(prop)
+    save_properties(dst_props, target_ws_id)
+    return jsonify({"status": "ok"})
+
+
 # --- Station geocoding ---
 
 # Major terminal stations get larger radius

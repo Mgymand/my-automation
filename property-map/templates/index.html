@@ -52,6 +52,15 @@
     .pdf-pages { margin-top: 8px; }
     .pdf-pages img { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; }
 
+    /* Property actions */
+    .prop-actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px; }
+    .prop-actions button, .prop-actions select { font-size: 12px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+    .prop-action-move { flex: 1; border: 1px solid #d1d5db; background: #fff; color: #374151; }
+    .prop-action-move:hover { background: #f1f5f9; }
+    .prop-action-delete { border: 1px solid #fecaca; background: #fff; color: #dc2626; }
+    .prop-action-delete:hover { background: #fef2f2; }
+    .move-select { flex: 1; border: 1px solid #d1d5db; background: #fff; color: #374151; font-size: 12px; padding: 6px; border-radius: 6px; }
+
     .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; text-align: center; }
     .placeholder p { font-size: 14px; line-height: 1.6; }
 
@@ -327,6 +336,13 @@
           <div id="details-list">${detailRows}</div><button class="detail-add" id="detail-add-btn">+ 項目を追加</button></div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
         <div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>
+        <div class="prop-actions">
+          <select class="move-select" id="move-to-ws">
+            <option value="" disabled selected>他エリアに移動...</option>
+            ${workspacesData.workspaces.filter(w => w.id !== activeWorkspaceId).map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}
+          </select>
+          <button class="prop-action-delete" id="delete-prop-btn">削除</button>
+        </div>
       </div>`;
 
       // Memo
@@ -369,6 +385,26 @@
       fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
         .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
         .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
+      // Move to another workspace
+      document.getElementById("move-to-ws").addEventListener("change", async function() {
+        const targetWsId = this.value;
+        if (!targetWsId) return;
+        const targetWs = workspacesData.workspaces.find(w => w.id === targetWsId);
+        if (!confirm(`「${prop.name}」を「${targetWs.name}」に移動しますか？`)) { this.value = ""; return; }
+        const res = await fetch(`/api/properties/${prop.id}/move?ws=${activeWorkspaceId}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ targetWs: targetWsId }),
+        });
+        if (res.ok) { closeSidebar(); await loadProperties(); }
+      });
+
+      // Delete property
+      document.getElementById("delete-prop-btn").addEventListener("click", async () => {
+        if (!confirm(`「${prop.name}」を削除しますか？この操作は取り消せません。`)) return;
+        await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
+        closeSidebar(); await loadProperties();
+      });
+
       requestAnimationFrame(() => map.invalidateSize());
     }
 
