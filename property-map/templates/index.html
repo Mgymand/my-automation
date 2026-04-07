@@ -293,6 +293,11 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       maxZoom: 19, subdomains: "abcd", updateWhenIdle: true, updateWhenZooming: false,
     }).addTo(map);
+    // OpenRailwayMap overlay - 路線を明確に表示
+    L.tileLayer("https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png", {
+      attribution: '<a href="https://www.openrailwaymap.org/">OpenRailwayMap</a>',
+      maxZoom: 19, opacity: 0.7, updateWhenIdle: true, updateWhenZooming: false,
+    }).addTo(map);
 
     // === Workspace ===
     async function loadWorkspaces() {
@@ -335,19 +340,28 @@
     }
 
     // === Stations ===
-    const stationStyle = { color: "#e8a0b0", fillColor: "#f8d0d8", fillOpacity: 0.45, weight: 1 };
+    const stationCircleStyle = { color: "rgba(200,120,140,0.4)", fillColor: "rgba(248,208,216,0.35)", fillOpacity: 0.35, weight: 1.5 };
 
     function renderStations(stations) {
       stationLayers.forEach(l => map.removeLayer(l));
       stationLayers = [];
       for (const st of stations) {
-        const circle = L.circle([st.lat, st.lon], { radius: st.r || 120, ...stationStyle, interactive: false }).addTo(map);
-        const label = L.marker([st.lat, st.lon], {
-          icon: L.divIcon({ className: "", iconSize: null, iconAnchor: [0, 0],
-            html: `<span style="font-size:11px;font-weight:600;color:#b04060;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff;pointer-events:none;">${st.name}</span>` }),
-          interactive: false
-        }).addTo(map);
-        stationLayers.push(circle, label);
+        // Light pink area
+        const circle = L.circle([st.lat, st.lon], { radius: st.r || 120, ...stationCircleStyle, interactive: false }).addTo(map);
+        // Apple Maps style station marker: train icon + name
+        const icon = L.divIcon({
+          className: "",
+          iconSize: null,
+          iconAnchor: [0, 12],
+          html: `<div style="display:flex;align-items:center;gap:3px;pointer-events:none;white-space:nowrap;">
+            <div style="width:22px;height:22px;border-radius:6px;background:#2563eb;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.25);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/><path d="M8 21l2-4h4l2 4"/><circle cx="9" cy="7" r="1" fill="#fff"/><circle cx="15" cy="7" r="1" fill="#fff"/></svg>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:#1e293b;text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 8px #fff;">${st.name}</span>
+          </div>`,
+        });
+        const marker = L.marker([st.lat, st.lon], { icon, interactive: false, zIndexOffset: 500 }).addTo(map);
+        stationLayers.push(circle, marker);
       }
     }
 
