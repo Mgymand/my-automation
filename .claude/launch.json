@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "property-map",
-      "runtimeExecutable": "python3",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
       "runtimeArgs": ["property-map/app.py"],
       "port": 5000
     }

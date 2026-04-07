@@ -238,4 +238,20 @@ def serve_pdf(filename):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--public", action="store_true", help="ngrokで外部公開")
+    parser.add_argument("--port", type=int, default=5000)
+    args = parser.parse_args()
+
+    if args.public:
+        import sys
+        sys.path.insert(0, os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages"))
+        from pyngrok import ngrok
+        tunnel = ngrok.connect(args.port)
+        print(f"\n{'='*50}")
+        print(f"  外部公開URL: {tunnel.public_url}")
+        print(f"  このURLを共有してください")
+        print(f"{'='*50}\n")
+
+    app.run(host="0.0.0.0", port=args.port, debug=not args.public)
