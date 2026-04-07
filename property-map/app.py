@@ -239,19 +239,47 @@ def serve_pdf(filename):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--public", action="store_true", help="ngrokで外部公開")
+    import subprocess
+    import threading
+
+    parser = argparse.ArgumentParser(description="物件マップサーバー")
+    parser.add_argument("--public", action="store_true",
+                        help="外部公開（アカウント・インストール不要）")
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
 
     if args.public:
-        import sys
-        sys.path.insert(0, os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages"))
-        from pyngrok import ngrok
-        tunnel = ngrok.connect(args.port)
-        print(f"\n{'='*50}")
-        print(f"  外部公開URL: {tunnel.public_url}")
-        print(f"  このURLを共有してください")
-        print(f"{'='*50}\n")
+        def start_tunnel():
+            """SSH tunnel via serveo.net (no signup, no install)."""
+            import sys
+            print("\n  トンネル接続中...", flush=True)
+            proc = subprocess.Popen(
+                ["ssh", "-T",
+                 "-o", "StrictHostKeyChecking=no",
+                 "-o", "ServerAliveInterval=60",
+                 "-R", f"80:localhost:{args.port}", "serveo.net"],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+            )
+            import re as _re
+            for line in proc.stdout:
+                text = line.decode("utf-8", errors="replace")
+                # Strip ANSI escape codes
+                clean = _re.sub(r"\x1b\[[0-9;]*m", "", text).strip()
+                urls = _re.findall(r"https://\S+", clean)
+                if urls:
+                    url = urls[0]
+                    msg = (f"\n{'='*60}\n"
+                           f"  外部公開URL: {url}\n"
+                           f"  このURLを共有するだけでアクセスできます\n"
+                           f"  ログイン不要・誰でも閲覧/編集可能\n"
+                           f"{'='*60}\n")
+                    sys.stdout.write(msg)
+                    sys.stdout.flush()
+                    break
 
-    app.run(host="0.0.0.0", port=args.port, debug=not args.public)
+        tunnel_thread = threading.Thread(target=start_tunnel, daemon=True)
+        tunnel_thread.start()
+
+    host = "0.0.0.0" if args.public else "127.0.0.1"
+    app.run(host=host, port=args.port, debug=not args.public)
