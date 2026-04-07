@@ -340,14 +340,10 @@
     }
 
     // === Stations ===
-    const stationCircleStyle = { color: "rgba(200,120,140,0.4)", fillColor: "rgba(248,208,216,0.35)", fillOpacity: 0.35, weight: 1.5 };
-
     function renderStations(stations) {
       stationLayers.forEach(l => map.removeLayer(l));
       stationLayers = [];
       for (const st of stations) {
-        // Light pink area
-        const circle = L.circle([st.lat, st.lon], { radius: st.r || 120, ...stationCircleStyle, interactive: false }).addTo(map);
         // Apple Maps style station marker: train icon + name
         const icon = L.divIcon({
           className: "",
@@ -361,7 +357,7 @@
           </div>`,
         });
         const marker = L.marker([st.lat, st.lon], { icon, interactive: false, zIndexOffset: 500 }).addTo(map);
-        stationLayers.push(circle, marker);
+        stationLayers.push(marker);
       }
     }
 
