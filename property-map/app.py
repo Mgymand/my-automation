@@ -237,6 +237,38 @@ def serve_pdf(filename):
     return resp
 
 
+@app.route("/pdf-images/<path:filename>")
+def serve_pdf_as_images(filename):
+    """PDFの各ページをPNG画像に変換して返す（スマホ対応）."""
+    import fitz
+    from flask import Response
+    import io
+
+    filepath = os.path.join(PDF_DIR, filename)
+    if not os.path.exists(filepath):
+        return jsonify({"error": "not found"}), 404
+
+    page_num = request.args.get("page", 0, type=int)
+
+    doc = fitz.open(filepath)
+    if page_num >= len(doc):
+        doc.close()
+        return jsonify({"error": "page not found"}), 404
+
+    page = doc[page_num]
+    # 2x zoom for readability
+    mat = fitz.Matrix(2.0, 2.0)
+    pix = page.get_pixmap(matrix=mat)
+    img_bytes = pix.tobytes("png")
+    total_pages = len(doc)
+    doc.close()
+
+    resp = Response(img_bytes, mimetype="image/png")
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    resp.headers["X-Total-Pages"] = str(total_pages)
+    return resp
+
+
 if __name__ == "__main__":
     import argparse
     import subprocess

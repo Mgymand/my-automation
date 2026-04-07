@@ -88,7 +88,18 @@
       margin-bottom: 8px;
     }
     .pdf-open-btn:hover { background: #e2e8f0; }
-    .pdf-embed { width: 100%; height: 500px; border: 1px solid #e5e7eb; border-radius: 6px; }
+    .pdf-pages { margin-top: 8px; }
+    .pdf-pages img { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; }
+    .pdf-page-nav {
+      display: flex; justify-content: center; align-items: center; gap: 12px;
+      font-size: 13px; color: #374151; margin-bottom: 8px;
+    }
+    .pdf-page-nav button {
+      padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .pdf-page-nav button:hover { background: #f1f5f9; }
+    .pdf-page-nav button:disabled { opacity: 0.4; cursor: default; }
 
     /* Placeholder */
     .placeholder {
@@ -391,9 +402,8 @@
             <div class="memo-saved" id="memo-saved">保存しました</div>
           </div>
           <div class="pdf-section">
-            <a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFを新しいタブで開く</a>
-            <button class="pdf-open-btn" id="pdf-embed-btn" style="background:#2563eb;color:#fff;border:none;">サイドバーにPDFを表示</button>
-            <div id="pdf-container"></div>
+            <a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a>
+            <div class="pdf-pages" id="pdf-pages"></div>
           </div>
         </div>
       `;
@@ -468,15 +478,25 @@
         row.querySelector(".detail-key").focus();
       });
 
-      // Lazy PDF embed button
-      document.getElementById("pdf-embed-btn").addEventListener("click", function() {
-        this.style.display = "none";
-        document.getElementById("pdf-container").innerHTML =
-          `<object data="${pdfUrl}" type="application/pdf" class="pdf-embed">
-            <p style="padding:20px;text-align:center;color:#64748b;">
-              PDFを表示できません。<a href="${pdfUrl}" target="_blank" style="color:#2563eb;">こちらから開く</a>
-            </p>
-          </object>`;
+      // Load PDF as images (works on all browsers/smartphones)
+      const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
+      const pdfPagesEl = document.getElementById("pdf-pages");
+      pdfPagesEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
+
+      fetch(imgUrl + "?page=0").then(res => {
+        if (!res.ok) throw new Error("PDF load failed");
+        const totalPages = parseInt(res.headers.get("X-Total-Pages") || "1");
+        return res.blob().then(blob => ({ blob, totalPages }));
+      }).then(({ blob, totalPages }) => {
+        const url0 = URL.createObjectURL(blob);
+        let html = `<img src="${url0}" alt="Page 1">`;
+        // Load remaining pages
+        for (let i = 1; i < totalPages; i++) {
+          html += `<img src="${imgUrl}?page=${i}" alt="Page ${i+1}" loading="lazy">`;
+        }
+        pdfPagesEl.innerHTML = html;
+      }).catch(() => {
+        pdfPagesEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>';
       });
 
       // Recalculate map size after sidebar opens
