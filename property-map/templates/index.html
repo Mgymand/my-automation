@@ -12,17 +12,9 @@
     #map { flex: 1; min-width: 0; }
 
     /* Sidebar */
-    #sidebar {
-      width: 480px; background: #fff; border-left: 1px solid #ddd;
-      display: flex; flex-direction: column; overflow: hidden;
-      transition: width 0.2s ease;
-    }
+    #sidebar { width: 480px; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; overflow: hidden; transition: width 0.2s ease; }
     #sidebar.collapsed { width: 0; border: none; }
-    .sidebar-header {
-      padding: 12px 16px; background: #2563eb; color: #fff;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-shrink: 0;
-    }
+    .sidebar-header { padding: 12px 16px; background: #2563eb; color: #fff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     .sidebar-header h2 { font-size: 16px; font-weight: 600; }
     .sidebar-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
     .sidebar-content { flex: 1; overflow-y: auto; padding: 16px; }
@@ -31,38 +23,16 @@
     .prop-info h3 { font-size: 18px; margin-bottom: 8px; color: #1e293b; }
     .prop-info .address { color: #64748b; font-size: 13px; margin-bottom: 12px; }
     .details-section { margin-bottom: 16px; }
-    .details-section .section-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
-    }
+    .details-section .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .details-section .section-header label { font-size: 13px; font-weight: 600; color: #374151; }
-    .detail-row {
-      display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px;
-    }
-    .detail-key {
-      width: 70px; flex-shrink: 0; padding: 4px 6px;
-      border: 1px solid transparent; border-radius: 4px; color: #64748b; font-weight: 500;
-      background: none; font-size: 13px; font-family: inherit;
-    }
-    .detail-val {
-      flex: 1; padding: 4px 6px;
-      border: 1px solid transparent; border-radius: 4px; color: #1e293b;
-      background: none; font-size: 13px; font-family: inherit;
-    }
+    .detail-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; }
+    .detail-key { width: 70px; flex-shrink: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; color: #64748b; font-weight: 500; background: none; font-size: 13px; font-family: inherit; }
+    .detail-val { flex: 1; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; color: #1e293b; background: none; font-size: 13px; font-family: inherit; }
     .detail-key:hover, .detail-val:hover { border-color: #e2e8f0; background: #f8fafc; }
-    .detail-key:focus, .detail-val:focus {
-      outline: none; border-color: #2563eb; background: #fff;
-      box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
-    }
-    .detail-del {
-      width: 20px; height: 20px; border: none; background: none;
-      color: #94a3b8; cursor: pointer; font-size: 14px; padding: 0;
-      border-radius: 4px; display: flex; align-items: center; justify-content: center;
-    }
+    .detail-key:focus, .detail-val:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .detail-del { width: 20px; height: 20px; border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 0; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
     .detail-del:hover { color: #dc2626; background: #fef2f2; }
-    .detail-add {
-      font-size: 12px; color: #2563eb; background: none; border: 1px dashed #cbd5e1;
-      border-radius: 4px; padding: 3px 10px; cursor: pointer;
-    }
+    .detail-add { font-size: 12px; color: #2563eb; background: none; border: 1px dashed #cbd5e1; border-radius: 4px; padding: 3px 10px; cursor: pointer; }
     .detail-add:hover { background: #eff6ff; border-color: #2563eb; }
     .details-saved { color: #16a34a; font-size: 11px; opacity: 0; transition: opacity 0.3s; margin-left: 8px; }
     .details-saved.show { opacity: 1; }
@@ -70,128 +40,78 @@
     /* Memo */
     .memo-section { margin-bottom: 16px; }
     .memo-section label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
-    .memo-section textarea {
-      width: 100%; height: 80px; border: 1px solid #d1d5db;
-      border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical;
-      font-family: inherit;
-    }
+    .memo-section textarea { width: 100%; height: 80px; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; resize: vertical; font-family: inherit; }
     .memo-section textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
     .memo-saved { color: #16a34a; font-size: 11px; margin-top: 2px; opacity: 0; transition: opacity 0.3s; }
     .memo-saved.show { opacity: 1; }
 
     /* PDF */
     .pdf-section { margin-top: 12px; }
-    .pdf-open-btn {
-      display: block; width: 100%; padding: 10px; text-align: center;
-      background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
-      color: #2563eb; font-size: 13px; cursor: pointer; text-decoration: none;
-      margin-bottom: 8px;
-    }
+    .pdf-open-btn { display: block; width: 100%; padding: 10px; text-align: center; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; color: #2563eb; font-size: 13px; cursor: pointer; text-decoration: none; margin-bottom: 8px; }
     .pdf-open-btn:hover { background: #e2e8f0; }
     .pdf-pages { margin-top: 8px; }
     .pdf-pages img { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; }
-    .pdf-page-nav {
-      display: flex; justify-content: center; align-items: center; gap: 12px;
-      font-size: 13px; color: #374151; margin-bottom: 8px;
-    }
-    .pdf-page-nav button {
-      padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 4px;
-      background: #fff; cursor: pointer; font-size: 13px;
-    }
-    .pdf-page-nav button:hover { background: #f1f5f9; }
-    .pdf-page-nav button:disabled { opacity: 0.4; cursor: default; }
 
-    /* Placeholder */
-    .placeholder {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; height: 100%; color: #94a3b8; text-align: center;
-    }
+    .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; text-align: center; }
     .placeholder p { font-size: 14px; line-height: 1.6; }
 
-    /* Upload */
-    .upload-area { position: fixed; top: 12px; left: 60px; z-index: 1000; }
-    .upload-btn {
-      background: #2563eb; color: #fff; border: none;
-      padding: 8px 16px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; font-weight: 500;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      display: flex; align-items: center; gap: 6px;
-    }
+    /* Top toolbar */
+    .toolbar { position: fixed; top: 12px; left: 12px; z-index: 1000; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+
+    /* Workspace selector */
+    .ws-panel { background: #fff; border-radius: 8px; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 4px; }
+    .ws-panel select { border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: inherit; background: #fff; min-width: 130px; }
+    .ws-btn { width: 30px; height: 30px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; color: #374151; }
+    .ws-btn:hover { background: #f1f5f9; }
+
+    .upload-btn { background: #2563eb; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 5px; }
     .upload-btn:hover { background: #1d4ed8; }
 
-    /* Drop overlay */
-    .drop-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(37,99,235,0.15); z-index: 9999;
-      border: 3px dashed #2563eb;
-      align-items: center; justify-content: center;
-    }
+    /* Compare panel */
+    .compare-panel { background: #fff; border-radius: 8px; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 6px; }
+    .compare-panel label { font-size: 12px; font-weight: 600; color: #374151; white-space: nowrap; }
+    .compare-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+    .compare-chip { font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #374151; white-space: nowrap; transition: all 0.15s; }
+    .compare-chip:hover { border-color: #2563eb; color: #2563eb; }
+    .compare-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    .marker-label { background: rgba(30,41,59,0.88); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; text-align: center; pointer-events: none; font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    .pin-marker { background: none; border: none; }
+    .color-picker { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; }
+    .color-picker label { font-size: 13px; font-weight: 600; color: #374151; margin-right: 4px; }
+    .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
+    .color-dot:hover { opacity: 0.8; }
+    .color-dot.active { border-color: #1e293b; }
+
+    /* Modal shared */
+    .drop-overlay { display: none; position: fixed; inset: 0; background: rgba(37,99,235,0.15); z-index: 9999; border: 3px dashed #2563eb; align-items: center; justify-content: center; }
     .drop-overlay.active { display: flex; }
     .drop-overlay p { font-size: 24px; color: #2563eb; font-weight: 600; }
-
-    /* Modal */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5); z-index: 10000;
-      align-items: center; justify-content: center;
-    }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
     .modal-overlay.active { display: flex; }
-    .modal { background: #fff; border-radius: 12px; padding: 24px; width: 420px; max-width: 90vw; }
+    .modal { background: #fff; border-radius: 12px; padding: 24px; width: 480px; max-width: 90vw; max-height: 85vh; overflow-y: auto; }
     .modal h3 { margin-bottom: 16px; font-size: 18px; }
     .modal label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
-    .modal input[type="text"] {
-      width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
-      border-radius: 6px; font-size: 14px; margin-bottom: 12px;
-    }
+    .modal input[type="text"], .modal input[type="number"] { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; margin-bottom: 12px; font-family: inherit; }
     .modal input:focus { outline: none; border-color: #2563eb; }
     .modal .extracted-info { background: #f1f5f9; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
-    .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
     .modal .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; }
     .modal .btn-primary { background: #2563eb; color: #fff; }
     .modal .btn-primary:hover { background: #1d4ed8; }
     .modal .btn-secondary { background: #f1f5f9; color: #374151; }
+    .modal .btn-danger { background: #dc2626; color: #fff; }
+    .modal .btn-danger:hover { background: #b91c1c; }
     .loading { color: #64748b; font-size: 13px; padding: 8px 0; }
 
-    /* Comparison panel */
-    .compare-panel {
-      position: fixed; top: 12px; left: 220px; z-index: 1000;
-      background: #fff; border-radius: 8px; padding: 6px 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .compare-panel label {
-      font-size: 12px; font-weight: 600; color: #374151; white-space: nowrap;
-    }
-    .compare-chips { display: flex; gap: 4px; flex-wrap: wrap; }
-    .compare-chip {
-      font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer;
-      border: 1px solid #d1d5db; background: #fff; color: #374151;
-      white-space: nowrap; transition: all 0.15s;
-    }
-    .compare-chip:hover { border-color: #2563eb; color: #2563eb; }
-    .compare-chip.active { background: #2563eb; color: #fff; border-color: #2563eb; }
-
-    /* Info labels on markers */
-    .marker-label {
-      background: rgba(30,41,59,0.88); color: #fff;
-      font-size: 11px; padding: 2px 6px; border-radius: 4px;
-      white-space: nowrap; text-align: center;
-      pointer-events: none; font-weight: 500;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
-
-    /* Marker styling */
-    .pin-marker { background: none; border: none; }
-
-    /* Color picker */
-    .color-picker { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; }
-    .color-picker label { font-size: 13px; font-weight: 600; color: #374151; margin-right: 4px; }
-    .color-dot {
-      width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
-      border: 2px solid transparent; transition: border-color 0.15s;
-    }
-    .color-dot:hover { opacity: 0.8; }
-    .color-dot.active { border-color: #1e293b; }
+    /* Station editor table */
+    .station-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+    .station-table th { text-align: left; padding: 4px 6px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e5e7eb; }
+    .station-table td { padding: 3px 4px; }
+    .station-table input { width: 100%; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; font-family: inherit; }
+    .station-table input:focus { outline: none; border-color: #2563eb; }
+    .station-table .del-btn { width: 22px; height: 22px; border: none; background: none; color: #94a3b8; cursor: pointer; font-size: 14px; border-radius: 4px; }
+    .station-table .del-btn:hover { color: #dc2626; background: #fef2f2; }
   </style>
 </head>
 <body>
@@ -203,28 +123,32 @@
         <button onclick="closeSidebar()">&times;</button>
       </div>
       <div class="sidebar-content" id="sidebar-content">
-        <div class="placeholder">
-          <p>地図上のピンをクリックすると<br>物件情報が表示されます</p>
-        </div>
+        <div class="placeholder"><p>地図上のピンをクリックすると<br>物件情報が表示されます</p></div>
       </div>
     </div>
   </div>
 
-  <div class="compare-panel" id="compare-panel">
-    <label>条件比較</label>
-    <div class="compare-chips" id="compare-chips"></div>
-  </div>
-
-  <div class="upload-area">
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="ws-panel">
+      <select id="ws-select" onchange="switchWorkspace(this.value)"></select>
+      <button class="ws-btn" onclick="openWsModal('create')" title="新規作成">+</button>
+      <button class="ws-btn" onclick="openWsModal('settings')" title="設定">&#9881;</button>
+    </div>
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      PDFインポート
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      PDF
     </button>
     <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFileSelect(event)">
+    <div class="compare-panel" id="compare-panel">
+      <label>条件比較</label>
+      <div class="compare-chips" id="compare-chips"></div>
+    </div>
   </div>
 
   <div class="drop-overlay" id="drop-overlay"><p>PDFをドロップしてインポート</p></div>
 
+  <!-- Upload modal -->
   <div class="modal-overlay" id="upload-modal">
     <div class="modal">
       <h3>PDFインポート</h3>
@@ -241,84 +165,105 @@
     </div>
   </div>
 
+  <!-- Workspace modal -->
+  <div class="modal-overlay" id="ws-modal">
+    <div class="modal">
+      <h3 id="ws-modal-title">ワークスペース設定</h3>
+      <label>ワークスペース名</label>
+      <input type="text" id="ws-name" placeholder="例: 渋谷店用">
+      <label>登録駅</label>
+      <table class="station-table">
+        <thead><tr><th>駅名</th><th style="width:75px">緯度</th><th style="width:75px">経度</th><th style="width:50px">半径m</th><th style="width:28px"></th></tr></thead>
+        <tbody id="ws-stations"></tbody>
+      </table>
+      <button class="detail-add" onclick="addStationRow()">+ 駅を追加</button>
+      <div class="btn-row" id="ws-modal-btns"></div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // --- State ---
+    // === State ===
+    let workspacesData = { workspaces: [], activeWorkspace: null };
+    let activeWorkspaceId = null;
     let properties = [];
     let markers = {};
+    let stationLayers = [];
     let currentUploadFile = null;
     let memoTimer = null;
     let selectedPropId = null;
+    let activeCompareKey = null;
+    let infoLabels = [];
+    let wsModalMode = "create";
 
-    // --- Pin colors ---
-    const PIN_COLORS = {
-      blue:  { fill: "#2563eb", label: "青" },
-      red:   { fill: "#dc2626", label: "赤" },
-      green: { fill: "#16a34a", label: "緑" },
-    };
-
-    // Pre-build one icon per color (reused across all markers of same color)
+    // === Pin icons ===
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "青" }, red: { fill: "#dc2626", label: "赤" }, green: { fill: "#16a34a", label: "緑" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
-      pinIcons[key] = L.divIcon({
-        className: "pin-marker",
-        html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`,
-        iconSize: [28, 40],
-        iconAnchor: [14, 40],
-        popupAnchor: [0, -40],
-      });
+      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
     }
 
-    // --- Map init ---
-    const map = L.map("map", {
-      center: [35.6595, 139.7005],
-      zoom: 16,
-      zoomControl: true,
-      preferCanvas: true,
-    });
-    // CartoDB Voyager - Google Maps風の見た目（無料・APIキー不要）
+    // === Map ===
+    const map = L.map("map", { center: [35.6595, 139.7005], zoom: 16, zoomControl: true, preferCanvas: true });
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      maxZoom: 19,
-      subdomains: "abcd",
-      updateWhenIdle: true,
-      updateWhenZooming: false,
+      maxZoom: 19, subdomains: "abcd", updateWhenIdle: true, updateWhenZooming: false,
     }).addTo(map);
 
-    // --- 駅エリア（Apple Maps風 薄ピンク強調） ---
-    const STATIONS = [
-      { name: "渋谷駅",   lat: 35.6580, lon: 139.7016, r: 180 },
-      { name: "表参道駅", lat: 35.6654, lon: 139.7122, r: 120 },
-      { name: "明治神宮前駅", lat: 35.6699, lon: 139.7024, r: 100 },
-    ];
-    const stationStyle = {
-      color: "#e8a0b0",
-      fillColor: "#f8d0d8",
-      fillOpacity: 0.45,
-      weight: 1,
-    };
-    const stationLabelStyle = {
-      className: "station-label",
-      iconSize: null,
-      iconAnchor: [0, 0],
-    };
-    for (const st of STATIONS) {
-      L.circle([st.lat, st.lon], { radius: st.r, ...stationStyle, interactive: false }).addTo(map);
-      // Station name label
-      const label = L.divIcon({
-        ...stationLabelStyle,
-        html: `<span style="
-          font-size:11px; font-weight:600; color:#b04060;
-          white-space:nowrap; text-shadow:0 0 3px #fff, 0 0 3px #fff;
-          pointer-events:none;
-        ">${st.name}</span>`,
-      });
-      L.marker([st.lat, st.lon], { icon: label, interactive: false }).addTo(map);
+    // === Workspace ===
+    async function loadWorkspaces() {
+      const res = await fetch("/api/workspaces");
+      workspacesData = await res.json();
+      activeWorkspaceId = workspacesData.activeWorkspace;
+      const sel = document.getElementById("ws-select");
+      sel.innerHTML = "";
+      for (const ws of workspacesData.workspaces) {
+        const opt = document.createElement("option");
+        opt.value = ws.id; opt.textContent = ws.name;
+        if (ws.id === activeWorkspaceId) opt.selected = true;
+        sel.appendChild(opt);
+      }
     }
 
-    // --- Load & render ---
+    function getActiveWs() {
+      return workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
+    }
+
+    async function switchWorkspace(wsId) {
+      activeWorkspaceId = wsId;
+      await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
+      document.getElementById("ws-select").value = wsId;
+      const ws = getActiveWs();
+      if (ws) {
+        renderStations(ws.stations || []);
+        if (ws.center) map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14);
+      }
+      closeSidebar();
+      clearInfoLabels();
+      activeCompareKey = null;
+      await loadProperties();
+    }
+
+    // === Stations ===
+    const stationStyle = { color: "#e8a0b0", fillColor: "#f8d0d8", fillOpacity: 0.45, weight: 1 };
+
+    function renderStations(stations) {
+      stationLayers.forEach(l => map.removeLayer(l));
+      stationLayers = [];
+      for (const st of stations) {
+        const circle = L.circle([st.lat, st.lon], { radius: st.r || 120, ...stationStyle, interactive: false }).addTo(map);
+        const label = L.marker([st.lat, st.lon], {
+          icon: L.divIcon({ className: "", iconSize: null, iconAnchor: [0, 0],
+            html: `<span style="font-size:11px;font-weight:600;color:#b04060;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff;pointer-events:none;">${st.name}</span>` }),
+          interactive: false
+        }).addTo(map);
+        stationLayers.push(circle, label);
+      }
+    }
+
+    // === Properties ===
     async function loadProperties() {
-      const res = await fetch("/api/properties");
+      const res = await fetch(`/api/properties?ws=${activeWorkspaceId}`);
       properties = await res.json();
       renderMarkers();
     }
@@ -326,390 +271,241 @@
     function renderMarkers() {
       Object.values(markers).forEach(m => map.removeLayer(m));
       markers = {};
-
       for (const prop of properties) {
         if (prop.lat == null || prop.lon == null) continue;
-        const color = prop.color || "blue";
-        const icon = pinIcons[color] || pinIcons.blue;
-        const m = L.marker([prop.lat, prop.lon], { icon })
-          .addTo(map)
+        const icon = pinIcons[prop.color || "blue"] || pinIcons.blue;
+        const m = L.marker([prop.lat, prop.lon], { icon }).addTo(map)
           .bindTooltip(prop.name, { direction: "top", offset: [0, -40] });
         m.on("click", () => showProperty(prop));
         markers[prop.id] = m;
       }
-
       const vals = Object.values(markers);
-      if (vals.length > 1) {
-        map.fitBounds(L.featureGroup(vals).getBounds().pad(0.3), { maxZoom: 17 });
-      } else if (vals.length === 1) {
-        const p = properties.find(p => markers[p.id]);
-        if (p) map.setView([p.lat, p.lon], 16);
-      }
-      // Refresh compare chips & labels
-      if (typeof buildCompareChips === "function") {
-        buildCompareChips();
-        if (activeCompareKey) showInfoLabels(activeCompareKey);
-      }
+      if (vals.length > 1) map.fitBounds(L.featureGroup(vals).getBounds().pad(0.3), { maxZoom: 17 });
+      else if (vals.length === 1) { const p = properties[0]; if (p) map.setView([p.lat, p.lon], 16); }
+      buildCompareChips();
+      if (activeCompareKey) showInfoLabels(activeCompareKey);
     }
 
-    // --- Show property (lazy PDF load) ---
+    // === Show property ===
     function showProperty(prop) {
       selectedPropId = prop.id;
-      const sidebar = document.getElementById("sidebar");
-      const content = document.getElementById("sidebar-content");
-      sidebar.classList.remove("collapsed");
+      document.getElementById("sidebar").classList.remove("collapsed");
       document.getElementById("sidebar-title").textContent = prop.name;
+      const content = document.getElementById("sidebar-content");
 
       let detailRows = "";
       if (prop.details) {
         for (const [k, v] of Object.entries(prop.details)) {
-          detailRows += `<div class="detail-row">
-            <input class="detail-key" value="${esc(k)}" data-orig-key="${esc(k)}">
-            <input class="detail-val" value="${esc(v)}">
-            <button class="detail-del" title="削除">&times;</button>
-          </div>`;
+          detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
-
       const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
-
       const currentColor = prop.color || "blue";
-      let colorDotsHtml = "";
+      let colorDots = "";
       for (const [key, c] of Object.entries(PIN_COLORS)) {
-        const active = key === currentColor ? " active" : "";
-        colorDotsHtml += `<div class="color-dot${active}" data-color="${key}" style="background:${c.fill};" title="${c.label}"></div>`;
+        colorDots += `<div class="color-dot${key === currentColor ? " active" : ""}" data-color="${key}" style="background:${c.fill};" title="${c.label}"></div>`;
       }
 
-      content.innerHTML = `
-        <div class="prop-info">
-          <h3>${esc(prop.name)}</h3>
-          <div class="address">${esc(prop.address)}</div>
-          <div class="color-picker">
-            <label>ピン色</label>
-            ${colorDotsHtml}
-          </div>
-          <div class="details-section">
-            <div class="section-header">
-              <label>物件情報</label>
-              <span class="details-saved" id="details-saved">保存しました</span>
-            </div>
-            <div id="details-list">${detailRows}</div>
-            <button class="detail-add" id="detail-add-btn">+ 項目を追加</button>
-          </div>
-          <div class="memo-section">
-            <label>メモ</label>
-            <textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
-            <div class="memo-saved" id="memo-saved">保存しました</div>
-          </div>
-          <div class="pdf-section">
-            <a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a>
-            <div class="pdf-pages" id="pdf-pages"></div>
-          </div>
-        </div>
-      `;
+      content.innerHTML = `<div class="prop-info">
+        <h3>${esc(prop.name)}</h3><div class="address">${esc(prop.address)}</div>
+        <div class="color-picker"><label>ピン色</label>${colorDots}</div>
+        <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
+          <div id="details-list">${detailRows}</div><button class="detail-add" id="detail-add-btn">+ 項目を追加</button></div>
+        <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
+        <div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>
+      </div>`;
 
-      // Memo auto-save with debounce
-      const textarea = document.getElementById("memo-input");
-      textarea.addEventListener("input", () => {
+      // Memo
+      document.getElementById("memo-input").addEventListener("input", function() {
         clearTimeout(memoTimer);
-        memoTimer = setTimeout(() => saveMemo(prop.id, textarea.value), 800);
+        const val = this.value;
+        memoTimer = setTimeout(() => saveMemo(prop.id, val), 800);
       });
-
-      // Color picker
+      // Color
       content.querySelectorAll(".color-dot").forEach(dot => {
         dot.addEventListener("click", () => {
-          const color = dot.dataset.color;
-          prop.color = color;
-          // Update active state
-          content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active"));
-          dot.classList.add("active");
-          // Update marker icon
-          const marker = markers[prop.id];
-          if (marker) marker.setIcon(pinIcons[color] || pinIcons.blue);
-          // Save to server
-          fetch(`/api/properties/${prop.id}/color`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ color }),
-          });
+          const color = dot.dataset.color; prop.color = color;
+          content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active")); dot.classList.add("active");
+          if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
+          fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
         });
       });
-
-      // Details editing
+      // Details
       let detailsTimer = null;
-      function collectAndSaveDetails() {
+      function saveDetails() {
         clearTimeout(detailsTimer);
         detailsTimer = setTimeout(() => {
-          const newDetails = {};
-          document.querySelectorAll("#details-list .detail-row").forEach(row => {
-            const key = row.querySelector(".detail-key").value.trim();
-            const val = row.querySelector(".detail-val").value.trim();
-            if (key) newDetails[key] = val;
-          });
-          prop.details = newDetails;
-          fetch(`/api/properties/${prop.id}/details`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ details: newDetails }),
-          }).then(() => {
-            const el = document.getElementById("details-saved");
-            if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); }
-          });
+          const d = {}; document.querySelectorAll("#details-list .detail-row").forEach(r => { const k = r.querySelector(".detail-key").value.trim(), v = r.querySelector(".detail-val").value.trim(); if (k) d[k] = v; });
+          prop.details = d;
+          fetch(`/api/properties/${prop.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: d }) })
+            .then(() => { const el = document.getElementById("details-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } });
         }, 800);
       }
-
-      // Delegate input events on details list
-      document.getElementById("details-list").addEventListener("input", collectAndSaveDetails);
-
-      // Delete detail row
-      document.getElementById("details-list").addEventListener("click", e => {
-        if (e.target.classList.contains("detail-del")) {
-          e.target.closest(".detail-row").remove();
-          collectAndSaveDetails();
-        }
-      });
-
-      // Add detail row
+      document.getElementById("details-list").addEventListener("input", saveDetails);
+      document.getElementById("details-list").addEventListener("click", e => { if (e.target.classList.contains("detail-del")) { e.target.closest(".detail-row").remove(); saveDetails(); } });
       document.getElementById("detail-add-btn").addEventListener("click", () => {
-        const row = document.createElement("div");
-        row.className = "detail-row";
-        row.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
-        document.getElementById("details-list").appendChild(row);
-        row.querySelector(".detail-key").focus();
+        const r = document.createElement("div"); r.className = "detail-row";
+        r.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
+        document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
-
-      // Load PDF as images (works on all browsers/smartphones)
+      // PDF images
       const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
-      const pdfPagesEl = document.getElementById("pdf-pages");
-      pdfPagesEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
-
-      fetch(imgUrl + "?page=0").then(res => {
-        if (!res.ok) throw new Error("PDF load failed");
-        const totalPages = parseInt(res.headers.get("X-Total-Pages") || "1");
-        return res.blob().then(blob => ({ blob, totalPages }));
-      }).then(({ blob, totalPages }) => {
-        const url0 = URL.createObjectURL(blob);
-        let html = `<img src="${url0}" alt="Page 1">`;
-        // Load remaining pages
-        for (let i = 1; i < totalPages; i++) {
-          html += `<img src="${imgUrl}?page=${i}" alt="Page ${i+1}" loading="lazy">`;
-        }
-        pdfPagesEl.innerHTML = html;
-      }).catch(() => {
-        pdfPagesEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>';
-      });
-
-      // Recalculate map size after sidebar opens
+      const pdfEl = document.getElementById("pdf-pages");
+      pdfEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
+      fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
+        .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
+        .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
       requestAnimationFrame(() => map.invalidateSize());
     }
 
     async function saveMemo(propId, memo) {
-      const res = await fetch(`/api/properties/${propId}/memo`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memo }),
-      });
-      if (res.ok) {
-        const el = document.getElementById("memo-saved");
-        if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); }
-        const p = properties.find(x => x.id === propId);
-        if (p) p.memo = memo;
-      }
+      const res = await fetch(`/api/properties/${propId}/memo?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memo }) });
+      if (res.ok) { const el = document.getElementById("memo-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } const p = properties.find(x => x.id === propId); if (p) p.memo = memo; }
     }
 
     function closeSidebar() {
-      document.getElementById("sidebar").classList.add("collapsed");
-      selectedPropId = null;
-      // Remove PDF embed to free memory
-      const container = document.getElementById("pdf-container");
-      if (container) container.innerHTML = "";
+      document.getElementById("sidebar").classList.add("collapsed"); selectedPropId = null;
       setTimeout(() => map.invalidateSize(), 200);
     }
 
-    // --- File upload ---
-    function handleFileSelect(e) {
-      const files = e.target.files;
-      if (files.length > 0) uploadFile(files[0]);
-      e.target.value = "";
-    }
+    // === Upload ===
+    function handleFileSelect(e) { if (e.target.files.length > 0) uploadFile(e.target.files[0]); e.target.value = ""; }
 
     async function uploadFile(file) {
       currentUploadFile = file;
-      const modal = document.getElementById("upload-modal");
-      const status = document.getElementById("upload-status");
-      const extracted = document.getElementById("upload-extracted");
-
-      document.getElementById("upload-name").value = "";
-      document.getElementById("upload-address").value = "";
-      extracted.style.display = "none";
-      status.style.display = "block";
-      status.textContent = "PDFを解析中...";
-      status.style.color = "#64748b";
-      modal.classList.add("active");
-
-      const fd = new FormData();
-      fd.append("pdf", file);
-
+      const modal = document.getElementById("upload-modal"), status = document.getElementById("upload-status"), extracted = document.getElementById("upload-extracted");
+      document.getElementById("upload-name").value = ""; document.getElementById("upload-address").value = "";
+      extracted.style.display = "none"; status.style.display = "block"; status.textContent = "PDFを解析中..."; status.style.color = "#64748b"; modal.classList.add("active");
+      const fd = new FormData(); fd.append("pdf", file);
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-
-        if (data.status === "ok") {
-          status.style.display = "none";
-          modal.classList.remove("active");
-          properties.push(data.property);
-          renderMarkers();
-          showProperty(data.property);
-          return;
-        }
-
+        const res = await fetch(`/api/upload?ws=${activeWorkspaceId}`, { method: "POST", body: fd }); const data = await res.json();
+        if (data.status === "ok") { status.style.display = "none"; modal.classList.remove("active"); properties.push(data.property); renderMarkers(); showProperty(data.property); return; }
         status.style.display = "none";
-        if (data.extracted) {
-          document.getElementById("upload-name").value = data.extracted.name || "";
-          document.getElementById("upload-address").value = data.extracted.address || "";
-          if (data.extracted.details && Object.keys(data.extracted.details).length) {
-            extracted.style.display = "block";
-            extracted.innerHTML = Object.entries(data.extracted.details)
-              .map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`).join("<br>");
-          }
-        }
-        if (data.message) {
-          status.style.display = "block";
-          status.textContent = data.message;
-          status.style.color = "#dc2626";
-        }
-      } catch (err) {
-        status.style.display = "block";
-        status.textContent = "エラー: " + err.message;
-        status.style.color = "#dc2626";
-      }
+        if (data.extracted) { document.getElementById("upload-name").value = data.extracted.name || ""; document.getElementById("upload-address").value = data.extracted.address || "";
+          if (data.extracted.details && Object.keys(data.extracted.details).length) { extracted.style.display = "block"; extracted.innerHTML = Object.entries(data.extracted.details).map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`).join("<br>"); } }
+        if (data.message) { status.style.display = "block"; status.textContent = data.message; status.style.color = "#dc2626"; }
+      } catch (err) { status.style.display = "block"; status.textContent = "エラー: " + err.message; status.style.color = "#dc2626"; }
     }
 
     async function confirmUpload() {
-      const name = document.getElementById("upload-name").value.trim();
-      const address = document.getElementById("upload-address").value.trim();
-      const status = document.getElementById("upload-status");
-
-      if (!address) {
-        status.style.display = "block";
-        status.textContent = "住所を入力してください";
-        status.style.color = "#dc2626";
-        return;
-      }
-
-      status.style.display = "block";
-      status.textContent = "ジオコーディング中...";
-      status.style.color = "#64748b";
-
-      const fd = new FormData();
-      fd.append("pdf", currentUploadFile);
-      fd.append("address", address);
-
+      const name = document.getElementById("upload-name").value.trim(), address = document.getElementById("upload-address").value.trim(), status = document.getElementById("upload-status");
+      if (!address) { status.style.display = "block"; status.textContent = "住所を入力してください"; status.style.color = "#dc2626"; return; }
+      status.style.display = "block"; status.textContent = "ジオコーディング中..."; status.style.color = "#64748b";
+      const fd = new FormData(); fd.append("pdf", currentUploadFile); fd.append("address", address);
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (data.status === "ok") {
-          if (name && data.property) data.property.name = name;
-          closeUploadModal();
-          properties.push(data.property);
-          renderMarkers();
-          showProperty(data.property);
-        } else {
-          status.textContent = data.message || "登録に失敗しました";
-          status.style.color = "#dc2626";
-        }
-      } catch (err) {
-        status.textContent = "エラー: " + err.message;
-        status.style.color = "#dc2626";
+        const res = await fetch(`/api/upload?ws=${activeWorkspaceId}`, { method: "POST", body: fd }); const data = await res.json();
+        if (data.status === "ok") { if (name && data.property) data.property.name = name; closeUploadModal(); properties.push(data.property); renderMarkers(); showProperty(data.property); }
+        else { status.textContent = data.message || "登録に失敗しました"; status.style.color = "#dc2626"; }
+      } catch (err) { status.textContent = "エラー: " + err.message; status.style.color = "#dc2626"; }
+    }
+
+    function closeUploadModal() { document.getElementById("upload-modal").classList.remove("active"); currentUploadFile = null; }
+
+    // === Workspace modal ===
+    function openWsModal(mode) {
+      wsModalMode = mode;
+      const modal = document.getElementById("ws-modal");
+      const title = document.getElementById("ws-modal-title");
+      const nameInput = document.getElementById("ws-name");
+      const stBody = document.getElementById("ws-stations");
+      const btns = document.getElementById("ws-modal-btns");
+      stBody.innerHTML = "";
+
+      if (mode === "create") {
+        title.textContent = "新規ワークスペース";
+        nameInput.value = "";
+        btns.innerHTML = `<button class="btn btn-secondary" onclick="closeWsModal()">キャンセル</button><button class="btn btn-primary" onclick="createWorkspace()">作成</button>`;
+      } else {
+        title.textContent = "ワークスペース設定";
+        const ws = getActiveWs();
+        nameInput.value = ws ? ws.name : "";
+        if (ws && ws.stations) ws.stations.forEach(s => addStationRow(s));
+        btns.innerHTML = `<button class="btn btn-danger" onclick="deleteWorkspace()">削除</button><div style="flex:1"></div><button class="btn btn-secondary" onclick="closeWsModal()">キャンセル</button><button class="btn btn-primary" onclick="saveWsSettings()">保存</button>`;
       }
+      modal.classList.add("active");
     }
 
-    function closeUploadModal() {
-      document.getElementById("upload-modal").classList.remove("active");
-      currentUploadFile = null;
+    function closeWsModal() { document.getElementById("ws-modal").classList.remove("active"); }
+
+    function addStationRow(st) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><input type="text" value="${st ? esc(st.name) : ""}" placeholder="駅名"></td>
+        <td><input type="number" step="0.0001" value="${st ? st.lat : ""}" placeholder="35.xxx"></td>
+        <td><input type="number" step="0.0001" value="${st ? st.lon : ""}" placeholder="139.xxx"></td>
+        <td><input type="number" value="${st ? st.r || 120 : 120}" placeholder="120"></td>
+        <td><button class="del-btn" onclick="this.closest('tr').remove()">&times;</button></td>`;
+      document.getElementById("ws-stations").appendChild(tr);
     }
 
-    // --- Drag & drop ---
+    function collectStations() {
+      const stations = [];
+      document.querySelectorAll("#ws-stations tr").forEach(tr => {
+        const inputs = tr.querySelectorAll("input");
+        const name = inputs[0].value.trim(), lat = parseFloat(inputs[1].value), lon = parseFloat(inputs[2].value), r = parseInt(inputs[3].value) || 120;
+        if (name && !isNaN(lat) && !isNaN(lon)) stations.push({ name, lat, lon, r });
+      });
+      return stations;
+    }
+
+    async function createWorkspace() {
+      const name = document.getElementById("ws-name").value.trim();
+      if (!name) return;
+      const center = map.getCenter();
+      const res = await fetch("/api/workspaces", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, stations: collectStations(), center: { lat: center.lat, lon: center.lng }, zoom: map.getZoom() }) });
+      const data = await res.json();
+      if (data.status === "ok") { closeWsModal(); await loadWorkspaces(); await switchWorkspace(data.workspace.id); }
+    }
+
+    async function saveWsSettings() {
+      const ws = getActiveWs(); if (!ws) return;
+      const name = document.getElementById("ws-name").value.trim();
+      const center = map.getCenter();
+      await fetch(`/api/workspaces/${ws.id}`, { method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, stations: collectStations(), center: { lat: center.lat, lon: center.lng }, zoom: map.getZoom() }) });
+      ws.name = name; ws.stations = collectStations();
+      closeWsModal(); await loadWorkspaces(); renderStations(ws.stations);
+    }
+
+    async function deleteWorkspace() {
+      if (!confirm("このワークスペースを削除しますか？")) return;
+      const res = await fetch(`/api/workspaces/${activeWorkspaceId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.status === "ok") { closeWsModal(); await loadWorkspaces(); await switchWorkspace(data.activeWorkspace); }
+      else { alert(data.error); }
+    }
+
+    // === Drag & drop ===
     let dragCounter = 0;
     document.addEventListener("dragenter", e => { e.preventDefault(); dragCounter++; document.getElementById("drop-overlay").classList.add("active"); });
     document.addEventListener("dragleave", e => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; document.getElementById("drop-overlay").classList.remove("active"); }});
     document.addEventListener("dragover", e => e.preventDefault());
-    document.addEventListener("drop", e => {
-      e.preventDefault();
-      dragCounter = 0;
-      document.getElementById("drop-overlay").classList.remove("active");
-      const files = e.dataTransfer.files;
-      if (files.length > 0 && files[0].name.endsWith(".pdf")) uploadFile(files[0]);
-    });
+    document.addEventListener("drop", e => { e.preventDefault(); dragCounter = 0; document.getElementById("drop-overlay").classList.remove("active"); const f = e.dataTransfer.files; if (f.length > 0 && f[0].name.endsWith(".pdf")) uploadFile(f[0]); });
 
-    // --- Util ---
+    // === Compare ===
+    function buildCompareChips() {
+      const keys = new Set(); for (const p of properties) { if (p.details) Object.keys(p.details).forEach(k => keys.add(k)); }
+      const c = document.getElementById("compare-chips"); c.innerHTML = "";
+      for (const key of keys) { const chip = document.createElement("span"); chip.className = "compare-chip" + (key === activeCompareKey ? " active" : ""); chip.textContent = key; chip.addEventListener("click", () => toggleCompare(key)); c.appendChild(chip); }
+    }
+    function toggleCompare(key) { if (activeCompareKey === key) { activeCompareKey = null; clearInfoLabels(); } else { activeCompareKey = key; showInfoLabels(key); } document.querySelectorAll(".compare-chip").forEach(c => c.classList.toggle("active", c.textContent === activeCompareKey)); }
+    function clearInfoLabels() { infoLabels.forEach(m => map.removeLayer(m)); infoLabels = []; }
+    function showInfoLabels(key) { clearInfoLabels(); for (const p of properties) { if (!p.lat || !p.lon) continue; const v = p.details && p.details[key]; const l = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "", html: `<div class="marker-label">${esc(v || "—")}</div>`, iconSize: null, iconAnchor: [0, 38] }), interactive: false, zIndexOffset: 1000 }).addTo(map); infoLabels.push(l); } }
+
+    // === Util ===
     const _escDiv = document.createElement("div");
     function esc(s) { _escDiv.textContent = s; return _escDiv.innerHTML; }
 
-    // --- 条件比較 ---
-    let activeCompareKey = null;
-    let infoLabels = [];  // Leaflet markers for info labels
-
-    function buildCompareChips() {
-      // Collect all unique detail keys across properties
-      const keys = new Set();
-      for (const p of properties) {
-        if (p.details) Object.keys(p.details).forEach(k => keys.add(k));
-      }
-      const container = document.getElementById("compare-chips");
-      container.innerHTML = "";
-      for (const key of keys) {
-        const chip = document.createElement("span");
-        chip.className = "compare-chip" + (key === activeCompareKey ? " active" : "");
-        chip.textContent = key;
-        chip.addEventListener("click", () => toggleCompare(key));
-        container.appendChild(chip);
-      }
-    }
-
-    function toggleCompare(key) {
-      if (activeCompareKey === key) {
-        activeCompareKey = null;
-        clearInfoLabels();
-      } else {
-        activeCompareKey = key;
-        showInfoLabels(key);
-      }
-      // Update chip active states
-      document.querySelectorAll(".compare-chip").forEach(c => {
-        c.classList.toggle("active", c.textContent === activeCompareKey);
-      });
-    }
-
-    function clearInfoLabels() {
-      infoLabels.forEach(m => map.removeLayer(m));
-      infoLabels = [];
-    }
-
-    function showInfoLabels(key) {
-      clearInfoLabels();
-      for (const prop of properties) {
-        if (!prop.lat || !prop.lon) continue;
-        const val = prop.details && prop.details[key];
-        const text = val || "—";
-        const label = L.marker([prop.lat, prop.lon], {
-          icon: L.divIcon({
-            className: "",
-            html: `<div class="marker-label">${esc(text)}</div>`,
-            iconSize: null,
-            iconAnchor: [0, 38],  // position above pin
-          }),
-          interactive: false,
-          zIndexOffset: 1000,
-        }).addTo(map);
-        infoLabels.push(label);
-      }
-    }
-
-    // --- Init ---
-    requestAnimationFrame(() => {
+    // === Init ===
+    requestAnimationFrame(async () => {
       map.invalidateSize();
-      loadProperties().then(() => buildCompareChips());
+      await loadWorkspaces();
+      const ws = getActiveWs();
+      if (ws) {
+        renderStations(ws.stations || []);
+        if (ws.center) map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14);
+      }
+      await loadProperties();
     });
   </script>
 </body>
