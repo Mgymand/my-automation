@@ -29,6 +29,64 @@ SSL_CTX = ssl.create_default_context()
 SSL_CTX.check_hostname = False
 SSL_CTX.verify_mode = ssl.CERT_NONE
 
+# --- GitHub persistent storage ---
+
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "Mgymand/my-automation")
+GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "claude/frosty-swartz")
+GITHUB_DATA_PREFIX = "property-map/data/"
+
+
+def _github_api(method, path, data=None):
+    """Call GitHub API."""
+    if not GITHUB_TOKEN:
+        return None
+    url = f"https://api.github.com{path}"
+    body = json.dumps(data).encode("utf-8") if data else None
+    req = urllib.request.Request(url, data=body, method=method, headers={
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "PropertyMapApp/1.0",
+        "Content-Type": "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=15, context=SSL_CTX) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"GitHub API error ({method} {path}): {e}")
+        return None
+
+
+def sync_file_to_github(local_path):
+    """Upload a local file to GitHub repo (non-blocking)."""
+    if not GITHUB_TOKEN:
+        return
+    import threading, base64
+    def _sync():
+        try:
+            # Relative path within data dir
+            rel = os.path.relpath(local_path, DATA_DIR)
+            gh_path = GITHUB_DATA_PREFIX + rel
+            with open(local_path, "rb") as f:
+                content = base64.b64encode(f.read()).decode("ascii")
+            # Get current file SHA (needed for update)
+            api_path = f"/repos/{GITHUB_REPO}/contents/{gh_path}?ref={GITHUB_BRANCH}"
+            existing = _github_api("GET", api_path)
+            sha = existing.get("sha") if existing else None
+            # Create or update
+            payload = {
+                "message": f"Auto-sync: {rel}",
+                "content": content,
+                "branch": GITHUB_BRANCH,
+            }
+            if sha:
+                payload["sha"] = sha
+            _github_api("PUT", f"/repos/{GITHUB_REPO}/contents/{gh_path}", payload)
+        except Exception as e:
+            print(f"GitHub sync error: {e}")
+    threading.Thread(target=_sync, daemon=True).start()
+
+
 # --- Workspace helpers ---
 
 _ws_cache = None
@@ -60,6 +118,7 @@ def save_workspaces(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
     _ws_cache = data
     _ws_mtime = os.path.getmtime(WORKSPACES_FILE)
+    sync_file_to_github(WORKSPACES_FILE)
 
 
 def _migrate_to_workspaces():
@@ -130,6 +189,7 @@ def save_properties(props, ws_id=None):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(props, f, ensure_ascii=False, indent=2)
     _prop_cache[ws_id] = (os.path.getmtime(path), props)
+    sync_file_to_github(path)
 
 
 # --- Address / PDF helpers ---
@@ -578,6 +638,7 @@ def upload_pdf():
     filename = file.filename
     filepath = os.path.join(PDF_DIR, filename)
     file.save(filepath)
+    sync_file_to_github(filepath)  # PDFもGitHubに永続化
     info = extract_property_info(filepath)
     manual_address = request.form.get("address", "").strip()
     if manual_address:
