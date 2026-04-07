@@ -10,8 +10,13 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Render: use persistent disk at /data if available, else local ./data
-DATA_DIR = "/data" if os.path.isdir("/data") else os.path.join(BASE_DIR, "data")
+# Render: use /data disk if writable, else /tmp/property-data (Render free), else local ./data
+if os.path.isdir("/data") and os.access("/data", os.W_OK):
+    DATA_DIR = "/data"
+elif os.environ.get("RENDER"):
+    DATA_DIR = os.path.join("/tmp", "property-data")
+else:
+    DATA_DIR = os.path.join(BASE_DIR, "data")
 PDF_DIR = os.path.join(DATA_DIR, "pdfs")
 WORKSPACES_FILE = os.path.join(DATA_DIR, "workspaces.json")
 WORKSPACES_DIR = os.path.join(DATA_DIR, "workspaces")

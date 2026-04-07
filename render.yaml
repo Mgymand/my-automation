@@ -8,7 +8,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.12"
-    disk:
-      name: property-data
-      mountPath: /data
-      sizeGB: 1
+      - key: RENDER
+        value: "true"
