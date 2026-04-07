@@ -157,34 +157,284 @@ def geocode_address(address):
 
 
 def extract_property_info(pdf_path):
+    """PDFから物件情報を網羅的に抽出。必須項目: 賃料, 共益費, 面積, 築年数, 備考."""
     import fitz
+    import unicodedata
+    from datetime import datetime
+
     doc = fitz.open(pdf_path)
-    text = doc[0].get_text()
+    raw_text = doc[0].get_text()
     doc.close()
-    info = {"name": "", "address": "", "details": {}}
+    # Normalize fullwidth chars
+    text = unicodedata.normalize("NFKC", raw_text)
     lines = [l.strip() for l in text.split("\n") if l.strip()]
-    if lines:
-        info["name"] = lines[0]
+
+    info = {"name": "", "address": "", "details": {}}
+    details = info["details"]
+    remarks = []  # 備考に集約する情報
+
+    # --- 物件名 (タイトル) ---
+    # GT-works: first line is building name
+    # Infosheet: building name is in 建物名 field
+    m_bldg = re.search(r"建物名\s*\n?\s*(.+)", text)
+    if m_bldg:
+        info["name"] = m_bldg.group(1).strip()
+    elif lines:
+        # Skip non-name first lines (e.g. "専有面積")
+        for l in lines[:5]:
+            if not re.match(r"^(専有面積|築年月|引渡|貸店舗|貸事務所|\d)", l):
+                info["name"] = l
+                break
+
+    # --- 住所 ---
     addr_match = re.search(r"所在地\s*[:：]\s*(.+)", text)
     if addr_match:
         info["address"] = addr_match.group(1).strip()
     else:
-        addr_match = re.search(r"(東京都[^\n]+)", text)
-        if addr_match:
-            info["address"] = addr_match.group(1).strip()
-    for pattern, key in [
-        (r"賃料\s*(\S+)", "賃料"), (r"([\d.]+)\s*坪", "面積"),
-        (r"構造\s*[:：]\s*(\S+)", "構造"), (r"竣工\s*[:：]\s*(\S+)", "竣工"),
-    ]:
-        m = re.search(pattern, text)
+        for pat in [r"(東京都[^\n]+)", r"(神奈川県[^\n]+)", r"(埼玉県[^\n]+)",
+                    r"(千葉県[^\n]+)", r"(大阪府[^\n]+)", r"(福岡県[^\n]+)"]:
+            m = re.search(pat, text)
+            if m:
+                addr = m.group(1).strip()
+                # Filter out license addresses
+                if "知事免許" not in addr and "〒" not in addr:
+                    info["address"] = addr
+                    break
+
+    # --- Detect format: GT-works vs infosheet ---
+    is_gtworks = "【物件概要】" in text
+
+    if is_gtworks:
+        _extract_gtworks(text, lines, details, remarks)
+    else:
+        _extract_infosheet(text, lines, details, remarks)
+
+    # --- 共通: 交通 ---
+    station_parts = re.findall(
+        r"((?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武)[^\n]+)\n([^\n]+)\n(\d+分)",
+        raw_text
+    )
+    if station_parts:
+        details["交通"] = "; ".join(f"{l} {s} {t}" for l, s, t in station_parts[:4])
+    else:
+        # infosheet format: 東京メトロ丸ノ内線 新宿三丁目 徒歩1分
+        m = re.search(r"((?:JR|東京メトロ|東急|京王|都営)\S+\s+\S+\s+徒歩\d+分)", text)
         if m:
-            val = m.group(1)
-            if key == "面積": val += " 坪"
-            info["details"][key] = val
-    station_matches = re.findall(r"((?:JR|東京メトロ|東急)[^\n]+\n\S+\n\d+分)", text)
-    if station_matches:
-        info["details"]["交通"] = "; ".join(" ".join(m.split()) for m in station_matches[:3])
+            details["交通"] = m.group(1)
+
+    # --- 備考 ---
+    if remarks:
+        details["備考"] = " / ".join(remarks)
+
+    # --- 必須項目のデフォルト ---
+    for key in ["賃料", "共益費", "面積", "築年数", "敷金/保証金", "礼金"]:
+        if key not in details:
+            details[key] = "-"
+
     return info
+
+
+def _extract_gtworks(text, lines, details, remarks):
+    """GT-works形式のPDF抽出."""
+    from datetime import datetime
+
+    # 賃料 (坪単価含む)
+    rent_matches = re.findall(r"([\d,]+)\s*円\s*\n?\s*\(坪単価[:：]?([\d,]+)\s*円\)", text)
+    if rent_matches:
+        rents = [f"{r[0]}円 (@{r[1]}円)" for r in rent_matches]
+        details["賃料"] = " / ".join(rents)
+    else:
+        m = re.search(r"賃料\s*\n?\s*([\d,]+)\s*円", text)
+        if m:
+            details["賃料"] = m.group(1) + "円"
+        elif "無し" in text and re.search(r"賃料\s*\n", text):
+            details["賃料"] = "非公開"
+
+    # 共益費
+    m = re.search(r"共益費\s*\n?\s*([\d,]+)\s*円", text)
+    if m:
+        details["共益費"] = m.group(1) + "円"
+    elif re.search(r"共益費\s*\n?\s*込\b", text) or re.search(r"\n込\n", text):
+        details["共益費"] = "賃料込み"
+    elif re.search(r"共益費\s*\n?\s*無し", text) or re.search(r"共益費\s*\n?\s*なし", text):
+        details["共益費"] = "なし"
+
+    # 面積 (複数階対応)
+    area_matches = re.findall(r"(\d+(?:\.\d+)?)\s*坪\s*\n?\s*\(([\d.]+)\s*m", text)
+    if area_matches:
+        areas = [f"{a[0]}坪 ({a[1]}m²)" for a in area_matches]
+        details["面積"] = " / ".join(areas)
+
+    # 竣工 → 築年数
+    m = re.search(r"竣工\s*[:：]\s*(\d{4})[/年](\d{1,2})", text)
+    if m:
+        year, month = int(m.group(1)), int(m.group(2))
+        age = datetime.now().year - year
+        details["築年数"] = f"{age}年 ({year}/{month:02d})"
+
+    # 構造・規模
+    m = re.search(r"構造\s*[:：]\s*(\S+)", text)
+    if m:
+        structure = m.group(1)
+        m2 = re.search(r"規模\s*[:：]\s*(\S+)", text)
+        if m2:
+            structure += f" {m2.group(1)}"
+        details["構造"] = structure
+
+    # 階数
+    floor_matches = re.findall(r"^\s*(\d+)\s*$", text, re.MULTILINE)
+    #階数は面積の前に出る数字
+    m = re.search(r"入居日\n([\s\S]+?)所在地", text)
+    if m:
+        block = m.group(1)
+        floors = re.findall(r"^(\d+)\n", block, re.MULTILINE)
+        if floors:
+            details["階数"] = "F / ".join(floors) + "F"
+
+    # 預託金
+    dep_matches = re.findall(r"(\d+ヶ月)", text)
+    if dep_matches:
+        # First occurrence before 賃料 line is usually 預託金
+        details["預託金"] = dep_matches[0]
+
+    # 契約期間
+    contracts = re.findall(r"(定期借家[^\n]*|\d+年)", text)
+    if contracts:
+        details["契約"] = contracts[0].strip()
+
+    # 入居日 (即, 相談, 2026/xx, xxxx/xx/xx)
+    entry_matches = re.findall(r"(即|相談|\d{4}/\d{1,2}(?:/\d{1,2})?(?:以降|予定)?)", text)
+    if entry_matches:
+        details["入居日"] = entry_matches[-1]
+
+    # EV, 警備, 空調, トイレ, 使用時間
+    for label, key in [("EV", "EV"), ("警備", "警備"), ("空調", "空調"),
+                       ("トイレ", "トイレ"), ("使用時間", "使用時間")]:
+        m = re.search(rf"{label}\s*[:：]\s*(.+)", text)
+        if m:
+            remarks.append(f"{key}: {m.group(1).strip()}")
+
+    # 床仕様
+    bed_matches = re.findall(r"(OAフロアー|タイルカーペット|フリーアクセス|Pタイル)", text)
+    if bed_matches:
+        remarks.append(f"床: {bed_matches[0]}")
+
+    # ネット/グロス
+    ng = re.findall(r"(ネット面積|グロス面積)", text)
+    if ng:
+        remarks.append(ng[0])
+
+    # 更新料・償却
+    m = re.search(r"更新料\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "償却費"):
+        remarks.append(f"更新料: {m.group(1)}")
+    m = re.search(r"償却費?\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "礼金"):
+        remarks.append(f"償却: {m.group(1)}")
+
+    # 礼金 → details
+    m = re.search(r"礼金\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "契約期間"):
+        details["礼金"] = m.group(1)
+    else:
+        details["礼金"] = "なし"
+
+    # 敷金/保証金 → details (預託金を使う)
+    if "預託金" in details:
+        details["敷金/保証金"] = details.pop("預託金")
+
+
+def _extract_infosheet(text, lines, details, remarks):
+    """infosheet形式のPDF抽出."""
+    from datetime import datetime
+
+    # 賃料
+    m = re.search(r"賃料\s*([\d,.]+万?円)", text)
+    if m:
+        details["賃料"] = m.group(1)
+
+    # 共益費 / 管理費
+    m = re.search(r"共益費([\d,]+円/月|なし)", text)
+    if m:
+        details["共益費"] = m.group(1)
+    else:
+        m = re.search(r"管理費等\s*\n?\s*([\d,]+円/月|なし)", text)
+        if m:
+            details["共益費"] = m.group(1)
+        else:
+            m = re.search(r"([\d,]+)円/月\s*共益費", text)
+            if m:
+                details["共益費"] = m.group(1) + "円/月"
+
+    # 面積
+    m = re.search(r"面\s*積\s*\n?\s*([\d.]+)\s*m|面積\s*\n?\s*([\d.]+)m|([\d.]+)\s*m²|([\d.]+)\s*㎡", text)
+    if m:
+        sqm = next(g for g in m.groups() if g)
+        tsubo = round(float(sqm) / 3.30579, 2)
+        details["面積"] = f"{tsubo}坪 ({sqm}m²)"
+    else:
+        m = re.search(r"([\d.]+)\s*坪", text)
+        if m:
+            details["面積"] = m.group(1) + "坪"
+
+    # 築年月 → 築年数
+    m = re.search(r"築\s*年\s*月?\s*\n?\s*(\d{4})年(\d{1,2})月", text)
+    if m:
+        year, month = int(m.group(1)), int(m.group(2))
+        age = datetime.now().year - year
+        details["築年数"] = f"{age}年 ({year}/{month:02d})"
+
+    # 構造
+    m = re.search(r"構造[・･]?規模\s*\n?\s*(\S+\s+\S+)", text)
+    if m:
+        details["構造"] = m.group(1).strip()
+
+    # 敷金・保証金 → details
+    dep_parts = []
+    for label in ["敷金", "保証金"]:
+        m = re.search(rf"{label}\s+([\d.]+ヶ月|なし|[\d,]+万?円)", text)
+        if m and m.group(1) != "なし":
+            dep_parts.append(f"{label}{m.group(1)}")
+    if dep_parts:
+        details["敷金/保証金"] = " / ".join(dep_parts)
+
+    # 礼金 → details
+    m = re.search(r"礼金\s+([\d.]+ヶ月|なし|[\d,]+万?円)", text)
+    if m and m.group(1) != "なし":
+        details["礼金"] = m.group(1)
+    else:
+        details["礼金"] = "なし"
+
+    # 契約期間
+    m = re.search(r"契約期間\s*\n?\s*(\d+年|定期借家)", text)
+    if m:
+        details["契約"] = m.group(1)
+
+    # 引渡時期
+    m = re.search(r"引渡可能\s*\n?\s*時\s*期\s*\n?\s*(\S+)", text)
+    if m:
+        details["入居日"] = m.group(1)
+
+    # 設備
+    m = re.search(r"設\s*備\s*\n?\s*(.+?)(?:\n備\s*考|\n$)", text, re.DOTALL)
+    if m:
+        equip = m.group(1).strip().replace("\n", ", ")
+        if equip and equip != "-":
+            remarks.append(f"設備: {equip}")
+
+    # 備考テキスト
+    m = re.search(r"備\s*考\s*\n(.+?)(?:\nこの図面|\ninfosheet)", text, re.DOTALL)
+    if m:
+        biko = " ".join(m.group(1).split())
+        if len(biko) > 200:
+            biko = biko[:200] + "..."
+        remarks.append(biko)
+
+    # チェックポイント
+    m = re.search(r"チェックポイント！\s*\n(.+?)(?:\n物)", text, re.DOTALL)
+    if m:
+        cp = m.group(1).strip().replace("\n", ", ")
+        remarks.append(f"特徴: {cp}")
 
 
 # ===================== Routes =====================
