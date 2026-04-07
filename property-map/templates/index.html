@@ -244,7 +244,13 @@
       const ws = getActiveWs();
       if (ws) {
         renderStations(ws.stations || []);
-        if (ws.center) map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14);
+        // 駅が登録されている場合は全駅が見える範囲にフィット
+        if (ws.stations && ws.stations.length > 0) {
+          const pts = ws.stations.map(s => [s.lat, s.lon]);
+          map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16, animate: true });
+        } else if (ws.center) {
+          map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14, { animate: true });
+        }
       }
       closeSidebar();
       clearInfoLabels();
@@ -542,7 +548,12 @@
       const ws = getActiveWs();
       if (ws) {
         renderStations(ws.stations || []);
-        if (ws.center) map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14);
+        if (ws.stations && ws.stations.length > 0) {
+          const pts = ws.stations.map(s => [s.lat, s.lon]);
+          map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16 });
+        } else if (ws.center) {
+          map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14);
+        }
       }
       await loadProperties();
     });
