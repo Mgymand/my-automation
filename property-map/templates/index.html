@@ -1374,13 +1374,14 @@
       const container = document.getElementById("agent-props-container");
       if (!props.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">担当エリア内に物件がありません</p>'; return; }
       container.innerHTML = `<table class="agent-props-table">
-        <thead><tr><th>物件名</th><th>エリア</th><th>住所</th><th>賃料</th><th>面積</th></tr></thead>
+        <thead><tr><th>物件名</th><th>エリア</th><th>住所</th><th>賃料</th><th>面積</th><th>メモ</th></tr></thead>
         <tbody>${props.map(p => `<tr>
           <td>${esc(p.name)}</td>
           <td>${esc(p._wsName || "")}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.address)}</td>
           <td>${esc((p.details && p.details["賃料"]) || "-")}</td>
           <td>${esc((p.details && p.details["面積"]) || "-")}</td>
+          <td style="max-width:250px;white-space:pre-wrap;font-size:12px;color:#64748b;">${esc(p.memo || "-")}</td>
         </tr>`).join("")}</tbody>
       </table>`;
     }
