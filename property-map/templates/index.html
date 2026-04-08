@@ -308,6 +308,13 @@
     .criteria-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .criteria-value { font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 1px; }
     .criteria-value.empty { color: #94a3b8; font-weight: 400; font-style: italic; }
+    .criteria-bar { padding: 8px 16px; background: #f0fdfa; border-bottom: 1px solid #99f6e4; font-size: 12px; flex-shrink: 0; display: none; }
+    .criteria-bar.show { display: block; }
+    .criteria-bar-title { font-weight: 600; color: #0891b2; margin-bottom: 4px; font-size: 11px; }
+    .criteria-bar-items { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .criteria-bar-item { color: #374151; }
+    .criteria-bar-item span { font-weight: 600; }
+    .list-criteria-section.show { display: block !important; }
 
     /* Dancing cat - BPM 140 = 0.429s per beat */
     @keyframes catBounce {
@@ -378,6 +385,7 @@
         <span id="sidebar-agent" style="font-size:12px;opacity:0.85;margin-left:auto;margin-right:8px;white-space:nowrap;"></span>
         <button onclick="closeSidebar()">&times;</button>
       </div>
+      <div class="criteria-bar" id="criteria-bar"></div>
       <div class="sidebar-content" id="sidebar-content">
         <div class="placeholder"><p>地図上のピンをクリックすると<br>物件情報が表示されます</p></div>
       </div>
@@ -764,6 +772,14 @@
       document.getElementById("sidebar-title").textContent = prop.name;
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
+      // Show criteria bar
+      const ws = getActiveWs();
+      const criteriaBar = document.getElementById("criteria-bar");
+      const c = ws && ws.criteria ? ws.criteria : {};
+      if (c.maxRent || c.minArea || c.walkMinutes || c.other) {
+        criteriaBar.className = "criteria-bar show";
+        criteriaBar.innerHTML = `<div class="criteria-bar-title">選定基準 - ${esc(ws.name)}</div><div class="criteria-bar-items">${c.maxRent ? `<div class="criteria-bar-item">賃料上限: <span>${esc(c.maxRent)}</span></div>` : ""}${c.minArea ? `<div class="criteria-bar-item">面積: <span>${esc(c.minArea)}</span></div>` : ""}${c.walkMinutes ? `<div class="criteria-bar-item">駅徒歩: <span>${esc(c.walkMinutes)}</span></div>` : ""}${c.other ? `<div class="criteria-bar-item">他: <span>${esc(c.other)}</span></div>` : ""}</div>`;
+      } else { criteriaBar.className = "criteria-bar"; }
       // Show agent name for this workspace
       const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
       const agentEl = document.getElementById("sidebar-agent");
@@ -1187,18 +1203,22 @@
           showProperty(prop);
           const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
           const agentNames = assignedAgents.map(a => a.name).join(", ");
+          const wsObj = getActiveWs();
+          const cr = wsObj && wsObj.criteria ? wsObj.criteria : {};
+          const hasCriteria = cr.maxRent || cr.minArea || cr.walkMinutes || cr.other;
           memoRow.innerHTML = `<td colspan="${colSpan}"><div class="list-memo-panel">
             <div class="memo-info" style="min-width:auto;">
               <select class="memo-status-select" data-propid="${prop.id}">
                 ${Object.entries(PIN_COLORS).map(([k,v]) => `<option value="${k}"${k===(prop.color||"blue")?" selected":""}>${v.label}</option>`).join("")}
               </select>
               <button class="view-detail-btn" onclick="setView('map');showProperty(properties.find(p=>p.id==='${prop.id}'))">地図で詳細を見る</button>
+              ${hasCriteria ? `<button class="view-detail-btn" onclick="event.stopPropagation();this.closest('.list-memo-panel').querySelector('.list-criteria-section').classList.toggle('show')">選定基準</button>` : ""}
             </div>
             <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
               <textarea class="list-memo-input" data-propid="${prop.id}" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
               <span class="memo-saved-msg" id="list-memo-saved-${prop.id}">保存しました</span>
             </div>
-          </div></td>`;
+          </div>${hasCriteria ? `<div class="list-criteria-section" style="display:none;padding:8px 16px;background:#f0fdfa;border-top:1px solid #99f6e4;font-size:12px;"><div class="criteria-bar-items">${cr.maxRent ? `<div class="criteria-bar-item">賃料上限: <span style="font-weight:600">${esc(cr.maxRent)}</span></div>` : ""}${cr.minArea ? `<div class="criteria-bar-item">面積: <span style="font-weight:600">${esc(cr.minArea)}</span></div>` : ""}${cr.walkMinutes ? `<div class="criteria-bar-item">駅徒歩: <span style="font-weight:600">${esc(cr.walkMinutes)}</span></div>` : ""}${cr.other ? `<div class="criteria-bar-item">他: <span style="font-weight:600">${esc(cr.other)}</span></div>` : ""}</div></div>` : ""}</td>`;
           tr.after(memoRow);
           // Memo auto-save
           const textarea = memoRow.querySelector(".list-memo-input");
