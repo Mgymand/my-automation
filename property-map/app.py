@@ -938,6 +938,7 @@ def create_agent():
         "email": email,
         "phone": data.get("phone", "").strip(),
         "area": data.get("area", ""),
+        "managerArea": data.get("managerArea", ""),
         "memo": data.get("memo", "").strip(),
     }
     agents.append(agent)
@@ -951,7 +952,7 @@ def update_agent(agent_id):
     agents = load_agents()
     for a in agents:
         if a["id"] == agent_id:
-            for key in ["name", "email", "phone", "area", "memo"]:
+            for key in ["name", "email", "phone", "area", "managerArea", "memo"]:
                 if key in data:
                     a[key] = data[key].strip() if isinstance(data[key], str) else data[key]
             save_agents(agents)
@@ -973,7 +974,13 @@ def get_agent_properties(agent_id):
     if not agent:
         return jsonify({"error": "not found"}), 404
     area = agent.get("area", "")
-    ws_ids = [x.strip() for x in area.split(",") if x.strip()] if area else []
+    manager_area = agent.get("managerArea", "")
+    combined = set()
+    if area:
+        combined.update(x.strip() for x in area.split(",") if x.strip())
+    if manager_area:
+        combined.update(x.strip() for x in manager_area.split(",") if x.strip())
+    ws_ids = list(combined)
     all_props = []
     for ws_id in ws_ids:
         props = load_properties(ws_id)

@@ -1402,8 +1402,15 @@
       const ws = getActiveWs();
       if (!ws) { panel.style.display = "none"; return; }
       const c = ws.criteria || {};
+      // Find managers and staff for this workspace
+      const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
+      const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
       panel.style.display = "block";
       panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
+        <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
+          <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
+          <div><span style="color:#7c3aed;font-weight:600;">担当者:</span> ${staff.length ? staff.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
+        </div>
         <div class="criteria-float-grid">
           <div class="criteria-float-field"><label>賃料上限</label><input type="text" value="${esc(c.maxRent || "")}" data-key="maxRent" placeholder="未設定"></div>
           <div class="criteria-float-field"><label>面積/ブース</label><input type="text" value="${esc(c.minArea || "")}" data-key="minArea" placeholder="未設定"></div>
@@ -1465,6 +1472,7 @@
     let agentsData = [];
     let selectedAgentId = null;
     let agentFormAreaIds = [];
+    let agentFormManagerAreaIds = [];
 
     async function loadAgents() {
       const res = await fetch("/api/agents");
@@ -1553,6 +1561,7 @@
       selectedAgentId = agent ? agent.id : null;
       renderAgentLeftPanel();
       agentFormAreaIds = agent && agent.area ? agent.area.split(",").filter(x => x.trim()) : [];
+      agentFormManagerAreaIds = agent && agent.managerArea ? agent.managerArea.split(",").filter(x => x.trim()) : [];
       const right = document.getElementById("agent-right");
       right.innerHTML = `<div style="max-width:600px;">
         <h3 style="font-size:18px;margin-bottom:16px;">${agent ? "エージェント編集" : "新規エージェント登録"}</h3>
@@ -1563,7 +1572,9 @@
         <input type="text" id="agent-email" value="${agent ? esc(agent.email) : ""}" placeholder="例: tanaka@example.com">
         <label>電話番号</label>
         <input type="text" id="agent-phone" value="${agent ? esc(agent.phone || "") : ""}" placeholder="例: 03-1234-5678">
-        <label>担当エリア（クリックで選択）</label>
+        <label style="color:#0891b2;font-weight:600;">統括エリア（責任者として表示）</label>
+        <div class="area-chips" id="manager-area-chips"></div>
+        <label style="margin-top:8px;">担当エリア（担当者として表示）</label>
         <div class="area-chips" id="area-chips"></div>
         <label style="margin-top:12px;">備考</label>
         <input type="text" id="agent-memo" value="${agent ? esc(agent.memo || "") : ""}" placeholder="メモ">
@@ -1574,6 +1585,7 @@
         </div>
       </div>`;
       renderAreaChips();
+      renderManagerAreaChips();
     }
 
     function renderAreaChips() {
@@ -1592,6 +1604,22 @@
       renderAreaChips();
     }
 
+    function renderManagerAreaChips() {
+      const container = document.getElementById("manager-area-chips");
+      if (!container) return;
+      container.innerHTML = workspacesData.workspaces.map(ws => {
+        const active = agentFormManagerAreaIds.includes(ws.id);
+        return `<span class="area-chip${active ? " active" : ""}" style="${active ? "background:#0891b2;border-color:#0891b2;" : ""}" data-wsid="${ws.id}" onclick="toggleManagerAreaChip('${ws.id}')">${esc(ws.name)}</span>`;
+      }).join("");
+    }
+
+    function toggleManagerAreaChip(wsId) {
+      const idx = agentFormManagerAreaIds.indexOf(wsId);
+      if (idx >= 0) agentFormManagerAreaIds.splice(idx, 1);
+      else agentFormManagerAreaIds.push(wsId);
+      renderManagerAreaChips();
+    }
+
     async function saveAgent() {
       const editId = document.getElementById("agent-edit-id").value;
       const data = {
@@ -1599,6 +1627,7 @@
         email: document.getElementById("agent-email").value.trim(),
         phone: document.getElementById("agent-phone").value.trim(),
         area: agentFormAreaIds.join(","),
+        managerArea: agentFormManagerAreaIds.join(","),
         memo: document.getElementById("agent-memo").value.trim(),
       };
       const status = document.getElementById("agent-status");
