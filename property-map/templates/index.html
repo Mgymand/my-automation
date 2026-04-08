@@ -1158,14 +1158,30 @@
     }
 
     // === Compare ===
+    // Compare chips - fixed order with 物件名 first
+    const COMPARE_KEYS_ORDER = ["物件名", "賃料", "共益費", "面積", "築年数", "敷金/保証金", "礼金", "交通", "管理会社", "TEL"];
     function buildCompareChips() {
-      const keys = new Set(); for (const p of properties) { if (p.details) Object.keys(p.details).forEach(k => keys.add(k)); }
+      const allKeys = new Set(); for (const p of properties) { if (p.details) Object.keys(p.details).forEach(k => allKeys.add(k)); }
+      // Ordered: fixed keys first, then remaining
+      const ordered = [];
+      for (const k of COMPARE_KEYS_ORDER) { ordered.push(k); allKeys.delete(k); }
+      for (const k of allKeys) { if (k !== "備考" && k !== "FAX") ordered.push(k); }
       const c = document.getElementById("compare-chips"); c.innerHTML = "";
-      for (const key of keys) { const chip = document.createElement("span"); chip.className = "compare-chip" + (key === activeCompareKey ? " active" : ""); chip.textContent = key; chip.addEventListener("click", () => toggleCompare(key)); c.appendChild(chip); }
+      for (const key of ordered) { const chip = document.createElement("span"); chip.className = "compare-chip" + (key === activeCompareKey ? " active" : ""); chip.textContent = key; chip.addEventListener("click", () => toggleCompare(key)); c.appendChild(chip); }
     }
     function toggleCompare(key) { if (activeCompareKey === key) { activeCompareKey = null; clearInfoLabels(); } else { activeCompareKey = key; showInfoLabels(key); } document.querySelectorAll(".compare-chip").forEach(c => c.classList.toggle("active", c.textContent === activeCompareKey)); }
     function clearInfoLabels() { infoLabels.forEach(m => map.removeLayer(m)); infoLabels = []; }
-    function showInfoLabels(key) { clearInfoLabels(); for (const p of properties) { if (!p.lat || !p.lon) continue; const v = p.details && p.details[key]; const l = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "", html: `<div class="marker-label">${esc(v || "—")}</div>`, iconSize: null, iconAnchor: [0, 38] }), interactive: false, zIndexOffset: 1000 }).addTo(map); infoLabels.push(l); } }
+    function showInfoLabels(key) {
+      clearInfoLabels();
+      for (const p of properties) {
+        if (!p.lat || !p.lon) continue;
+        let v;
+        if (key === "物件名") v = p.name;
+        else v = p.details && p.details[key];
+        const l = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: "", html: `<div class="marker-label">${esc(v || "—")}</div>`, iconSize: null, iconAnchor: [0, 38] }), interactive: false, zIndexOffset: 1000 }).addTo(map);
+        infoLabels.push(l);
+      }
+    }
 
     // === Map controls ===
     function toggleControls() {
