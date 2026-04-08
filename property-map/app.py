@@ -121,6 +121,7 @@ def save_workspaces(data):
     _ws_cache = data
     _ws_mtime = os.path.getmtime(WORKSPACES_FILE)
     sync_file_to_github(WORKSPACES_FILE)
+    bump_change()
 
 
 def _migrate_to_workspaces():
@@ -192,6 +193,7 @@ def save_properties(props, ws_id=None):
         json.dump(props, f, ensure_ascii=False, indent=2)
     _prop_cache[ws_id] = (os.path.getmtime(path), props)
     sync_file_to_github(path)
+    bump_change()
 
 
 # --- Address / PDF helpers ---
@@ -556,6 +558,21 @@ def _extract_infosheet(text, lines, details, remarks):
 
 # ===================== Routes =====================
 
+# --- Sync / polling ---
+_last_change_ts = time.time()
+
+
+def bump_change():
+    global _last_change_ts
+    _last_change_ts = time.time()
+
+
+@app.route("/api/sync")
+def get_sync():
+    """Return current change timestamp for polling."""
+    return jsonify({"ts": _last_change_ts})
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -858,6 +875,7 @@ def save_agents(agents):
     _agents_cache = agents
     _agents_mtime = os.path.getmtime(AGENTS_FILE)
     sync_file_to_github(AGENTS_FILE)
+    bump_change()
 
 
 @app.route("/api/agents")
@@ -952,6 +970,7 @@ def save_schedules(schedules):
     _schedules_cache = schedules
     _schedules_mtime = os.path.getmtime(SCHEDULES_FILE)
     sync_file_to_github(SCHEDULES_FILE)
+    bump_change()
 
 
 @app.route("/api/schedules")

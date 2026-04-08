@@ -1665,6 +1665,24 @@
       if (e.target.closest("#schedule-modal")) updateGcalLink();
     });
 
+    // === Real-time sync (polling) ===
+    let _lastSyncTs = 0;
+    async function pollSync() {
+      try {
+        const res = await fetch("/api/sync");
+        const data = await res.json();
+        if (_lastSyncTs > 0 && data.ts > _lastSyncTs) {
+          // Data changed by another user - reload
+          await loadProperties();
+          await loadAgents();
+          renderMarkers();
+          if (currentView === "list") renderListView();
+        }
+        _lastSyncTs = data.ts;
+      } catch (e) { /* ignore network errors */ }
+    }
+    setInterval(pollSync, 3000); // Poll every 3 seconds
+
     // === Init ===
     requestAnimationFrame(async () => {
       map.invalidateSize();
@@ -1681,6 +1699,7 @@
       }
       await loadProperties();
       await loadAgents();
+      _lastSyncTs = Date.now() / 1000;
     });
   </script>
 </body>
