@@ -308,13 +308,16 @@
     .criteria-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .criteria-value { font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 1px; }
     .criteria-value.empty { color: #94a3b8; font-weight: 400; font-style: italic; }
-    .criteria-bar { padding: 8px 16px; background: #f0fdfa; border-bottom: 1px solid #99f6e4; font-size: 12px; flex-shrink: 0; display: none; }
-    .criteria-bar.show { display: block; }
-    .criteria-bar-title { font-weight: 600; color: #0891b2; margin-bottom: 4px; font-size: 11px; }
-    .criteria-bar-items { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-    .criteria-bar-item { color: #374151; }
-    .criteria-bar-item span { font-weight: 600; }
-    .list-criteria-section.show { display: block !important; }
+    .criteria-bar { padding: 10px 16px; background: #f0fdfa; border-bottom: 1px solid #99f6e4; font-size: 12px; flex-shrink: 0; }
+    .criteria-bar-title { font-weight: 600; color: #0891b2; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+    .criteria-bar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+    .criteria-bar-field { display: flex; align-items: center; gap: 4px; }
+    .criteria-bar-field label { font-size: 11px; color: #64748b; white-space: nowrap; min-width: 50px; }
+    .criteria-bar-field input { flex: 1; padding: 3px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 12px; font-family: inherit; background: transparent; color: #1e293b; font-weight: 500; min-width: 0; }
+    .criteria-bar-field input:hover { border-color: #99f6e4; background: #fff; }
+    .criteria-bar-field input:focus { outline: none; border-color: #0891b2; background: #fff; box-shadow: 0 0 0 2px rgba(8,145,178,0.15); }
+    .criteria-bar-saved { color: #0891b2; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+    .criteria-bar-saved.show { opacity: 1; }
 
     /* Dancing cat - BPM 140 = 0.429s per beat */
     @keyframes catBounce {
@@ -772,14 +775,34 @@
       document.getElementById("sidebar-title").textContent = prop.name;
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
-      // Show criteria bar
+      // Show criteria bar (always visible, editable)
       const ws = getActiveWs();
       const criteriaBar = document.getElementById("criteria-bar");
       const c = ws && ws.criteria ? ws.criteria : {};
-      if (c.maxRent || c.minArea || c.walkMinutes || c.other) {
-        criteriaBar.className = "criteria-bar show";
-        criteriaBar.innerHTML = `<div class="criteria-bar-title">選定基準 - ${esc(ws.name)}</div><div class="criteria-bar-items">${c.maxRent ? `<div class="criteria-bar-item">賃料上限: <span>${esc(c.maxRent)}</span></div>` : ""}${c.minArea ? `<div class="criteria-bar-item">面積: <span>${esc(c.minArea)}</span></div>` : ""}${c.walkMinutes ? `<div class="criteria-bar-item">駅徒歩: <span>${esc(c.walkMinutes)}</span></div>` : ""}${c.other ? `<div class="criteria-bar-item">他: <span>${esc(c.other)}</span></div>` : ""}</div>`;
-      } else { criteriaBar.className = "criteria-bar"; }
+      criteriaBar.innerHTML = `<div class="criteria-bar-title">選定基準 - ${esc(ws ? ws.name : "")} <span class="criteria-bar-saved" id="criteria-bar-saved">保存しました</span></div>
+        <div class="criteria-bar-grid">
+          <div class="criteria-bar-field"><label>賃料上限</label><input type="text" value="${esc(c.maxRent || "")}" data-key="maxRent" placeholder="未設定"></div>
+          <div class="criteria-bar-field"><label>面積/ブース</label><input type="text" value="${esc(c.minArea || "")}" data-key="minArea" placeholder="未設定"></div>
+          <div class="criteria-bar-field"><label>駅徒歩</label><input type="text" value="${esc(c.walkMinutes || "")}" data-key="walkMinutes" placeholder="未設定"></div>
+          <div class="criteria-bar-field"><label>その他</label><input type="text" value="${esc(c.other || "")}" data-key="other" placeholder="未設定"></div>
+        </div>`;
+      // Auto-save criteria on input
+      let criteriaTimer = null;
+      criteriaBar.querySelectorAll("input").forEach(inp => {
+        inp.addEventListener("input", () => {
+          clearTimeout(criteriaTimer);
+          criteriaTimer = setTimeout(async () => {
+            if (!ws) return;
+            const newCriteria = {};
+            criteriaBar.querySelectorAll("input[data-key]").forEach(el => { newCriteria[el.dataset.key] = el.value.trim(); });
+            ws.criteria = newCriteria;
+            await fetch(`/api/workspaces/${ws.id}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ criteria: newCriteria }) });
+            syncTs();
+            const msg = document.getElementById("criteria-bar-saved");
+            if (msg) { msg.classList.add("show"); setTimeout(() => msg.classList.remove("show"), 2000); }
+          }, 800);
+        });
+      });
       // Show agent name for this workspace
       const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
       const agentEl = document.getElementById("sidebar-agent");
@@ -1205,20 +1228,19 @@
           const agentNames = assignedAgents.map(a => a.name).join(", ");
           const wsObj = getActiveWs();
           const cr = wsObj && wsObj.criteria ? wsObj.criteria : {};
-          const hasCriteria = cr.maxRent || cr.minArea || cr.walkMinutes || cr.other;
-          memoRow.innerHTML = `<td colspan="${colSpan}"><div class="list-memo-panel">
+          const criteriaLine = [cr.maxRent ? `賃料上限:${cr.maxRent}` : "", cr.minArea ? `面積:${cr.minArea}` : "", cr.walkMinutes ? `徒歩:${cr.walkMinutes}` : "", cr.other ? `他:${cr.other}` : ""].filter(x=>x).join(" / ");
+          memoRow.innerHTML = `<td colspan="${colSpan}">${criteriaLine ? `<div style="padding:6px 16px;background:#f0fdfa;border-bottom:1px solid #e0f2fe;font-size:11px;color:#0891b2;">選定基準: <span style="color:#1e293b;font-weight:500;">${esc(criteriaLine)}</span></div>` : ""}<div class="list-memo-panel">
             <div class="memo-info" style="min-width:auto;">
               <select class="memo-status-select" data-propid="${prop.id}">
                 ${Object.entries(PIN_COLORS).map(([k,v]) => `<option value="${k}"${k===(prop.color||"blue")?" selected":""}>${v.label}</option>`).join("")}
               </select>
               <button class="view-detail-btn" onclick="setView('map');showProperty(properties.find(p=>p.id==='${prop.id}'))">地図で詳細を見る</button>
-              ${hasCriteria ? `<button class="view-detail-btn" onclick="event.stopPropagation();this.closest('.list-memo-panel').querySelector('.list-criteria-section').classList.toggle('show')">選定基準</button>` : ""}
             </div>
             <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
               <textarea class="list-memo-input" data-propid="${prop.id}" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea>
               <span class="memo-saved-msg" id="list-memo-saved-${prop.id}">保存しました</span>
             </div>
-          </div>${hasCriteria ? `<div class="list-criteria-section" style="display:none;padding:8px 16px;background:#f0fdfa;border-top:1px solid #99f6e4;font-size:12px;"><div class="criteria-bar-items">${cr.maxRent ? `<div class="criteria-bar-item">賃料上限: <span style="font-weight:600">${esc(cr.maxRent)}</span></div>` : ""}${cr.minArea ? `<div class="criteria-bar-item">面積: <span style="font-weight:600">${esc(cr.minArea)}</span></div>` : ""}${cr.walkMinutes ? `<div class="criteria-bar-item">駅徒歩: <span style="font-weight:600">${esc(cr.walkMinutes)}</span></div>` : ""}${cr.other ? `<div class="criteria-bar-item">他: <span style="font-weight:600">${esc(cr.other)}</span></div>` : ""}</div></div>` : ""}</td>`;
+          </div></td>`;
           tr.after(memoRow);
           // Memo auto-save
           const textarea = memoRow.querySelector(".list-memo-input");
