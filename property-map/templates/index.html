@@ -575,7 +575,7 @@
     let wsModalMode = "create";
 
     // === Pin icons ===
-    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" } };
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
       pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
