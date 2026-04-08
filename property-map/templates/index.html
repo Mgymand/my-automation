@@ -418,7 +418,6 @@
     </button>
     <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
     <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
-    <button class="criteria-btn" onclick="openCriteriaPanel()">&#128203; 選定基準</button>
     <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
     <div id="dancing-cat" style="display:none;pointer-events:none;">
       <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
@@ -501,14 +500,6 @@
 
   <div class="drop-overlay" id="drop-overlay"><p>PDFをドロップしてインポート</p></div>
 
-  <!-- Criteria panel (full screen) -->
-  <div id="criteria-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
-    <div class="cal-toolbar">
-      <h2 style="min-width:auto;">物件選定基準</h2>
-      <button class="cal-close-btn" onclick="closeCriteriaPanel()">&times; 閉じる</button>
-    </div>
-    <div class="criteria-cards" id="criteria-cards"></div>
-  </div>
 
   <!-- Agent view (full screen) -->
   <div id="agent-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
@@ -776,6 +767,7 @@
     function showProperty(prop) {
       selectedPropId = prop.id;
       document.getElementById("sidebar").classList.remove("collapsed");
+      document.getElementById("criteria-float").style.display = "none";
       document.getElementById("sidebar-title").textContent = prop.name;
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
@@ -937,6 +929,7 @@
 
     function closeSidebar() {
       document.getElementById("sidebar").classList.add("collapsed"); selectedPropId = null;
+      if (currentView === "map") document.getElementById("criteria-float").style.display = "block";
       setTimeout(() => map.invalidateSize(), 200);
     }
 
