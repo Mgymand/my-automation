@@ -753,12 +753,13 @@
       });
       // Color
       content.querySelectorAll(".color-dot").forEach(dot => {
-        dot.addEventListener("click", () => {
+        dot.addEventListener("click", async () => {
           const color = dot.dataset.color; prop.color = color;
           content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active")); dot.classList.add("active");
           if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
           document.querySelector(".sidebar-header").style.background = PIN_COLORS[color]?.fill || "#2563eb";
-          fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
+          pauseSync();
+          await fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
         });
       });
       // Details - collect all fields including biko and company
@@ -788,6 +789,7 @@
         detailsTimer = setTimeout(() => {
           const d = collectAllDetails();
           prop.details = d;
+          pauseSync();
           fetch(`/api/properties/${prop.id}/details?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ details: d }) })
             .then(() => { const el = document.getElementById("details-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } });
         }, 800);
@@ -828,12 +830,14 @@
     }
 
     async function saveMemo(propId, memo) {
+      pauseSync();
       const res = await fetch(`/api/properties/${propId}/memo?ws=${activeWorkspaceId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memo }) });
       if (res.ok) { const el = document.getElementById("memo-saved"); if (el) { el.classList.add("show"); setTimeout(() => el.classList.remove("show"), 2000); } const p = properties.find(x => x.id === propId); if (p) p.memo = memo; }
     }
 
     async function deleteProperty(prop) {
       if (!confirm(`「${prop.name}」を削除しますか？この操作は取り消せません。`)) return;
+      pauseSync();
       await fetch(`/api/properties/${prop.id}?ws=${activeWorkspaceId}`, { method: "DELETE" });
       if (selectedPropId === prop.id) closeSidebar();
       await loadProperties();
@@ -1122,6 +1126,7 @@
             const color = statusSel.value;
             prop.color = color;
             if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
+            pauseSync();
             await fetch(`/api/properties/${prop.id}/color?ws=${activeWorkspaceId}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ color }) });
             renderListView();
           });
@@ -1667,7 +1672,10 @@
 
     // === Real-time sync (polling) ===
     let _lastSyncTs = 0;
+    let _syncPausedUntil = 0;
+    function pauseSync() { _syncPausedUntil = Date.now() + 5000; } // Pause 5 seconds after own change
     async function pollSync() {
+      if (Date.now() < _syncPausedUntil) return; // Skip poll during own changes
       try {
         const res = await fetch("/api/sync");
         const data = await res.json();
