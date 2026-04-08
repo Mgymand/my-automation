@@ -308,16 +308,17 @@
     .criteria-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .criteria-value { font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 1px; }
     .criteria-value.empty { color: #94a3b8; font-weight: 400; font-style: italic; }
-    .criteria-bar { padding: 10px 16px; background: #f0fdfa; border-bottom: 1px solid #99f6e4; font-size: 12px; flex-shrink: 0; }
-    .criteria-bar-title { font-weight: 600; color: #0891b2; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
-    .criteria-bar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
-    .criteria-bar-field { display: flex; align-items: center; gap: 4px; }
-    .criteria-bar-field label { font-size: 11px; color: #64748b; white-space: nowrap; min-width: 50px; }
-    .criteria-bar-field input { flex: 1; padding: 3px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 12px; font-family: inherit; background: transparent; color: #1e293b; font-weight: 500; min-width: 0; }
-    .criteria-bar-field input:hover { border-color: #99f6e4; background: #fff; }
-    .criteria-bar-field input:focus { outline: none; border-color: #0891b2; background: #fff; box-shadow: 0 0 0 2px rgba(8,145,178,0.15); }
-    .criteria-bar-saved { color: #0891b2; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
-    .criteria-bar-saved.show { opacity: 1; }
+    /* Criteria floating panel - top right of map */
+    .criteria-float { position: fixed; top: 56px; right: 12px; z-index: 900; background: rgba(240,253,250,0.95); backdrop-filter: blur(6px); border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 14px; font-size: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
+    .criteria-float-title { font-weight: 600; color: #0891b2; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+    .criteria-float-grid { display: flex; flex-direction: column; gap: 4px; }
+    .criteria-float-field { display: flex; align-items: center; gap: 6px; }
+    .criteria-float-field label { font-size: 11px; color: #64748b; white-space: nowrap; min-width: 58px; }
+    .criteria-float-field input { flex: 1; padding: 3px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 12px; font-family: inherit; background: transparent; color: #1e293b; font-weight: 500; min-width: 0; }
+    .criteria-float-field input:hover { border-color: #99f6e4; background: #fff; }
+    .criteria-float-field input:focus { outline: none; border-color: #0891b2; background: #fff; box-shadow: 0 0 0 2px rgba(8,145,178,0.15); }
+    .criteria-float-saved { color: #0891b2; font-size: 10px; opacity: 0; transition: opacity 0.3s; }
+    .criteria-float-saved.show { opacity: 1; }
 
     /* Dancing cat - BPM 140 = 0.429s per beat */
     @keyframes catBounce {
@@ -388,7 +389,6 @@
         <span id="sidebar-agent" style="font-size:12px;opacity:0.85;margin-left:auto;margin-right:8px;white-space:nowrap;"></span>
         <button onclick="closeSidebar()">&times;</button>
       </div>
-      <div class="criteria-bar" id="criteria-bar"></div>
       <div class="sidebar-content" id="sidebar-content">
         <div class="placeholder"><p>地図上のピンをクリックすると<br>物件情報が表示されます</p></div>
       </div>
@@ -495,6 +495,9 @@
     </div>
     <button class="map-ctrl-btn" id="controls-toggle" onclick="toggleControls()" title="操作パネル" style="font-size:16px;">&#9881;</button>
   </div>
+
+  <!-- Criteria floating panel (always visible on map) -->
+  <div class="criteria-float" id="criteria-float" style="display:none;"></div>
 
   <div class="drop-overlay" id="drop-overlay"><p>PDFをドロップしてインポート</p></div>
 
@@ -719,6 +722,7 @@
       activeCompareKey = null;
       await loadProperties();
       if (currentView === "list") renderListView();
+      renderCriteriaFloat();
     }
 
     // === Stations ===
@@ -775,34 +779,7 @@
       document.getElementById("sidebar-title").textContent = prop.name;
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
-      // Show criteria bar (always visible, editable)
       const ws = getActiveWs();
-      const criteriaBar = document.getElementById("criteria-bar");
-      const c = ws && ws.criteria ? ws.criteria : {};
-      criteriaBar.innerHTML = `<div class="criteria-bar-title">選定基準 - ${esc(ws ? ws.name : "")} <span class="criteria-bar-saved" id="criteria-bar-saved">保存しました</span></div>
-        <div class="criteria-bar-grid">
-          <div class="criteria-bar-field"><label>賃料上限</label><input type="text" value="${esc(c.maxRent || "")}" data-key="maxRent" placeholder="未設定"></div>
-          <div class="criteria-bar-field"><label>面積/ブース</label><input type="text" value="${esc(c.minArea || "")}" data-key="minArea" placeholder="未設定"></div>
-          <div class="criteria-bar-field"><label>駅徒歩</label><input type="text" value="${esc(c.walkMinutes || "")}" data-key="walkMinutes" placeholder="未設定"></div>
-          <div class="criteria-bar-field"><label>その他</label><input type="text" value="${esc(c.other || "")}" data-key="other" placeholder="未設定"></div>
-        </div>`;
-      // Auto-save criteria on input
-      let criteriaTimer = null;
-      criteriaBar.querySelectorAll("input").forEach(inp => {
-        inp.addEventListener("input", () => {
-          clearTimeout(criteriaTimer);
-          criteriaTimer = setTimeout(async () => {
-            if (!ws) return;
-            const newCriteria = {};
-            criteriaBar.querySelectorAll("input[data-key]").forEach(el => { newCriteria[el.dataset.key] = el.value.trim(); });
-            ws.criteria = newCriteria;
-            await fetch(`/api/workspaces/${ws.id}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ criteria: newCriteria }) });
-            syncTs();
-            const msg = document.getElementById("criteria-bar-saved");
-            if (msg) { msg.classList.add("show"); setTimeout(() => msg.classList.remove("show"), 2000); }
-          }, 800);
-        });
-      });
       // Show agent name for this workspace
       const assignedAgents = agentsData.filter(a => a.area && a.area.split(",").includes(activeWorkspaceId));
       const agentEl = document.getElementById("sidebar-agent");
@@ -1150,6 +1127,7 @@
       document.getElementById("view-list-btn").classList.toggle("active", mode === "list");
       document.getElementById("list-view").classList.toggle("active", mode === "list");
       document.getElementById("compare-panel").style.display = mode === "list" ? "none" : "";
+      document.getElementById("criteria-float").style.display = mode === "list" ? "none" : "block";
       if (mode === "list") renderListView();
       else setTimeout(() => map.invalidateSize(), 100);
     }
@@ -1423,6 +1401,37 @@
           } else { status.textContent = data.message || "登録に失敗しました"; status.style.color = "#dc2626"; }
         }
       } catch (err) { status.textContent = "エラー: " + err.message; status.style.color = "#dc2626"; }
+    }
+
+    // === Criteria floating panel (always visible on map) ===
+    function renderCriteriaFloat() {
+      const panel = document.getElementById("criteria-float");
+      const ws = getActiveWs();
+      if (!ws) { panel.style.display = "none"; return; }
+      const c = ws.criteria || {};
+      panel.style.display = "block";
+      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
+        <div class="criteria-float-grid">
+          <div class="criteria-float-field"><label>賃料上限</label><input type="text" value="${esc(c.maxRent || "")}" data-key="maxRent" placeholder="未設定"></div>
+          <div class="criteria-float-field"><label>面積/ブース</label><input type="text" value="${esc(c.minArea || "")}" data-key="minArea" placeholder="未設定"></div>
+          <div class="criteria-float-field"><label>駅徒歩</label><input type="text" value="${esc(c.walkMinutes || "")}" data-key="walkMinutes" placeholder="未設定"></div>
+          <div class="criteria-float-field"><label>その他</label><input type="text" value="${esc(c.other || "")}" data-key="other" placeholder="未設定"></div>
+        </div>`;
+      let timer = null;
+      panel.querySelectorAll("input").forEach(inp => {
+        inp.addEventListener("input", () => {
+          clearTimeout(timer);
+          timer = setTimeout(async () => {
+            const newCriteria = {};
+            panel.querySelectorAll("input[data-key]").forEach(el => { newCriteria[el.dataset.key] = el.value.trim(); });
+            ws.criteria = newCriteria;
+            await fetch(`/api/workspaces/${ws.id}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ criteria: newCriteria }) });
+            syncTs();
+            const msg = document.getElementById("criteria-float-saved");
+            if (msg) { msg.classList.add("show"); setTimeout(() => msg.classList.remove("show"), 2000); }
+          }, 800);
+        });
+      });
     }
 
     // === Criteria panel ===
@@ -1898,6 +1907,7 @@
       }
       await loadProperties();
       await loadAgents();
+      renderCriteriaFloat();
       _lastSyncTs = Date.now() / 1000;
     }
 
