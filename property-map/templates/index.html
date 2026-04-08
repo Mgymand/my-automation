@@ -8,6 +8,22 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+
+    /* Login screen */
+    #login-screen { position: fixed; inset: 0; z-index: 99999; background: linear-gradient(135deg, #032D60 0%, #0176D3 50%, #1B96FF 100%); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .login-logo { margin-bottom: 32px; text-align: center; }
+    .login-logo svg { margin-bottom: 8px; }
+    .login-logo h1 { color: #fff; font-size: 32px; font-weight: 700; letter-spacing: 1px; }
+    .login-logo p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+    .login-card { background: #fff; border-radius: 12px; padding: 32px 36px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); }
+    .login-card h2 { font-size: 18px; color: #032D60; margin-bottom: 20px; text-align: center; }
+    .login-card label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 4px; }
+    .login-card input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px; font-family: inherit; transition: border-color 0.2s; }
+    .login-card input:focus { outline: none; border-color: #0176D3; box-shadow: 0 0 0 3px rgba(1,118,211,0.15); }
+    .login-btn { width: 100%; padding: 12px; background: #0176D3; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .login-btn:hover { background: #014486; }
+    .login-error { color: #dc2626; font-size: 13px; text-align: center; margin-bottom: 12px; display: none; }
+
     #app { display: flex; height: 100vh; }
     #map { flex: 1; min-width: 0; }
 
@@ -301,6 +317,29 @@
   </style>
 </head>
 <body>
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-logo">
+      <svg width="80" height="56" viewBox="0 0 120 84" fill="none">
+        <!-- Salesforce-style cloud -->
+        <path d="M25 68C12 68 2 58 2 46c0-10 6-18 15-21 0-14 12-25 27-25 10 0 19 5 24 13 4-3 9-5 14-5 14 0 25 11 25 24 0 1 0 3 0 4 8 3 13 10 13 19 0 12-10 22-22 22H25z" fill="rgba(255,255,255,0.95)"/>
+        <!-- Inner cloud accent -->
+        <path d="M25 68C12 68 2 58 2 46c0-10 6-18 15-21 0-14 12-25 27-25 10 0 19 5 24 13 4-3 9-5 14-5 14 0 25 11 25 24 0 1 0 3 0 4 8 3 13 10 13 19 0 12-10 22-22 22H25z" fill="none" stroke="rgba(1,118,211,0.3)" stroke-width="1"/>
+      </svg>
+      <h1>Estateforce</h1>
+      <p>Property Management Platform</p>
+    </div>
+    <div class="login-card">
+      <h2>ログイン</h2>
+      <div class="login-error" id="login-error"></div>
+      <label for="login-email">メールアドレス</label>
+      <input type="email" id="login-email" placeholder="example@company.com" autofocus>
+      <label for="login-password">パスワード</label>
+      <input type="password" id="login-password" placeholder="パスワード">
+      <button class="login-btn" onclick="doLogin()">ログイン</button>
+    </div>
+  </div>
+
   <div id="app">
     <div id="map"></div>
     <div id="list-view">
@@ -1694,8 +1733,39 @@
     }
     setInterval(pollSync, 3000);
 
-    // === Init ===
-    requestAnimationFrame(async () => {
+    // === Login ===
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth-check");
+        const data = await res.json();
+        if (data.loggedIn) { document.getElementById("login-screen").style.display = "none"; return true; }
+      } catch(e) {}
+      document.getElementById("login-screen").style.display = "flex";
+      return false;
+    }
+
+    async function doLogin() {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const errorEl = document.getElementById("login-error");
+      errorEl.style.display = "none";
+      if (!email || !password) { errorEl.textContent = "メールアドレスとパスワードを入力してください"; errorEl.style.display = "block"; return; }
+      const res = await fetch("/api/login", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ email, password }) });
+      const data = await res.json();
+      if (data.status === "ok") {
+        document.getElementById("login-screen").style.display = "none";
+        initApp();
+      } else {
+        errorEl.textContent = data.message || "ログインに失敗しました";
+        errorEl.style.display = "block";
+      }
+    }
+
+    // Enter key to login
+    document.getElementById("login-password").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+    document.getElementById("login-email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("login-password").focus(); });
+
+    async function initApp() {
       map.invalidateSize();
       await loadWorkspaces();
       const ws = getActiveWs();
@@ -1711,7 +1781,15 @@
       await loadProperties();
       await loadAgents();
       _lastSyncTs = Date.now() / 1000;
+    }
+
+    // === Init ===
+    requestAnimationFrame(async () => {
+      const loggedIn = await checkAuth();
+      if (!loggedIn) return;
+      await initApp();
     });
+
   </script>
 </body>
 </html>

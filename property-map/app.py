@@ -6,9 +6,25 @@ import urllib.request
 import urllib.parse
 import time
 import shutil
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "estateforce-secret-key-2026")
+
+# --- Authentication ---
+USERS = {
+    "k.iwamoto@lime-fit.com": "Lime0201",
+}
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return jsonify({"error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Render: use /data disk if writable, else /tmp/property-data (Render free), else local ./data
 if os.path.isdir("/data") and os.access("/data", os.W_OK):
@@ -571,6 +587,31 @@ def bump_change():
 def get_sync():
     """Return current change timestamp for polling."""
     return jsonify({"ts": _last_change_ts})
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    if email in USERS and USERS[email] == password:
+        session["logged_in"] = True
+        session["user_email"] = email
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "invalid", "message": "IDまたはパスワードが正しくありません"}), 401
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/auth-check")
+def auth_check():
+    if session.get("logged_in"):
+        return jsonify({"loggedIn": True, "email": session.get("user_email", "")})
+    return jsonify({"loggedIn": False})
 
 
 @app.route("/")
