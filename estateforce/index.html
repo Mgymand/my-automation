@@ -738,32 +738,37 @@
       const doc = await lib.getDocument({ data: arrayBuffer }).promise;
       const page = await doc.getPage(1);
       const textContent = await page.getTextContent();
-      // Reconstruct text with proper line breaks using Y-coordinate grouping
-      const items = textContent.items.filter(i => i.str.trim());
+      // Reconstruct text to match PyMuPDF output as closely as possible
+      const items = textContent.items.filter(i => i.str && i.str.trim());
       if (!items.length) { doc.destroy(); return ""; }
       // Sort by Y (descending = top to bottom) then X (left to right)
+      // Use font height as threshold for line detection
       items.sort((a, b) => {
         const dy = b.transform[5] - a.transform[5];
-        if (Math.abs(dy) > 3) return dy > 0 ? 1 : -1; // different line
-        return a.transform[4] - b.transform[4]; // same line, sort by X
+        const threshold = Math.min(a.height || 8, b.height || 8) * 0.5;
+        if (Math.abs(dy) > threshold) return dy > 0 ? 1 : -1;
+        return a.transform[4] - b.transform[4];
       });
       let lines = [];
       let currentLine = items[0].str;
       let lastY = items[0].transform[5];
+      let lastHeight = items[0].height || 8;
       for (let i = 1; i < items.length; i++) {
         const item = items[i];
         const y = item.transform[5];
-        if (Math.abs(y - lastY) > 3) {
-          // New line
+        const threshold = Math.min(lastHeight, item.height || 8) * 0.5;
+        if (Math.abs(y - lastY) > threshold) {
           lines.push(currentLine);
           currentLine = item.str;
           lastY = y;
+          lastHeight = item.height || 8;
         } else {
-          // Same line - check gap for space insertion
+          // Same line - add space if there's a gap
           const prevItem = items[i - 1];
           const prevEnd = prevItem.transform[4] + (prevItem.width || 0);
           const gap = item.transform[4] - prevEnd;
-          currentLine += (gap > 5 ? " " : "") + item.str;
+          if (gap > 2) currentLine += " ";
+          currentLine += item.str;
           lastY = y;
         }
       }
@@ -842,13 +847,16 @@
         // Contract
         m = flat.match(/(定期借家[^,.\s]*|\d+年)/);
         if (m) details["契約"] = m[1].trim();
-        // Move-in
-        const entryMatches = flat.match(/(即日?|相談|\d{4}\s*\/\s*\d{1,2}(?:\s*\/\s*\d{1,2})?(?:\s*以降|\s*予定)?)/g);
-        if (entryMatches) details["入居日"] = entryMatches[entryMatches.length - 1].replace(/\s/g, "");
-        // Facilities
+        // Move-in (即, 相談, 2026/xx, etc.) - search both text and flat
+        const entryPat = /(即日?|相談|\d{4}\s*[/\/]\s*\d{1,2}(?:\s*[/\/]\s*\d{1,2})?(?:\s*以降|\s*予定|\s*下)?)/g;
+        let entryMatches = [...flat.matchAll(entryPat)].map(m => m[1].replace(/\s/g, ""));
+        if (!entryMatches.length) entryMatches = [...text.matchAll(entryPat)].map(m => m[1].replace(/\s/g, ""));
+        if (entryMatches.length) details["入居日"] = entryMatches[entryMatches.length - 1];
+        // Facilities - use line-by-line matching (more reliable than flat for labeled items)
         for (const [label, key] of [["EV","EV"],["警備","警備"],["空調","空調"],["トイレ","トイレ"],["使用時間","使用時間"]]) {
-          m = flat.match(new RegExp(`${label}\\s*[:：]\\s*([^,]+?)(?:\\s+(?:EV|警備|空調|トイレ|使用時間|床)|$)`));
-          if (!m) m = text.match(new RegExp(`${label}\\s*[:：]\\s*(.+)`));
+          // Try text (line-by-line) first, then flat
+          m = text.match(new RegExp(`${label}\\s*[:：]\\s*(.+)`));
+          if (!m) m = flat.match(new RegExp(`${label}\\s*[:：]\\s*([^\\n]+?)(?=\\s+(?:EV|警備|空調|トイレ|使用時間|備考)|$)`));
           if (m) remarks.push(`${key}: ${m[1].trim()}`);
         }
         // Floor type
@@ -857,6 +865,11 @@
         // Net/Gross
         const ng = flat.match(/(ネット面積|グロス面積)/g);
         if (ng) remarks.push(ng[0]);
+        // 更新料・償却 (Python版にあったが欠落していた)
+        m = flat.match(/更新料\s*(\S+)/);
+        if (m && !["-","無し","償却費","償却"].includes(m[1])) remarks.push(`更新料: ${m[1]}`);
+        m = flat.match(/償却費?\s*(\S+)/);
+        if (m && !["-","無し","礼金"].includes(m[1])) remarks.push(`償却: ${m[1]}`);
         // Reikin
         m = flat.match(/礼金\s*(\S+)/);
         if (m && !["-","無し","契約期間","償却"].includes(m[1])) details["礼金"] = m[1];
@@ -1077,7 +1090,30 @@
           detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
-      const pdfUrl = prop.pdf_url || "";
+      // PDF URL: use stored url, or try to find in storage by filename
+      let pdfUrl = prop.pdf_url || "";
+      if (!pdfUrl && prop.filename) {
+        // Try to find the file in Supabase Storage by listing and matching filename
+        (async () => {
+          try {
+            const { data: files } = await sb.storage.from('pdfs').list('', { limit: 200 });
+            const match = (files || []).find(f => f.name.includes(prop.filename) || f.name.endsWith(prop.filename));
+            if (match) {
+              const { data } = sb.storage.from('pdfs').getPublicUrl(match.name);
+              pdfUrl = data.publicUrl;
+              prop.pdf_url = pdfUrl;
+              await sb.from('properties').update({ pdf_url: pdfUrl }).eq('id', prop.id);
+              // Re-render PDF section if sidebar is still showing this property
+              if (selectedPropId === prop.id) {
+                const pdfEl = document.getElementById("pdf-pages");
+                const pdfBtn = document.querySelector(".pdf-open-btn");
+                if (pdfEl) renderPdfPages(pdfUrl, pdfEl);
+                if (pdfBtn) { pdfBtn.href = pdfUrl; pdfBtn.style.display = "block"; }
+              }
+            }
+          } catch(e) { console.error("PDF lookup error:", e); }
+        })();
+      }
       const currentColor = prop.color || "blue";
       let colorDots = "";
       for (const [key, c] of Object.entries(PIN_COLORS)) {
