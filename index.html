@@ -1425,14 +1425,17 @@
 
     async function processUploadFile(file) {
       currentUploadFile = file;
-      // Create a Blob copy before pdf.js reads the file (ArrayBuffer can only be read once)
-      const arrBuf = await file.arrayBuffer();
-      currentUploadFileBlob = new Blob([arrBuf], { type: 'application/pdf' });
+      // Read file once and create independent copies:
+      // - One Blob for Supabase upload (untouched)
+      // - One ArrayBuffer copy for pdf.js text extraction
+      const originalBuf = await file.arrayBuffer();
+      currentUploadFileBlob = new Blob([originalBuf], { type: 'application/pdf' });
+      const extractionBuf = originalBuf.slice(0); // independent copy for pdf.js
       document.getElementById("upload-status").style.display = "block";
       document.getElementById("upload-status").textContent = "PDFを解析中...";
       document.getElementById("upload-modal").classList.add("active");
       try {
-        const text = await extractTextFromPdfBuffer(arrBuf);
+        const text = await extractTextFromPdfBuffer(extractionBuf);
         currentUploadInfo = extractPropertyInfo(text);
         document.getElementById("upload-name").value = currentUploadInfo.name || "";
         document.getElementById("upload-address").value = currentUploadInfo.address || "";
@@ -1460,22 +1463,30 @@
       // Upload PDF to Supabase Storage
       let pdfUrl = "";
       let filename = "";
-      if (currentUploadFileBlob) {
+      if (currentUploadFileBlob && currentUploadFileBlob.size > 0) {
         filename = currentUploadFile?.name || 'document.pdf';
-        const path = `${Date.now()}_${filename}`;
+        // Sanitize filename for storage path (remove special chars)
+        const safeName = filename.replace(/[^a-zA-Z0-9._\u3000-\u9fff\uff00-\uffef-]/g, '_');
+        const path = `${Date.now()}_${safeName}`;
+        console.log(`PDF upload: blob size=${currentUploadFileBlob.size}, path=${path}`);
         const { data: uploadData, error } = await sb.storage.from('pdfs').upload(path, currentUploadFileBlob, {
           contentType: 'application/pdf',
           cacheControl: '3600',
           upsert: true
         });
         if (error) {
-          console.error("PDF upload error:", error);
-          status.textContent = "PDF保存に失敗しましたが、物件情報は登録します";
+          console.error("PDF upload error:", JSON.stringify(error));
+          status.textContent = "PDF保存に失敗: " + (error.message || error.error || "不明なエラー");
           status.style.color = "#ea580c";
+          // Wait a moment so user can see the error
+          await new Promise(r => setTimeout(r, 2000));
         } else {
           const { data: urlData } = sb.storage.from('pdfs').getPublicUrl(path);
           pdfUrl = urlData.publicUrl;
+          console.log(`PDF uploaded successfully: ${pdfUrl}`);
         }
+      } else {
+        console.warn("No PDF blob available for upload", currentUploadFileBlob);
       }
       // Create property
       const propId = `prop_${Date.now()}`;
@@ -1545,11 +1556,14 @@
       let pdfUrl = "", filename = "";
       if (manualPdfFile) {
         filename = manualPdfFile.name;
-        const path = `${Date.now()}_${filename}`;
-        const { data: upData, error } = await sb.storage.from('pdfs').upload(path, manualPdfFile, {
+        const buf = await manualPdfFile.arrayBuffer();
+        const blob = new Blob([buf], { type: 'application/pdf' });
+        const safeName = filename.replace(/[^a-zA-Z0-9._\u3000-\u9fff\uff00-\uffef-]/g, '_');
+        const path = `${Date.now()}_${safeName}`;
+        const { data: upData, error } = await sb.storage.from('pdfs').upload(path, blob, {
           contentType: 'application/pdf', cacheControl: '3600', upsert: true
         });
-        if (error) { console.error("PDF upload error:", error); }
+        if (error) { console.error("PDF upload error:", JSON.stringify(error)); }
         else { const { data } = sb.storage.from('pdfs').getPublicUrl(path); pdfUrl = data.publicUrl; }
       }
       const propId = `prop_${Date.now()}`;
