@@ -375,10 +375,6 @@
     </button>
     <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
     <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
-    <div class="compare-panel" id="compare-panel">
-      <label>条件比較</label>
-      <div class="compare-chips" id="compare-chips"></div>
-    </div>
     <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
     <div id="dancing-cat" style="display:none;pointer-events:none;">
       <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
@@ -405,6 +401,12 @@
       </svg>
     </div>
     <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
+  </div>
+
+  <!-- Compare panel - fixed below workspace selector (left side) -->
+  <div class="compare-panel" id="compare-panel" style="position:fixed;top:52px;left:12px;z-index:999;">
+    <label>条件比較</label>
+    <div class="compare-chips" id="compare-chips"></div>
   </div>
 
   <!-- Map controls -->
