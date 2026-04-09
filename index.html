@@ -731,121 +731,177 @@
       const doc = await lib.getDocument({ data: arrayBuffer }).promise;
       const page = await doc.getPage(1);
       const textContent = await page.getTextContent();
-      const text = textContent.items.map(i => i.str).join("\n");
+      // Reconstruct text with proper line breaks using Y-coordinate grouping
+      const items = textContent.items.filter(i => i.str.trim());
+      if (!items.length) { doc.destroy(); return ""; }
+      // Sort by Y (descending = top to bottom) then X (left to right)
+      items.sort((a, b) => {
+        const dy = b.transform[5] - a.transform[5];
+        if (Math.abs(dy) > 3) return dy > 0 ? 1 : -1; // different line
+        return a.transform[4] - b.transform[4]; // same line, sort by X
+      });
+      let lines = [];
+      let currentLine = items[0].str;
+      let lastY = items[0].transform[5];
+      for (let i = 1; i < items.length; i++) {
+        const item = items[i];
+        const y = item.transform[5];
+        if (Math.abs(y - lastY) > 3) {
+          // New line
+          lines.push(currentLine);
+          currentLine = item.str;
+          lastY = y;
+        } else {
+          // Same line - check gap for space insertion
+          const prevItem = items[i - 1];
+          const prevEnd = prevItem.transform[4] + (prevItem.width || 0);
+          const gap = item.transform[4] - prevEnd;
+          currentLine += (gap > 5 ? " " : "") + item.str;
+          lastY = y;
+        }
+      }
+      lines.push(currentLine);
       doc.destroy();
-      return text;
+      return lines.join("\n");
     }
 
     function extractPropertyInfo(rawText) {
       const text = rawText.normalize("NFKC");
+      // Also create a single-line version for cross-line matching
+      const flat = text.replace(/\n/g, " ").replace(/\s+/g, " ");
       const lines = text.split("\n").map(l => l.trim()).filter(l => l);
       const info = { name: "", address: "", details: {} };
       const details = info.details;
       const remarks = [];
 
       // Name
-      const mBldg = text.match(/建物名\s*\n?\s*(.+)/);
+      const mBldg = flat.match(/建物名\s+(.+?)(?:\s+所在地|\s+賃料|\s+面積)/);
       if (mBldg) info.name = mBldg[1].trim();
-      else if (lines.length) {
-        for (const l of lines.slice(0, 5)) {
-          if (!/^(専有面積|築年月|引渡|貸店舗|貸事務所|\d)/.test(l)) { info.name = l; break; }
+      else {
+        const mBldg2 = text.match(/建物名[\s\n]+(.+)/);
+        if (mBldg2) info.name = mBldg2[1].trim();
+        else if (lines.length) {
+          for (const l of lines.slice(0, 5)) {
+            if (!/^(専有面積|築年月|引渡|貸店舗|貸事務所|\d|【)/.test(l) && l.length > 1) { info.name = l; break; }
+          }
         }
       }
 
-      // Address
-      let addrMatch = text.match(/所在地\s*[:：]\s*(.+)/);
+      // Address - try multiple patterns
+      let addrMatch = flat.match(/所在地\s*[:：]?\s*(東京都\S+|神奈川県\S+|埼玉県\S+|千葉県\S+|大阪府\S+)/);
+      if (!addrMatch) addrMatch = text.match(/所在地[\s\n]*[:：]?\s*(.+)/);
       if (addrMatch) info.address = addrMatch[1].trim();
       else {
         for (const pat of [/(東京都[^\n]+)/, /(神奈川県[^\n]+)/, /(埼玉県[^\n]+)/, /(千葉県[^\n]+)/, /(大阪府[^\n]+)/]) {
           const m = text.match(pat);
-          if (m && !m[1].includes("知事免許") && !m[1].includes("〒")) { info.address = m[1].trim(); break; }
+          if (m && !m[1].includes("知事免許") && !m[1].includes("〒") && !m[1].includes("代表")) { info.address = m[1].trim(); break; }
         }
       }
 
-      const isGtworks = text.includes("【物件概要】");
+      const isGtworks = text.includes("【物件概要】") || flat.includes("物件概要");
 
       if (isGtworks) {
-        // Rent
-        const rentMatches = [...text.matchAll(/([\d,]+)\s*円\s*\n?\s*\(坪単価[:：]?([\d,]+)\s*円\)/g)];
+        // Rent - try flat text too
+        const rentMatches = [...flat.matchAll(/([\d,]+)\s*円\s*\(坪単価[:：]?\s*([\d,]+)\s*円\)/g)];
         if (rentMatches.length) details["賃料"] = rentMatches.map(r => `${r[1]}円 (@${r[2]}円)`).join(" / ");
-        else { const m = text.match(/賃料\s*\n?\s*([\d,]+)\s*円/); if (m) details["賃料"] = m[1] + "円"; }
+        else {
+          let m = flat.match(/賃料\s*([\d,]+)\s*円/);
+          if (!m) m = text.match(/賃料[\s\n]*([\d,]+)\s*円/);
+          if (m) details["賃料"] = m[1] + "円";
+        }
         // Kyoekihi
-        let m = text.match(/共益費\s*\n?\s*([\d,]+)\s*円/);
+        let m = flat.match(/共益費\s*([\d,]+)\s*円/);
+        if (!m) m = text.match(/共益費[\s\n]*([\d,]+)\s*円/);
         if (m) details["共益費"] = m[1] + "円";
-        else if (/共益費\s*\n?\s*込\b|\n込\n/.test(text)) details["共益費"] = "賃料込み";
-        else if (/共益費\s*\n?\s*(無し|なし)/.test(text)) details["共益費"] = "なし";
+        else if (/共益費[\s\n]*込/.test(flat)) details["共益費"] = "賃料込み";
+        else if (/共益費[\s\n]*(無し|なし)/.test(flat)) details["共益費"] = "なし";
         // Area
-        const areaMatches = [...text.matchAll(/(\d+(?:\.\d+)?)\s*坪\s*\n?\s*\(([\d.]+)\s*m/g)];
+        const areaMatches = [...flat.matchAll(/(\d+(?:\.\d+)?)\s*坪\s*\(?([\d.]+)\s*m/g)];
         if (areaMatches.length) details["面積"] = areaMatches.map(a => `${a[1]}坪 (${a[2]}m²)`).join(" / ");
+        else {
+          m = flat.match(/(\d+(?:\.\d+)?)\s*坪/);
+          if (m) details["面積"] = m[1] + "坪";
+        }
         // Build year
-        m = text.match(/竣工\s*[:：]\s*(\d{4})[/年](\d{1,2})/);
+        m = flat.match(/竣工\s*[:：]?\s*(\d{4})\s*[/年]\s*(\d{1,2})/);
+        if (!m) m = text.match(/竣工[\s\n]*[:：]?\s*(\d{4})\s*[/年]\s*(\d{1,2})/);
         if (m) { const age = new Date().getFullYear() - parseInt(m[1]); details["築年数"] = `${age}年 (${m[1]}/${m[2].padStart(2,"0")})`; }
         // Structure
-        m = text.match(/構造\s*[:：]\s*(\S+)/);
-        if (m) { let s = m[1]; const m2 = text.match(/規模\s*[:：]\s*(\S+)/); if (m2) s += " " + m2[1]; details["構造"] = s; }
+        m = flat.match(/構造\s*[:：]?\s*(\S+)/);
+        if (m) { let s = m[1]; const m2 = flat.match(/規模\s*[:：]?\s*(\S+)/); if (m2) s += " " + m2[1]; details["構造"] = s; }
         // Deposit
-        const depMatches = text.match(/(\d+ヶ月)/g);
-        if (depMatches) details["預託金"] = depMatches[0];
+        const depMatches = flat.match(/(\d+)\s*ヶ月/g);
+        if (depMatches) details["預託金"] = depMatches[0].replace(/\s/g, "");
         // Contract
-        const contracts = text.match(/(定期借家[^\n]*|\d+年)/g);
-        if (contracts) details["契約"] = contracts[0].trim();
+        m = flat.match(/(定期借家[^,.\s]*|\d+年)/);
+        if (m) details["契約"] = m[1].trim();
         // Move-in
-        const entryMatches = text.match(/(即|相談|\d{4}\/\d{1,2}(?:\/\d{1,2})?(?:以降|予定)?)/g);
-        if (entryMatches) details["入居日"] = entryMatches[entryMatches.length - 1];
+        const entryMatches = flat.match(/(即日?|相談|\d{4}\s*\/\s*\d{1,2}(?:\s*\/\s*\d{1,2})?(?:\s*以降|\s*予定)?)/g);
+        if (entryMatches) details["入居日"] = entryMatches[entryMatches.length - 1].replace(/\s/g, "");
         // Facilities
         for (const [label, key] of [["EV","EV"],["警備","警備"],["空調","空調"],["トイレ","トイレ"],["使用時間","使用時間"]]) {
-          m = text.match(new RegExp(`${label}\\s*[:：]\\s*(.+)`));
+          m = flat.match(new RegExp(`${label}\\s*[:：]\\s*([^,]+?)(?:\\s+(?:EV|警備|空調|トイレ|使用時間|床)|$)`));
+          if (!m) m = text.match(new RegExp(`${label}\\s*[:：]\\s*(.+)`));
           if (m) remarks.push(`${key}: ${m[1].trim()}`);
         }
-        // Floor
-        const bedMatches = text.match(/(OAフロアー|タイルカーペット|フリーアクセス|Pタイル)/g);
+        // Floor type
+        const bedMatches = flat.match(/(OAフロアー?|タイルカーペット|フリーアクセス|Pタイル)/g);
         if (bedMatches) remarks.push(`床: ${bedMatches[0]}`);
         // Net/Gross
-        const ng = text.match(/(ネット面積|グロス面積)/g);
+        const ng = flat.match(/(ネット面積|グロス面積)/g);
         if (ng) remarks.push(ng[0]);
         // Reikin
-        m = text.match(/礼金\s*\n?\s*(\S+)/);
-        if (m && !["-","無し","契約期間"].includes(m[1])) details["礼金"] = m[1];
+        m = flat.match(/礼金\s*(\S+)/);
+        if (m && !["-","無し","契約期間","償却"].includes(m[1])) details["礼金"] = m[1];
         else details["礼金"] = "なし";
         // Shikikin
         if (details["預託金"]) { details["敷金/保証金"] = details["預託金"]; delete details["預託金"]; }
       } else {
         // Infosheet format
-        let m = text.match(/賃料\s*([\d,.]+万?円)/);
-        if (m) details["賃料"] = m[1];
-        m = text.match(/共益費([\d,]+円\/月|なし)/);
-        if (m) details["共益費"] = m[1];
-        else { m = text.match(/管理費等\s*\n?\s*([\d,]+円\/月|なし)/); if (m) details["共益費"] = m[1]; }
-        m = text.match(/面\s*積\s*\n?\s*([\d.]+)\s*m|面積\s*\n?\s*([\d.]+)m|([\d.]+)\s*m²|([\d.]+)\s*㎡/);
+        let m = flat.match(/賃料\s*([\d,.]+\s*万?\s*円)/);
+        if (m) details["賃料"] = m[1].replace(/\s/g, "");
+        m = flat.match(/共益費\s*([\d,]+\s*円\s*\/?\s*月|なし)/);
+        if (m) details["共益費"] = m[1].replace(/\s/g, "");
+        else { m = flat.match(/管理費等?\s*([\d,]+\s*円\s*\/?\s*月|なし)/); if (m) details["共益費"] = m[1].replace(/\s/g, ""); }
+        m = flat.match(/面\s*積\s*([\d.]+)\s*m|面積\s*([\d.]+)\s*m|([\d.]+)\s*m²|([\d.]+)\s*㎡/);
         if (m) { const sqm = [m[1],m[2],m[3],m[4]].find(g => g); const tsubo = (parseFloat(sqm) / 3.30579).toFixed(2); details["面積"] = `${tsubo}坪 (${sqm}m²)`; }
-        else { m = text.match(/([\d.]+)\s*坪/); if (m) details["面積"] = m[1] + "坪"; }
-        m = text.match(/築\s*年\s*月?\s*\n?\s*(\d{4})年(\d{1,2})月/);
+        else { m = flat.match(/([\d.]+)\s*坪/); if (m) details["面積"] = m[1] + "坪"; }
+        m = flat.match(/築\s*年\s*月?\s*(\d{4})\s*年\s*(\d{1,2})\s*月/);
         if (m) { const age = new Date().getFullYear() - parseInt(m[1]); details["築年数"] = `${age}年 (${m[1]}/${m[2].padStart(2,"0")})`; }
-        m = text.match(/構造[・･]?規模\s*\n?\s*(\S+\s+\S+)/);
+        m = flat.match(/構造[・･]?\s*規模\s*(\S+\s+\S+)/);
         if (m) details["構造"] = m[1].trim();
         const depParts = [];
-        for (const label of ["敷金","保証金"]) { m = text.match(new RegExp(`${label}\\s+(\\d+\\.?\\d*ヶ月|なし|[\\d,]+万?円)`)); if (m && m[1] !== "なし") depParts.push(`${label}${m[1]}`); }
+        for (const label of ["敷金","保証金"]) { m = flat.match(new RegExp(`${label}\\s*(\\d+\\.?\\d*\\s*ヶ月|なし|[\\d,]+\\s*万?\\s*円)`)); if (m && m[1].replace(/\s/g,"") !== "なし") depParts.push(`${label}${m[1].replace(/\s/g,"")}`); }
         if (depParts.length) details["敷金/保証金"] = depParts.join(" / ");
-        m = text.match(/礼金\s+([\d.]+ヶ月|なし|[\d,]+万?円)/);
-        if (m && m[1] !== "なし") details["礼金"] = m[1];
+        m = flat.match(/礼金\s*([\d.]+\s*ヶ月|なし|[\d,]+\s*万?\s*円)/);
+        if (m && m[1].replace(/\s/g,"") !== "なし") details["礼金"] = m[1].replace(/\s/g,"");
         else details["礼金"] = "なし";
-        m = text.match(/契約期間\s*\n?\s*(\d+年|定期借家)/);
-        if (m) details["契約"] = m[1];
-        m = text.match(/引渡可能\s*\n?\s*時\s*期\s*\n?\s*(\S+)/);
+        m = flat.match(/契約期間\s*(\d+\s*年|定期借家)/);
+        if (m) details["契約"] = m[1].replace(/\s/g,"");
+        m = flat.match(/引渡可能\s*時?\s*期?\s*(\S+)/);
         if (m) details["入居日"] = m[1];
       }
 
-      // Transport
-      const stationParts = [...rawText.matchAll(/((?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武)[^\n]+)\n([^\n]+)\n(\d+分)/g)];
-      if (stationParts.length) details["交通"] = stationParts.slice(0, 4).map(m => `${m[1]} ${m[2]} ${m[3]}`).join("; ");
-      else { const m = text.match(/((?:JR|東京メトロ|東急|京王|都営)\S+\s+\S+\s+徒歩\d+分)/); if (m) details["交通"] = m[1]; }
+      // Transport - try both flat and line-by-line
+      let transport = [];
+      const stParts = [...flat.matchAll(/((?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武)\S+)\s+(\S+駅?)\s+(徒歩?\s*\d+分)/g)];
+      if (stParts.length) transport = stParts.slice(0, 4).map(m => `${m[1]} ${m[2]} ${m[3].replace(/\s/g,"")}`);
+      if (!transport.length) {
+        const stParts2 = [...text.matchAll(/((?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武)[^\n]+)\n([^\n]+)\n(\d+分)/g)];
+        if (stParts2.length) transport = stParts2.slice(0, 4).map(m => `${m[1]} ${m[2]} ${m[3]}`);
+      }
+      if (!transport.length) {
+        const m = flat.match(/((?:JR|東京メトロ|東急|京王|都営)\S+\s+\S+\s+徒歩\d+分)/);
+        if (m) transport = [m[1]];
+      }
+      if (transport.length) details["交通"] = transport.join("; ");
 
       // Company
-      const companyMatch = text.match(/(株式会社\S+|有限会社\S+)/);
+      const companyMatch = flat.match(/(株式会社\S+|有限会社\S+)/);
       if (companyMatch) details["管理会社"] = companyMatch[1];
-      const telMatch = text.match(/TEL[:：]?\s*([\d-]+)/);
+      const telMatch = flat.match(/TEL\s*[:：]?\s*([\d-]+)/);
       if (telMatch) details["TEL"] = telMatch[1];
-      const faxMatch = text.match(/FAX[:：]?\s*([\d-]+)/);
+      const faxMatch = flat.match(/FAX\s*[:：]?\s*([\d-]+)/);
       if (faxMatch) details["FAX"] = faxMatch[1];
 
       if (remarks.length) details["備考"] = remarks.join(" / ");
@@ -860,7 +916,11 @@
     async function renderPdfPages(pdfUrl, container) {
       try {
         const lib = await ensurePdfJs();
-        const doc = await lib.getDocument(pdfUrl).promise;
+        // Fetch as ArrayBuffer to avoid CORS issues with pdf.js direct URL loading
+        const response = await fetch(pdfUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const arrayBuffer = await response.arrayBuffer();
+        const doc = await lib.getDocument({ data: arrayBuffer }).promise;
         container.innerHTML = "";
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
@@ -874,6 +934,7 @@
         }
         doc.destroy();
       } catch (e) {
+        console.error("PDF render error:", e);
         container.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>';
       }
     }
@@ -1140,8 +1201,12 @@
       document.getElementById("view-map-btn").classList.toggle("active", view === "map");
       document.getElementById("view-list-btn").classList.toggle("active", view === "list");
       document.getElementById("list-view").classList.toggle("active", view === "list");
-      if (view === "list") renderListView();
-      if (view === "map") map.invalidateSize();
+      document.getElementById("compare-panel").style.display = view === "list" ? "none" : "flex";
+      if (view === "list") {
+        document.getElementById("criteria-float").style.display = "none";
+        renderListView();
+      }
+      if (view === "map") { map.invalidateSize(); renderCriteriaFloat(); }
     }
 
     // ================================================================
@@ -1352,8 +1417,16 @@
       if (currentUploadFile) {
         filename = currentUploadFile.name;
         const path = `${Date.now()}_${filename}`;
-        const { error } = await sb.storage.from('pdfs').upload(path, currentUploadFile);
-        if (!error) {
+        const { data: uploadData, error } = await sb.storage.from('pdfs').upload(path, currentUploadFile, {
+          contentType: 'application/pdf',
+          cacheControl: '3600',
+          upsert: true
+        });
+        if (error) {
+          console.error("PDF upload error:", error);
+          status.textContent = "PDF保存に失敗しましたが、物件情報は登録します";
+          status.style.color = "#ea580c";
+        } else {
           const { data: urlData } = sb.storage.from('pdfs').getPublicUrl(path);
           pdfUrl = urlData.publicUrl;
         }
@@ -1365,7 +1438,8 @@
         lat: coords.lat, lon: coords.lon, filename, pdf_url: pdfUrl,
         details: currentUploadInfo?.details || {}, memo: "", color: "blue",
       };
-      await sb.from('properties').insert(newProp);
+      const { error: insertError } = await sb.from('properties').insert(newProp);
+      if (insertError) { console.error("Property insert error:", insertError); }
       closeUploadModal();
       await loadProperties();
       if (currentView === "list") renderListView();
@@ -1425,8 +1499,11 @@
       if (manualPdfFile) {
         filename = manualPdfFile.name;
         const path = `${Date.now()}_${filename}`;
-        const { error } = await sb.storage.from('pdfs').upload(path, manualPdfFile);
-        if (!error) { const { data } = sb.storage.from('pdfs').getPublicUrl(path); pdfUrl = data.publicUrl; }
+        const { data: upData, error } = await sb.storage.from('pdfs').upload(path, manualPdfFile, {
+          contentType: 'application/pdf', cacheControl: '3600', upsert: true
+        });
+        if (error) { console.error("PDF upload error:", error); }
+        else { const { data } = sb.storage.from('pdfs').getPublicUrl(path); pdfUrl = data.publicUrl; }
       }
       const propId = `prop_${Date.now()}`;
       await sb.from('properties').insert({
