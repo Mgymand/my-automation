@@ -604,6 +604,7 @@
     let markers = {};
     let stationLayers = [];
     let currentUploadFile = null;
+    let currentUploadFileBlob = null;  // Blob copy for upload (pdf.js may consume the original)
     let currentUploadInfo = null;
     let memoTimer = null;
     let selectedPropId = null;
@@ -728,8 +729,12 @@
     }
 
     async function extractTextFromPdf(file) {
+      const ab = await file.arrayBuffer();
+      return extractTextFromPdfBuffer(ab);
+    }
+
+    async function extractTextFromPdfBuffer(arrayBuffer) {
       const lib = await ensurePdfJs();
-      const arrayBuffer = await file.arrayBuffer();
       const doc = await lib.getDocument({ data: arrayBuffer }).promise;
       const page = await doc.getPage(1);
       const textContent = await page.getTextContent();
@@ -1384,11 +1389,14 @@
 
     async function processUploadFile(file) {
       currentUploadFile = file;
+      // Create a Blob copy before pdf.js reads the file (ArrayBuffer can only be read once)
+      const arrBuf = await file.arrayBuffer();
+      currentUploadFileBlob = new Blob([arrBuf], { type: 'application/pdf' });
       document.getElementById("upload-status").style.display = "block";
       document.getElementById("upload-status").textContent = "PDFを解析中...";
       document.getElementById("upload-modal").classList.add("active");
       try {
-        const text = await extractTextFromPdf(file);
+        const text = await extractTextFromPdfBuffer(arrBuf);
         currentUploadInfo = extractPropertyInfo(text);
         document.getElementById("upload-name").value = currentUploadInfo.name || "";
         document.getElementById("upload-address").value = currentUploadInfo.address || "";
@@ -1416,10 +1424,10 @@
       // Upload PDF to Supabase Storage
       let pdfUrl = "";
       let filename = "";
-      if (currentUploadFile) {
-        filename = currentUploadFile.name;
+      if (currentUploadFileBlob) {
+        filename = currentUploadFile?.name || 'document.pdf';
         const path = `${Date.now()}_${filename}`;
-        const { data: uploadData, error } = await sb.storage.from('pdfs').upload(path, currentUploadFile, {
+        const { data: uploadData, error } = await sb.storage.from('pdfs').upload(path, currentUploadFileBlob, {
           contentType: 'application/pdf',
           cacheControl: '3600',
           upsert: true
@@ -1454,6 +1462,7 @@
       document.getElementById("upload-address").value = "";
       document.getElementById("upload-status").style.display = "none";
       currentUploadFile = null;
+      currentUploadFileBlob = null;
       currentUploadInfo = null;
     }
 
