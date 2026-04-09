@@ -576,7 +576,6 @@
 
   <!-- Libraries -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <script>
@@ -592,7 +591,7 @@
       document.getElementById('login-screen').style.display = 'none';
     }
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ================================================================
     // STATE
@@ -883,8 +882,8 @@
     // SUPABASE DATA OPERATIONS
     // ================================================================
     async function loadWorkspaces() {
-      const { data: wsList } = await supabase.from('workspaces').select('*');
-      const { data: settings } = await supabase.from('app_settings').select('*').eq('key', 'activeWorkspace').single();
+      const { data: wsList } = await sb.from('workspaces').select('*');
+      const { data: settings } = await sb.from('app_settings').select('*').eq('key', 'activeWorkspace').single();
       const activeWs = settings?.value?.replace(/"/g, '') || (wsList && wsList[0]?.id) || 'ws_1';
       workspacesData = { workspaces: wsList || [], activeWorkspace: activeWs };
       activeWorkspaceId = activeWs;
@@ -904,7 +903,7 @@
 
     async function switchWorkspace(wsId) {
       activeWorkspaceId = wsId;
-      await supabase.from('app_settings').upsert({ key: 'activeWorkspace', value: JSON.stringify(wsId) });
+      await sb.from('app_settings').upsert({ key: 'activeWorkspace', value: JSON.stringify(wsId) });
       document.getElementById("ws-select").value = wsId;
       const ws = getActiveWs();
       if (ws) {
@@ -925,18 +924,18 @@
     }
 
     async function loadProperties() {
-      const { data } = await supabase.from('properties').select('*').eq('workspace_id', activeWorkspaceId);
+      const { data } = await sb.from('properties').select('*').eq('workspace_id', activeWorkspaceId);
       properties = data || [];
       renderMarkers();
     }
 
     async function loadAgents() {
-      const { data } = await supabase.from('agents').select('*');
+      const { data } = await sb.from('agents').select('*');
       agentsData = data || [];
     }
 
     async function loadSchedules(month) {
-      let query = supabase.from('schedules').select('*');
+      let query = sb.from('schedules').select('*');
       if (month) query = query.like('date', `${month}%`);
       const { data } = await query;
       schedulesData = data || [];
@@ -1057,7 +1056,7 @@
           content.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active")); dot.classList.add("active");
           if (markers[prop.id]) markers[prop.id].setIcon(pinIcons[color] || pinIcons.blue);
           document.querySelector(".sidebar-header").style.background = PIN_COLORS[color]?.fill || "#2563eb";
-          await supabase.from('properties').update({ color }).eq('id', prop.id);
+          await sb.from('properties').update({ color }).eq('id', prop.id);
         });
       });
 
@@ -1082,7 +1081,7 @@
         detailsTimer = setTimeout(async () => {
           const d = collectAllDetails();
           prop.details = d;
-          await supabase.from('properties').update({ details: d }).eq('id', prop.id);
+          await sb.from('properties').update({ details: d }).eq('id', prop.id);
           showSaved("details-saved");
         }, 800);
       }
@@ -1104,7 +1103,7 @@
       document.getElementById("move-to-ws").addEventListener("change", async function() {
         const targetWsId = this.value;
         if (!targetWsId || !confirm(`この物件を移動しますか？`)) return;
-        await supabase.from('properties').update({ workspace_id: targetWsId }).eq('id', prop.id);
+        await sb.from('properties').update({ workspace_id: targetWsId }).eq('id', prop.id);
         closeSidebar();
         await loadProperties();
         if (currentView === "list") renderListView();
@@ -1113,7 +1112,7 @@
       // Delete
       document.getElementById("delete-prop-btn").addEventListener("click", async () => {
         if (!confirm("この物件を削除しますか？")) return;
-        await supabase.from('properties').delete().eq('id', prop.id);
+        await sb.from('properties').delete().eq('id', prop.id);
         closeSidebar();
         await loadProperties();
         if (currentView === "list") renderListView();
@@ -1123,7 +1122,7 @@
     async function saveMemo(propId, memo) {
       const p = properties.find(x => x.id === propId);
       if (p) p.memo = memo;
-      await supabase.from('properties').update({ memo }).eq('id', propId);
+      await sb.from('properties').update({ memo }).eq('id', propId);
       showSaved("memo-saved");
     }
 
@@ -1203,7 +1202,7 @@
         btn.addEventListener("click", async e => {
           e.stopPropagation();
           if (!confirm("この物件を削除しますか？")) return;
-          await supabase.from('properties').delete().eq('id', btn.dataset.id);
+          await sb.from('properties').delete().eq('id', btn.dataset.id);
           await loadProperties();
           renderListView();
         });
@@ -1254,7 +1253,7 @@
         clearTimeout(memoTimer);
         memoTimer = setTimeout(async () => {
           prop.memo = ta.value;
-          await supabase.from('properties').update({ memo: ta.value }).eq('id', propId);
+          await sb.from('properties').update({ memo: ta.value }).eq('id', propId);
           showSaved(`list-saved-${propId}`);
         }, 800);
       });
@@ -1262,7 +1261,7 @@
       const sel = document.getElementById(`list-status-${propId}`);
       sel.addEventListener("change", async () => {
         prop.color = sel.value;
-        await supabase.from('properties').update({ color: sel.value }).eq('id', propId);
+        await sb.from('properties').update({ color: sel.value }).eq('id', propId);
         renderListView();
       });
     }
@@ -1353,9 +1352,9 @@
       if (currentUploadFile) {
         filename = currentUploadFile.name;
         const path = `${Date.now()}_${filename}`;
-        const { error } = await supabase.storage.from('pdfs').upload(path, currentUploadFile);
+        const { error } = await sb.storage.from('pdfs').upload(path, currentUploadFile);
         if (!error) {
-          const { data: urlData } = supabase.storage.from('pdfs').getPublicUrl(path);
+          const { data: urlData } = sb.storage.from('pdfs').getPublicUrl(path);
           pdfUrl = urlData.publicUrl;
         }
       }
@@ -1366,7 +1365,7 @@
         lat: coords.lat, lon: coords.lon, filename, pdf_url: pdfUrl,
         details: currentUploadInfo?.details || {}, memo: "", color: "blue",
       };
-      await supabase.from('properties').insert(newProp);
+      await sb.from('properties').insert(newProp);
       closeUploadModal();
       await loadProperties();
       if (currentView === "list") renderListView();
@@ -1426,11 +1425,11 @@
       if (manualPdfFile) {
         filename = manualPdfFile.name;
         const path = `${Date.now()}_${filename}`;
-        const { error } = await supabase.storage.from('pdfs').upload(path, manualPdfFile);
-        if (!error) { const { data } = supabase.storage.from('pdfs').getPublicUrl(path); pdfUrl = data.publicUrl; }
+        const { error } = await sb.storage.from('pdfs').upload(path, manualPdfFile);
+        if (!error) { const { data } = sb.storage.from('pdfs').getPublicUrl(path); pdfUrl = data.publicUrl; }
       }
       const propId = `prop_${Date.now()}`;
-      await supabase.from('properties').insert({
+      await sb.from('properties').insert({
         id: propId, workspace_id: activeWorkspaceId, name, address,
         lat: coords.lat, lon: coords.lon, filename, pdf_url: pdfUrl,
         details, memo: "", color: "blue",
@@ -1531,13 +1530,13 @@
 
       if (wsModalMode === "create") {
         const wsId = `ws_${Date.now()}`;
-        await supabase.from('workspaces').insert({ id: wsId, name, stations: wsModalStations, center, zoom: 16, criteria });
+        await sb.from('workspaces').insert({ id: wsId, name, stations: wsModalStations, center, zoom: 16, criteria });
         await loadWorkspaces();
         await switchWorkspace(wsId);
       } else {
         const ws = getActiveWs();
         if (ws) {
-          await supabase.from('workspaces').update({ name, stations: wsModalStations, center, criteria }).eq('id', ws.id);
+          await sb.from('workspaces').update({ name, stations: wsModalStations, center, criteria }).eq('id', ws.id);
           await loadWorkspaces();
           renderStations(wsModalStations);
           renderCriteriaFloat();
@@ -1549,8 +1548,8 @@
     async function deleteWorkspace() {
       if (workspacesData.workspaces.length <= 1) { alert("最後のワークスペースは削除できません"); return; }
       if (!confirm("このワークスペースと全ての物件を削除しますか？")) return;
-      await supabase.from('properties').delete().eq('workspace_id', activeWorkspaceId);
-      await supabase.from('workspaces').delete().eq('id', activeWorkspaceId);
+      await sb.from('properties').delete().eq('workspace_id', activeWorkspaceId);
+      await sb.from('workspaces').delete().eq('id', activeWorkspaceId);
       await loadWorkspaces();
       if (workspacesData.workspaces.length > 0) await switchWorkspace(workspacesData.workspaces[0].id);
     }
@@ -1585,7 +1584,7 @@
             const newCriteria = {};
             panel.querySelectorAll("input[data-key]").forEach(el => { newCriteria[el.dataset.key] = el.value.trim(); });
             ws.criteria = newCriteria;
-            await supabase.from('workspaces').update({ criteria: newCriteria }).eq('id', ws.id);
+            await sb.from('workspaces').update({ criteria: newCriteria }).eq('id', ws.id);
             showSaved("criteria-float-saved");
           }, 800);
         });
@@ -1703,7 +1702,7 @@
       const wsIds = [...combined];
       let allProps = [];
       for (const wsId of wsIds) {
-        const { data } = await supabase.from('properties').select('*').eq('workspace_id', wsId);
+        const { data } = await sb.from('properties').select('*').eq('workspace_id', wsId);
         const ws = workspacesData.workspaces.find(w => w.id === wsId);
         (data || []).forEach(p => { p._wsName = ws?.name || wsId; allProps.push(p); });
       }
@@ -1785,10 +1784,10 @@
       if (!name || !email) { status.style.display = "block"; status.textContent = "名前とメールアドレスは必須です"; status.style.color = "#dc2626"; return; }
       const agentData = { name, email, phone, area: agentFormAreaIds.join(","), manager_area: agentFormManagerAreaIds.join(","), memo };
       if (editId) {
-        await supabase.from('agents').update(agentData).eq('id', editId);
+        await sb.from('agents').update(agentData).eq('id', editId);
       } else {
         agentData.id = `agent_${Date.now()}`;
-        await supabase.from('agents').insert(agentData);
+        await sb.from('agents').insert(agentData);
       }
       await loadAgents();
       renderAgentLeftPanel();
@@ -1798,7 +1797,7 @@
 
     async function deleteAgent(id) {
       if (!confirm("このエージェントを削除しますか？")) return;
-      await supabase.from('agents').delete().eq('id', id);
+      await sb.from('agents').delete().eq('id', id);
       await loadAgents();
       renderAgentLeftPanel();
       showAgentForm();
@@ -1972,10 +1971,10 @@
       const status = document.getElementById("sch-status");
       if (!data.title || !data.date) { status.style.display = "block"; status.textContent = "タイトルと日付は必須です"; status.style.color = "#dc2626"; return; }
       if (editId) {
-        await supabase.from('schedules').update(data).eq('id', editId);
+        await sb.from('schedules').update(data).eq('id', editId);
       } else {
         data.id = `sch_${Date.now()}`;
-        await supabase.from('schedules').insert(data);
+        await sb.from('schedules').insert(data);
       }
       const month = `${calDate.getFullYear()}-${String(calDate.getMonth()+1).padStart(2,"0")}`;
       await loadSchedules(month);
@@ -1985,7 +1984,7 @@
 
     async function deleteSchedule(id) {
       if (!confirm("この予定を削除しますか？")) return;
-      await supabase.from('schedules').delete().eq('id', id);
+      await sb.from('schedules').delete().eq('id', id);
       const month = `${calDate.getFullYear()}-${String(calDate.getMonth()+1).padStart(2,"0")}`;
       await loadSchedules(month);
       renderCalendar();
@@ -1995,7 +1994,7 @@
     // REALTIME SYNC
     // ================================================================
     function setupRealtime() {
-      supabase.channel('db-changes')
+      sb.channel('db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, async () => {
           await loadProperties();
           if (currentView === "list") renderListView();
@@ -2023,7 +2022,7 @@
     // AUTH
     // ================================================================
     async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await sb.auth.getSession();
       if (session) {
         document.getElementById("login-screen").style.display = "none";
         return true;
@@ -2038,7 +2037,7 @@
       const errorEl = document.getElementById("login-error");
       errorEl.style.display = "none";
       if (!email || !password) { errorEl.textContent = "メールアドレスとパスワードを入力してください"; errorEl.style.display = "block"; return; }
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
         errorEl.textContent = error.message || "ログインに失敗しました";
         errorEl.style.display = "block";
@@ -2074,7 +2073,7 @@
     }
 
     // Auth state listener
-    supabase.auth.onAuthStateChange((event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         document.getElementById("login-screen").style.display = "flex";
       }
