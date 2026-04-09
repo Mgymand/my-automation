@@ -66,7 +66,6 @@
     .pdf-open-btn { display: block; width: 100%; padding: 10px; text-align: center; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; color: #2563eb; font-size: 13px; cursor: pointer; text-decoration: none; margin-bottom: 8px; }
     .pdf-open-btn:hover { background: #e2e8f0; }
     .pdf-pages { margin-top: 8px; }
-    .pdf-pages canvas { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; }
 
     /* Property actions */
     .prop-actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb; display: flex; gap: 8px; }
@@ -1105,10 +1104,8 @@
               await sb.from('properties').update({ pdf_url: pdfUrl }).eq('id', prop.id);
               // Re-render PDF section if sidebar is still showing this property
               if (selectedPropId === prop.id) {
-                const pdfEl = document.getElementById("pdf-pages");
-                const pdfBtn = document.querySelector(".pdf-open-btn");
-                if (pdfEl) renderPdfPages(pdfUrl, pdfEl);
-                if (pdfBtn) { pdfBtn.href = pdfUrl; pdfBtn.style.display = "block"; }
+                // Re-render sidebar with the found PDF URL
+                showProperty(prop);
               }
             }
           } catch(e) { console.error("PDF lookup error:", e); }
@@ -1130,7 +1127,10 @@
           ${companyRows ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #e5e7eb;"><label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block;">管理会社情報</label><div id="company-list">${companyRows}</div></div>` : ''}
         </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
-        ${pdfUrl ? `<div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"><p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p></div></div>` : `<div class="pdf-section"><p style="text-align:center;color:#94a3b8;font-size:13px;">PDFなし</p></div>`}
+        <div class="pdf-section">
+          ${pdfUrl ? `<a class="pdf-open-btn" href="${pdfUrl}" target="_blank" rel="noopener">&#128196; PDFを開く / ダウンロード</a>
+          <div id="pdf-embed-wrap" style="margin-top:8px;"><iframe id="pdf-embed" src="${pdfUrl}" style="width:100%;height:500px;border:1px solid #e5e7eb;border-radius:6px;" frameborder="0"></iframe></div>` : `<p style="text-align:center;color:#94a3b8;font-size:13px;">PDFなし</p>`}
+        </div>
         <div class="prop-actions">
           <select class="move-select" id="move-to-ws">
             <option value="" disabled selected>他エリアに移動...</option>
@@ -1197,10 +1197,10 @@
         document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
 
-      // PDF rendering
-      if (pdfUrl) {
-        const pdfEl = document.getElementById("pdf-pages");
-        renderPdfPages(pdfUrl, pdfEl);
+      // PDF iframe fallback: if iframe fails to load, hide it
+      const pdfEmbed = document.getElementById("pdf-embed");
+      if (pdfEmbed) {
+        pdfEmbed.onerror = () => { pdfEmbed.parentElement.style.display = "none"; };
       }
 
       // Move
