@@ -166,6 +166,7 @@
     .color-picker { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; }
     .color-picker label { font-size: 13px; font-weight: 600; color: #374151; margin-right: 4px; }
     .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
+    .color-dot[data-color="white"] { border-color: #d1d5db; }
     .color-dot:hover { opacity: 0.8; }
     .color-dot.active { border-color: #1e293b; }
 
@@ -656,10 +657,12 @@
     let wsModalMode = "create";
 
     // === Pin icons ===
-    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" } };
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" }, white: { fill: "#ffffff", label: "不可" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
-      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
+      const stroke = key === "white" ? ' stroke="#999" stroke-width="1.5"' : '';
+      const inner = key === "white" ? '#ddd' : '#fff';
+      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"${stroke}/><circle cx="14" cy="13" r="6" fill="${inner}"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
     }
 
     // === Map ===
@@ -802,7 +805,7 @@
 
       content.innerHTML = `<div class="prop-info">
         <h3>${esc(prop.name)}</h3><div class="address">${esc(prop.address)}</div>
-        <div class="color-picker"><label>ステータス</label>${colorDots}</div>
+        <div class="color-picker">${colorDots}</div>
         <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
           <div style="margin-bottom:8px"><label style="font-size:12px;color:#64748b;margin-bottom:2px;display:block;">備考</label><textarea id="biko-input" style="width:100%;height:100px;border:1px solid #d1d5db;border-radius:6px;padding:8px;font-size:12px;resize:vertical;font-family:inherit;" placeholder="備考...">${esc(bikoValue)}</textarea></div>
           <div id="details-list">${detailRows}</div>
