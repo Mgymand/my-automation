@@ -660,7 +660,7 @@ def update_memo(prop_id):
 @app.route("/api/properties/<prop_id>/color", methods=["PUT"])
 def update_color(prop_id):
     color = request.json.get("color", "blue")
-    if color not in ("blue", "red", "green", "yellow", "black", "white"):
+    if color not in ("blue", "red", "green", "yellow", "black", "gray"):
         color = "blue"
     resp = supabase.table("properties").update({"color": color}).eq("id", prop_id).execute()
     if not resp.data:
