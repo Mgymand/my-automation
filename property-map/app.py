@@ -837,6 +837,29 @@ def geocode_station():
     return jsonify({"error": "not_found", "message": f"\u300c{search_name}\u300d\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f"})
 
 
+# --- PDF replace ---
+
+@app.route("/api/properties/replace-pdf", methods=["POST"])
+def replace_pdf():
+    """Replace or add PDF for an existing property."""
+    if "pdf" not in request.files:
+        return jsonify({"error": "no file"}), 400
+    file = request.files["pdf"]
+    prop_id = request.form.get("propertyId", "")
+    ws_id = request.form.get("ws", "")
+    if not prop_id:
+        return jsonify({"error": "propertyId required"}), 400
+    if not file.filename.endswith(".pdf"):
+        return jsonify({"error": "not a PDF"}), 400
+    filename = file.filename
+    filepath = os.path.join(PDF_DIR, filename)
+    file.save(filepath)
+    # Update property in DB
+    supabase.table("properties").update({"filename": filename}).eq("id", prop_id).execute()
+    bump_change()
+    return jsonify({"status": "ok", "filename": filename})
+
+
 # --- PDF serving ---
 
 @app.route("/pdf/<path:filename>")

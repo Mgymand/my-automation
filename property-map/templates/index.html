@@ -1002,7 +1002,14 @@
           ${companyRows ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #e5e7eb;"><label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block;">管理会社情報</label><div id="company-list">${companyRows}</div></div>` : ''}
         </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
-        ${prop.filename ? `<div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>` : `<div class="pdf-section"><p style="text-align:center;color:#94a3b8;font-size:13px;">PDFなし</p></div>`}
+        <div class="pdf-section">
+          ${prop.filename ? `<a class="pdf-open-btn" href="${pdfUrl}" target="_blank">&#128196; PDFをダウンロード</a>` : `<p style="text-align:center;color:#94a3b8;font-size:13px;margin-bottom:8px;">PDFなし</p>`}
+          <label class="pdf-open-btn" style="cursor:pointer;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;display:block;margin-bottom:0;">
+            &#128257; PDF${prop.filename ? 'を差し替え' : 'をアップロード'}
+            <input type="file" accept=".pdf" style="display:none;" id="pdf-replace-input">
+          </label>
+          <div id="pdf-replace-status" style="font-size:12px;margin-top:4px;display:none;"></div>
+        </div>
         <div class="prop-actions">
           <select class="move-select" id="move-to-ws">
             <option value="" disabled selected>他エリアに移動...</option>
@@ -1076,15 +1083,35 @@
         r.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
         document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
-      // PDF images (only if file exists)
-      if (prop.filename) {
-        const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
-        const pdfEl = document.getElementById("pdf-pages");
-        pdfEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
-        fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
-          .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
-          .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
-      }
+      // PDF replace
+      document.getElementById("pdf-replace-input").addEventListener("change", async function() {
+        const file = this.files[0];
+        if (!file || !file.name.endsWith(".pdf")) return;
+        const status = document.getElementById("pdf-replace-status");
+        status.style.display = "block";
+        status.textContent = "アップロード中...";
+        status.style.color = "#64748b";
+        const formData = new FormData();
+        formData.append("pdf", file);
+        formData.append("propertyId", prop.id);
+        formData.append("ws", prop.workspace_id || activeWorkspaceId);
+        try {
+          const res = await fetch("/api/properties/replace-pdf", { method: "POST", body: formData });
+          const data = await res.json();
+          if (data.status === "ok") {
+            prop.filename = data.filename;
+            status.textContent = "差し替え完了";
+            status.style.color = "#16a34a";
+            setTimeout(() => showProperty(prop), 1000);
+          } else {
+            status.textContent = data.message || "エラー";
+            status.style.color = "#dc2626";
+          }
+        } catch(e) {
+          status.textContent = "アップロード失敗";
+          status.style.color = "#dc2626";
+        }
+      });
       // Move to another workspace
       document.getElementById("move-to-ws").addEventListener("change", async function() {
         const targetWsId = this.value;
