@@ -284,18 +284,26 @@ def extract_property_info(pdf_path):
                 info["name"] = l
                 break
 
-    addr_match = re.search(r"\u6240\u5728\u5730\s*[:\uff1a]\s*(.+)", text)
+    # --- 住所 (全都道府県対応) ---
+    addr_match = re.search(r"所在地\s*[:：]\s*(.+)", text)
     if addr_match:
         info["address"] = addr_match.group(1).strip()
     else:
-        for pat in [r"(\u6771\u4eac\u90fd[^\n]+)", r"(\u795e\u5948\u5ddd\u770c[^\n]+)", r"(\u57fc\u7389\u770c[^\n]+)",
-                    r"(\u5343\u8449\u770c[^\n]+)", r"(\u5927\u962a\u5e9c[^\n]+)", r"(\u798f\u5ca1\u770c[^\n]+)"]:
-            m = re.search(pat, text)
-            if m:
-                addr = m.group(1).strip()
-                if "\u77e5\u4e8b\u514d\u8a31" not in addr and "\u3012" not in addr:
-                    info["address"] = addr
-                    break
+        # 全都道府県パターン
+        prefectures = (
+            "北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|"
+            "茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|"
+            "新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|"
+            "三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|"
+            "鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|"
+            "福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県"
+        )
+        for m in re.finditer(rf"((?:{prefectures})[^\n]+)", text):
+            addr = m.group(1).strip()
+            # 免許番号や郵便番号を含む行は除外
+            if "知事免許" not in addr and "〒" not in addr and "代表" not in addr and len(addr) > 5:
+                info["address"] = addr
+                break
 
     is_gtworks = "\u3010\u7269\u4ef6\u6982\u8981\u3011" in text
 
@@ -304,16 +312,25 @@ def extract_property_info(pdf_path):
     else:
         _extract_infosheet(text, lines, details, remarks)
 
+    # 交通 (全国の鉄道会社に対応)
+    rail_companies = (
+        r"(?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武|京急|京成|相鉄|"
+        r"名古屋市営|名鉄|近鉄|南海|阪急|阪神|京阪|大阪メトロ|"
+        r"仙台市地下鉄|仙台市営|札幌市営|福岡市地下鉄|"
+        r"つくばエクスプレス|ゆりかもめ|りんかい線|モノレール|"
+        r"\S+鉄道|\S+電鉄|\S+線)"
+    )
     station_parts = re.findall(
-        r"((?:JR|\u6771\u4eac\u30e1\u30c8\u30ed|\u6771\u6025|\u4eac\u738b|\u5c0f\u7530\u6025|\u90fd\u55b6|\u897f\u6b66|\u6771\u6b66)[^\n]+)\n([^\n]+)\n(\d+\u5206)",
+        rf"({rail_companies}[^\n]+)\n([^\n]+)\n(\d+分)",
         raw_text
     )
     if station_parts:
         details["\u4ea4\u901a"] = "; ".join(f"{l} {s} {t}" for l, s, t in station_parts[:4])
     else:
-        m = re.search(r"((?:JR|\u6771\u4eac\u30e1\u30c8\u30ed|\u6771\u6025|\u4eac\u738b|\u90fd\u55b6)\S+\s+\S+\s+\u5f92\u6b69\d+\u5206)", text)
+        # infosheet format: 仙台市地下鉄東西線 宮城野通 徒歩4分
+        m = re.search(r"(\S+線\s+\S+\s+徒歩\d+分)", text)
         if m:
-            details["\u4ea4\u901a"] = m.group(1)
+            details["交通"] = m.group(1)
 
     company_match = re.search(r"(\u682a\u5f0f\u4f1a\u793e\S+|\u6709\u9650\u4f1a\u793e\S+)", text)
     if company_match:
