@@ -1892,17 +1892,20 @@
     function showPdfOverlay(url) {
       const overlay = document.getElementById("pdf-overlay");
       document.getElementById("pdf-overlay-title").textContent = "PDF表示";
-      // Hide sidebar/page nav in browser PDF viewer, fit to width
       document.getElementById("pdf-overlay-frame").src = url + "#toolbar=0&navpanes=0&view=FitH";
       overlay.style.display = "flex";
+      document.querySelector(".toolbar").style.display = "none";
+      document.getElementById("compare-panel").style.display = "none";
+      document.getElementById("criteria-float").style.display = "none";
     }
     function showStreetView(lat, lon, name) {
       const overlay = document.getElementById("pdf-overlay");
       document.getElementById("pdf-overlay-title").textContent = "外観確認 - " + name;
-      document.getElementById("pdf-overlay-frame").src = `https://www.google.com/maps/embed?pb=!4v0!6m8!1m7!1s!2m2!1d${lat}!2d${lon}!3f0!4f0!5f0.7820865974627469&q=${lat},${lon}`;
-      // Fallback: use street view URL directly
       document.getElementById("pdf-overlay-frame").src = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
       overlay.style.display = "flex";
+      document.querySelector(".toolbar").style.display = "none";
+      document.getElementById("compare-panel").style.display = "none";
+      document.getElementById("criteria-float").style.display = "none";
     }
     function closePdfOverlay() {
       const overlay = document.getElementById("pdf-overlay");
@@ -1910,6 +1913,9 @@
       document.getElementById("pdf-overlay-frame").src = "";
       const btn = document.getElementById("pdf-show-btn");
       if (btn) btn.innerHTML = "&#128196; PDFを表示";
+      document.querySelector(".toolbar").style.display = "flex";
+      if (compareVisible) document.getElementById("compare-panel").style.display = "";
+      if (criteriaVisible) document.getElementById("criteria-float").style.display = "block";
     }
 
     function toggleBgm() {
