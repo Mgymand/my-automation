@@ -378,9 +378,9 @@ def _extract_gtworks(text, lines, details, remarks):
     elif re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*\u7121\u3057", text) or re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*\u306a\u3057", text):
         details["\u5171\u76ca\u8cbb"] = "\u306a\u3057"
 
-    area_matches = re.findall(r"(\d+(?:\.\d+)?)\s*\u5751\s*\n?\s*\(([\d.]+)\s*m", text)
+    area_matches = re.findall(r"(\d+(?:\.\d+)?)\s*\u576a\s*\n?\s*\(([\d.]+)\s*m", text)
     if area_matches:
-        areas = [f"{a[0]}\u5751 ({a[1]}m\u00b2)" for a in area_matches]
+        areas = [f"{a[0]}\u576a ({a[1]}m\u00b2)" for a in area_matches]
         details["\u9762\u7a4d"] = " / ".join(areas)
 
     m = re.search(r"\u7aef\u5de5\s*[:\uff1a]\s*(\d{4})[/\u5e74](\d{1,2})", text)
@@ -471,11 +471,11 @@ def _extract_infosheet(text, lines, details, remarks):
     if m:
         sqm = next(g for g in m.groups() if g)
         tsubo = round(float(sqm) / 3.30579, 2)
-        details["\u9762\u7a4d"] = f"{tsubo}\u5751 ({sqm}m\u00b2)"
+        details["\u9762\u7a4d"] = f"{tsubo}\u576a ({sqm}m\u00b2)"
     else:
-        m = re.search(r"([\d.]+)\s*\u5751", text)
+        m = re.search(r"([\d.]+)\s*\u576a", text)
         if m:
-            details["\u9762\u7a4d"] = m.group(1) + "\u5751"
+            details["\u9762\u7a4d"] = m.group(1) + "\u576a"
 
     m = re.search(r"\u7bc9\s*\u5e74\s*\u6708?\s*\n?\s*(\d{4})\u5e74(\d{1,2})\u6708", text)
     if m:
