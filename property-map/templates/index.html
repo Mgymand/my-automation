@@ -421,7 +421,7 @@
         </div>
 
         <!-- Monthly confirm -->
-        <div style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+        <div id="stats-monthly-register" style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
           <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次登録</h3>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <select id="stats-month" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;"></select>
@@ -432,7 +432,7 @@
         </div>
 
         <!-- Monthly targets -->
-        <div style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+        <div id="stats-targets-section" style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
           <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次目標設定</h3>
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:13px;">
             <div><label style="font-size:11px;color:#64748b;">提案目標</label><input type="number" id="target-proposals" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
@@ -2469,48 +2469,95 @@
       const adminBtn = document.getElementById("admin-settings-btn");
       if (adminBtn) adminBtn.style.display = (role === "admin") ? "" : "none";
       if (role === "viewer") {
-        // Hide all edit controls in toolbar
         document.querySelectorAll(".upload-btn, .manual-add-btn").forEach(el => el.style.display = "none");
-        // Hide workspace create/delete buttons
         document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
-          if (btn.title === "新規作成" || btn.title === "このエリアを削除") btn.style.display = "none";
+          if (btn.title === "新規作成" || btn.title === "このエリアを削除" || btn.title === "設定") btn.style.display = "none";
         });
+        // Hide agent/schedule edit buttons
+        document.querySelectorAll(".agent-btn, .schedule-btn").forEach(el => el.style.display = "none");
       }
     }
 
     // Re-apply viewer restrictions after DOM updates (sidebar, list, etc.)
     function enforceViewerMode() {
       if (currentUserRole !== "viewer") return;
-      // Hide delete, move, replace buttons in sidebar
-      document.querySelectorAll(".prop-action-delete, .prop-action-move, #pdf-replace-input, #move-to-ws").forEach(el => {
-        const parent = el.closest("div") || el.closest("label");
-        if (parent) parent.style.display = "none";
-        el.style.display = "none";
-      });
-      // Hide PDF replace label
+
+      // === Sidebar ===
+      // Hide delete, move, replace buttons
+      document.querySelectorAll(".prop-action-delete, #move-to-ws, #delete-prop-btn").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".prop-actions").forEach(el => el.style.display = "none");
+      // Hide PDF replace label (keep PDF display/download)
       document.querySelectorAll("label").forEach(el => {
-        if (el.textContent.includes("差し替え") || el.textContent.includes("アップロード")) {
-          if (el.querySelector("input[type=file]")) el.style.display = "none";
-        }
+        if ((el.textContent.includes("差し替え") || el.textContent.includes("アップロード")) && el.querySelector("input[type=file]")) el.style.display = "none";
       });
-      // Disable editable cells
-      document.querySelectorAll(".editable-cell, .editable-name").forEach(el => {
-        el.style.cursor = "default";
-        el.replaceWith(el.cloneNode(true)); // Remove event listeners
-      });
-      // Hide row delete buttons in list
-      document.querySelectorAll(".row-del").forEach(el => el.style.display = "none");
       // Hide detail-add, detail-del buttons
       document.querySelectorAll(".detail-add, .detail-del").forEach(el => el.style.display = "none");
-      // Make textareas and inputs in sidebar readonly
+      // Make all sidebar textareas and inputs readonly
       document.querySelectorAll("#sidebar-content textarea, #sidebar-content .detail-key, #sidebar-content .detail-val").forEach(el => {
         el.readOnly = true;
         el.style.opacity = "0.7";
+        el.style.pointerEvents = "none";
       });
-      // Disable color dots
+      // Disable sidebar title click (rename)
+      const sidebarTitle = document.getElementById("sidebar-title");
+      if (sidebarTitle) { sidebarTitle.style.cursor = "default"; sidebarTitle.onclick = null; }
+      // Disable color dots (status change)
       document.querySelectorAll(".color-dot").forEach(el => {
         el.style.pointerEvents = "none";
         el.style.opacity = "0.5";
+      });
+
+      // === List view ===
+      // Disable editable cells (name, details)
+      document.querySelectorAll(".editable-cell, .editable-name").forEach(el => {
+        el.style.cursor = "default";
+        el.replaceWith(el.cloneNode(true));
+      });
+      // Hide row delete buttons
+      document.querySelectorAll(".row-del").forEach(el => el.style.display = "none");
+      // Disable memo textareas in list memo panels
+      document.querySelectorAll(".list-memo-input").forEach(el => {
+        el.readOnly = true;
+        el.style.opacity = "0.7";
+      });
+      // Disable status select in list memo panels
+      document.querySelectorAll(".memo-status-select").forEach(el => {
+        el.disabled = true;
+        el.style.opacity = "0.7";
+      });
+
+      // === Agent view ===
+      document.querySelectorAll(".agent-editable, .agent-editable-memo").forEach(el => {
+        el.style.cursor = "default";
+        el.replaceWith(el.cloneNode(true));
+      });
+
+      // === Stats view ===
+      const statsRegister = document.getElementById("stats-monthly-register");
+      if (statsRegister) statsRegister.style.display = "none";
+      const statsTargets = document.getElementById("stats-targets-section");
+      if (statsTargets) statsTargets.style.display = "none";
+
+      // === Contract view ===
+      // Hide contract start buttons
+      document.querySelectorAll("#contract-approved button").forEach(btn => {
+        if (btn.textContent.includes("契約開始")) btn.style.display = "none";
+      });
+      // Make contract fields readonly
+      document.querySelectorAll("#contract-list select, #contract-list input, #contract-list textarea").forEach(el => {
+        el.disabled = true;
+        el.style.opacity = "0.7";
+      });
+      // Hide contract delete/task add buttons
+      document.querySelectorAll("#contract-list button").forEach(btn => {
+        const text = btn.textContent || btn.innerText;
+        if (text.includes("削除") || text.includes("追加") || text.includes("アップロード")) btn.style.display = "none";
+      });
+
+      // === Toolbar ===
+      document.querySelectorAll(".upload-btn, .manual-add-btn").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
+        if (btn.title === "新規作成" || btn.title === "このエリアを削除" || btn.title === "設定") btn.style.display = "none";
       });
     }
 
@@ -2736,6 +2783,7 @@
           </table>`;
         }
       } catch(e) { console.error("Stats history error:", e); }
+      enforceViewerMode();
     }
 
     async function confirmMonthlyStats() {
@@ -2906,6 +2954,7 @@
           </div>`;
         }).join("");
       }
+      enforceViewerMode();
     }
 
     async function startContract(propId, wsId, propName) {
