@@ -558,7 +558,6 @@
     <div class="compare-panel" id="compare-panel">
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
-      <button onclick="toggleComparePanel()" style="margin-left:4px;border:none;background:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0 2px;" title="閉じる">&times;</button>
     </div>
   </div>
 
@@ -1218,8 +1217,8 @@
       document.getElementById("contract-view").classList.toggle("active", mode === "contract");
       document.getElementById("compare-panel").style.display = (mode === "map" && compareVisible) ? "" : "none";
       document.getElementById("criteria-float").style.display = (mode === "map" && criteriaVisible) ? "block" : "none";
-      document.getElementById("reopen-compare-btn").style.display = (mode === "map" && !compareVisible) ? "" : "none";
-      document.getElementById("reopen-criteria-btn").style.display = (mode === "map" && !criteriaVisible) ? "" : "none";
+      document.getElementById("reopen-compare-btn").style.display = (mode === "map") ? "" : "none";
+      document.getElementById("reopen-criteria-btn").style.display = (mode === "map") ? "" : "none";
       if (mode === "list") renderListView();
       if (mode === "stats") renderStatsView();
       if (mode === "contract") renderContractView();
@@ -1229,13 +1228,17 @@
     function toggleComparePanel() {
       compareVisible = !compareVisible;
       document.getElementById("compare-panel").style.display = compareVisible ? "" : "none";
-      document.getElementById("reopen-compare-btn").style.display = compareVisible ? "none" : "";
+      const btn = document.getElementById("reopen-compare-btn");
+      btn.style.background = compareVisible ? "#2563eb" : "#fff";
+      btn.style.color = compareVisible ? "#fff" : "#374151";
     }
 
     function toggleCriteriaPanel() {
       criteriaVisible = !criteriaVisible;
       document.getElementById("criteria-float").style.display = criteriaVisible ? "block" : "none";
-      document.getElementById("reopen-criteria-btn").style.display = criteriaVisible ? "none" : "";
+      const btn = document.getElementById("reopen-criteria-btn");
+      btn.style.background = criteriaVisible ? "#0891b2" : "#fff";
+      btn.style.color = criteriaVisible ? "#fff" : "#0891b2";
     }
 
     function renderListView() {
@@ -1519,7 +1522,7 @@
       const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
       const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
       panel.style.display = "block";
-      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span><button onclick="toggleCriteriaPanel()" style="margin-left:auto;border:none;background:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0 2px;" title="閉じる">&times;</button></div>
+      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
         <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
           <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
           <div><span style="color:#7c3aed;font-weight:600;">担当者:</span> ${staff.length ? staff.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
