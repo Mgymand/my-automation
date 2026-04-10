@@ -1208,7 +1208,9 @@ def update_contract(contract_id):
     data = request.json
     update = {}
     for key in ["status", "contract_date", "move_in_date", "deposit_deadline",
-                 "key_delivery_date", "notes", "tasks", "documents", "property_name"]:
+                 "key_delivery_date", "notes", "tasks", "documents", "property_name",
+                 "property_address", "management_company", "management_address",
+                 "management_tel", "management_fax", "rent", "area"]:
         if key in data:
             update[key] = data[key]
     if not update:

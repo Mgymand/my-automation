@@ -2155,13 +2155,24 @@
                 <button onclick="deleteContract('${c.id}')" style="padding:4px 8px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:4px;font-size:11px;cursor:pointer;">削除</button>
               </div>
             </div>
-            <!-- 管理会社情報 -->
-            <div style="margin-top:10px;padding:8px 12px;background:#f8fafc;border-radius:6px;font-size:12px;color:#64748b;display:flex;gap:16px;flex-wrap:wrap;">
-              <span><b>管理会社:</b> ${esc(mgmt["管理会社"] || c.management_company || "-")}</span>
-              <span><b>TEL:</b> ${esc(mgmt["TEL"] || c.management_tel || "-")}</span>
-              <span><b>FAX:</b> ${esc(mgmt["FAX"] || c.management_fax || "-")}</span>
-              <span><b>賃料:</b> ${esc(mgmt["賃料"] || "-")}</span>
-              <span><b>面積:</b> ${esc(mgmt["面積"] || "-")}</span>
+            <!-- 物件・管理会社情報（編集可能） -->
+            <div style="margin-top:10px;padding:10px 12px;background:#f8fafc;border-radius:6px;font-size:12px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                <div><label style="font-size:10px;color:#64748b;">物件住所</label>
+                  <input type="text" value="${esc(c.property_address || propData?.address || '')}" onchange="updateContractField('${c.id}','property_address',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">管理会社</label>
+                  <input type="text" value="${esc(c.management_company || mgmt['管理会社'] || '')}" onchange="updateContractField('${c.id}','management_company',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">管理会社住所</label>
+                  <input type="text" value="${esc(c.management_address || '')}" onchange="updateContractField('${c.id}','management_address',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">TEL</label>
+                  <input type="text" value="${esc(c.management_tel || mgmt['TEL'] || '')}" onchange="updateContractField('${c.id}','management_tel',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">FAX</label>
+                  <input type="text" value="${esc(c.management_fax || mgmt['FAX'] || '')}" onchange="updateContractField('${c.id}','management_fax',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">賃料</label>
+                  <input type="text" value="${esc(c.rent || mgmt['賃料'] || '')}" onchange="updateContractField('${c.id}','rent',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+                <div><label style="font-size:10px;color:#64748b;">面積</label>
+                  <input type="text" value="${esc(c.area || mgmt['面積'] || '')}" onchange="updateContractField('${c.id}','area',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px;font-size:13px;">
               <div><label style="font-size:11px;color:#64748b;display:block;">ステータス</label>
