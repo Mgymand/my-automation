@@ -1112,7 +1112,16 @@
             pdfShowBtn.title = "PDFファイルが見つかりません。差し替えてください。";
           }
         }).catch(() => {});
-        pdfShowBtn.addEventListener("click", () => showPdfOverlay(pdfUrl));
+        pdfShowBtn.addEventListener("click", () => {
+          const overlay = document.getElementById("pdf-overlay");
+          if (overlay.style.display === "flex") {
+            closePdfOverlay();
+            pdfShowBtn.innerHTML = "&#128196; PDFを表示";
+          } else {
+            showPdfOverlay(pdfUrl);
+            pdfShowBtn.innerHTML = "&#10005; 閉じる";
+          }
+        });
       }
       // PDF replace
       document.getElementById("pdf-replace-input").addEventListener("change", async function() {
@@ -1898,6 +1907,8 @@
       const overlay = document.getElementById("pdf-overlay");
       overlay.style.display = "none";
       document.getElementById("pdf-overlay-frame").src = "";
+      const btn = document.getElementById("pdf-show-btn");
+      if (btn) btn.innerHTML = "&#128196; PDFを表示";
     }
 
     function toggleBgm() {
