@@ -499,6 +499,7 @@
       <button class="ws-btn" onclick="openWsModal('create')" title="新規作成">+</button>
       <button class="ws-btn" onclick="openWsModal('settings')" title="設定">&#9881;</button>
       <button class="ws-btn" onclick="deleteWorkspace()" title="このエリアを削除" style="color:#dc2626;font-size:13px;">&#128465;</button>
+      <button class="ws-btn" id="admin-settings-btn" onclick="openUserManagement()" title="ユーザー管理" style="color:#64748b;font-size:12px;display:none;">&#128101;</button>
       <button class="ws-btn" onclick="doLogout()" title="ログアウト" style="color:#64748b;font-size:12px;">&#8617;</button>
     </div>
     <div class="view-toggle">
@@ -749,6 +750,30 @@
         </div>
       </div>
       <div class="btn-row" id="ws-modal-btns"></div>
+    </div>
+  </div>
+
+  <!-- User Management Modal -->
+  <div class="modal-overlay" id="user-mgmt-modal">
+    <div class="modal" style="width:550px;">
+      <h3>👥 ユーザー管理</h3>
+      <div id="user-list" style="margin-bottom:16px;"></div>
+      <div style="padding-top:12px;border-top:1px solid #e5e7eb;">
+        <h4 style="font-size:14px;margin-bottom:8px;">新規ユーザー追加</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><label>名前</label><input type="text" id="new-user-name" placeholder="例: 山田太郎"></div>
+          <div><label>メールアドレス</label><input type="text" id="new-user-email" placeholder="例: user@example.com"></div>
+          <div><label>パスワード</label><input type="text" id="new-user-pass" placeholder="パスワード"></div>
+          <div><label>権限</label><select id="new-user-role" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+            <option value="viewer">閲覧者</option><option value="admin">管理者</option>
+          </select></div>
+        </div>
+        <div id="user-mgmt-status" style="font-size:12px;display:none;margin-bottom:8px;"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="closeUserManagement()">閉じる</button>
+          <button class="btn btn-primary" onclick="addUser()">追加</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2424,16 +2449,83 @@
       try {
         const res = await fetch("/api/auth-check");
         const data = await res.json();
-        if (data.loggedIn) { document.getElementById("login-screen").style.display = "none"; return true; }
+        if (data.loggedIn) { document.getElementById("login-screen").style.display = "none"; applyUserRole(data.role); return true; }
       } catch(e) {}
       document.getElementById("login-screen").style.display = "flex";
       return false;
     }
 
+    let currentUserRole = "viewer";
+
     async function doLogout() {
       if (!confirm("ログアウトしますか？")) return;
       await fetch("/api/logout", { method: "POST" });
       document.getElementById("login-screen").style.display = "flex";
+    }
+
+    function applyUserRole(role) {
+      currentUserRole = role || "viewer";
+      const adminBtn = document.getElementById("admin-settings-btn");
+      if (adminBtn) adminBtn.style.display = (role === "admin") ? "" : "none";
+      // Viewers: hide edit/delete/upload buttons
+      if (role === "viewer") {
+        document.querySelectorAll(".upload-btn, .manual-add-btn, .prop-action-delete").forEach(el => el.style.display = "none");
+      }
+    }
+
+    // === User Management ===
+    async function openUserManagement() {
+      document.getElementById("user-mgmt-modal").classList.add("active");
+      await renderUserList();
+    }
+    function closeUserManagement() {
+      document.getElementById("user-mgmt-modal").classList.remove("active");
+    }
+    async function renderUserList() {
+      const res = await fetch("/api/users");
+      if (!res.ok) { document.getElementById("user-list").innerHTML = '<p style="color:#dc2626;">管理者権限が必要です</p>'; return; }
+      const users = await res.json();
+      const roleLabels = { admin: "管理者", viewer: "閲覧者" };
+      const roleColors = { admin: "#2563eb", viewer: "#64748b" };
+      document.getElementById("user-list").innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#f1f5f9;">
+          <th style="padding:8px;text-align:left;">名前</th>
+          <th style="padding:8px;text-align:left;">メール</th>
+          <th style="padding:8px;text-align:center;">権限</th>
+          <th style="padding:8px;width:40px;"></th>
+        </tr></thead>
+        <tbody>${users.map(u => `<tr style="border-top:1px solid #f1f5f9;">
+          <td style="padding:6px 8px;">${esc(u.name || "")}</td>
+          <td style="padding:6px 8px;">${esc(u.email)}</td>
+          <td style="padding:6px 8px;text-align:center;"><span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:${u.role==='admin'?'#dbeafe':'#f1f5f9'};color:${roleColors[u.role]||'#64748b'};">${roleLabels[u.role]||u.role}</span></td>
+          <td style="padding:6px 8px;"><button onclick="deleteUser('${u.email}')" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;" title="削除">&times;</button></td>
+        </tr>`).join("")}</tbody>
+      </table>`;
+    }
+    async function addUser() {
+      const name = document.getElementById("new-user-name").value.trim();
+      const email = document.getElementById("new-user-email").value.trim();
+      const password = document.getElementById("new-user-pass").value;
+      const role = document.getElementById("new-user-role").value;
+      const status = document.getElementById("user-mgmt-status");
+      if (!email || !password) { status.style.display = "block"; status.textContent = "メールとパスワードは必須です"; status.style.color = "#dc2626"; return; }
+      const res = await fetch("/api/users", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ name, email, password, role }) });
+      const data = await res.json();
+      if (data.status === "ok") {
+        status.style.display = "block"; status.textContent = "追加しました"; status.style.color = "#16a34a";
+        document.getElementById("new-user-name").value = "";
+        document.getElementById("new-user-email").value = "";
+        document.getElementById("new-user-pass").value = "";
+        await renderUserList();
+        setTimeout(() => status.style.display = "none", 2000);
+      } else {
+        status.style.display = "block"; status.textContent = data.error || "エラー"; status.style.color = "#dc2626";
+      }
+    }
+    async function deleteUser(email) {
+      if (!confirm(`${email} を削除しますか？`)) return;
+      await fetch(`/api/users/${encodeURIComponent(email)}`, { method: "DELETE" });
+      await renderUserList();
     }
 
     async function doLogin() {
@@ -2446,6 +2538,7 @@
       const data = await res.json();
       if (data.status === "ok") {
         document.getElementById("login-screen").style.display = "none";
+        applyUserRole(data.role);
         initApp();
       } else {
         errorEl.textContent = data.message || "ログインに失敗しました";

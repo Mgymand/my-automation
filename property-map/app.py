@@ -18,9 +18,26 @@ SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5c
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # --- Authentication ---
-USERS = {
-    "k.iwamoto@lime-fit.com": "Lime0201",
+# Fallback users (used if DB table doesn't exist yet)
+FALLBACK_USERS = {
+    "k.iwamoto@lime-fit.com": {"password": "Lime0201", "role": "admin"},
+    "gymand.manman@gmail.com": {"password": "View0201", "role": "viewer"},
 }
+
+
+def _load_users():
+    """Load users from Supabase. Falls back to FALLBACK_USERS."""
+    try:
+        resp = supabase.table("users").select("*").execute()
+        if resp.data:
+            return {u["email"]: u for u in resp.data}
+    except Exception:
+        pass
+    return {email: {"email": email, **data} for email, data in FALLBACK_USERS.items()}
+
+
+def _get_current_user_role():
+    return session.get("user_role", "viewer")
 
 
 def login_required(f):
@@ -28,6 +45,17 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if not session.get("logged_in"):
             return jsonify({"error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return jsonify({"error": "unauthorized"}), 401
+        if session.get("user_role") != "admin":
+            return jsonify({"error": "admin_only", "message": "管理者権限が必要です"}), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -603,13 +631,17 @@ def get_sync():
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    email = data.get("email", "").strip()
+    email = data.get("email", "").strip().lower()
     password = data.get("password", "")
-    if email in USERS and USERS[email] == password:
+    users = _load_users()
+    user = users.get(email)
+    if user and user.get("password") == password:
         session["logged_in"] = True
         session["user_email"] = email
-        return jsonify({"status": "ok"})
-    return jsonify({"error": "invalid", "message": "ID\u307e\u305f\u306f\u30d1\u30b9\u30ef\u30fc\u30c9\u304c\u6b63\u3057\u304f\u3042\u308a\u307e\u305b\u3093"}), 401
+        session["user_role"] = user.get("role", "viewer")
+        session["user_name"] = user.get("name", email.split("@")[0])
+        return jsonify({"status": "ok", "role": user.get("role", "viewer"), "name": session["user_name"]})
+    return jsonify({"error": "invalid", "message": "IDまたはパスワードが正しくありません"}), 401
 
 
 @app.route("/api/logout", methods=["POST"])
@@ -621,7 +653,9 @@ def logout():
 @app.route("/api/auth-check")
 def auth_check():
     if session.get("logged_in"):
-        return jsonify({"loggedIn": True, "email": session.get("user_email", "")})
+        return jsonify({"loggedIn": True, "email": session.get("user_email", ""),
+                        "role": session.get("user_role", "viewer"),
+                        "name": session.get("user_name", "")})
     return jsonify({"loggedIn": False})
 
 
@@ -1214,6 +1248,46 @@ def update_schedule(sch_id):
 def delete_schedule(sch_id):
     supabase.table("schedules").delete().eq("id", sch_id).execute()
     bump_change()
+    return jsonify({"status": "ok"})
+
+
+# ===================== User Management =====================
+
+@app.route("/api/users")
+@admin_required
+def get_users():
+    users = _load_users()
+    # Don't expose passwords
+    return jsonify([{"email": u["email"], "name": u.get("name", ""), "role": u.get("role", "viewer")} for u in users.values()])
+
+
+@app.route("/api/users", methods=["POST"])
+@admin_required
+def create_user():
+    data = request.json
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    name = data.get("name", "").strip()
+    role = data.get("role", "viewer")
+    if not email or not password:
+        return jsonify({"error": "メールとパスワードは必須です"}), 400
+    if role not in ("admin", "viewer"):
+        role = "viewer"
+    try:
+        supabase.table("users").upsert({
+            "email": email, "password": password, "name": name or email.split("@")[0], "role": role
+        }).execute()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/users/<email>", methods=["DELETE"])
+@admin_required
+def delete_user(email):
+    if email == session.get("user_email"):
+        return jsonify({"error": "自分自身は削除できません"}), 400
+    supabase.table("users").delete().eq("email", email).execute()
     return jsonify({"status": "ok"})
 
 
