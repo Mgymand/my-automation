@@ -49,6 +49,18 @@ def login_required(f):
     return decorated
 
 
+def editor_required(f):
+    """Require admin role for write operations. Viewers get 403."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return jsonify({"error": "unauthorized"}), 401
+        if session.get("user_role") == "viewer":
+            return jsonify({"error": "readonly", "message": "閲覧専用アカウントです"}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -672,6 +684,7 @@ def get_workspaces():
 
 
 @app.route("/api/workspaces", methods=["POST"])
+@editor_required
 def create_workspace():
     data = request.json
     ws_id = f"ws_{int(time.time() * 1000)}"
@@ -694,6 +707,7 @@ def create_workspace():
 
 
 @app.route("/api/workspaces/<ws_id>", methods=["PUT"])
+@editor_required
 def update_workspace(ws_id):
     updates = request.json
     update_data = {}
@@ -717,6 +731,7 @@ def update_workspace(ws_id):
 
 
 @app.route("/api/workspaces/<ws_id>", methods=["DELETE"])
+@editor_required
 def delete_workspace(ws_id):
     # Check count
     resp = supabase.table("workspaces").select("id").execute()
@@ -739,6 +754,7 @@ def delete_workspace(ws_id):
 
 
 @app.route("/api/workspaces/active", methods=["PUT"])
+@editor_required
 def set_active_workspace():
     ws_id = request.json.get("id")
     resp = supabase.table("workspaces").select("id").eq("id", ws_id).execute()
@@ -757,6 +773,7 @@ def get_properties():
 
 
 @app.route("/api/properties/<prop_id>/memo", methods=["PUT"])
+@editor_required
 def update_memo(prop_id):
     memo = request.json.get("memo", "")
     resp = supabase.table("properties").update({"memo": memo}).eq("id", prop_id).execute()
@@ -767,6 +784,7 @@ def update_memo(prop_id):
 
 
 @app.route("/api/properties/<prop_id>/color", methods=["PUT"])
+@editor_required
 def update_color(prop_id):
     color = request.json.get("color", "blue")
     if color not in ("blue", "red", "green", "yellow", "black", "gray"):
@@ -779,6 +797,7 @@ def update_color(prop_id):
 
 
 @app.route("/api/upload", methods=["POST"])
+@editor_required
 def upload_pdf():
     ws_id = get_active_ws_id()
     if "pdf" not in request.files:
@@ -824,6 +843,7 @@ def upload_pdf():
 
 
 @app.route("/api/properties/manual", methods=["POST"])
+@editor_required
 def add_property_manual():
     ws_id = get_active_ws_id()
     data = request.json
@@ -856,6 +876,7 @@ def add_property_manual():
 
 
 @app.route("/api/properties/<prop_id>/details", methods=["PUT"])
+@editor_required
 def update_details(prop_id):
     data = request.json
     update = {}
@@ -873,6 +894,7 @@ def update_details(prop_id):
 
 
 @app.route("/api/properties/<prop_id>", methods=["DELETE"])
+@editor_required
 def delete_property(prop_id):
     supabase.table("properties").delete().eq("id", prop_id).execute()
     bump_change()
@@ -880,6 +902,7 @@ def delete_property(prop_id):
 
 
 @app.route("/api/properties/<prop_id>/move", methods=["PUT"])
+@editor_required
 def move_property(prop_id):
     """Move a property to a different workspace."""
     target_ws_id = request.json.get("targetWs")
@@ -932,6 +955,7 @@ def geocode_station():
 # --- PDF replace ---
 
 @app.route("/api/properties/replace-pdf", methods=["POST"])
+@editor_required
 def replace_pdf():
     """Replace or add PDF for an existing property."""
     if "pdf" not in request.files:
@@ -1041,6 +1065,7 @@ def get_agents():
 
 
 @app.route("/api/agents", methods=["POST"])
+@editor_required
 def create_agent():
     data = request.json
     name = data.get("name", "").strip()
@@ -1070,6 +1095,7 @@ def create_agent():
 
 
 @app.route("/api/agents/<agent_id>", methods=["PUT"])
+@editor_required
 def update_agent(agent_id):
     data = request.json
     update_data = {}
@@ -1097,6 +1123,7 @@ def update_agent(agent_id):
 
 
 @app.route("/api/agents/<agent_id>", methods=["DELETE"])
+@editor_required
 def delete_agent(agent_id):
     supabase.table("agents").delete().eq("id", agent_id).execute()
     bump_change()
@@ -1175,6 +1202,7 @@ def get_schedules():
 
 
 @app.route("/api/schedules", methods=["POST"])
+@editor_required
 def create_schedule():
     data = request.json
     title = data.get("title", "").strip()
@@ -1208,6 +1236,7 @@ def create_schedule():
 
 
 @app.route("/api/schedules/<sch_id>", methods=["PUT"])
+@editor_required
 def update_schedule(sch_id):
     data = request.json
     update_data = {}
@@ -1245,6 +1274,7 @@ def update_schedule(sch_id):
 
 
 @app.route("/api/schedules/<sch_id>", methods=["DELETE"])
+@editor_required
 def delete_schedule(sch_id):
     supabase.table("schedules").delete().eq("id", sch_id).execute()
     bump_change()
@@ -1328,6 +1358,7 @@ def get_monthly_stats():
 
 
 @app.route("/api/stats/monthly", methods=["POST"])
+@editor_required
 def confirm_monthly_stats():
     """Confirm (register) monthly stats for a workspace."""
     data = request.json
@@ -1377,6 +1408,7 @@ def get_targets():
 
 
 @app.route("/api/stats/targets", methods=["POST"])
+@editor_required
 def save_targets():
     """Save monthly targets."""
     data = request.json
@@ -1398,6 +1430,7 @@ def get_contracts():
 
 
 @app.route("/api/contracts", methods=["POST"])
+@editor_required
 def create_contract():
     """Create a contract from an approved (yellow) property."""
     data = request.json
@@ -1425,6 +1458,7 @@ def create_contract():
 
 
 @app.route("/api/contracts/<contract_id>", methods=["PUT"])
+@editor_required
 def update_contract(contract_id):
     """Update a contract."""
     data = request.json
@@ -1445,6 +1479,7 @@ def update_contract(contract_id):
 
 
 @app.route("/api/contracts/<contract_id>", methods=["DELETE"])
+@editor_required
 def delete_contract(contract_id):
     supabase.table("contracts").delete().eq("id", contract_id).execute()
     bump_change()
@@ -1452,6 +1487,7 @@ def delete_contract(contract_id):
 
 
 @app.route("/api/contracts/upload", methods=["POST"])
+@editor_required
 def upload_contract_doc():
     """Upload a document (PDF/image) for a contract."""
     if "file" not in request.files:

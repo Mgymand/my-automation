@@ -1212,7 +1212,7 @@
       // Delete property
       document.getElementById("delete-prop-btn").addEventListener("click", () => deleteProperty(prop));
 
-      requestAnimationFrame(() => map.invalidateSize());
+      requestAnimationFrame(() => { map.invalidateSize(); enforceViewerMode(); });
     }
 
     async function saveMemo(propId, memo) {
@@ -1743,6 +1743,7 @@
           renderListView();
         };
       });
+      enforceViewerMode();
     }
 
     // === Compare ===
@@ -2467,10 +2468,50 @@
       currentUserRole = role || "viewer";
       const adminBtn = document.getElementById("admin-settings-btn");
       if (adminBtn) adminBtn.style.display = (role === "admin") ? "" : "none";
-      // Viewers: hide edit/delete/upload buttons
       if (role === "viewer") {
-        document.querySelectorAll(".upload-btn, .manual-add-btn, .prop-action-delete").forEach(el => el.style.display = "none");
+        // Hide all edit controls in toolbar
+        document.querySelectorAll(".upload-btn, .manual-add-btn").forEach(el => el.style.display = "none");
+        // Hide workspace create/delete buttons
+        document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
+          if (btn.title === "新規作成" || btn.title === "このエリアを削除") btn.style.display = "none";
+        });
       }
+    }
+
+    // Re-apply viewer restrictions after DOM updates (sidebar, list, etc.)
+    function enforceViewerMode() {
+      if (currentUserRole !== "viewer") return;
+      // Hide delete, move, replace buttons in sidebar
+      document.querySelectorAll(".prop-action-delete, .prop-action-move, #pdf-replace-input, #move-to-ws").forEach(el => {
+        const parent = el.closest("div") || el.closest("label");
+        if (parent) parent.style.display = "none";
+        el.style.display = "none";
+      });
+      // Hide PDF replace label
+      document.querySelectorAll("label").forEach(el => {
+        if (el.textContent.includes("差し替え") || el.textContent.includes("アップロード")) {
+          if (el.querySelector("input[type=file]")) el.style.display = "none";
+        }
+      });
+      // Disable editable cells
+      document.querySelectorAll(".editable-cell, .editable-name").forEach(el => {
+        el.style.cursor = "default";
+        el.replaceWith(el.cloneNode(true)); // Remove event listeners
+      });
+      // Hide row delete buttons in list
+      document.querySelectorAll(".row-del").forEach(el => el.style.display = "none");
+      // Hide detail-add, detail-del buttons
+      document.querySelectorAll(".detail-add, .detail-del").forEach(el => el.style.display = "none");
+      // Make textareas and inputs in sidebar readonly
+      document.querySelectorAll("#sidebar-content textarea, #sidebar-content .detail-key, #sidebar-content .detail-val").forEach(el => {
+        el.readOnly = true;
+        el.style.opacity = "0.7";
+      });
+      // Disable color dots
+      document.querySelectorAll(".color-dot").forEach(el => {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.5";
+      });
     }
 
     // === User Management ===
