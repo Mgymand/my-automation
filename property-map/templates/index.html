@@ -1915,7 +1915,8 @@
       if (btn) btn.innerHTML = "&#128196; PDFを表示";
       document.querySelector(".toolbar").style.display = "flex";
       if (compareVisible) document.getElementById("compare-panel").style.display = "";
-      if (criteriaVisible) document.getElementById("criteria-float").style.display = "block";
+      const sidebarOpen = !document.getElementById("sidebar").classList.contains("collapsed");
+      if (criteriaVisible && !sidebarOpen) document.getElementById("criteria-float").style.display = "block";
     }
 
     function toggleBgm() {
