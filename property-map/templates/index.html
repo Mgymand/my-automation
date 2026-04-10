@@ -574,6 +574,7 @@
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
     </div>
+    <button class="ws-btn" onclick="doLogout()" title="ログアウト" style="font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:auto;padding:0 8px;white-space:nowrap;color:#dc2626;">↩ログアウト</button>
   </div>
 
 
@@ -2263,6 +2264,12 @@
       } catch(e) {}
       document.getElementById("login-screen").style.display = "flex";
       return false;
+    }
+
+    async function doLogout() {
+      if (!confirm("ログアウトしますか？")) return;
+      await fetch("/api/logout", { method: "POST" });
+      document.getElementById("login-screen").style.display = "flex";
     }
 
     async function doLogin() {
