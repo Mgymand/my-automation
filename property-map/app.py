@@ -43,6 +43,60 @@ PDF_DIR = os.path.join(DATA_DIR, "pdfs")
 
 os.makedirs(PDF_DIR, exist_ok=True)
 
+# Copy bundled PDFs from git repo to PDF_DIR on startup (Render wipes /tmp on redeploy)
+_bundled_pdf_dir = os.path.join(BASE_DIR, "data", "pdfs")
+if os.path.isdir(_bundled_pdf_dir) and _bundled_pdf_dir != PDF_DIR:
+    import shutil
+    for fname in os.listdir(_bundled_pdf_dir):
+        src = os.path.join(_bundled_pdf_dir, fname)
+        dst = os.path.join(PDF_DIR, fname)
+        if os.path.isfile(src) and not os.path.exists(dst):
+            shutil.copy2(src, dst)
+            print(f"Restored PDF: {fname}")
+
+
+def _upload_pdf_to_supabase(filepath, filename):
+    """Upload PDF to Supabase Storage for permanent persistence."""
+    try:
+        import base64
+        storage_path = f"{int(time.time())}_{filename}".replace(" ", "_")
+        # Remove non-ASCII for storage key safety
+        safe_path = re.sub(r'[^\x20-\x7E]', '', storage_path) or f"{int(time.time())}.pdf"
+        if not safe_path.endswith('.pdf'):
+            safe_path += '.pdf'
+        with open(filepath, "rb") as f:
+            file_bytes = f.read()
+        supabase.storage.from_("pdfs").upload(safe_path, file_bytes, {
+            "content-type": "application/pdf",
+            "cache-control": "3600",
+            "upsert": "true"
+        })
+        url = supabase.storage.from_("pdfs").get_public_url(safe_path)
+        print(f"PDF uploaded to Supabase Storage: {safe_path}")
+        return url
+    except Exception as e:
+        print(f"Supabase PDF upload error: {e}")
+        return ""
+
+
+def _download_pdf_from_supabase(pdf_url, filename):
+    """Download PDF from Supabase Storage to local cache if not exists."""
+    filepath = os.path.join(PDF_DIR, filename)
+    if os.path.exists(filepath):
+        return filepath
+    if not pdf_url:
+        return None
+    try:
+        req = urllib.request.Request(pdf_url, headers={"User-Agent": "PropertyMapApp/1.0"})
+        with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
+            with open(filepath, "wb") as f:
+                f.write(resp.read())
+        print(f"Downloaded PDF from Supabase: {filename}")
+        return filepath
+    except Exception as e:
+        print(f"PDF download error: {e}")
+        return None
+
 SSL_CTX = ssl.create_default_context()
 SSL_CTX.check_hostname = False
 SSL_CTX.verify_mode = ssl.CERT_NONE
@@ -713,6 +767,8 @@ def upload_pdf():
         return jsonify({"error": "geocode_failed", "extracted": info,
                         "filename": filename, "message": "\u30b8\u30aa\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002"})
     prop_id = f"prop_{int(time.time() * 1000)}"
+    # Upload PDF to Supabase Storage for permanent persistence
+    pdf_url = _upload_pdf_to_supabase(filepath, filename)
     new_prop = {"id": prop_id, "name": info["name"], "address": info["address"],
                 "lat": lat, "lon": lon, "filename": filename,
                 "details": info["details"], "memo": ""}
@@ -724,6 +780,7 @@ def upload_pdf():
         "lat": lat,
         "lon": lon,
         "filename": filename,
+        "pdf_url": pdf_url,
         "details": info["details"],
         "memo": "",
         "color": "blue",
@@ -855,8 +912,10 @@ def replace_pdf():
     filename = file.filename
     filepath = os.path.join(PDF_DIR, filename)
     file.save(filepath)
+    # Upload to Supabase Storage for permanent persistence
+    pdf_url = _upload_pdf_to_supabase(filepath, filename)
     # Update property in DB
-    supabase.table("properties").update({"filename": filename}).eq("id", prop_id).execute()
+    supabase.table("properties").update({"filename": filename, "pdf_url": pdf_url}).eq("id", prop_id).execute()
     bump_change()
     return jsonify({"status": "ok", "filename": filename})
 
@@ -865,6 +924,15 @@ def replace_pdf():
 
 @app.route("/pdf/<path:filename>")
 def serve_pdf(filename):
+    filepath = os.path.join(PDF_DIR, filename)
+    if not os.path.exists(filepath):
+        # Try to download from Supabase Storage
+        # Look up pdf_url from DB by filename
+        resp_db = supabase.table("properties").select("pdf_url").eq("filename", filename).limit(1).execute()
+        if resp_db.data and resp_db.data[0].get("pdf_url"):
+            _download_pdf_from_supabase(resp_db.data[0]["pdf_url"], filename)
+    if not os.path.exists(filepath):
+        return jsonify({"error": "PDF not found"}), 404
     resp = send_from_directory(PDF_DIR, filename, mimetype="application/pdf")
     resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
@@ -875,6 +943,11 @@ def serve_pdf_as_images(filename):
     import fitz
     from flask import Response
     filepath = os.path.join(PDF_DIR, filename)
+    if not os.path.exists(filepath):
+        # Try Supabase fallback
+        resp_db = supabase.table("properties").select("pdf_url").eq("filename", filename).limit(1).execute()
+        if resp_db.data and resp_db.data[0].get("pdf_url"):
+            _download_pdf_from_supabase(resp_db.data[0]["pdf_url"], filename)
     if not os.path.exists(filepath):
         return jsonify({"error": "not found"}), 404
     page_num = request.args.get("page", 0, type=int)
