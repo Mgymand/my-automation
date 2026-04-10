@@ -934,7 +934,33 @@
       selectedPropId = prop.id;
       document.getElementById("sidebar").classList.remove("collapsed");
       document.getElementById("criteria-float").style.display = "none";
-      document.getElementById("sidebar-title").textContent = prop.name;
+      const titleEl = document.getElementById("sidebar-title");
+      titleEl.textContent = prop.name;
+      titleEl.style.cursor = "pointer";
+      titleEl.title = "クリックで物件名を編集";
+      titleEl.onclick = () => {
+        const input = document.createElement("input");
+        input.type = "text"; input.value = prop.name;
+        input.style.cssText = "background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);border-radius:4px;color:#fff;font-size:16px;font-weight:600;padding:2px 6px;width:200px;font-family:inherit;";
+        titleEl.replaceWith(input); input.focus(); input.select();
+        const save = async () => {
+          const v = input.value.trim();
+          if (v && v !== prop.name) {
+            prop.name = v;
+            await fetch(`/api/properties/${prop.id}/details?ws=${prop.workspace_id || activeWorkspaceId}`, {
+              method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ name: v })
+            });
+            if (markers[prop.id]) markers[prop.id].unbindTooltip().bindTooltip(v, { direction: "top", offset: [0, -40] });
+          }
+          // Restore title element
+          const newTitle = document.createElement("h2");
+          newTitle.id = "sidebar-title";
+          input.replaceWith(newTitle);
+          showProperty(prop);
+        };
+        input.addEventListener("blur", save);
+        input.addEventListener("keydown", e => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") { input.value = prop.name; input.blur(); } });
+      };
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
       const ws = getActiveWs();
@@ -1397,6 +1423,9 @@
       body.querySelectorAll("tr").forEach(tr => {
         tr.addEventListener("click", e => {
           if (e.target.classList.contains("row-del") || e.target.closest(".list-memo-row")) return;
+          // Don't trigger row click when editing a cell
+          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+          if (e.target.classList.contains("editable-name") || e.target.classList.contains("editable-cell")) return;
           const prop = properties.find(p => p.id === tr.dataset.id);
           if (!prop) return;
           // Remove existing memo rows
