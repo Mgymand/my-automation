@@ -400,13 +400,21 @@
 
     <!-- Stats view -->
     <div id="stats-view" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#f8fafc;z-index:500;overflow-y:auto;padding:56px 20px 20px;">
-      <div style="max-width:1000px;margin:0 auto;">
+      <div style="max-width:1100px;margin:0 auto;">
         <h2 style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:16px;">📊 月次統計</h2>
-        <!-- Current snapshot -->
+
+        <!-- Total + Targets -->
+        <div id="stats-total" style="margin-bottom:20px;"></div>
+
+        <!-- Current snapshot (collapsible) -->
         <div style="margin-bottom:24px;">
-          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">現在のスナップショット（リアルタイム）</h3>
-          <div id="stats-current" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
+          <div onclick="document.getElementById('stats-current-body').style.display=document.getElementById('stats-current-body').style.display==='none'?'grid':'none';this.querySelector('.chevron').textContent=document.getElementById('stats-current-body').style.display==='none'?'▶':'▼'" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin-bottom:10px;">
+            <span class="chevron" style="font-size:11px;color:#64748b;">▼</span>
+            <h3 style="font-size:15px;font-weight:600;color:#374151;margin:0;">エリア別スナップショット（リアルタイム）</h3>
+          </div>
+          <div id="stats-current-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
         </div>
+
         <!-- Monthly confirm -->
         <div style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
           <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次登録</h3>
@@ -417,6 +425,19 @@
             <span id="stats-confirm-msg" style="font-size:12px;color:#16a34a;opacity:0;transition:opacity 0.3s;"></span>
           </div>
         </div>
+
+        <!-- Monthly targets -->
+        <div style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次目標設定</h3>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:13px;">
+            <div><label style="font-size:11px;color:#64748b;">提案目標</label><input type="number" id="target-proposals" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+            <div><label style="font-size:11px;color:#64748b;">内見目標</label><input type="number" id="target-viewings" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+            <div><label style="font-size:11px;color:#64748b;">申込目標</label><input type="number" id="target-applications" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+            <div><label style="font-size:11px;color:#64748b;">審査通過目標</label><input type="number" id="target-approvals" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+            <div><label style="font-size:11px;color:#64748b;">契約目標</label><input type="number" id="target-contracts" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+          </div>
+        </div>
+
         <!-- History -->
         <div>
           <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">確定済み月次データ</h3>
@@ -2009,6 +2030,39 @@
     // ================================================================
     // STATS VIEW
     // ================================================================
+    let monthlyTargets = { proposals: 0, viewings: 0, applications: 0, approvals: 0, contracts: 0 };
+
+    async function loadTargets() {
+      try {
+        const res = await fetch("/api/stats/targets");
+        const data = await res.json();
+        if (data && data.proposals !== undefined) monthlyTargets = data;
+      } catch(e) {}
+      document.getElementById("target-proposals").value = monthlyTargets.proposals || "";
+      document.getElementById("target-viewings").value = monthlyTargets.viewings || "";
+      document.getElementById("target-applications").value = monthlyTargets.applications || "";
+      document.getElementById("target-approvals").value = monthlyTargets.approvals || "";
+      document.getElementById("target-contracts").value = monthlyTargets.contracts || "";
+    }
+
+    async function saveTargets() {
+      monthlyTargets = {
+        proposals: parseInt(document.getElementById("target-proposals").value) || 0,
+        viewings: parseInt(document.getElementById("target-viewings").value) || 0,
+        applications: parseInt(document.getElementById("target-applications").value) || 0,
+        approvals: parseInt(document.getElementById("target-approvals").value) || 0,
+        contracts: parseInt(document.getElementById("target-contracts").value) || 0,
+      };
+      await fetch("/api/stats/targets", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(monthlyTargets) });
+      renderStatsView();
+    }
+
+    function pct(a, b) { return b > 0 ? Math.round(a / b * 100) : 0; }
+    function pctBar(val, target, color) {
+      const p = target > 0 ? Math.min(100, Math.round(val / target * 100)) : 0;
+      return `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${p}%;background:${color};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:600;color:${p>=100?'#16a34a':'#64748b'};min-width:35px;text-align:right;">${p}%</span></div>`;
+    }
+
     async function renderStatsView() {
       // Populate month selector
       const monthSel = document.getElementById("stats-month");
@@ -2022,19 +2076,50 @@
           monthSel.innerHTML += `<option value="${val}">${label}</option>`;
         }
       }
-      // Populate workspace selector
       const wsSel = document.getElementById("stats-ws-select");
-      wsSel.innerHTML = workspacesData.workspaces.map(ws =>
-        `<option value="${ws.id}">${esc(ws.name)}</option>`
-      ).join("");
+      wsSel.innerHTML = workspacesData.workspaces.map(ws => `<option value="${ws.id}">${esc(ws.name)}</option>`).join("");
+
+      await loadTargets();
 
       // Current snapshot
       try {
         const res = await fetch("/api/stats/current");
         const stats = await res.json();
-        const container = document.getElementById("stats-current");
-        container.innerHTML = stats.map(s => `
-          <div class="stat-card">
+
+        // Total across all workspaces
+        const total = { proposals: 0, viewings: 0, applications: 0, approvals: 0, contracts: 0 };
+        stats.forEach(s => { total.proposals += s.proposals; total.viewings += s.viewings; total.applications += s.applications; total.approvals += s.approvals; });
+
+        // Conversion rates
+        const r1 = pct(total.viewings, total.proposals);
+        const r2 = pct(total.applications, total.viewings);
+        const r3 = pct(total.approvals, total.applications);
+
+        const t = monthlyTargets;
+        document.getElementById("stats-total").innerHTML = `
+          <div class="stat-card" style="border:2px solid #2563eb;">
+            <h4 style="color:#2563eb;font-size:16px;">全エリア統合</h4>
+            <div class="stat-grid" style="margin-bottom:12px;">
+              <div class="stat-item"><div class="num" style="color:#2563eb">${total.proposals}</div><div class="lbl">提案数</div>${t.proposals ? pctBar(total.proposals, t.proposals, '#2563eb') : ''}</div>
+              <div class="stat-item"><div class="num" style="color:#dc2626">${total.viewings}</div><div class="lbl">内見数</div>${t.viewings ? pctBar(total.viewings, t.viewings, '#dc2626') : ''}</div>
+              <div class="stat-item"><div class="num" style="color:#16a34a">${total.applications}</div><div class="lbl">申込数</div>${t.applications ? pctBar(total.applications, t.applications, '#16a34a') : ''}</div>
+              <div class="stat-item"><div class="num" style="color:#eab308">${total.approvals}</div><div class="lbl">審査通過</div>${t.approvals ? pctBar(total.approvals, t.approvals, '#eab308') : ''}</div>
+              <div class="stat-item"><div class="num" style="color:#7c3aed">${total.contracts}</div><div class="lbl">契約数</div>${t.contracts ? pctBar(total.contracts, t.contracts, '#7c3aed') : ''}</div>
+            </div>
+            <div style="display:flex;gap:12px;font-size:12px;color:#64748b;border-top:1px solid #e5e7eb;padding-top:8px;">
+              <span>提案→内見: <b style="color:#1e293b">${r1}%</b></span>
+              <span>内見→申込: <b style="color:#1e293b">${r2}%</b></span>
+              <span>申込→審査通過: <b style="color:#1e293b">${r3}%</b></span>
+            </div>
+          </div>`;
+
+        // Per-workspace cards
+        const container = document.getElementById("stats-current-body");
+        container.innerHTML = stats.map(s => {
+          const sr1 = pct(s.viewings, s.proposals);
+          const sr2 = pct(s.applications, s.viewings);
+          const sr3 = pct(s.approvals, s.applications);
+          return `<div class="stat-card">
             <h4>${esc(s.workspaceName)}</h4>
             <div class="stat-grid">
               <div class="stat-item"><div class="num" style="color:#2563eb">${s.proposals}</div><div class="lbl">提案数</div></div>
@@ -2043,8 +2128,9 @@
               <div class="stat-item"><div class="num" style="color:#eab308">${s.approvals}</div><div class="lbl">審査通過</div></div>
               <div class="stat-item"><div class="num" style="color:#7c3aed">-</div><div class="lbl">契約数</div></div>
             </div>
-          </div>
-        `).join("");
+            <div style="font-size:11px;color:#94a3b8;margin-top:6px;">移行率: 提案→内見 ${sr1}% | 内見→申込 ${sr2}% | 申込→通過 ${sr3}%</div>
+          </div>`;
+        }).join("");
       } catch(e) { console.error("Stats load error:", e); }
 
       // History
@@ -2059,16 +2145,18 @@
           workspacesData.workspaces.forEach(ws => wsNames[ws.id] = ws.name);
           container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
             <thead><tr style="background:#f1f5f9;">
-              <th style="padding:10px;text-align:left;font-weight:600;color:#64748b;">月</th>
-              <th style="padding:10px;text-align:left;font-weight:600;color:#64748b;">エリア</th>
-              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">提案</th>
-              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">内見</th>
-              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">申込</th>
-              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">審査通過</th>
-              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">契約</th>
-              <th style="padding:10px;text-align:right;font-weight:600;color:#64748b;">確定日</th>
+              <th style="padding:10px;text-align:left;">月</th><th style="padding:10px;text-align:left;">エリア</th>
+              <th style="padding:10px;text-align:center;">提案</th><th style="padding:10px;text-align:center;">内見</th>
+              <th style="padding:10px;text-align:center;">申込</th><th style="padding:10px;text-align:center;">審査通過</th>
+              <th style="padding:10px;text-align:center;">契約</th>
+              <th style="padding:10px;text-align:center;">提→内</th><th style="padding:10px;text-align:center;">内→申</th><th style="padding:10px;text-align:center;">申→通</th>
+              <th style="padding:10px;text-align:right;">確定日</th>
             </tr></thead>
-            <tbody>${history.map(h => `<tr style="border-top:1px solid #f1f5f9;">
+            <tbody>${history.map(h => {
+              const hr1 = pct(h.viewings, h.proposals);
+              const hr2 = pct(h.applications, h.viewings);
+              const hr3 = pct(h.approvals, h.applications);
+              return `<tr style="border-top:1px solid #f1f5f9;">
               <td style="padding:8px 10px;font-weight:500;">${esc(h.month)}</td>
               <td style="padding:8px 10px;">${esc(wsNames[h.workspace_id] || h.workspace_id)}</td>
               <td style="padding:8px 10px;text-align:center;">${h.proposals}</td>
@@ -2076,8 +2164,11 @@
               <td style="padding:8px 10px;text-align:center;">${h.applications}</td>
               <td style="padding:8px 10px;text-align:center;">${h.approvals}</td>
               <td style="padding:8px 10px;text-align:center;">${h.contracts}</td>
+              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr1}%</td>
+              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr2}%</td>
+              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr3}%</td>
               <td style="padding:8px 10px;text-align:right;color:#64748b;font-size:12px;">${h.confirmed_at ? new Date(h.confirmed_at).toLocaleDateString('ja-JP') : '-'}</td>
-            </tr>`).join("")}</tbody>
+            </tr>`;}).join("")}</tbody>
           </table>`;
         }
       } catch(e) { console.error("Stats history error:", e); }

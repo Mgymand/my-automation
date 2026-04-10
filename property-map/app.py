@@ -1162,6 +1162,23 @@ def confirm_monthly_stats():
     }})
 
 
+@app.route("/api/stats/targets")
+def get_targets():
+    """Get monthly targets."""
+    targets = _get_app_setting("monthly_targets", {
+        "proposals": 0, "viewings": 0, "applications": 0, "approvals": 0, "contracts": 0
+    })
+    return jsonify(targets)
+
+
+@app.route("/api/stats/targets", methods=["POST"])
+def save_targets():
+    """Save monthly targets."""
+    data = request.json
+    _set_app_setting("monthly_targets", data)
+    return jsonify({"status": "ok"})
+
+
 # ===================== Contracts =====================
 
 @app.route("/api/contracts")
