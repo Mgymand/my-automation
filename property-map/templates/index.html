@@ -2140,6 +2140,10 @@
         listEl.innerHTML = contractsData.map(c => {
           const st = CONTRACT_STATUSES.find(s => s.value === c.status) || CONTRACT_STATUSES[0];
           const tasks = c.tasks || [];
+          const docs = c.documents || [];
+          // Find the property to show management company info
+          const propData = approvedProps.find(p => p.id === c.property_id);
+          const mgmt = propData?.details || {};
           return `<div class="contract-card" id="contract-${c.id}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
               <div>
@@ -2150,6 +2154,14 @@
               <div style="display:flex;gap:4px;">
                 <button onclick="deleteContract('${c.id}')" style="padding:4px 8px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:4px;font-size:11px;cursor:pointer;">削除</button>
               </div>
+            </div>
+            <!-- 管理会社情報 -->
+            <div style="margin-top:10px;padding:8px 12px;background:#f8fafc;border-radius:6px;font-size:12px;color:#64748b;display:flex;gap:16px;flex-wrap:wrap;">
+              <span><b>管理会社:</b> ${esc(mgmt["管理会社"] || c.management_company || "-")}</span>
+              <span><b>TEL:</b> ${esc(mgmt["TEL"] || c.management_tel || "-")}</span>
+              <span><b>FAX:</b> ${esc(mgmt["FAX"] || c.management_fax || "-")}</span>
+              <span><b>賃料:</b> ${esc(mgmt["賃料"] || "-")}</span>
+              <span><b>面積:</b> ${esc(mgmt["面積"] || "-")}</span>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px;font-size:13px;">
               <div><label style="font-size:11px;color:#64748b;display:block;">ステータス</label>
@@ -2168,9 +2180,29 @@
             <div style="margin-top:10px;"><label style="font-size:11px;color:#64748b;display:block;">備考</label>
               <textarea onchange="updateContractField('${c.id}','notes',this.value)" style="width:100%;height:50px;padding:6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="メモ...">${esc(c.notes||'')}</textarea>
             </div>
-            <div class="contract-tasks">
+            <!-- 書類アップロード -->
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="font-size:12px;font-weight:600;color:#374151;">タスク / スケジュール</label>
+                <label style="font-size:12px;font-weight:600;color:#374151;">📎 書類</label>
+                <label style="font-size:11px;padding:2px 8px;border:1px dashed #cbd5e1;background:none;color:#2563eb;border-radius:4px;cursor:pointer;">
+                  + アップロード
+                  <input type="file" accept=".pdf,.jpg,.png,.jpeg" style="display:none;" onchange="uploadContractDoc('${c.id}',event)">
+                </label>
+              </div>
+              ${docs.map((d, i) => `
+                <div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;">
+                  <span style="color:#2563eb;">📄</span>
+                  <a href="${esc(d.url)}" target="_blank" style="color:#2563eb;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d.name)}</a>
+                  <span style="color:#94a3b8;font-size:10px;">${esc(d.type || '')}</span>
+                  <button onclick="removeContractDoc('${c.id}',${i})" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;">&times;</button>
+                </div>
+              `).join('')}
+              ${!docs.length ? '<p style="font-size:11px;color:#94a3b8;">書類はまだアップロードされていません</p>' : ''}
+            </div>
+            <!-- タスク / スケジュール -->
+            <div class="contract-tasks" style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label style="font-size:12px;font-weight:600;color:#374151;">📋 タスク / スケジュール</label>
                 <button onclick="addContractTask('${c.id}')" style="font-size:11px;padding:2px 8px;border:1px dashed #cbd5e1;background:none;color:#2563eb;border-radius:4px;cursor:pointer;">+ 追加</button>
               </div>
               ${tasks.map((t, i) => `
@@ -2196,10 +2228,11 @@
             { title: "重説実施", date: "", done: false },
             { title: "書類返送", date: "", done: false },
             { title: "初期費用入金", date: "", done: false },
-            { title: "仲介手数料支払い", date: "", done: false },
+            { title: "仲介手数料入金", date: "", done: false },
             { title: "鍵渡し", date: "", done: false },
             { title: "入居", date: "", done: false },
-          ]
+          ],
+          documents: []
         })
       });
       if ((await res.json()).status === "ok") renderContractView();
@@ -2251,6 +2284,44 @@
       const tasks = _getContractTasks(id);
       tasks.splice(idx, 1);
       await _saveContractTasks(id, tasks);
+    }
+
+    // ================================================================
+    // CONTRACT DOCUMENTS
+    // ================================================================
+    async function uploadContractDoc(contractId, event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('contractId', contractId);
+      const res = await fetch('/api/contracts/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        // Update contract documents array
+        const c = contractsData.find(x => x.id === contractId);
+        if (c) {
+          if (!c.documents) c.documents = [];
+          c.documents.push(data.document);
+          await fetch(`/api/contracts/${contractId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ documents: c.documents }) });
+        }
+        renderContractView();
+      } else {
+        alert('アップロードに失敗しました: ' + (data.error || ''));
+      }
+      event.target.value = '';
+    }
+
+    async function removeContractDoc(contractId, idx) {
+      if (!confirm('この書類を削除しますか？')) return;
+      const c = contractsData.find(x => x.id === contractId);
+      if (c && c.documents) {
+        c.documents.splice(idx, 1);
+        await fetch(`/api/contracts/${contractId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ documents: c.documents }) });
+        renderContractView();
+      }
     }
 
     // ================================================================

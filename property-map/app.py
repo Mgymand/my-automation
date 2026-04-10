@@ -1208,7 +1208,7 @@ def update_contract(contract_id):
     data = request.json
     update = {}
     for key in ["status", "contract_date", "move_in_date", "deposit_deadline",
-                 "key_delivery_date", "notes", "tasks", "property_name"]:
+                 "key_delivery_date", "notes", "tasks", "documents", "property_name"]:
         if key in data:
             update[key] = data[key]
     if not update:
@@ -1225,6 +1225,45 @@ def delete_contract(contract_id):
     supabase.table("contracts").delete().eq("id", contract_id).execute()
     bump_change()
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/contracts/upload", methods=["POST"])
+def upload_contract_doc():
+    """Upload a document (PDF/image) for a contract."""
+    if "file" not in request.files:
+        return jsonify({"error": "no file"}), 400
+    file = request.files["file"]
+    contract_id = request.form.get("contractId", "")
+    if not contract_id:
+        return jsonify({"error": "contractId required"}), 400
+    # Save to contract docs directory
+    docs_dir = os.path.join(PDF_DIR, "contract_docs")
+    os.makedirs(docs_dir, exist_ok=True)
+    filename = file.filename
+    safe_name = f"{int(time.time())}_{filename}"
+    filepath = os.path.join(docs_dir, safe_name)
+    file.save(filepath)
+    doc_url = f"/contract-docs/{safe_name}"
+    doc_info = {"name": filename, "url": doc_url, "type": "", "uploaded_at": time.strftime("%Y-%m-%d")}
+    # Auto-detect type from filename
+    lower = filename.lower()
+    if "重要事項" in filename or "重説" in filename:
+        doc_info["type"] = "重要事項説明書"
+    elif "仲介" in filename or "手数料" in filename:
+        doc_info["type"] = "仲介手数料請求書"
+    elif "請求" in filename:
+        doc_info["type"] = "請求書"
+    elif "契約" in filename:
+        doc_info["type"] = "契約書"
+    return jsonify({"status": "ok", "document": doc_info})
+
+
+@app.route("/contract-docs/<path:filename>")
+def serve_contract_doc(filename):
+    docs_dir = os.path.join(PDF_DIR, "contract_docs")
+    resp = send_from_directory(docs_dir, filename)
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 # ===================== Main =====================
