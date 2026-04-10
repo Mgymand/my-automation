@@ -1086,6 +1086,147 @@ def delete_schedule(sch_id):
     return jsonify({"status": "ok"})
 
 
+# ===================== Statistics =====================
+
+@app.route("/api/stats/current")
+def get_current_stats():
+    """Get real-time stats for all workspaces (current snapshot)."""
+    ws_data = load_workspaces()
+    result = []
+    for ws in ws_data.get("workspaces", []):
+        ws_id = ws["id"]
+        props = load_properties(ws_id)
+        proposals = len(props)
+        colors = [p.get("color", "blue") for p in props]
+        # 内見数: 不可(gray)、未内見(blue)以外
+        viewings = sum(1 for c in colors if c not in ("blue", "gray"))
+        # 申込数: 申込済(green) + 審査通過(yellow) + 審査落ち(black)
+        applications = sum(1 for c in colors if c in ("green", "yellow", "black"))
+        # 審査通過数
+        approvals = sum(1 for c in colors if c == "yellow")
+        result.append({
+            "workspaceId": ws_id,
+            "workspaceName": ws.get("name", ws_id),
+            "proposals": proposals,
+            "viewings": viewings,
+            "applications": applications,
+            "approvals": approvals,
+        })
+    return jsonify(result)
+
+
+@app.route("/api/stats/monthly")
+def get_monthly_stats():
+    """Get all confirmed monthly stats."""
+    resp = supabase.table("monthly_stats").select("*").order("month", desc=True).execute()
+    return jsonify(resp.data or [])
+
+
+@app.route("/api/stats/monthly", methods=["POST"])
+def confirm_monthly_stats():
+    """Confirm (register) monthly stats for a workspace."""
+    data = request.json
+    ws_id = data.get("workspaceId", "")
+    month = data.get("month", "")
+    if not ws_id or not month:
+        return jsonify({"error": "workspaceId and month required"}), 400
+
+    props = load_properties(ws_id)
+    colors = [p.get("color", "blue") for p in props]
+    proposals = len(props)
+    viewings = sum(1 for c in colors if c not in ("blue", "gray"))
+    applications = sum(1 for c in colors if c in ("green", "yellow", "black"))
+    approvals = sum(1 for c in colors if c == "yellow")
+
+    # Count contracts for this workspace/month
+    contract_resp = supabase.table("contracts").select("id").eq("workspace_id", ws_id).execute()
+    contracts_count = len(contract_resp.data or [])
+
+    stat_id = f"stat_{ws_id}_{month}"
+    supabase.table("monthly_stats").upsert({
+        "id": stat_id,
+        "workspace_id": ws_id,
+        "month": month,
+        "proposals": proposals,
+        "viewings": viewings,
+        "applications": applications,
+        "approvals": approvals,
+        "contracts": contracts_count,
+        "confirmed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }).execute()
+    bump_change()
+    return jsonify({"status": "ok", "stats": {
+        "proposals": proposals, "viewings": viewings,
+        "applications": applications, "approvals": approvals,
+        "contracts": contracts_count,
+    }})
+
+
+# ===================== Contracts =====================
+
+@app.route("/api/contracts")
+def get_contracts():
+    """Get all contracts, optionally filtered by workspace."""
+    ws_id = request.args.get("ws")
+    query = supabase.table("contracts").select("*")
+    if ws_id:
+        query = query.eq("workspace_id", ws_id)
+    resp = query.order("created_at", desc=True).execute()
+    return jsonify(resp.data or [])
+
+
+@app.route("/api/contracts", methods=["POST"])
+def create_contract():
+    """Create a contract from an approved (yellow) property."""
+    data = request.json
+    prop_id = data.get("propertyId", "")
+    ws_id = data.get("workspaceId", "")
+    if not prop_id or not ws_id:
+        return jsonify({"error": "propertyId and workspaceId required"}), 400
+    contract_id = f"contract_{int(time.time() * 1000)}"
+    contract = {
+        "id": contract_id,
+        "property_id": prop_id,
+        "workspace_id": ws_id,
+        "property_name": data.get("propertyName", ""),
+        "status": "準備中",
+        "contract_date": data.get("contractDate", ""),
+        "move_in_date": data.get("moveInDate", ""),
+        "deposit_deadline": data.get("depositDeadline", ""),
+        "key_delivery_date": data.get("keyDeliveryDate", ""),
+        "notes": data.get("notes", ""),
+        "tasks": data.get("tasks", []),
+    }
+    supabase.table("contracts").insert(contract).execute()
+    bump_change()
+    return jsonify({"status": "ok", "contract": contract})
+
+
+@app.route("/api/contracts/<contract_id>", methods=["PUT"])
+def update_contract(contract_id):
+    """Update a contract."""
+    data = request.json
+    update = {}
+    for key in ["status", "contract_date", "move_in_date", "deposit_deadline",
+                 "key_delivery_date", "notes", "tasks", "property_name"]:
+        if key in data:
+            update[key] = data[key]
+    if not update:
+        return jsonify({"error": "no fields to update"}), 400
+    resp = supabase.table("contracts").update(update).eq("id", contract_id).execute()
+    if not resp.data:
+        return jsonify({"error": "not found"}), 404
+    bump_change()
+    return jsonify({"status": "ok", "contract": resp.data[0]})
+
+
+@app.route("/api/contracts/<contract_id>", methods=["DELETE"])
+def delete_contract(contract_id):
+    supabase.table("contracts").delete().eq("id", contract_id).execute()
+    bump_change()
+    return jsonify({"status": "ok"})
+
+
 # ===================== Main =====================
 
 if __name__ == "__main__":

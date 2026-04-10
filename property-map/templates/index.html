@@ -87,6 +87,20 @@
       flex-direction: column;
     }
     #list-view.active { display: flex; }
+    #stats-view.active, #contract-view.active { display: block !important; }
+    .stat-card { background:#fff; border-radius:12px; border:1px solid #e5e7eb; padding:16px; }
+    .stat-card h4 { font-size:14px; font-weight:600; color:#374151; margin-bottom:12px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+    .stat-item { text-align:center; padding:8px 4px; border-radius:8px; background:#f8fafc; }
+    .stat-item .num { font-size:24px; font-weight:700; color:#1e293b; }
+    .stat-item .lbl { font-size:10px; color:#64748b; margin-top:2px; }
+    .contract-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px; }
+    .contract-card h4 { font-size:15px; font-weight:600; color:#1e293b; margin-bottom:8px; }
+    .contract-status { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+    .contract-tasks { margin-top:10px; }
+    .contract-task { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
+    .contract-task input[type=checkbox] { margin:0; }
+    .contract-task.done { color:#94a3b8; text-decoration:line-through; }
     .list-toolbar {
       padding: 56px 16px 12px; display: flex; gap: 8px; align-items: center;
       background: #fff; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
@@ -383,6 +397,53 @@
         </table>
       </div>
     </div>
+
+    <!-- Stats view -->
+    <div id="stats-view" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#f8fafc;z-index:500;overflow-y:auto;padding:56px 20px 20px;">
+      <div style="max-width:1000px;margin:0 auto;">
+        <h2 style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:16px;">📊 月次統計</h2>
+        <!-- Current snapshot -->
+        <div style="margin-bottom:24px;">
+          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">現在のスナップショット（リアルタイム）</h3>
+          <div id="stats-current" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
+        </div>
+        <!-- Monthly confirm -->
+        <div style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
+          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次登録</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="stats-month" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;"></select>
+            <select id="stats-ws-select" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;"></select>
+            <button onclick="confirmMonthlyStats()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">月次登録</button>
+            <span id="stats-confirm-msg" style="font-size:12px;color:#16a34a;opacity:0;transition:opacity 0.3s;"></span>
+          </div>
+        </div>
+        <!-- History -->
+        <div>
+          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">確定済み月次データ</h3>
+          <div id="stats-history" style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract view -->
+    <div id="contract-view" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#f8fafc;z-index:500;overflow-y:auto;padding:56px 20px 20px;">
+      <div style="max-width:1100px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="font-size:20px;font-weight:700;color:#1e293b;">📝 契約管理</h2>
+        </div>
+        <!-- Approved properties (yellow) available to start contract -->
+        <div style="margin-bottom:24px;">
+          <h3 style="font-size:15px;font-weight:600;color:#eab308;margin-bottom:10px;">🟡 審査通過物件（契約開始可能）</h3>
+          <div id="contract-approved" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;"></div>
+        </div>
+        <!-- Active contracts -->
+        <div>
+          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">契約一覧</h3>
+          <div id="contract-list"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="sidebar" class="collapsed">
       <div class="sidebar-header">
         <h2 id="sidebar-title">物件情報</h2>
@@ -406,6 +467,8 @@
     <div class="view-toggle">
       <button id="view-map-btn" class="active" onclick="setView('map')">&#x1F5FA; 地図</button>
       <button id="view-list-btn" onclick="setView('list')">&#x1F4CB; 一覧</button>
+      <button id="view-stats-btn" onclick="setView('stats')" style="border-left:1px solid #d1d5db;">&#x1F4CA; 統計</button>
+      <button id="view-contract-btn" onclick="setView('contract')" style="border-left:1px solid #d1d5db;">&#x1F4DD; 契約</button>
     </div>
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -1117,13 +1180,20 @@
 
     function setView(mode) {
       currentView = mode;
-      document.getElementById("view-map-btn").classList.toggle("active", mode === "map");
-      document.getElementById("view-list-btn").classList.toggle("active", mode === "list");
+      const views = ["map","list","stats","contract"];
+      views.forEach(v => {
+        const btn = document.getElementById(`view-${v}-btn`);
+        if (btn) btn.classList.toggle("active", mode === v);
+      });
       document.getElementById("list-view").classList.toggle("active", mode === "list");
-      document.getElementById("compare-panel").style.display = mode === "list" ? "none" : "";
-      document.getElementById("criteria-float").style.display = mode === "list" ? "none" : "block";
+      document.getElementById("stats-view").classList.toggle("active", mode === "stats");
+      document.getElementById("contract-view").classList.toggle("active", mode === "contract");
+      document.getElementById("compare-panel").style.display = (mode === "map") ? "" : "none";
+      document.getElementById("criteria-float").style.display = (mode === "map") ? "block" : "none";
       if (mode === "list") renderListView();
-      else setTimeout(() => map.invalidateSize(), 100);
+      if (mode === "stats") renderStatsView();
+      if (mode === "contract") renderContractView();
+      if (mode === "map") setTimeout(() => map.invalidateSize(), 100);
     }
 
     function renderListView() {
@@ -1914,6 +1984,269 @@
     // Enter key to login
     document.getElementById("login-password").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
     document.getElementById("login-email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("login-password").focus(); });
+
+    // ================================================================
+    // STATS VIEW
+    // ================================================================
+    async function renderStatsView() {
+      // Populate month selector
+      const monthSel = document.getElementById("stats-month");
+      if (!monthSel.options.length || monthSel.options.length <= 1) {
+        monthSel.innerHTML = "";
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+          const label = `${d.getFullYear()}年${d.getMonth()+1}月`;
+          monthSel.innerHTML += `<option value="${val}">${label}</option>`;
+        }
+      }
+      // Populate workspace selector
+      const wsSel = document.getElementById("stats-ws-select");
+      wsSel.innerHTML = workspacesData.workspaces.map(ws =>
+        `<option value="${ws.id}">${esc(ws.name)}</option>`
+      ).join("");
+
+      // Current snapshot
+      try {
+        const res = await fetch("/api/stats/current");
+        const stats = await res.json();
+        const container = document.getElementById("stats-current");
+        container.innerHTML = stats.map(s => `
+          <div class="stat-card">
+            <h4>${esc(s.workspaceName)}</h4>
+            <div class="stat-grid">
+              <div class="stat-item"><div class="num" style="color:#2563eb">${s.proposals}</div><div class="lbl">提案数</div></div>
+              <div class="stat-item"><div class="num" style="color:#dc2626">${s.viewings}</div><div class="lbl">内見数</div></div>
+              <div class="stat-item"><div class="num" style="color:#16a34a">${s.applications}</div><div class="lbl">申込数</div></div>
+              <div class="stat-item"><div class="num" style="color:#eab308">${s.approvals}</div><div class="lbl">審査通過</div></div>
+              <div class="stat-item"><div class="num" style="color:#7c3aed">-</div><div class="lbl">契約数</div></div>
+            </div>
+          </div>
+        `).join("");
+      } catch(e) { console.error("Stats load error:", e); }
+
+      // History
+      try {
+        const res = await fetch("/api/stats/monthly");
+        const history = await res.json();
+        const container = document.getElementById("stats-history");
+        if (!history.length) {
+          container.innerHTML = '<p style="padding:20px;text-align:center;color:#94a3b8;font-size:13px;">確定済みデータはありません</p>';
+        } else {
+          const wsNames = {};
+          workspacesData.workspaces.forEach(ws => wsNames[ws.id] = ws.name);
+          container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#f1f5f9;">
+              <th style="padding:10px;text-align:left;font-weight:600;color:#64748b;">月</th>
+              <th style="padding:10px;text-align:left;font-weight:600;color:#64748b;">エリア</th>
+              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">提案</th>
+              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">内見</th>
+              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">申込</th>
+              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">審査通過</th>
+              <th style="padding:10px;text-align:center;font-weight:600;color:#64748b;">契約</th>
+              <th style="padding:10px;text-align:right;font-weight:600;color:#64748b;">確定日</th>
+            </tr></thead>
+            <tbody>${history.map(h => `<tr style="border-top:1px solid #f1f5f9;">
+              <td style="padding:8px 10px;font-weight:500;">${esc(h.month)}</td>
+              <td style="padding:8px 10px;">${esc(wsNames[h.workspace_id] || h.workspace_id)}</td>
+              <td style="padding:8px 10px;text-align:center;">${h.proposals}</td>
+              <td style="padding:8px 10px;text-align:center;">${h.viewings}</td>
+              <td style="padding:8px 10px;text-align:center;">${h.applications}</td>
+              <td style="padding:8px 10px;text-align:center;">${h.approvals}</td>
+              <td style="padding:8px 10px;text-align:center;">${h.contracts}</td>
+              <td style="padding:8px 10px;text-align:right;color:#64748b;font-size:12px;">${h.confirmed_at ? new Date(h.confirmed_at).toLocaleDateString('ja-JP') : '-'}</td>
+            </tr>`).join("")}</tbody>
+          </table>`;
+        }
+      } catch(e) { console.error("Stats history error:", e); }
+    }
+
+    async function confirmMonthlyStats() {
+      const month = document.getElementById("stats-month").value;
+      const wsId = document.getElementById("stats-ws-select").value;
+      if (!month || !wsId) return;
+      const wsName = workspacesData.workspaces.find(w => w.id === wsId)?.name || wsId;
+      if (!confirm(`${wsName} の ${month} のデータを月次登録しますか？`)) return;
+      const res = await fetch("/api/stats/monthly", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ workspaceId: wsId, month }) });
+      const data = await res.json();
+      if (data.status === "ok") {
+        const msg = document.getElementById("stats-confirm-msg");
+        msg.textContent = `${wsName} ${month} を登録しました`;
+        msg.style.opacity = "1";
+        setTimeout(() => msg.style.opacity = "0", 3000);
+        renderStatsView();
+      }
+    }
+
+    // ================================================================
+    // CONTRACT VIEW
+    // ================================================================
+    let contractsData = [];
+    const CONTRACT_STATUSES = [
+      { value: "準備中", color: "#64748b", bg: "#f1f5f9" },
+      { value: "書類提出", color: "#2563eb", bg: "#dbeafe" },
+      { value: "審査中", color: "#ea580c", bg: "#ffedd5" },
+      { value: "契約締結", color: "#16a34a", bg: "#dcfce7" },
+      { value: "入居済", color: "#7c3aed", bg: "#ede9fe" },
+    ];
+
+    async function renderContractView() {
+      // Load all approved (yellow) properties across all workspaces
+      const approvedProps = [];
+      for (const ws of workspacesData.workspaces) {
+        const res = await fetch(`/api/properties?ws=${ws.id}`);
+        const props = await res.json();
+        props.filter(p => p.color === "yellow").forEach(p => {
+          p._wsName = ws.name; p._wsId = ws.id;
+          approvedProps.push(p);
+        });
+      }
+      // Load contracts
+      const cRes = await fetch("/api/contracts");
+      contractsData = await cRes.json();
+      const contractedPropIds = new Set(contractsData.map(c => c.property_id));
+
+      // Approved properties not yet in contracts
+      const available = approvedProps.filter(p => !contractedPropIds.has(p.id));
+      const approvedEl = document.getElementById("contract-approved");
+      if (!available.length) {
+        approvedEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">審査通過物件はありません</p>';
+      } else {
+        approvedEl.innerHTML = available.map(p => `
+          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;font-size:14px;color:#1e293b;">${esc(p.name)}</div>
+              <div style="font-size:12px;color:#64748b;">${esc(p._wsName)} | ${esc(p.address)}</div>
+            </div>
+            <button onclick="startContract('${p.id}','${p._wsId}','${esc(p.name).replace(/'/g,"\\'")}')"
+              style="padding:6px 14px;background:#eab308;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;">契約開始</button>
+          </div>
+        `).join("");
+      }
+
+      // Contracts list
+      const wsNames = {};
+      workspacesData.workspaces.forEach(ws => wsNames[ws.id] = ws.name);
+      const listEl = document.getElementById("contract-list");
+      if (!contractsData.length) {
+        listEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">契約データはありません</p>';
+      } else {
+        listEl.innerHTML = contractsData.map(c => {
+          const st = CONTRACT_STATUSES.find(s => s.value === c.status) || CONTRACT_STATUSES[0];
+          const tasks = c.tasks || [];
+          return `<div class="contract-card" id="contract-${c.id}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <h4>${esc(c.property_name)}</h4>
+                <div style="font-size:12px;color:#64748b;margin-bottom:6px;">${esc(wsNames[c.workspace_id] || '')}</div>
+                <span class="contract-status" style="background:${st.bg};color:${st.color};">${st.value}</span>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <button onclick="deleteContract('${c.id}')" style="padding:4px 8px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:4px;font-size:11px;cursor:pointer;">削除</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px;font-size:13px;">
+              <div><label style="font-size:11px;color:#64748b;display:block;">ステータス</label>
+                <select onchange="updateContractField('${c.id}','status',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;">
+                  ${CONTRACT_STATUSES.map(s => `<option value="${s.value}"${s.value===c.status?' selected':''}>${s.value}</option>`).join('')}
+                </select></div>
+              <div><label style="font-size:11px;color:#64748b;display:block;">契約予定日</label>
+                <input type="date" value="${c.contract_date||''}" onchange="updateContractField('${c.id}','contract_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+              <div><label style="font-size:11px;color:#64748b;display:block;">入居予定日</label>
+                <input type="date" value="${c.move_in_date||''}" onchange="updateContractField('${c.id}','move_in_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+              <div><label style="font-size:11px;color:#64748b;display:block;">敷金/保証金期限</label>
+                <input type="date" value="${c.deposit_deadline||''}" onchange="updateContractField('${c.id}','deposit_deadline',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+              <div><label style="font-size:11px;color:#64748b;display:block;">鍵引渡日</label>
+                <input type="date" value="${c.key_delivery_date||''}" onchange="updateContractField('${c.id}','key_delivery_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
+            </div>
+            <div style="margin-top:10px;"><label style="font-size:11px;color:#64748b;display:block;">備考</label>
+              <textarea onchange="updateContractField('${c.id}','notes',this.value)" style="width:100%;height:50px;padding:6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="メモ...">${esc(c.notes||'')}</textarea>
+            </div>
+            <div class="contract-tasks">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label style="font-size:12px;font-weight:600;color:#374151;">タスク / スケジュール</label>
+                <button onclick="addContractTask('${c.id}')" style="font-size:11px;padding:2px 8px;border:1px dashed #cbd5e1;background:none;color:#2563eb;border-radius:4px;cursor:pointer;">+ 追加</button>
+              </div>
+              ${tasks.map((t, i) => `
+                <div class="contract-task${t.done?' done':''}" style="display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9;">
+                  <input type="checkbox" ${t.done?'checked':''} onchange="toggleContractTask('${c.id}',${i})">
+                  <input type="date" value="${t.date||''}" onchange="updateContractTaskDate('${c.id}',${i},this.value)" style="padding:2px 4px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;width:130px;">
+                  <input type="text" value="${esc(t.title||'')}" onchange="updateContractTaskTitle('${c.id}',${i},this.value)" style="flex:1;padding:2px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:13px;" placeholder="タスク名">
+                  <button onclick="removeContractTask('${c.id}',${i})" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;">&times;</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+        }).join("");
+      }
+    }
+
+    async function startContract(propId, wsId, propName) {
+      const res = await fetch("/api/contracts", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ propertyId: propId, workspaceId: wsId, propertyName: propName,
+          tasks: [
+            { title: "重要事項説明", date: "", done: false },
+            { title: "契約書締結", date: "", done: false },
+            { title: "敷金/保証金支払い", date: "", done: false },
+            { title: "鍵引渡し", date: "", done: false },
+            { title: "入居", date: "", done: false },
+          ]
+        })
+      });
+      if ((await res.json()).status === "ok") renderContractView();
+    }
+
+    async function updateContractField(id, field, value) {
+      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({[field]: value}) });
+    }
+
+    async function deleteContract(id) {
+      if (!confirm("この契約データを削除しますか？")) return;
+      await fetch(`/api/contracts/${id}`, { method:"DELETE" });
+      renderContractView();
+    }
+
+    function _getContractTasks(id) {
+      const c = contractsData.find(x => x.id === id);
+      return c ? (c.tasks || []) : [];
+    }
+    async function _saveContractTasks(id, tasks) {
+      const c = contractsData.find(x => x.id === id);
+      if (c) c.tasks = tasks;
+      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ tasks }) });
+      renderContractView();
+    }
+    async function addContractTask(id) {
+      const tasks = _getContractTasks(id);
+      tasks.push({ title: "", date: "", done: false });
+      await _saveContractTasks(id, tasks);
+    }
+    async function toggleContractTask(id, idx) {
+      const tasks = _getContractTasks(id);
+      if (tasks[idx]) tasks[idx].done = !tasks[idx].done;
+      await _saveContractTasks(id, tasks);
+    }
+    async function updateContractTaskDate(id, idx, val) {
+      const tasks = _getContractTasks(id);
+      if (tasks[idx]) tasks[idx].date = val;
+      await _saveContractTasks(id, tasks);
+    }
+    async function updateContractTaskTitle(id, idx, val) {
+      const tasks = _getContractTasks(id);
+      if (tasks[idx]) tasks[idx].title = val;
+      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ tasks }) });
+      const c = contractsData.find(x => x.id === id);
+      if (c) c.tasks = tasks;
+    }
+    async function removeContractTask(id, idx) {
+      const tasks = _getContractTasks(id);
+      tasks.splice(idx, 1);
+      await _saveContractTasks(id, tasks);
+    }
+
+    // ================================================================
 
     async function initApp() {
       map.invalidateSize();
