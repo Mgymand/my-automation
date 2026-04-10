@@ -1284,6 +1284,7 @@
 
     const LIST_COLUMNS = [
       { key: "_name", label: "物件名", detail: false },
+      { key: "_area", label: "エリア", detail: false },
       { key: "賃料", label: "賃料", detail: true },
       { key: "共益費", label: "共益費", detail: true },
       { key: "面積", label: "面積", detail: true },
@@ -1367,15 +1368,23 @@
 
       // Body
       const body = document.getElementById("list-body");
+      // Build workspace name lookup
+      const wsNameMap = {};
+      workspacesData.workspaces.forEach(ws => wsNameMap[ws.id] = ws.name);
+
       body.innerHTML = filtered.map(p => {
         const color = PIN_COLORS[p.color || "blue"]?.fill || "#2563eb";
+        const areaName = wsNameMap[p.workspace_id] || "";
         return `<tr data-id="${p.id}">` +
           LIST_COLUMNS.map(col => {
             let val;
             if (col.key === "_name") {
               val = `<span class="color-indicator" style="background:${color}"></span>${esc(p.name)}`;
+            } else if (col.key === "_area") {
+              val = `<span style="font-size:11px;color:#64748b;">${esc(areaName)}</span>`;
             } else {
-              val = esc((p.details && p.details[col.key]) || "-");
+              const raw = (p.details && p.details[col.key]) || "-";
+              val = `<span class="editable-cell" data-prop="${p.id}" data-key="${col.key}">${esc(raw)}</span>`;
             }
             return `<td>${val}</td>`;
           }).join("") +
@@ -1449,11 +1458,36 @@
         });
       });
 
-      // Double-click cell → toggle full text
-      body.querySelectorAll("td").forEach(td => {
-        td.addEventListener("dblclick", e => {
+      // Double-click editable cell → inline edit
+      body.querySelectorAll(".editable-cell").forEach(span => {
+        span.style.cursor = "pointer";
+        span.addEventListener("dblclick", e => {
           e.stopPropagation();
-          td.classList.toggle("expanded");
+          const propId = span.dataset.prop;
+          const key = span.dataset.key;
+          const prop = properties.find(p => p.id === propId);
+          if (!prop) return;
+          const current = (prop.details && prop.details[key]) || "";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = current;
+          input.style.cssText = "width:100%;padding:2px 4px;border:1px solid #2563eb;border-radius:3px;font-size:12px;font-family:inherit;";
+          span.replaceWith(input);
+          input.focus();
+          input.select();
+          const save = async () => {
+            const newVal = input.value.trim();
+            if (!prop.details) prop.details = {};
+            prop.details[key] = newVal || "-";
+            await fetch(`/api/properties/${propId}/details?ws=${prop.workspace_id || activeWorkspaceId}`, {
+              method: "PUT", headers: {"Content-Type":"application/json"},
+              body: JSON.stringify({ details: prop.details })
+            });
+            renderListView();
+          };
+          input.addEventListener("blur", save);
+          input.addEventListener("keydown", e2 => { if (e2.key === "Enter") { e2.preventDefault(); input.blur(); } if (e2.key === "Escape") { input.value = current; input.blur(); } });
+          input.addEventListener("click", e2 => e2.stopPropagation());
         });
       });
 
@@ -1753,17 +1787,61 @@
       const props = await res.json();
       const container = document.getElementById("agent-props-container");
       if (!props.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">担当エリア内に物件がありません</p>'; return; }
+      const editableKeys = ["賃料","面積"];
       container.innerHTML = `<table class="agent-props-table">
         <thead><tr><th>物件名</th><th>エリア</th><th>住所</th><th>賃料</th><th>面積</th><th>メモ</th></tr></thead>
         <tbody>${props.map(p => `<tr>
           <td>${esc(p.name)}</td>
           <td>${esc(p._wsName || "")}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.address)}</td>
-          <td>${esc((p.details && p.details["賃料"]) || "-")}</td>
-          <td>${esc((p.details && p.details["面積"]) || "-")}</td>
-          <td style="max-width:250px;white-space:pre-wrap;font-size:12px;color:#64748b;">${esc(p.memo || "-")}</td>
+          <td><span class="agent-editable" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" data-key="賃料">${esc((p.details && p.details["賃料"]) || "-")}</span></td>
+          <td><span class="agent-editable" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" data-key="面積">${esc((p.details && p.details["面積"]) || "-")}</span></td>
+          <td><span class="agent-editable-memo" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" style="max-width:250px;white-space:pre-wrap;font-size:12px;color:#64748b;display:block;">${esc(p.memo || "-")}</span></td>
         </tr>`).join("")}</tbody>
       </table>`;
+      // Inline editing for agent property cells
+      container.querySelectorAll(".agent-editable").forEach(span => {
+        span.style.cursor = "pointer";
+        span.title = "ダブルクリックで編集";
+        span.addEventListener("dblclick", e => {
+          e.stopPropagation();
+          const propId = span.dataset.propid, wsId = span.dataset.wsid, key = span.dataset.key;
+          const p = props.find(x => x.id === propId);
+          const current = (p && p.details && p.details[key]) || "";
+          const input = document.createElement("input");
+          input.type = "text"; input.value = current;
+          input.style.cssText = "width:100%;padding:2px 4px;border:1px solid #7c3aed;border-radius:3px;font-size:12px;";
+          span.replaceWith(input); input.focus(); input.select();
+          const save = async () => {
+            const v = input.value.trim();
+            if (p) { if (!p.details) p.details = {}; p.details[key] = v || "-"; }
+            await fetch(`/api/properties/${propId}/details?ws=${wsId}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ details: p.details }) });
+            showAgentDetail(id);
+          };
+          input.addEventListener("blur", save);
+          input.addEventListener("keydown", e2 => { if (e2.key==="Enter") input.blur(); if (e2.key==="Escape") { input.value=current; input.blur(); } });
+        });
+      });
+      container.querySelectorAll(".agent-editable-memo").forEach(span => {
+        span.style.cursor = "pointer";
+        span.title = "ダブルクリックで編集";
+        span.addEventListener("dblclick", e => {
+          e.stopPropagation();
+          const propId = span.dataset.propid, wsId = span.dataset.wsid;
+          const p = props.find(x => x.id === propId);
+          const current = p ? (p.memo || "") : "";
+          const ta = document.createElement("textarea");
+          ta.value = current;
+          ta.style.cssText = "width:100%;height:50px;padding:4px;border:1px solid #7c3aed;border-radius:3px;font-size:12px;resize:vertical;";
+          span.replaceWith(ta); ta.focus();
+          const save = async () => {
+            if (p) p.memo = ta.value;
+            await fetch(`/api/properties/${propId}/memo?ws=${wsId}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ memo: ta.value }) });
+            showAgentDetail(id);
+          };
+          ta.addEventListener("blur", save);
+        });
+      });
     }
 
     function showAgentForm(agent) {
