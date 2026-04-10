@@ -1164,23 +1164,38 @@
       if (!name) return;
 
       btn.disabled = true; btn.textContent = "検索中...";
-      status.textContent = ""; status.style.color = "#64748b";
+      status.innerHTML = ""; status.style.color = "#64748b";
 
       try {
         const res = await fetch(`/api/geocode-station?name=${encodeURIComponent(name)}`);
         const data = await res.json();
-        if (data.status === "ok") {
-          editingStations.push({ name: data.name, lat: data.lat, lon: data.lon, r: data.r });
-          renderStationList();
-          input.value = "";
-          status.textContent = `${data.name} を追加しました`;
-          status.style.color = "#16a34a";
+        if (data.status === "ok" && data.candidates && data.candidates.length > 0) {
+          // Show candidate list for selection
+          status.innerHTML = `<div style="margin-top:6px;font-size:12px;color:#374151;font-weight:500;">候補を選択してください:</div>`;
+          const list = document.createElement("div");
+          list.style.cssText = "max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;margin-top:4px;background:#fff;";
+          data.candidates.forEach((c, i) => {
+            const row = document.createElement("div");
+            row.style.cssText = "padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;";
+            row.onmouseenter = () => row.style.background = "#eff6ff";
+            row.onmouseleave = () => row.style.background = "#fff";
+            const displayParts = c.display.split(",").slice(0, 3).join(", ");
+            row.innerHTML = `<div><b>${esc(c.name)}</b><div style="color:#94a3b8;font-size:10px;margin-top:1px;">${esc(displayParts)}</div></div>
+              <div style="text-align:right;color:#64748b;font-size:10px;">${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}</div>`;
+            row.onclick = () => {
+              editingStations.push({ name: c.name, lat: c.lat, lon: c.lon, r: c.r });
+              renderStationList();
+              input.value = "";
+              status.innerHTML = `<span style="color:#16a34a;">${esc(c.name)} を追加しました</span>`;
+            };
+            list.appendChild(row);
+          });
+          status.appendChild(list);
         } else {
-          status.textContent = data.message || "見つかりませんでした";
-          status.style.color = "#dc2626";
+          status.innerHTML = `<span style="color:#dc2626;">${data.message || "見つかりませんでした"}</span>`;
         }
       } catch (e) {
-        status.textContent = "検索エラー"; status.style.color = "#dc2626";
+        status.innerHTML = '<span style="color:#dc2626;">検索エラー</span>';
       }
       btn.disabled = false; btn.textContent = "検索して追加";
     }

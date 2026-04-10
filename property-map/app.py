@@ -785,7 +785,7 @@ def geocode_station():
         return jsonify({"error": "name required"}), 400
     search_name = name if name.endswith("\u99c5") else name + "\u99c5"
     query = urllib.parse.urlencode({
-        "q": search_name, "format": "json", "limit": 1, "countrycodes": "jp",
+        "q": search_name, "format": "json", "limit": 8, "countrycodes": "jp",
     })
     url = f"https://nominatim.openstreetmap.org/search?{query}"
     req = urllib.request.Request(url, headers={"User-Agent": "PropertyMapApp/1.0"})
@@ -793,11 +793,18 @@ def geocode_station():
         with urllib.request.urlopen(req, timeout=10, context=SSL_CTX) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if data:
-                lat = float(data[0]["lat"])
-                lon = float(data[0]["lon"])
                 base_name = search_name.replace("\u99c5", "")
                 radius = 180 if base_name in MAJOR_STATIONS else 120
-                return jsonify({"status": "ok", "lat": lat, "lon": lon, "r": radius, "name": search_name})
+                candidates = []
+                for item in data:
+                    candidates.append({
+                        "name": item.get("display_name", search_name).split(",")[0],
+                        "display": item.get("display_name", ""),
+                        "lat": float(item["lat"]),
+                        "lon": float(item["lon"]),
+                        "r": radius,
+                    })
+                return jsonify({"status": "ok", "candidates": candidates, "name": search_name})
     except Exception as e:
         print(f"Station geocoding failed: {e}")
     return jsonify({"error": "not_found", "message": f"\u300c{search_name}\u300d\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f"})
