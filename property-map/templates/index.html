@@ -569,9 +569,9 @@
       </svg>
     </div>
     <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
-    <button id="reopen-compare-btn" onclick="toggleComparePanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#2563eb;color:#fff;">条件比較</button>
-    <button id="reopen-criteria-btn" onclick="toggleCriteriaPanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#0891b2;color:#fff;">選定基準</button>
-    <div class="compare-panel" id="compare-panel">
+    <button id="reopen-compare-btn" onclick="toggleComparePanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#374151;">条件比較</button>
+    <button id="reopen-criteria-btn" onclick="toggleCriteriaPanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#0891b2;">選定基準</button>
+    <div class="compare-panel" id="compare-panel" style="display:none;">
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
     </div>
@@ -1014,9 +1014,8 @@
         </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
         <!-- 外観確認 -->
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <button class="pdf-open-btn" onclick="showStreetView(${prop.lat},${prop.lon},'${esc(prop.name).replace(/'/g,"\\'")}')" style="flex:1;cursor:pointer;border:none;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">&#127758; 外観を確認</button>
-          <a href="https://www.google.com/maps/@${prop.lat},${prop.lon},3a,75y,0h,90t/data=!3m1!1e3" target="_blank" style="padding:10px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;font-size:11px;text-decoration:none;display:flex;align-items:center;white-space:nowrap;" title="Googleマップで開く">&#8599;</a>
+        <div style="margin-bottom:8px;">
+          <button class="pdf-open-btn" id="streetview-btn" style="cursor:pointer;border:none;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;display:block;width:100%;">&#127758; 外観を確認</button>
         </div>
         <div class="pdf-section" id="pdf-section-area">
           ${hasPdf ? `<div style="display:flex;gap:6px;margin-bottom:6px;">
@@ -1123,6 +1122,26 @@
           }
         });
       }
+      // Street View button
+      const svBtn = document.getElementById("streetview-btn");
+      let svActive = false;
+      if (svBtn) {
+        svBtn.addEventListener("click", () => {
+          if (svActive) {
+            closeSatelliteView();
+            svBtn.innerHTML = "&#127758; 外観を確認";
+            svBtn.style.background = "#e0f2fe";
+            svBtn.style.color = "#0369a1";
+            svActive = false;
+          } else {
+            showStreetView(prop.lat, prop.lon, prop.name);
+            svBtn.innerHTML = "&#10005; 衛星表示を閉じる";
+            svBtn.style.background = "#dc2626";
+            svBtn.style.color = "#fff";
+            svActive = true;
+          }
+        });
+      }
       // PDF replace
       document.getElementById("pdf-replace-input").addEventListener("change", async function() {
         const file = this.files[0];
@@ -1188,7 +1207,8 @@
 
     function closeSidebar() {
       document.getElementById("sidebar").classList.add("collapsed"); selectedPropId = null;
-      if (currentView === "map") document.getElementById("criteria-float").style.display = "block";
+      if (currentView === "map" && criteriaVisible) document.getElementById("criteria-float").style.display = "block";
+      closeSatelliteView();
       setTimeout(() => map.invalidateSize(), 200);
     }
 
@@ -1453,8 +1473,8 @@
       { key: "TEL", label: "TEL", detail: true },
     ];
 
-    let compareVisible = true;
-    let criteriaVisible = true;
+    let compareVisible = false;
+    let criteriaVisible = false;
 
     function setView(mode) {
       currentView = mode;
@@ -1837,7 +1857,7 @@
       // Find managers and staff for this workspace
       const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
       const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
-      panel.style.display = "block";
+      panel.style.display = criteriaVisible ? "block" : "none";
       panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
         <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
           <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
@@ -1898,14 +1918,22 @@
       document.getElementById("compare-panel").style.display = "none";
       document.getElementById("criteria-float").style.display = "none";
     }
+    let satelliteLayer = null;
     function showStreetView(lat, lon, name) {
-      const overlay = document.getElementById("pdf-overlay");
-      document.getElementById("pdf-overlay-title").textContent = "外観確認 - " + name;
-      document.getElementById("pdf-overlay-frame").src = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
-      overlay.style.display = "flex";
-      document.querySelector(".toolbar").style.display = "none";
-      document.getElementById("compare-panel").style.display = "none";
-      document.getElementById("criteria-float").style.display = "none";
+      // Open Google Street View in new tab
+      window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`, '_blank');
+      // Show satellite view on map
+      if (!satelliteLayer) {
+        satelliteLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+          maxZoom: 20, attribution: 'Google Satellite'
+        });
+      }
+      satelliteLayer.addTo(map);
+      map.setView([lat, lon], 18);
+      // Update button to allow closing satellite view
+    }
+    function closeSatelliteView() {
+      if (satelliteLayer) { map.removeLayer(satelliteLayer); }
     }
     function closePdfOverlay() {
       const overlay = document.getElementById("pdf-overlay");
@@ -1913,6 +1941,8 @@
       document.getElementById("pdf-overlay-frame").src = "";
       const btn = document.getElementById("pdf-show-btn");
       if (btn) btn.innerHTML = "&#128196; PDFを表示";
+      const svBtn = document.getElementById("streetview-btn");
+      if (svBtn) svBtn.innerHTML = "&#127758; 外観を確認";
       document.querySelector(".toolbar").style.display = "flex";
       if (compareVisible) document.getElementById("compare-panel").style.display = "";
       const sidebarOpen = !document.getElementById("sidebar").classList.contains("collapsed");
