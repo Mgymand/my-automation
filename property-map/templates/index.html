@@ -2086,9 +2086,11 @@
     let contractsData = [];
     const CONTRACT_STATUSES = [
       { value: "準備中", color: "#64748b", bg: "#f1f5f9" },
-      { value: "書類提出", color: "#2563eb", bg: "#dbeafe" },
-      { value: "審査中", color: "#ea580c", bg: "#ffedd5" },
-      { value: "契約締結", color: "#16a34a", bg: "#dcfce7" },
+      { value: "書類確認済", color: "#0891b2", bg: "#cffafe" },
+      { value: "重説依頼済", color: "#2563eb", bg: "#dbeafe" },
+      { value: "重説完了", color: "#ea580c", bg: "#ffedd5" },
+      { value: "書類返送済", color: "#d97706", bg: "#fef3c7" },
+      { value: "鍵渡し完了", color: "#16a34a", bg: "#dcfce7" },
       { value: "入居済", color: "#7c3aed", bg: "#ede9fe" },
     ];
 
@@ -2156,7 +2158,7 @@
                 <input type="date" value="${c.contract_date||''}" onchange="updateContractField('${c.id}','contract_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
               <div><label style="font-size:11px;color:#64748b;display:block;">入居予定日</label>
                 <input type="date" value="${c.move_in_date||''}" onchange="updateContractField('${c.id}','move_in_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-              <div><label style="font-size:11px;color:#64748b;display:block;">敷金/保証金期限</label>
+              <div><label style="font-size:11px;color:#64748b;display:block;">初期費用入金期限</label>
                 <input type="date" value="${c.deposit_deadline||''}" onchange="updateContractField('${c.id}','deposit_deadline',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
               <div><label style="font-size:11px;color:#64748b;display:block;">鍵引渡日</label>
                 <input type="date" value="${c.key_delivery_date||''}" onchange="updateContractField('${c.id}','key_delivery_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
@@ -2187,10 +2189,13 @@
       const res = await fetch("/api/contracts", { method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ propertyId: propId, workspaceId: wsId, propertyName: propName,
           tasks: [
-            { title: "重要事項説明", date: "", done: false },
-            { title: "契約書締結", date: "", done: false },
-            { title: "敷金/保証金支払い", date: "", done: false },
-            { title: "鍵引渡し", date: "", done: false },
+            { title: "書類確認", date: "", done: false },
+            { title: "重説依頼", date: "", done: false },
+            { title: "重説実施", date: "", done: false },
+            { title: "書類返送", date: "", done: false },
+            { title: "初期費用入金", date: "", done: false },
+            { title: "仲介手数料支払い", date: "", done: false },
+            { title: "鍵渡し", date: "", done: false },
             { title: "入居", date: "", done: false },
           ]
         })
