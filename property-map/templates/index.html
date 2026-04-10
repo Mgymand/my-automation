@@ -532,12 +532,17 @@
       </svg>
     </div>
     <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
-    <button class="ws-btn" id="toggle-compare-btn" onclick="toggleComparePanel()" title="条件比較の表示/非表示" style="font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:auto;padding:0 8px;white-space:nowrap;">条件比較</button>
-    <button class="ws-btn" id="toggle-criteria-btn" onclick="toggleCriteriaPanel()" title="選定基準の表示/非表示" style="font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:auto;padding:0 8px;white-space:nowrap;color:#0891b2;">選定基準</button>
     <div class="compare-panel" id="compare-panel">
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
+      <button onclick="toggleComparePanel()" style="margin-left:4px;border:none;background:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0 2px;" title="閉じる">&times;</button>
     </div>
+  </div>
+
+  <!-- Reopen buttons (shown when panels are hidden) -->
+  <div id="reopen-panels" style="position:fixed;top:52px;right:12px;z-index:1002;display:flex;gap:4px;">
+    <button id="reopen-compare-btn" onclick="toggleComparePanel()" style="display:none;padding:4px 10px;background:#fff;border:1px solid #d1d5db;border-radius:6px;font-size:11px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);color:#374151;">条件比較 ▼</button>
+    <button id="reopen-criteria-btn" onclick="toggleCriteriaPanel()" style="display:none;padding:4px 10px;background:#fff;border:1px solid #99f6e4;border-radius:6px;font-size:11px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1);color:#0891b2;">選定基準 ▼</button>
   </div>
 
   <!-- Map controls (bottom-right) -->
@@ -1195,8 +1200,8 @@
       document.getElementById("contract-view").classList.toggle("active", mode === "contract");
       document.getElementById("compare-panel").style.display = (mode === "map" && compareVisible) ? "" : "none";
       document.getElementById("criteria-float").style.display = (mode === "map" && criteriaVisible) ? "block" : "none";
-      document.getElementById("toggle-compare-btn").style.display = (mode === "map") ? "" : "none";
-      document.getElementById("toggle-criteria-btn").style.display = (mode === "map") ? "" : "none";
+      document.getElementById("reopen-compare-btn").style.display = (mode === "map" && !compareVisible) ? "" : "none";
+      document.getElementById("reopen-criteria-btn").style.display = (mode === "map" && !criteriaVisible) ? "" : "none";
       if (mode === "list") renderListView();
       if (mode === "stats") renderStatsView();
       if (mode === "contract") renderContractView();
@@ -1205,18 +1210,14 @@
 
     function toggleComparePanel() {
       compareVisible = !compareVisible;
-      const btn = document.getElementById("toggle-compare-btn");
-      btn.style.background = compareVisible ? "#fff" : "#e2e8f0";
-      btn.style.color = compareVisible ? "#374151" : "#94a3b8";
       document.getElementById("compare-panel").style.display = compareVisible ? "" : "none";
+      document.getElementById("reopen-compare-btn").style.display = compareVisible ? "none" : "";
     }
 
     function toggleCriteriaPanel() {
       criteriaVisible = !criteriaVisible;
-      const btn = document.getElementById("toggle-criteria-btn");
-      btn.style.background = criteriaVisible ? "#fff" : "#e2e8f0";
-      btn.style.color = criteriaVisible ? "#0891b2" : "#94a3b8";
       document.getElementById("criteria-float").style.display = criteriaVisible ? "block" : "none";
+      document.getElementById("reopen-criteria-btn").style.display = criteriaVisible ? "none" : "";
     }
 
     function renderListView() {
@@ -1500,7 +1501,7 @@
       const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
       const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
       panel.style.display = "block";
-      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
+      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span><button onclick="toggleCriteriaPanel()" style="margin-left:auto;border:none;background:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:0 2px;" title="閉じる">&times;</button></div>
         <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
           <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
           <div><span style="color:#7c3aed;font-weight:600;">担当者:</span> ${staff.length ? staff.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
