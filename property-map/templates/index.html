@@ -459,7 +459,7 @@
         </div>
         <!-- Approved properties (yellow) available to start contract -->
         <div style="margin-bottom:24px;">
-          <h3 style="font-size:15px;font-weight:600;color:#eab308;margin-bottom:10px;">🟡 審査通過物件（契約開始可能）</h3>
+          <h3 style="font-size:15px;font-weight:600;color:#16a34a;margin-bottom:10px;">申込済以降の物件（契約開始可能）</h3>
           <div id="contract-approved" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;"></div>
         </div>
         <!-- Active contracts -->
@@ -2468,12 +2468,13 @@
     ];
 
     async function renderContractView() {
-      // Load all approved (yellow) properties across all workspaces
+      // Load properties with status: 申込済(green), 審査通過(yellow), 審査落ち(black)
       const approvedProps = [];
+      const contractColors = new Set(["green", "yellow", "black"]);
       for (const ws of workspacesData.workspaces) {
         const res = await fetch(`/api/properties?ws=${ws.id}`);
         const props = await res.json();
-        props.filter(p => p.color === "yellow").forEach(p => {
+        props.filter(p => contractColors.has(p.color)).forEach(p => {
           p._wsName = ws.name; p._wsId = ws.id;
           approvedProps.push(p);
         });
@@ -2487,18 +2488,19 @@
       const available = approvedProps.filter(p => !contractedPropIds.has(p.id));
       const approvedEl = document.getElementById("contract-approved");
       if (!available.length) {
-        approvedEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">審査通過物件はありません</p>';
+        approvedEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">対象物件はありません</p>';
       } else {
-        approvedEl.innerHTML = available.map(p => `
-          <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+        approvedEl.innerHTML = available.map(p => {
+          const pc = PIN_COLORS[p.color] || PIN_COLORS.blue;
+          return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
             <div>
-              <div style="font-weight:600;font-size:14px;color:#1e293b;">${esc(p.name)}</div>
+              <div style="font-weight:600;font-size:14px;color:#1e293b;">${esc(p.name)} <span style="font-size:11px;padding:2px 6px;border-radius:8px;background:${pc.fill};color:#fff;font-weight:500;">${pc.label}</span></div>
               <div style="font-size:12px;color:#64748b;">${esc(p._wsName)} | ${esc(p.address)}</div>
             </div>
             <button onclick="startContract('${p.id}','${p._wsId}','${esc(p.name).replace(/'/g,"\\'")}')"
-              style="padding:6px 14px;background:#eab308;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;">契約開始</button>
-          </div>
-        `).join("");
+              style="padding:6px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;">契約開始</button>
+          </div>`;
+        }).join("");
       }
 
       // Contracts list
