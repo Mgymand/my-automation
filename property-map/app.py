@@ -765,8 +765,15 @@ def add_property_manual():
 
 @app.route("/api/properties/<prop_id>/details", methods=["PUT"])
 def update_details(prop_id):
-    details = request.json.get("details", {})
-    resp = supabase.table("properties").update({"details": details}).eq("id", prop_id).execute()
+    data = request.json
+    update = {}
+    if "details" in data:
+        update["details"] = data["details"]
+    if "name" in data:
+        update["name"] = data["name"]
+    if not update:
+        return jsonify({"error": "no fields"}), 400
+    resp = supabase.table("properties").update(update).eq("id", prop_id).execute()
     if not resp.data:
         return jsonify({"error": "not found"}), 404
     bump_change()
