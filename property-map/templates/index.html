@@ -1218,6 +1218,8 @@
 
     // Station data held in memory during modal editing
     let editingStations = [];
+    let pinAdjustIndex = -1; // currently adjusting station index
+    let pinAdjustMarker = null;
 
     function renderStationList() {
       const container = document.getElementById("ws-stations");
@@ -1225,13 +1227,75 @@
       editingStations.forEach((st, i) => {
         const div = document.createElement("div");
         div.className = "station-item";
+        const isAdjusting = (pinAdjustIndex === i);
         div.innerHTML = `<span class="st-name">${esc(st.name)}</span>
           <span class="st-coord">${st.lat.toFixed(4)}, ${st.lon.toFixed(4)}</span>
           <span class="st-radius">半径${st.r}m</span>
+          <button class="pin-adj-btn" title="地図上でピン位置を調整" style="width:22px;height:22px;border:none;background:${isAdjusting ? '#2563eb' : 'none'};color:${isAdjusting ? '#fff' : '#2563eb'};cursor:pointer;font-size:12px;border-radius:4px;margin-left:auto;">📍</button>
           <button class="del-btn" title="削除">&times;</button>`;
-        div.querySelector(".del-btn").addEventListener("click", () => { editingStations.splice(i, 1); renderStationList(); });
+        div.querySelector(".del-btn").addEventListener("click", () => { editingStations.splice(i, 1); cancelPinAdjust(); renderStationList(); });
+        div.querySelector(".pin-adj-btn").addEventListener("click", () => {
+          if (pinAdjustIndex === i) {
+            cancelPinAdjust();
+          } else {
+            startPinAdjust(i);
+          }
+          renderStationList();
+        });
         container.appendChild(div);
       });
+      if (pinAdjustIndex >= 0) {
+        const msg = document.createElement("div");
+        msg.style.cssText = "padding:6px 8px;background:#dbeafe;border-radius:4px;font-size:11px;color:#2563eb;margin-top:4px;text-align:center;";
+        msg.textContent = `「${editingStations[pinAdjustIndex]?.name}」の位置を地図上でクリックして設定してください`;
+        container.appendChild(msg);
+      }
+    }
+
+    function startPinAdjust(idx) {
+      cancelPinAdjust();
+      pinAdjustIndex = idx;
+      const st = editingStations[idx];
+      // Close modal temporarily to show map
+      document.getElementById("ws-modal").style.opacity = "0.3";
+      document.getElementById("ws-modal").style.pointerEvents = "none";
+      // Show temporary marker
+      pinAdjustMarker = L.marker([st.lat, st.lon], {
+        icon: L.divIcon({ className: "", iconSize: null, html: '<div style="width:20px;height:20px;background:#dc2626;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>' }),
+        draggable: true
+      }).addTo(map);
+      map.setView([st.lat, st.lon], 16);
+      // Drag to adjust
+      pinAdjustMarker.on("dragend", () => {
+        const pos = pinAdjustMarker.getLatLng();
+        editingStations[idx].lat = pos.lat;
+        editingStations[idx].lon = pos.lng;
+        finishPinAdjust();
+      });
+      // Click map to set position
+      map._pinAdjustHandler = (e) => {
+        editingStations[idx].lat = e.latlng.lat;
+        editingStations[idx].lon = e.latlng.lng;
+        finishPinAdjust();
+      };
+      map.on("click", map._pinAdjustHandler);
+    }
+
+    function finishPinAdjust() {
+      if (pinAdjustMarker) { map.removeLayer(pinAdjustMarker); pinAdjustMarker = null; }
+      if (map._pinAdjustHandler) { map.off("click", map._pinAdjustHandler); map._pinAdjustHandler = null; }
+      pinAdjustIndex = -1;
+      document.getElementById("ws-modal").style.opacity = "1";
+      document.getElementById("ws-modal").style.pointerEvents = "auto";
+      renderStationList();
+    }
+
+    function cancelPinAdjust() {
+      if (pinAdjustMarker) { map.removeLayer(pinAdjustMarker); pinAdjustMarker = null; }
+      if (map._pinAdjustHandler) { map.off("click", map._pinAdjustHandler); map._pinAdjustHandler = null; }
+      pinAdjustIndex = -1;
+      const modal = document.getElementById("ws-modal");
+      if (modal) { modal.style.opacity = "1"; modal.style.pointerEvents = "auto"; }
     }
 
     async function searchStation() {
