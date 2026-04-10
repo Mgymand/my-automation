@@ -183,6 +183,11 @@
     .color-dot:hover { opacity: 0.8; }
     .color-dot.active { border-color: #1e293b; }
 
+    /* Workspace dropdown */
+    .ws-option { padding:6px 10px; font-size:13px; cursor:pointer; }
+    .ws-option:hover { background:#eff6ff; }
+    .ws-option.active { background:#2563eb; color:#fff; }
+
     /* Modal shared */
     .drop-overlay { display: none; position: fixed; inset: 0; background: rgba(37,99,235,0.15); z-index: 9999; border: 3px dashed #2563eb; align-items: center; justify-content: center; }
     .drop-overlay.active { display: flex; }
@@ -480,7 +485,17 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="ws-panel">
-      <select id="ws-select" onchange="switchWorkspace(this.value)"></select>
+      <div id="ws-select-wrap" style="position:relative;min-width:130px;">
+        <div id="ws-select-btn" onclick="toggleWsDropdown()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none;">
+          <span id="ws-select-label">エリア選択</span>
+          <span style="font-size:10px;color:#94a3b8;">▼</span>
+        </div>
+        <div id="ws-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:2000;max-height:250px;overflow:hidden;flex-direction:column;">
+          <input id="ws-search" type="text" placeholder="エリア検索..." oninput="filterWsDropdown()" style="padding:6px 10px;border:none;border-bottom:1px solid #e5e7eb;font-size:13px;font-family:inherit;outline:none;">
+          <div id="ws-options" style="overflow-y:auto;max-height:200px;"></div>
+        </div>
+      </div>
+      <input type="hidden" id="ws-select" value="">
       <button class="ws-btn" onclick="openWsModal('create')" title="新規作成">+</button>
       <button class="ws-btn" onclick="openWsModal('settings')" title="設定">&#9881;</button>
       <button class="ws-btn" onclick="deleteWorkspace()" title="このエリアを削除" style="color:#dc2626;font-size:13px;">&#128465;</button>
@@ -767,15 +782,52 @@
       const res = await fetch("/api/workspaces");
       workspacesData = await res.json();
       activeWorkspaceId = workspacesData.activeWorkspace;
-      const sel = document.getElementById("ws-select");
-      sel.innerHTML = "";
-      for (const ws of workspacesData.workspaces) {
-        const opt = document.createElement("option");
-        opt.value = ws.id; opt.textContent = ws.name;
-        if (ws.id === activeWorkspaceId) opt.selected = true;
-        sel.appendChild(opt);
+      document.getElementById("ws-select").value = activeWorkspaceId;
+      renderWsDropdownOptions();
+      updateWsLabel();
+    }
+
+    function renderWsDropdownOptions(filter) {
+      const container = document.getElementById("ws-options");
+      const q = (filter || "").toLowerCase();
+      container.innerHTML = workspacesData.workspaces
+        .filter(ws => !q || ws.name.toLowerCase().includes(q))
+        .map(ws => `<div class="ws-option${ws.id === activeWorkspaceId ? ' active' : ''}" onclick="selectWsOption('${ws.id}')">${esc(ws.name)}</div>`)
+        .join("") || '<div style="padding:8px 10px;color:#94a3b8;font-size:12px;">該当なし</div>';
+    }
+
+    function updateWsLabel() {
+      const ws = workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
+      document.getElementById("ws-select-label").textContent = ws ? ws.name : "エリア選択";
+    }
+
+    function toggleWsDropdown() {
+      const dd = document.getElementById("ws-dropdown");
+      const isOpen = dd.style.display !== "none";
+      dd.style.display = isOpen ? "none" : "flex";
+      if (!isOpen) {
+        document.getElementById("ws-search").value = "";
+        renderWsDropdownOptions();
+        document.getElementById("ws-search").focus();
       }
     }
+
+    function filterWsDropdown() {
+      renderWsDropdownOptions(document.getElementById("ws-search").value);
+    }
+
+    function selectWsOption(wsId) {
+      document.getElementById("ws-dropdown").style.display = "none";
+      switchWorkspace(wsId);
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener("click", e => {
+      const wrap = document.getElementById("ws-select-wrap");
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById("ws-dropdown").style.display = "none";
+      }
+    });
 
     function getActiveWs() {
       return workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
@@ -785,6 +837,8 @@
       activeWorkspaceId = wsId;
       await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
       document.getElementById("ws-select").value = wsId;
+      updateWsLabel();
+      renderWsDropdownOptions();
       const ws = getActiveWs();
       if (ws) {
         renderStations(ws.stations || []);
