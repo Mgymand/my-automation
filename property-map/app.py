@@ -146,6 +146,7 @@ def load_properties(ws_id=None):
     for r in rows:
         props.append({
             "id": r["id"],
+            "workspace_id": r.get("workspace_id", ws_id if ws_id != "_all" else ""),
             "name": r.get("name", ""),
             "address": r.get("address", ""),
             "lat": r.get("lat"),
