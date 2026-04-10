@@ -137,7 +137,10 @@ def get_active_ws_id():
 def load_properties(ws_id=None):
     if ws_id is None:
         ws_id = get_active_ws_id()
-    resp = supabase.table("properties").select("*").eq("workspace_id", ws_id).execute()
+    if ws_id == "_all":
+        resp = supabase.table("properties").select("*").execute()
+    else:
+        resp = supabase.table("properties").select("*").eq("workspace_id", ws_id).execute()
     rows = resp.data or []
     props = []
     for r in rows:

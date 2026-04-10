@@ -790,13 +790,23 @@
     function renderWsDropdownOptions(filter) {
       const container = document.getElementById("ws-options");
       const q = (filter || "").toLowerCase();
-      container.innerHTML = workspacesData.workspaces
+      // 「全物件」を先頭に追加
+      let html = '';
+      if (!q || "全物件".includes(q)) {
+        html += `<div class="ws-option${activeWorkspaceId === '_all' ? ' active' : ''}" onclick="selectWsOption('_all')" style="font-weight:600;border-bottom:1px solid #e5e7eb;">📋 全物件</div>`;
+      }
+      html += workspacesData.workspaces
         .filter(ws => !q || ws.name.toLowerCase().includes(q))
         .map(ws => `<div class="ws-option${ws.id === activeWorkspaceId ? ' active' : ''}" onclick="selectWsOption('${ws.id}')">${esc(ws.name)}</div>`)
-        .join("") || '<div style="padding:8px 10px;color:#94a3b8;font-size:12px;">該当なし</div>';
+        .join("");
+      container.innerHTML = html || '<div style="padding:8px 10px;color:#94a3b8;font-size:12px;">該当なし</div>';
     }
 
     function updateWsLabel() {
+      if (activeWorkspaceId === '_all') {
+        document.getElementById("ws-select-label").textContent = "📋 全物件";
+        return;
+      }
       const ws = workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
       document.getElementById("ws-select-label").textContent = ws ? ws.name : "エリア選択";
     }
@@ -835,25 +845,39 @@
 
     async function switchWorkspace(wsId) {
       activeWorkspaceId = wsId;
-      await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
+      if (wsId !== '_all') {
+        await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
+      }
       document.getElementById("ws-select").value = wsId;
       updateWsLabel();
       renderWsDropdownOptions();
-      const ws = getActiveWs();
-      if (ws) {
-        renderStations(ws.stations || []);
-        // 駅が登録されている場合は全駅が見える範囲にフィット
-        if (ws.stations && ws.stations.length > 0) {
-          const pts = ws.stations.map(s => [s.lat, s.lon]);
-          map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16, animate: true });
-        } else if (ws.center) {
-          map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14, { animate: true });
+
+      if (wsId === '_all') {
+        // 全物件モード: 全エリアの駅を表示
+        const allStations = [];
+        workspacesData.workspaces.forEach(ws => (ws.stations || []).forEach(s => allStations.push(s)));
+        renderStations(allStations);
+      } else {
+        const ws = getActiveWs();
+        if (ws) {
+          renderStations(ws.stations || []);
+          if (ws.stations && ws.stations.length > 0) {
+            const pts = ws.stations.map(s => [s.lat, s.lon]);
+            map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16, animate: true });
+          } else if (ws.center) {
+            map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14, { animate: true });
+          }
         }
       }
       closeSidebar();
       clearInfoLabels();
       activeCompareKey = null;
       await loadProperties();
+      // 全物件モード: 全ピンが見えるようにフィット
+      if (wsId === '_all') {
+        const vals = Object.values(markers);
+        if (vals.length > 0) map.fitBounds(L.featureGroup(vals).getBounds().pad(0.3), { maxZoom: 14 });
+      }
       if (currentView === "list") renderListView();
       renderCriteriaFloat();
     }
