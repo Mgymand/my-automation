@@ -995,7 +995,8 @@
           detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
-      const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
+      const hasPdf = prop.filename && prop.filename.trim();
+      const pdfUrl = hasPdf ? "/pdf/" + encodeURIComponent(prop.filename) : "";
       const currentColor = prop.color || "blue";
       let colorDots = "";
       for (const [key, c] of Object.entries(PIN_COLORS)) {
@@ -1017,10 +1018,10 @@
           <button class="pdf-open-btn" onclick="showStreetView(${prop.lat},${prop.lon},'${esc(prop.name).replace(/'/g,"\\'")}')" style="flex:1;cursor:pointer;border:none;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">&#127758; 外観を確認</button>
           <a href="https://www.google.com/maps/@${prop.lat},${prop.lon},3a,75y,0h,90t/data=!3m1!1e3" target="_blank" style="padding:10px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;font-size:11px;text-decoration:none;display:flex;align-items:center;white-space:nowrap;" title="Googleマップで開く">&#8599;</a>
         </div>
-        <div class="pdf-section">
-          ${prop.filename ? `<div style="display:flex;gap:6px;margin-bottom:6px;">
-            <button class="pdf-open-btn" onclick="showPdfOverlay('${pdfUrl}')" style="flex:1;cursor:pointer;border:none;">&#128196; PDFを表示</button>
-            <a href="${pdfUrl}" download style="padding:10px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;font-size:12px;text-decoration:none;display:flex;align-items:center;" title="ダウンロード">&#11015;</a>
+        <div class="pdf-section" id="pdf-section-area">
+          ${hasPdf ? `<div style="display:flex;gap:6px;margin-bottom:6px;">
+            <button class="pdf-open-btn" id="pdf-show-btn" style="flex:1;cursor:pointer;border:none;">&#128196; PDFを表示</button>
+            <a href="${pdfUrl}" target="_blank" style="padding:10px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;font-size:12px;text-decoration:none;display:flex;align-items:center;" title="新しいタブで開く/ダウンロード">&#11015;</a>
           </div>` : `<p style="text-align:center;color:#94a3b8;font-size:13px;margin-bottom:8px;">PDFなし</p>`}
           <label class="pdf-open-btn" style="cursor:pointer;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;display:block;margin-bottom:0;">
             &#128257; PDF${prop.filename ? 'を差し替え' : 'をアップロード'}
@@ -1101,6 +1102,18 @@
         r.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
         document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
+      // PDF show button
+      const pdfShowBtn = document.getElementById("pdf-show-btn");
+      if (pdfShowBtn && hasPdf) {
+        // First check if PDF exists on server
+        fetch(pdfUrl, { method: "HEAD" }).then(res => {
+          if (!res.ok) {
+            pdfShowBtn.style.opacity = "0.5";
+            pdfShowBtn.title = "PDFファイルが見つかりません。差し替えてください。";
+          }
+        }).catch(() => {});
+        pdfShowBtn.addEventListener("click", () => showPdfOverlay(pdfUrl));
+      }
       // PDF replace
       document.getElementById("pdf-replace-input").addEventListener("change", async function() {
         const file = this.files[0];
