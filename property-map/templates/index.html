@@ -1987,18 +1987,23 @@
     ];
     let bgmIndex = 0;
 
+    let bgmPlaying = false;
+
     function toggleBgm() {
       const audio = document.getElementById("bgm-audio");
       const btn = document.getElementById("bgm-btn");
       const cat = document.getElementById("dancing-cat");
-      if (audio.paused) {
-        if (!audio.src) audio.src = bgmTracks[bgmIndex];
-        audio.play();
+      if (!bgmPlaying) {
+        audio.src = bgmTracks[bgmIndex];
+        audio.play().catch(() => {});
+        bgmPlaying = true;
         btn.innerHTML = "&#9724;";
-        btn.title = "BGM停止（クリックで次の曲）";
+        btn.title = "BGM停止";
         cat.style.display = "block";
       } else {
         audio.pause();
+        audio.currentTime = 0;
+        bgmPlaying = false;
         btn.innerHTML = "&#9654;";
         btn.title = "BGM再生";
         cat.style.display = "none";
@@ -2008,17 +2013,17 @@
     function selectBgm(idx) {
       bgmIndex = parseInt(idx);
       const audio = document.getElementById("bgm-audio");
-      const wasPlaying = !audio.paused;
       audio.src = bgmTracks[bgmIndex];
-      if (wasPlaying) audio.play();
+      if (bgmPlaying) audio.play().catch(() => {});
     }
 
     // Auto-play next track when current ends
     document.getElementById("bgm-audio").addEventListener("ended", () => {
+      if (!bgmPlaying) return;
       bgmIndex = (bgmIndex + 1) % bgmTracks.length;
       const audio = document.getElementById("bgm-audio");
       audio.src = bgmTracks[bgmIndex];
-      audio.play();
+      audio.play().catch(() => {});
       document.getElementById("bgm-select").value = bgmIndex;
     });
 
