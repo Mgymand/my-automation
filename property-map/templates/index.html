@@ -519,7 +519,13 @@
     </button>
     <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
     <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
-    <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
+    <div style="display:flex;align-items:center;gap:2px;">
+      <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
+      <select id="bgm-select" onchange="selectBgm(this.value)" style="padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:10px;background:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <option value="0">物件探し1</option>
+        <option value="1">物件探し2</option>
+      </select>
+    </div>
     <div id="dancing-cat" style="display:none;pointer-events:none;">
       <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
         <!-- body -->
@@ -1999,12 +2005,21 @@
       }
     }
 
+    function selectBgm(idx) {
+      bgmIndex = parseInt(idx);
+      const audio = document.getElementById("bgm-audio");
+      const wasPlaying = !audio.paused;
+      audio.src = bgmTracks[bgmIndex];
+      if (wasPlaying) audio.play();
+    }
+
     // Auto-play next track when current ends
     document.getElementById("bgm-audio").addEventListener("ended", () => {
       bgmIndex = (bgmIndex + 1) % bgmTracks.length;
       const audio = document.getElementById("bgm-audio");
       audio.src = bgmTracks[bgmIndex];
       audio.play();
+      document.getElementById("bgm-select").value = bgmIndex;
     });
 
     // === Util ===
