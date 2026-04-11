@@ -569,7 +569,7 @@
         <path d="M56,54 Q68,46 64,34" fill="none" stroke="#fcd34d" stroke-width="4" stroke-linecap="round" style="animation:catTail 0.858s ease-in-out infinite;transform-origin:56px 54px;"/>
       </svg>
     </div>
-    <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
+    <audio id="bgm-audio" preload="none"></audio>
     <button id="reopen-compare-btn" onclick="toggleComparePanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#374151;">条件比較</button>
     <button id="reopen-criteria-btn" onclick="toggleCriteriaPanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#0891b2;">選定基準</button>
     <div class="compare-panel" id="compare-panel" style="display:none;">
@@ -1975,13 +1975,37 @@
       if (criteriaVisible && !sidebarOpen) document.getElementById("criteria-float").style.display = "block";
     }
 
+    const bgmTracks = [
+      "https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3",
+      "https://cdn1.suno.ai/qBb5QzAk5gArmxrH.mp3",
+    ];
+    let bgmIndex = 0;
+
     function toggleBgm() {
       const audio = document.getElementById("bgm-audio");
       const btn = document.getElementById("bgm-btn");
       const cat = document.getElementById("dancing-cat");
-      if (audio.paused) { audio.play(); btn.innerHTML = "&#9724;"; btn.title = "BGM停止"; cat.style.display = "block"; }
-      else { audio.pause(); btn.innerHTML = "&#9654;"; btn.title = "BGM再生"; cat.style.display = "none"; }
+      if (audio.paused) {
+        if (!audio.src) audio.src = bgmTracks[bgmIndex];
+        audio.play();
+        btn.innerHTML = "&#9724;";
+        btn.title = "BGM停止（クリックで次の曲）";
+        cat.style.display = "block";
+      } else {
+        audio.pause();
+        btn.innerHTML = "&#9654;";
+        btn.title = "BGM再生";
+        cat.style.display = "none";
+      }
     }
+
+    // Auto-play next track when current ends
+    document.getElementById("bgm-audio").addEventListener("ended", () => {
+      bgmIndex = (bgmIndex + 1) % bgmTracks.length;
+      const audio = document.getElementById("bgm-audio");
+      audio.src = bgmTracks[bgmIndex];
+      audio.play();
+    });
 
     // === Util ===
     const _escDiv = document.createElement("div");
