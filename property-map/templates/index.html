@@ -618,7 +618,7 @@
   <div id="agent-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
     <div class="cal-toolbar">
       <h2 style="min-width:auto;">エージェント管理</h2>
-      <button class="cal-nav-btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="showAgentForm()">+ 新規登録</button>
+      <button class="cal-nav-btn" id="agent-add-btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="showAgentForm()">+ 新規登録</button>
       <button class="cal-close-btn" onclick="closeAgentView()">&times; 閉じる</button>
     </div>
     <div style="flex:1;display:flex;overflow:hidden;">
@@ -640,7 +640,7 @@
       <button class="cal-nav-btn" onclick="calToday()">今日</button>
       <button class="cal-nav-btn" id="cal-month-btn" onclick="setCalView('month')">月</button>
       <button class="cal-nav-btn" id="cal-week-btn" onclick="setCalView('week')">週</button>
-      <button class="cal-nav-btn" style="background:#2563eb;color:#fff;" onclick="openScheduleModal()">+ 予定を追加</button>
+      <button class="cal-nav-btn" id="schedule-add-btn" style="background:#2563eb;color:#fff;" onclick="openScheduleModal()">+ 予定を追加</button>
       <button class="cal-close-btn" onclick="closeCalendar()">&times; 閉じる</button>
     </div>
     <div id="cal-day-headers" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
@@ -2005,6 +2005,7 @@
       view.style.display = "flex";
       renderAgentLeftPanel();
       showAgentForm();
+      enforceViewerMode();
     }
     function closeAgentView() { document.getElementById("agent-view").style.display = "none"; selectedAgentId = null; }
 
@@ -2118,6 +2119,7 @@
           ta.addEventListener("blur", save);
         });
       });
+      enforceViewerMode();
     }
 
     function showAgentForm(agent) {
@@ -2227,6 +2229,7 @@
       calDate = new Date();
       document.getElementById("calendar-view").classList.add("active");
       renderCalendar();
+      enforceViewerMode();
     }
     function closeCalendar() { document.getElementById("calendar-view").classList.remove("active"); }
 
@@ -2257,6 +2260,7 @@
 
       if (calViewMode === "month") renderMonthView(y, m);
       else renderWeekView();
+      enforceViewerMode();
     }
 
     function renderMonthView(y, m) {
@@ -2473,8 +2477,7 @@
         document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
           if (btn.title === "新規作成" || btn.title === "このエリアを削除" || btn.title === "設定") btn.style.display = "none";
         });
-        // Hide agent/schedule edit buttons
-        document.querySelectorAll(".agent-btn, .schedule-btn").forEach(el => el.style.display = "none");
+        // Agent/Schedule buttons remain visible (read-only mode enforced inside)
       }
     }
 
@@ -2530,6 +2533,28 @@
       document.querySelectorAll(".agent-editable, .agent-editable-memo").forEach(el => {
         el.style.cursor = "default";
         el.replaceWith(el.cloneNode(true));
+      });
+
+      // === Agent view ===
+      const agentAddBtn = document.getElementById("agent-add-btn");
+      if (agentAddBtn) agentAddBtn.style.display = "none";
+      // Hide edit/delete buttons in agent detail
+      document.querySelectorAll("#agent-view .cal-nav-btn").forEach(btn => {
+        const t = btn.textContent || "";
+        if (t.includes("編集") || t.includes("削除")) btn.style.display = "none";
+      });
+      // Hide agent form save/cancel buttons
+      document.querySelectorAll("#agent-view .btn-primary, #agent-view .btn-secondary").forEach(btn => {
+        if (!btn.textContent.includes("閉じる")) btn.style.display = "none";
+      });
+
+      // === Schedule view ===
+      const schedAddBtn = document.getElementById("schedule-add-btn");
+      if (schedAddBtn) schedAddBtn.style.display = "none";
+      // Disable clicking on calendar days to create events (viewer)
+      document.querySelectorAll(".cal-day, .cal-week-cell").forEach(el => {
+        el.style.cursor = "default";
+        el.onclick = null;
       });
 
       // === Stats view ===
