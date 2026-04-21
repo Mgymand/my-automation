@@ -5,39 +5,17 @@ import ssl
 import urllib.request
 import urllib.parse
 import time
+import shutil
 from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect
 from functools import wraps
-from supabase import create_client, Client
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "estateforce-secret-key-2026")
 
-# --- Supabase client ---
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://wfkglabydjucrzahvrrc.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indma2dsYWJ5ZGp1Y3J6YWh2cnJjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTczOTQwMSwiZXhwIjoyMDkxMzE1NDAxfQ.Dm7AHknnZmS5WJULgJtyWpC6YYScGCxT8rxlnvNDc6Y")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 # --- Authentication ---
-# Fallback users (used if DB table doesn't exist yet)
-FALLBACK_USERS = {
-    "k.iwamoto@lime-fit.com": {"password": "Lime0201", "role": "admin"},
-    "gymand.manman@gmail.com": {"password": "View0201", "role": "viewer"},
+USERS = {
+    "k.iwamoto@lime-fit.com": "Lime0201",
 }
-
-
-def _load_users():
-    """Load users from Supabase. Falls back to FALLBACK_USERS."""
-    try:
-        resp = supabase.table("users").select("*").execute()
-        if resp.data:
-            return {u["email"]: u for u in resp.data}
-    except Exception:
-        pass
-    return {email: {"email": email, **data} for email, data in FALLBACK_USERS.items()}
-
-
-def _get_current_user_role():
-    return session.get("user_role", "viewer")
 
 
 def login_required(f):
@@ -47,30 +25,6 @@ def login_required(f):
             return jsonify({"error": "unauthorized"}), 401
         return f(*args, **kwargs)
     return decorated
-
-
-def editor_required(f):
-    """Require admin role for write operations. Viewers get 403."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get("logged_in"):
-            return jsonify({"error": "unauthorized"}), 401
-        if session.get("user_role") == "viewer":
-            return jsonify({"error": "readonly", "message": "閲覧専用アカウントです"}), 403
-        return f(*args, **kwargs)
-    return decorated
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get("logged_in"):
-            return jsonify({"error": "unauthorized"}), 401
-        if session.get("user_role") != "admin":
-            return jsonify({"error": "admin_only", "message": "管理者権限が必要です"}), 403
-        return f(*args, **kwargs)
-    return decorated
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Render: use /data disk if writable, else /tmp/property-data (Render free), else local ./data
 if os.path.isdir("/data") and os.access("/data", os.W_OK):
@@ -80,219 +34,181 @@ elif os.environ.get("RENDER"):
 else:
     DATA_DIR = os.path.join(BASE_DIR, "data")
 PDF_DIR = os.path.join(DATA_DIR, "pdfs")
+WORKSPACES_FILE = os.path.join(DATA_DIR, "workspaces.json")
+WORKSPACES_DIR = os.path.join(DATA_DIR, "workspaces")
+OLD_PROPERTIES_FILE = os.path.join(DATA_DIR, "properties.json")
+AGENTS_FILE = os.path.join(DATA_DIR, "agents.json")
+SCHEDULES_FILE = os.path.join(DATA_DIR, "schedules.json")
 
 os.makedirs(PDF_DIR, exist_ok=True)
-
-# Copy bundled PDFs from git repo to PDF_DIR on startup (Render wipes /tmp on redeploy)
-_bundled_pdf_dir = os.path.join(BASE_DIR, "data", "pdfs")
-if os.path.isdir(_bundled_pdf_dir) and _bundled_pdf_dir != PDF_DIR:
-    import shutil
-    for fname in os.listdir(_bundled_pdf_dir):
-        src = os.path.join(_bundled_pdf_dir, fname)
-        dst = os.path.join(PDF_DIR, fname)
-        if os.path.isfile(src) and not os.path.exists(dst):
-            shutil.copy2(src, dst)
-            print(f"Restored PDF: {fname}")
-
-
-def _upload_pdf_to_supabase(filepath, filename):
-    """Upload PDF to Supabase Storage for permanent persistence."""
-    try:
-        import base64
-        storage_path = f"{int(time.time())}_{filename}".replace(" ", "_")
-        # Remove non-ASCII for storage key safety
-        safe_path = re.sub(r'[^\x20-\x7E]', '', storage_path) or f"{int(time.time())}.pdf"
-        if not safe_path.endswith('.pdf'):
-            safe_path += '.pdf'
-        with open(filepath, "rb") as f:
-            file_bytes = f.read()
-        supabase.storage.from_("pdfs").upload(safe_path, file_bytes, {
-            "content-type": "application/pdf",
-            "cache-control": "3600",
-            "upsert": "true"
-        })
-        url = supabase.storage.from_("pdfs").get_public_url(safe_path)
-        print(f"PDF uploaded to Supabase Storage: {safe_path}")
-        return url
-    except Exception as e:
-        print(f"Supabase PDF upload error: {e}")
-        return ""
-
-
-def _download_pdf_from_supabase(pdf_url, filename):
-    """Download PDF from Supabase Storage to local cache if not exists."""
-    filepath = os.path.join(PDF_DIR, filename)
-    if os.path.exists(filepath):
-        return filepath
-    if not pdf_url:
-        return None
-    try:
-        req = urllib.request.Request(pdf_url, headers={"User-Agent": "PropertyMapApp/1.0"})
-        with urllib.request.urlopen(req, timeout=30, context=SSL_CTX) as resp:
-            with open(filepath, "wb") as f:
-                f.write(resp.read())
-        print(f"Downloaded PDF from Supabase: {filename}")
-        return filepath
-    except Exception as e:
-        print(f"PDF download error: {e}")
-        return None
+os.makedirs(WORKSPACES_DIR, exist_ok=True)
 
 SSL_CTX = ssl.create_default_context()
 SSL_CTX.check_hostname = False
 SSL_CTX.verify_mode = ssl.CERT_NONE
 
+# --- GitHub persistent storage ---
 
-# --- Workspace helpers (Supabase) ---
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "Mgymand/my-automation")
+GITHUB_BRANCH = os.environ.get("GITHUB_BRANCH", "claude/frosty-swartz")
+GITHUB_DATA_PREFIX = "property-map/data/"
+
+
+def _github_api(method, path, data=None):
+    """Call GitHub API."""
+    if not GITHUB_TOKEN:
+        return None
+    url = f"https://api.github.com{path}"
+    body = json.dumps(data).encode("utf-8") if data else None
+    req = urllib.request.Request(url, data=body, method=method, headers={
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "PropertyMapApp/1.0",
+        "Content-Type": "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=15, context=SSL_CTX) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"GitHub API error ({method} {path}): {e}")
+        return None
+
+
+def sync_file_to_github(local_path):
+    """Upload a local file to GitHub repo (non-blocking)."""
+    if not GITHUB_TOKEN:
+        return
+    import threading, base64
+    def _sync():
+        try:
+            # Relative path within data dir
+            rel = os.path.relpath(local_path, DATA_DIR)
+            gh_path = GITHUB_DATA_PREFIX + rel
+            with open(local_path, "rb") as f:
+                content = base64.b64encode(f.read()).decode("ascii")
+            # Get current file SHA (needed for update)
+            api_path = f"/repos/{GITHUB_REPO}/contents/{gh_path}?ref={GITHUB_BRANCH}"
+            existing = _github_api("GET", api_path)
+            sha = existing.get("sha") if existing else None
+            # Create or update
+            payload = {
+                "message": f"Auto-sync: {rel}",
+                "content": content,
+                "branch": GITHUB_BRANCH,
+            }
+            if sha:
+                payload["sha"] = sha
+            _github_api("PUT", f"/repos/{GITHUB_REPO}/contents/{gh_path}", payload)
+        except Exception as e:
+            print(f"GitHub sync error: {e}")
+    threading.Thread(target=_sync, daemon=True).start()
+
+
+# --- Workspace helpers ---
+
+_ws_cache = None
+_ws_mtime = 0
 
 DEFAULT_STATIONS = [
-    {"name": "\u6e0b\u8c37\u99c5", "lat": 35.6580, "lon": 139.7016, "r": 180},
-    {"name": "\u8868\u53c2\u9053\u99c5", "lat": 35.6654, "lon": 139.7122, "r": 120},
-    {"name": "\u660e\u6cbb\u795e\u5bae\u524d\u99c5", "lat": 35.6699, "lon": 139.7024, "r": 100},
+    {"name": "渋谷駅", "lat": 35.6580, "lon": 139.7016, "r": 180},
+    {"name": "表参道駅", "lat": 35.6654, "lon": 139.7122, "r": 120},
+    {"name": "明治神宮前駅", "lat": 35.6699, "lon": 139.7024, "r": 100},
 ]
 
 
-def _get_app_setting(key, default=None):
-    """Get a value from the app_settings table."""
-    try:
-        resp = supabase.table("app_settings").select("value").eq("key", key).execute()
-        if resp.data:
-            return resp.data[0]["value"]
-    except Exception as e:
-        print(f"app_settings read error: {e}")
-    return default
-
-
-def _set_app_setting(key, value):
-    """Upsert a value in the app_settings table."""
-    try:
-        supabase.table("app_settings").upsert({"key": key, "value": value}).execute()
-    except Exception as e:
-        print(f"app_settings write error: {e}")
-
-
 def load_workspaces():
-    """Load workspace list + activeWorkspace from Supabase."""
-    resp = supabase.table("workspaces").select("*").execute()
-    rows = resp.data or []
-    workspaces = []
-    for r in rows:
-        workspaces.append({
-            "id": r["id"],
-            "name": r["name"],
-            "stations": r.get("stations") or DEFAULT_STATIONS,
-            "center": r.get("center") or {"lat": 35.6595, "lon": 139.7005},
-            "zoom": r.get("zoom") or 16,
-            "criteria": r.get("criteria"),
-        })
-    active_ws = _get_app_setting("activeWorkspace", "ws_1")
-    if not workspaces:
+    global _ws_cache, _ws_mtime
+    if not os.path.exists(WORKSPACES_FILE):
         _migrate_to_workspaces()
-        return load_workspaces()
-    return {"activeWorkspace": active_ws, "workspaces": workspaces}
+    mtime = os.path.getmtime(WORKSPACES_FILE)
+    if _ws_cache is not None and mtime == _ws_mtime:
+        return _ws_cache
+    with open(WORKSPACES_FILE, "r", encoding="utf-8") as f:
+        _ws_cache = json.load(f)
+    _ws_mtime = mtime
+    return _ws_cache
 
 
 def save_workspaces(data):
-    """Save workspace list + activeWorkspace to Supabase."""
-    _set_app_setting("activeWorkspace", data.get("activeWorkspace", "ws_1"))
-    for ws in data.get("workspaces", []):
-        supabase.table("workspaces").upsert({
-            "id": ws["id"],
-            "name": ws.get("name", ""),
-            "stations": ws.get("stations"),
-            "center": ws.get("center"),
-            "zoom": ws.get("zoom", 16),
-            "criteria": ws.get("criteria"),
-        }).execute()
+    global _ws_cache, _ws_mtime
+    with open(WORKSPACES_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    _ws_cache = data
+    _ws_mtime = os.path.getmtime(WORKSPACES_FILE)
+    sync_file_to_github(WORKSPACES_FILE)
     bump_change()
 
 
 def _migrate_to_workspaces():
-    """Create default workspace in Supabase if none exist."""
+    """Migrate existing properties.json to workspace system."""
     ws_id = "ws_1"
-    supabase.table("workspaces").upsert({
-        "id": ws_id,
-        "name": "\u65b0\u30aa\u30d5\u30a3\u30b9\u7528",
-        "stations": DEFAULT_STATIONS,
-        "center": {"lat": 35.6595, "lon": 139.7005},
-        "zoom": 16,
-    }).execute()
-    _set_app_setting("activeWorkspace", ws_id)
+    ws_dir = os.path.join(WORKSPACES_DIR, ws_id)
+    os.makedirs(ws_dir, exist_ok=True)
+
+    # Copy existing properties
+    old_props = []
+    if os.path.exists(OLD_PROPERTIES_FILE):
+        with open(OLD_PROPERTIES_FILE, "r", encoding="utf-8") as f:
+            old_props = json.load(f)
+
+    with open(os.path.join(ws_dir, "properties.json"), "w", encoding="utf-8") as f:
+        json.dump(old_props, f, ensure_ascii=False, indent=2)
+
+    data = {
+        "activeWorkspace": ws_id,
+        "workspaces": [{
+            "id": ws_id,
+            "name": "新オフィス用",
+            "stations": DEFAULT_STATIONS,
+            "center": {"lat": 35.6595, "lon": 139.7005},
+            "zoom": 16,
+        }],
+    }
+    save_workspaces(data)
 
 
 def get_active_ws_id():
     ws_id = request.args.get("ws")
     if ws_id:
         return ws_id
-    return _get_app_setting("activeWorkspace", "ws_1")
+    return load_workspaces().get("activeWorkspace", "ws_1")
 
 
-# --- Property helpers (Supabase, workspace-aware) ---
+def get_ws_props_path(ws_id):
+    return os.path.join(WORKSPACES_DIR, ws_id, "properties.json")
+
+
+# --- Property helpers (workspace-aware) ---
+
+_prop_cache = {}  # {ws_id: (mtime, data)}
+
 
 def load_properties(ws_id=None):
     if ws_id is None:
         ws_id = get_active_ws_id()
-    if ws_id == "_all":
-        resp = supabase.table("properties").select("*").execute()
-    else:
-        resp = supabase.table("properties").select("*").eq("workspace_id", ws_id).execute()
-    rows = resp.data or []
-    props = []
-    for r in rows:
-        props.append({
-            "id": r["id"],
-            "workspace_id": r.get("workspace_id", ws_id if ws_id != "_all" else ""),
-            "name": r.get("name", ""),
-            "address": r.get("address", ""),
-            "lat": r.get("lat"),
-            "lon": r.get("lon"),
-            "filename": r.get("filename", ""),
-            "pdf_url": r.get("pdf_url", ""),
-            "details": r.get("details") or {},
-            "memo": r.get("memo", ""),
-            "color": r.get("color", "blue"),
-        })
-    return props
+    path = get_ws_props_path(ws_id)
+    if not os.path.exists(path):
+        return []
+    mtime = os.path.getmtime(path)
+    cached = _prop_cache.get(ws_id)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    _prop_cache[ws_id] = (mtime, data)
+    return data
 
 
 def save_properties(props, ws_id=None):
-    """Overwrite all properties for a workspace (delete + re-insert)."""
     if ws_id is None:
         ws_id = get_active_ws_id()
-    # Delete existing properties for this workspace
-    supabase.table("properties").delete().eq("workspace_id", ws_id).execute()
-    # Insert all
-    for p in props:
-        supabase.table("properties").insert({
-            "id": p["id"],
-            "workspace_id": ws_id,
-            "name": p.get("name", ""),
-            "address": p.get("address", ""),
-            "lat": p.get("lat"),
-            "lon": p.get("lon"),
-            "filename": p.get("filename", ""),
-            "pdf_url": p.get("pdf_url", ""),
-            "details": p.get("details") or {},
-            "memo": p.get("memo", ""),
-            "color": p.get("color", "blue"),
-        }).execute()
-    bump_change()
-
-
-def _upsert_property(prop, ws_id):
-    """Upsert a single property (more efficient for single-record ops)."""
-    supabase.table("properties").upsert({
-        "id": prop["id"],
-        "workspace_id": ws_id,
-        "name": prop.get("name", ""),
-        "address": prop.get("address", ""),
-        "lat": prop.get("lat"),
-        "lon": prop.get("lon"),
-        "filename": prop.get("filename", ""),
-        "pdf_url": prop.get("pdf_url", ""),
-        "details": prop.get("details") or {},
-        "memo": prop.get("memo", ""),
-        "color": prop.get("color", "blue"),
-    }).execute()
+    path = get_ws_props_path(ws_id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(props, f, ensure_ascii=False, indent=2)
+    _prop_cache[ws_id] = (os.path.getmtime(path), props)
+    sync_file_to_github(path)
     bump_change()
 
 
@@ -301,28 +217,32 @@ def _upsert_property(prop, ws_id):
 def normalize_address(address):
     import unicodedata
     address = unicodedata.normalize("NFKC", address)
+    # CJK部首・互換漢字 → 通常の漢字に置換
     CJK_RADICAL_MAP = {
-        "\u2EC4": "\u897f",
-        "\u2F3B": "\u65e5",
-        "\u2F64": "\u7530",
-        "\u2F8F": "\u8349",
-        "\u2ECD": "\u91cc",
-        "\u2F97": "\u8c37",
-        "\u2F72": "\u77f3",
-        "\u2ECB": "\u8fba",
-        "\u2ECC": "\u8fbb",
+        "\u2EC4": "西",  # ⻄ → 西
+        "\u2F3B": "日",  # ⽇ → 日
+        "\u2F64": "田",  # ⽥ → 田
+        "\u2F8F": "草",  # ⾋ → 草 (actually 艸)
+        "\u2ECD": "里",  # ⻍ → 里
+        "\u2F97": "谷",  # ⾕ → 谷
+        "\u2F72": "石",  # ⽯ → 石
+        "\u2ECB": "辺",  # ⻋ → 辺
+        "\u2ECC": "辻",  # ⻌ → 辻
     }
     for radical, kanji in CJK_RADICAL_MAP.items():
         address = address.replace(radical, kanji)
+    # Remove extra spaces
     address = re.sub(r"\s+", "", address)
-    chome_map = {"1": "\u4e00", "2": "\u4e8c", "3": "\u4e09", "4": "\u56db", "5": "\u4e94",
-                 "6": "\u516d", "7": "\u4e03", "8": "\u516b", "9": "\u4e5d", "10": "\u5341"}
+    chome_map = {"1": "一", "2": "二", "3": "三", "4": "四", "5": "五",
+                 "6": "六", "7": "七", "8": "八", "9": "九", "10": "十"}
     def replace_chome(m):
         chome = chome_map.get(m.group(1), m.group(1))
-        return f"{chome}\u4e01\u76ee{m.group(2)}-{m.group(3)}"
+        return f"{chome}丁目{m.group(2)}-{m.group(3)}"
     address = re.sub(r"(\d+)-(\d+)-(\d+)", replace_chome, address)
-    address = re.sub(r"(\d+)\u4e01\u76ee\s*(\d+)\u756a\s*(\d+)\u53f7?", lambda m: f"{chome_map.get(m.group(1), m.group(1))}\u4e01\u76ee{m.group(2)}-{m.group(3)}", address)
-    address = re.sub(r"(\d+)\u756a\s*(\d+)\u53f7?", r"\1-\2", address)
+    # 「X丁目 Y番Z号」→「X丁目Y-Z」
+    address = re.sub(r"(\d+)丁目\s*(\d+)番\s*(\d+)号?", lambda m: f"{chome_map.get(m.group(1), m.group(1))}丁目{m.group(2)}-{m.group(3)}", address)
+    # 「X番Y号」(without 丁目) → 「X-Y」
+    address = re.sub(r"(\d+)番\s*(\d+)号?", r"\1-\2", address)
     return address
 
 
@@ -347,7 +267,8 @@ def geocode_address(address):
     lat, lon = _gsi_geocode(normalized)
     if lat is not None:
         return lat, lon
-    short = re.sub(r"(\u4e01\u76ee).*", r"\1", normalized)
+    # Fallback: try with shorter address (up to 丁目 level)
+    short = re.sub(r"(丁目).*", r"\1", normalized)
     if short != normalized:
         lat, lon = _gsi_geocode(short)
         if lat is not None:
@@ -358,7 +279,7 @@ def geocode_address(address):
 
 
 def extract_property_info(pdf_path):
-    """PDF\u304b\u3089\u7269\u4ef6\u60c5\u5831\u3092\u7db2\u7f85\u7684\u306b\u62bd\u51fa\u3002\u5fc5\u9808\u9805\u76ee: \u8cc3\u6599, \u5171\u76ca\u8cbb, \u9762\u7a4d, \u7bc9\u5e74\u6570, \u5099\u8003."""
+    """PDFから物件情報を網羅的に抽出。必須項目: 賃料, 共益費, 面積, 築年数, 備考."""
     import fitz
     import unicodedata
     from datetime import datetime
@@ -366,84 +287,82 @@ def extract_property_info(pdf_path):
     doc = fitz.open(pdf_path)
     raw_text = doc[0].get_text()
     doc.close()
+    # Normalize fullwidth chars
     text = unicodedata.normalize("NFKC", raw_text)
     lines = [l.strip() for l in text.split("\n") if l.strip()]
 
     info = {"name": "", "address": "", "details": {}}
     details = info["details"]
-    remarks = []
+    remarks = []  # 備考に集約する情報
 
-    m_bldg = re.search(r"\u5efa\u7269\u540d\s*\n?\s*(.+)", text)
+    # --- 物件名 (タイトル) ---
+    # GT-works: first line is building name
+    # Infosheet: building name is in 建物名 field
+    m_bldg = re.search(r"建物名\s*\n?\s*(.+)", text)
     if m_bldg:
         info["name"] = m_bldg.group(1).strip()
     elif lines:
+        # Skip non-name first lines (e.g. "専有面積")
         for l in lines[:5]:
-            if not re.match(r"^(\u5c02\u6709\u9762\u7a4d|\u7bc9\u5e74\u6708|\u5f15\u6e21|\u8cb8\u5e97\u8217|\u8cb8\u4e8b\u52d9\u6240|\d)", l):
+            if not re.match(r"^(専有面積|築年月|引渡|貸店舗|貸事務所|\d)", l):
                 info["name"] = l
                 break
 
-    # --- 住所 (全都道府県対応) ---
+    # --- 住所 ---
     addr_match = re.search(r"所在地\s*[:：]\s*(.+)", text)
     if addr_match:
         info["address"] = addr_match.group(1).strip()
     else:
-        # 全都道府県パターン
-        prefectures = (
-            "北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|"
-            "茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|"
-            "新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|"
-            "三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|"
-            "鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|"
-            "福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県"
-        )
-        for m in re.finditer(rf"((?:{prefectures})[^\n]+)", text):
-            addr = m.group(1).strip()
-            # 免許番号や郵便番号を含む行は除外
-            if "知事免許" not in addr and "〒" not in addr and "代表" not in addr and len(addr) > 5:
-                info["address"] = addr
-                break
+        for pat in [r"(東京都[^\n]+)", r"(神奈川県[^\n]+)", r"(埼玉県[^\n]+)",
+                    r"(千葉県[^\n]+)", r"(大阪府[^\n]+)", r"(福岡県[^\n]+)"]:
+            m = re.search(pat, text)
+            if m:
+                addr = m.group(1).strip()
+                # Filter out license addresses
+                if "知事免許" not in addr and "〒" not in addr:
+                    info["address"] = addr
+                    break
 
-    is_gtworks = "\u3010\u7269\u4ef6\u6982\u8981\u3011" in text
+    # --- Detect format: GT-works vs infosheet ---
+    is_gtworks = "【物件概要】" in text
 
     if is_gtworks:
         _extract_gtworks(text, lines, details, remarks)
     else:
         _extract_infosheet(text, lines, details, remarks)
 
-    # 交通 (全国の鉄道会社に対応)
-    rail_companies = (
-        r"(?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武|京急|京成|相鉄|"
-        r"名古屋市営|名鉄|近鉄|南海|阪急|阪神|京阪|大阪メトロ|"
-        r"仙台市地下鉄|仙台市営|札幌市営|福岡市地下鉄|"
-        r"つくばエクスプレス|ゆりかもめ|りんかい線|モノレール|"
-        r"\S+鉄道|\S+電鉄|\S+線)"
-    )
+    # --- 共通: 交通 ---
     station_parts = re.findall(
-        rf"({rail_companies}[^\n]+)\n([^\n]+)\n(\d+分)",
+        r"((?:JR|東京メトロ|東急|京王|小田急|都営|西武|東武)[^\n]+)\n([^\n]+)\n(\d+分)",
         raw_text
     )
     if station_parts:
-        details["\u4ea4\u901a"] = "; ".join(f"{l} {s} {t}" for l, s, t in station_parts[:4])
+        details["交通"] = "; ".join(f"{l} {s} {t}" for l, s, t in station_parts[:4])
     else:
-        # infosheet format: 仙台市地下鉄東西線 宮城野通 徒歩4分
-        m = re.search(r"(\S+線\s+\S+\s+徒歩\d+分)", text)
+        # infosheet format: 東京メトロ丸ノ内線 新宿三丁目 徒歩1分
+        m = re.search(r"((?:JR|東京メトロ|東急|京王|都営)\S+\s+\S+\s+徒歩\d+分)", text)
         if m:
             details["交通"] = m.group(1)
 
-    company_match = re.search(r"(\u682a\u5f0f\u4f1a\u793e\S+|\u6709\u9650\u4f1a\u793e\S+)", text)
+    # --- 管理会社・TEL・FAX ---
+    # GT-works format: 株式会社GT-works ... TEL: xxx / FAX: xxx
+    # Infosheet format: 株式会社xxx ... TEL: xxx / FAX: xxx
+    company_match = re.search(r"(株式会社\S+|有限会社\S+)", text)
     if company_match:
-        details["\u7ba1\u7406\u4f1a\u793e"] = company_match.group(1)
-    tel_match = re.search(r"TEL[:\uff1a]?\s*([\d-]+)", text)
+        details["管理会社"] = company_match.group(1)
+    tel_match = re.search(r"TEL[:：]?\s*([\d-]+)", text)
     if tel_match:
         details["TEL"] = tel_match.group(1)
-    fax_match = re.search(r"FAX[:\uff1a]?\s*([\d-]+)", text)
+    fax_match = re.search(r"FAX[:：]?\s*([\d-]+)", text)
     if fax_match:
         details["FAX"] = fax_match.group(1)
 
+    # --- 備考 (最後に配置) ---
     if remarks:
-        details["\u5099\u8003"] = " / ".join(remarks)
+        details["備考"] = " / ".join(remarks)
 
-    for key in ["\u8cc3\u6599", "\u5171\u76ca\u8cbb", "\u9762\u7a4d", "\u7bc9\u5e74\u6570", "\u6577\u91d1/\u4fdd\u8a3c\u91d1", "\u793c\u91d1", "\u7ba1\u7406\u4f1a\u793e", "TEL"]:
+    # --- 必須項目のデフォルト ---
+    for key in ["賃料", "共益費", "面積", "築年数", "敷金/保証金", "礼金", "管理会社", "TEL"]:
         if key not in details:
             details[key] = "-"
 
@@ -451,176 +370,206 @@ def extract_property_info(pdf_path):
 
 
 def _extract_gtworks(text, lines, details, remarks):
-    """GT-works\u5f62\u5f0f\u306ePDF\u62bd\u51fa."""
+    """GT-works形式のPDF抽出."""
     from datetime import datetime
 
-    rent_matches = re.findall(r"([\d,]+)\s*\u5186\s*\n?\s*\(\u5761\u5358\u4fa1[:\uff1a]?([\d,]+)\s*\u5186\)", text)
+    # 賃料 (坪単価含む)
+    rent_matches = re.findall(r"([\d,]+)\s*円\s*\n?\s*\(坪単価[:：]?([\d,]+)\s*円\)", text)
     if rent_matches:
-        rents = [f"{r[0]}\u5186 (@{r[1]}\u5186)" for r in rent_matches]
-        details["\u8cc3\u6599"] = " / ".join(rents)
+        rents = [f"{r[0]}円 (@{r[1]}円)" for r in rent_matches]
+        details["賃料"] = " / ".join(rents)
     else:
-        m = re.search(r"\u8cc3\u6599\s*\n?\s*([\d,]+)\s*\u5186", text)
+        m = re.search(r"賃料\s*\n?\s*([\d,]+)\s*円", text)
         if m:
-            details["\u8cc3\u6599"] = m.group(1) + "\u5186"
-        elif "\u7121\u3057" in text and re.search(r"\u8cc3\u6599\s*\n", text):
-            details["\u8cc3\u6599"] = "\u975e\u516c\u958b"
+            details["賃料"] = m.group(1) + "円"
+        elif "無し" in text and re.search(r"賃料\s*\n", text):
+            details["賃料"] = "非公開"
 
-    m = re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*([\d,]+)\s*\u5186", text)
+    # 共益費
+    m = re.search(r"共益費\s*\n?\s*([\d,]+)\s*円", text)
     if m:
-        details["\u5171\u76ca\u8cbb"] = m.group(1) + "\u5186"
-    elif re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*\u8fbc\b", text) or re.search(r"\n\u8fbc\n", text):
-        details["\u5171\u76ca\u8cbb"] = "\u8cc3\u6599\u8fbc\u307f"
-    elif re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*\u7121\u3057", text) or re.search(r"\u5171\u76ca\u8cbb\s*\n?\s*\u306a\u3057", text):
-        details["\u5171\u76ca\u8cbb"] = "\u306a\u3057"
+        details["共益費"] = m.group(1) + "円"
+    elif re.search(r"共益費\s*\n?\s*込\b", text) or re.search(r"\n込\n", text):
+        details["共益費"] = "賃料込み"
+    elif re.search(r"共益費\s*\n?\s*無し", text) or re.search(r"共益費\s*\n?\s*なし", text):
+        details["共益費"] = "なし"
 
-    area_matches = re.findall(r"(\d+(?:\.\d+)?)\s*\u576a\s*\n?\s*\(([\d.]+)\s*m", text)
+    # 面積 (複数階対応)
+    area_matches = re.findall(r"(\d+(?:\.\d+)?)\s*坪\s*\n?\s*\(([\d.]+)\s*m", text)
     if area_matches:
-        areas = [f"{a[0]}\u576a ({a[1]}m\u00b2)" for a in area_matches]
-        details["\u9762\u7a4d"] = " / ".join(areas)
+        areas = [f"{a[0]}坪 ({a[1]}m²)" for a in area_matches]
+        details["面積"] = " / ".join(areas)
 
-    m = re.search(r"\u7aef\u5de5\s*[:\uff1a]\s*(\d{4})[/\u5e74](\d{1,2})", text)
+    # 竣工 → 築年数
+    m = re.search(r"竣工\s*[:：]\s*(\d{4})[/年](\d{1,2})", text)
     if m:
         year, month = int(m.group(1)), int(m.group(2))
         age = datetime.now().year - year
-        details["\u7bc9\u5e74\u6570"] = f"{age}\u5e74 ({year}/{month:02d})"
+        details["築年数"] = f"{age}年 ({year}/{month:02d})"
 
-    m = re.search(r"\u69cb\u9020\s*[:\uff1a]\s*(\S+)", text)
+    # 構造・規模
+    m = re.search(r"構造\s*[:：]\s*(\S+)", text)
     if m:
         structure = m.group(1)
-        m2 = re.search(r"\u898f\u6a21\s*[:\uff1a]\s*(\S+)", text)
+        m2 = re.search(r"規模\s*[:：]\s*(\S+)", text)
         if m2:
             structure += f" {m2.group(1)}"
-        details["\u69cb\u9020"] = structure
+        details["構造"] = structure
 
-    m = re.search(r"\u5165\u5c45\u65e5\n([\s\S]+?)\u6240\u5728\u5730", text)
+    # 階数
+    floor_matches = re.findall(r"^\s*(\d+)\s*$", text, re.MULTILINE)
+    #階数は面積の前に出る数字
+    m = re.search(r"入居日\n([\s\S]+?)所在地", text)
     if m:
         block = m.group(1)
         floors = re.findall(r"^(\d+)\n", block, re.MULTILINE)
         if floors:
-            details["\u968e\u6570"] = "F / ".join(floors) + "F"
+            details["階数"] = "F / ".join(floors) + "F"
 
-    dep_matches = re.findall(r"(\d+\u30f6\u6708)", text)
+    # 預託金
+    dep_matches = re.findall(r"(\d+ヶ月)", text)
     if dep_matches:
-        details["\u9810\u8a17\u91d1"] = dep_matches[0]
+        # First occurrence before 賃料 line is usually 預託金
+        details["預託金"] = dep_matches[0]
 
-    contracts = re.findall(r"(\u5b9a\u671f\u501f\u5bb6[^\n]*|\d+\u5e74)", text)
+    # 契約期間
+    contracts = re.findall(r"(定期借家[^\n]*|\d+年)", text)
     if contracts:
-        details["\u5951\u7d04"] = contracts[0].strip()
+        details["契約"] = contracts[0].strip()
 
-    entry_matches = re.findall(r"(\u5373|\u76f8\u8ac7|\d{4}/\d{1,2}(?:/\d{1,2})?(?:\u4ee5\u964d|\u4e88\u5b9a)?)", text)
+    # 入居日 (即, 相談, 2026/xx, xxxx/xx/xx)
+    entry_matches = re.findall(r"(即|相談|\d{4}/\d{1,2}(?:/\d{1,2})?(?:以降|予定)?)", text)
     if entry_matches:
-        details["\u5165\u5c45\u65e5"] = entry_matches[-1]
+        details["入居日"] = entry_matches[-1]
 
-    for label, key in [("EV", "EV"), ("\u8b66\u5099", "\u8b66\u5099"), ("\u7a7a\u8abf", "\u7a7a\u8abf"),
-                       ("\u30c8\u30a4\u30ec", "\u30c8\u30a4\u30ec"), ("\u4f7f\u7528\u6642\u9593", "\u4f7f\u7528\u6642\u9593")]:
-        m = re.search(rf"{label}\s*[:\uff1a]\s*(.+)", text)
+    # EV, 警備, 空調, トイレ, 使用時間
+    for label, key in [("EV", "EV"), ("警備", "警備"), ("空調", "空調"),
+                       ("トイレ", "トイレ"), ("使用時間", "使用時間")]:
+        m = re.search(rf"{label}\s*[:：]\s*(.+)", text)
         if m:
             remarks.append(f"{key}: {m.group(1).strip()}")
 
-    bed_matches = re.findall(r"(OA\u30d5\u30ed\u30a2\u30fc|\u30bf\u30a4\u30eb\u30ab\u30fc\u30da\u30c3\u30c8|\u30d5\u30ea\u30fc\u30a2\u30af\u30bb\u30b9|P\u30bf\u30a4\u30eb)", text)
+    # 床仕様
+    bed_matches = re.findall(r"(OAフロアー|タイルカーペット|フリーアクセス|Pタイル)", text)
     if bed_matches:
-        remarks.append(f"\u5e8a: {bed_matches[0]}")
+        remarks.append(f"床: {bed_matches[0]}")
 
-    ng = re.findall(r"(\u30cd\u30c3\u30c8\u9762\u7a4d|\u30b0\u30ed\u30b9\u9762\u7a4d)", text)
+    # ネット/グロス
+    ng = re.findall(r"(ネット面積|グロス面積)", text)
     if ng:
         remarks.append(ng[0])
 
-    m = re.search(r"\u66f4\u65b0\u6599\s*\n?\s*(\S+)", text)
-    if m and m.group(1) not in ("-", "\u7121\u3057", "\u511f\u5374\u8cbb"):
-        remarks.append(f"\u66f4\u65b0\u6599: {m.group(1)}")
-    m = re.search(r"\u511f\u5374\u8cbb?\s*\n?\s*(\S+)", text)
-    if m and m.group(1) not in ("-", "\u7121\u3057", "\u793c\u91d1"):
-        remarks.append(f"\u511f\u5374: {m.group(1)}")
+    # 更新料・償却
+    m = re.search(r"更新料\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "償却費"):
+        remarks.append(f"更新料: {m.group(1)}")
+    m = re.search(r"償却費?\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "礼金"):
+        remarks.append(f"償却: {m.group(1)}")
 
-    m = re.search(r"\u793c\u91d1\s*\n?\s*(\S+)", text)
-    if m and m.group(1) not in ("-", "\u7121\u3057", "\u5951\u7d04\u671f\u9593"):
-        details["\u793c\u91d1"] = m.group(1)
+    # 礼金 → details
+    m = re.search(r"礼金\s*\n?\s*(\S+)", text)
+    if m and m.group(1) not in ("-", "無し", "契約期間"):
+        details["礼金"] = m.group(1)
     else:
-        details["\u793c\u91d1"] = "\u306a\u3057"
+        details["礼金"] = "なし"
 
-    if "\u9810\u8a17\u91d1" in details:
-        details["\u6577\u91d1/\u4fdd\u8a3c\u91d1"] = details.pop("\u9810\u8a17\u91d1")
+    # 敷金/保証金 → details (預託金を使う)
+    if "預託金" in details:
+        details["敷金/保証金"] = details.pop("預託金")
 
 
 def _extract_infosheet(text, lines, details, remarks):
-    """infosheet\u5f62\u5f0f\u306ePDF\u62bd\u51fa."""
+    """infosheet形式のPDF抽出."""
     from datetime import datetime
 
-    m = re.search(r"\u8cc3\u6599\s*([\d,.]+\u4e07?\u5186)", text)
+    # 賃料
+    m = re.search(r"賃料\s*([\d,.]+万?円)", text)
     if m:
-        details["\u8cc3\u6599"] = m.group(1)
+        details["賃料"] = m.group(1)
 
-    m = re.search(r"\u5171\u76ca\u8cbb([\d,]+\u5186/\u6708|\u306a\u3057)", text)
+    # 共益費 / 管理費
+    m = re.search(r"共益費([\d,]+円/月|なし)", text)
     if m:
-        details["\u5171\u76ca\u8cbb"] = m.group(1)
+        details["共益費"] = m.group(1)
     else:
-        m = re.search(r"\u7ba1\u7406\u8cbb\u7b49\s*\n?\s*([\d,]+\u5186/\u6708|\u306a\u3057)", text)
+        m = re.search(r"管理費等\s*\n?\s*([\d,]+円/月|なし)", text)
         if m:
-            details["\u5171\u76ca\u8cbb"] = m.group(1)
+            details["共益費"] = m.group(1)
         else:
-            m = re.search(r"([\d,]+)\u5186/\u6708\s*\u5171\u76ca\u8cbb", text)
+            m = re.search(r"([\d,]+)円/月\s*共益費", text)
             if m:
-                details["\u5171\u76ca\u8cbb"] = m.group(1) + "\u5186/\u6708"
+                details["共益費"] = m.group(1) + "円/月"
 
-    m = re.search(r"\u9762\s*\u7a4d\s*\n?\s*([\d.]+)\s*m|\u9762\u7a4d\s*\n?\s*([\d.]+)m|([\d.]+)\s*m\u00b2|([\d.]+)\s*\u33a1", text)
+    # 面積
+    m = re.search(r"面\s*積\s*\n?\s*([\d.]+)\s*m|面積\s*\n?\s*([\d.]+)m|([\d.]+)\s*m²|([\d.]+)\s*㎡", text)
     if m:
         sqm = next(g for g in m.groups() if g)
         tsubo = round(float(sqm) / 3.30579, 2)
-        details["\u9762\u7a4d"] = f"{tsubo}\u576a ({sqm}m\u00b2)"
+        details["面積"] = f"{tsubo}坪 ({sqm}m²)"
     else:
-        m = re.search(r"([\d.]+)\s*\u576a", text)
+        m = re.search(r"([\d.]+)\s*坪", text)
         if m:
-            details["\u9762\u7a4d"] = m.group(1) + "\u576a"
+            details["面積"] = m.group(1) + "坪"
 
-    m = re.search(r"\u7bc9\s*\u5e74\s*\u6708?\s*\n?\s*(\d{4})\u5e74(\d{1,2})\u6708", text)
+    # 築年月 → 築年数
+    m = re.search(r"築\s*年\s*月?\s*\n?\s*(\d{4})年(\d{1,2})月", text)
     if m:
         year, month = int(m.group(1)), int(m.group(2))
         age = datetime.now().year - year
-        details["\u7bc9\u5e74\u6570"] = f"{age}\u5e74 ({year}/{month:02d})"
+        details["築年数"] = f"{age}年 ({year}/{month:02d})"
 
-    m = re.search(r"\u69cb\u9020[\u30fb\uff65]?\u898f\u6a21\s*\n?\s*(\S+\s+\S+)", text)
+    # 構造
+    m = re.search(r"構造[・･]?規模\s*\n?\s*(\S+\s+\S+)", text)
     if m:
-        details["\u69cb\u9020"] = m.group(1).strip()
+        details["構造"] = m.group(1).strip()
 
+    # 敷金・保証金 → details
     dep_parts = []
-    for label in ["\u6577\u91d1", "\u4fdd\u8a3c\u91d1"]:
-        m = re.search(rf"{label}\s+([\d.]+\u30f6\u6708|\u306a\u3057|[\d,]+\u4e07?\u5186)", text)
-        if m and m.group(1) != "\u306a\u3057":
+    for label in ["敷金", "保証金"]:
+        m = re.search(rf"{label}\s+([\d.]+ヶ月|なし|[\d,]+万?円)", text)
+        if m and m.group(1) != "なし":
             dep_parts.append(f"{label}{m.group(1)}")
     if dep_parts:
-        details["\u6577\u91d1/\u4fdd\u8a3c\u91d1"] = " / ".join(dep_parts)
+        details["敷金/保証金"] = " / ".join(dep_parts)
 
-    m = re.search(r"\u793c\u91d1\s+([\d.]+\u30f6\u6708|\u306a\u3057|[\d,]+\u4e07?\u5186)", text)
-    if m and m.group(1) != "\u306a\u3057":
-        details["\u793c\u91d1"] = m.group(1)
+    # 礼金 → details
+    m = re.search(r"礼金\s+([\d.]+ヶ月|なし|[\d,]+万?円)", text)
+    if m and m.group(1) != "なし":
+        details["礼金"] = m.group(1)
     else:
-        details["\u793c\u91d1"] = "\u306a\u3057"
+        details["礼金"] = "なし"
 
-    m = re.search(r"\u5951\u7d04\u671f\u9593\s*\n?\s*(\d+\u5e74|\u5b9a\u671f\u501f\u5bb6)", text)
+    # 契約期間
+    m = re.search(r"契約期間\s*\n?\s*(\d+年|定期借家)", text)
     if m:
-        details["\u5951\u7d04"] = m.group(1)
+        details["契約"] = m.group(1)
 
-    m = re.search(r"\u5f15\u6e21\u53ef\u80fd\s*\n?\s*\u6642\s*\u671f\s*\n?\s*(\S+)", text)
+    # 引渡時期
+    m = re.search(r"引渡可能\s*\n?\s*時\s*期\s*\n?\s*(\S+)", text)
     if m:
-        details["\u5165\u5c45\u65e5"] = m.group(1)
+        details["入居日"] = m.group(1)
 
-    m = re.search(r"\u8a2d\s*\u5099\s*\n?\s*(.+?)(?:\n\u5099\s*\u8003|\n$)", text, re.DOTALL)
+    # 設備
+    m = re.search(r"設\s*備\s*\n?\s*(.+?)(?:\n備\s*考|\n$)", text, re.DOTALL)
     if m:
         equip = m.group(1).strip().replace("\n", ", ")
         if equip and equip != "-":
-            remarks.append(f"\u8a2d\u5099: {equip}")
+            remarks.append(f"設備: {equip}")
 
-    m = re.search(r"\u5099\s*\u8003\s*\n(.+?)(?:\n\u3053\u306e\u56f3\u9762|\ninfosheet)", text, re.DOTALL)
+    # 備考テキスト
+    m = re.search(r"備\s*考\s*\n(.+?)(?:\nこの図面|\ninfosheet)", text, re.DOTALL)
     if m:
         biko = " ".join(m.group(1).split())
         if len(biko) > 200:
             biko = biko[:200] + "..."
         remarks.append(biko)
 
-    m = re.search(r"\u30c1\u30a7\u30c3\u30af\u30dd\u30a4\u30f3\u30c8\uff01\s*\n(.+?)(?:\n\u7269)", text, re.DOTALL)
+    # チェックポイント
+    m = re.search(r"チェックポイント！\s*\n(.+?)(?:\n物)", text, re.DOTALL)
     if m:
         cp = m.group(1).strip().replace("\n", ", ")
-        remarks.append(f"\u7279\u5fb4: {cp}")
+        remarks.append(f"特徴: {cp}")
 
 
 # ===================== Routes =====================
@@ -643,16 +592,12 @@ def get_sync():
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    email = data.get("email", "").strip().lower()
+    email = data.get("email", "").strip()
     password = data.get("password", "")
-    users = _load_users()
-    user = users.get(email)
-    if user and user.get("password") == password:
+    if email in USERS and USERS[email] == password:
         session["logged_in"] = True
         session["user_email"] = email
-        session["user_role"] = user.get("role", "viewer")
-        session["user_name"] = user.get("name", email.split("@")[0])
-        return jsonify({"status": "ok", "role": user.get("role", "viewer"), "name": session["user_name"]})
+        return jsonify({"status": "ok"})
     return jsonify({"error": "invalid", "message": "IDまたはパスワードが正しくありません"}), 401
 
 
@@ -665,9 +610,7 @@ def logout():
 @app.route("/api/auth-check")
 def auth_check():
     if session.get("logged_in"):
-        return jsonify({"loggedIn": True, "email": session.get("user_email", ""),
-                        "role": session.get("user_role", "viewer"),
-                        "name": session.get("user_name", "")})
+        return jsonify({"loggedIn": True, "email": session.get("user_email", "")})
     return jsonify({"loggedIn": False})
 
 
@@ -684,84 +627,65 @@ def get_workspaces():
 
 
 @app.route("/api/workspaces", methods=["POST"])
-@editor_required
 def create_workspace():
     data = request.json
     ws_id = f"ws_{int(time.time() * 1000)}"
+    ws_dir = os.path.join(WORKSPACES_DIR, ws_id)
+    os.makedirs(ws_dir, exist_ok=True)
+    with open(os.path.join(ws_dir, "properties.json"), "w") as f:
+        json.dump([], f)
     new_ws = {
         "id": ws_id,
-        "name": data.get("name", "\u65b0\u898f\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9"),
+        "name": data.get("name", "新規ワークスペース"),
         "stations": data.get("stations", []),
         "center": data.get("center", {"lat": 35.6812, "lon": 139.7671}),
         "zoom": data.get("zoom", 14),
     }
-    supabase.table("workspaces").insert({
-        "id": new_ws["id"],
-        "name": new_ws["name"],
-        "stations": new_ws.get("stations"),
-        "center": new_ws.get("center"),
-        "zoom": new_ws.get("zoom", 14),
-    }).execute()
-    bump_change()
+    ws_data = load_workspaces()
+    ws_data["workspaces"].append(new_ws)
+    save_workspaces(ws_data)
     return jsonify({"status": "ok", "workspace": new_ws})
 
 
 @app.route("/api/workspaces/<ws_id>", methods=["PUT"])
-@editor_required
 def update_workspace(ws_id):
     updates = request.json
-    update_data = {}
-    if "name" in updates:
-        update_data["name"] = updates["name"]
-    if "stations" in updates:
-        update_data["stations"] = updates["stations"]
-    if "center" in updates:
-        update_data["center"] = updates["center"]
-    if "zoom" in updates:
-        update_data["zoom"] = updates["zoom"]
-    if "criteria" in updates:
-        update_data["criteria"] = updates["criteria"]
-    if not update_data:
-        return jsonify({"status": "ok"})
-    resp = supabase.table("workspaces").update(update_data).eq("id", ws_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    bump_change()
-    return jsonify({"status": "ok"})
+    ws_data = load_workspaces()
+    for ws in ws_data["workspaces"]:
+        if ws["id"] == ws_id:
+            if "name" in updates: ws["name"] = updates["name"]
+            if "stations" in updates: ws["stations"] = updates["stations"]
+            if "center" in updates: ws["center"] = updates["center"]
+            if "zoom" in updates: ws["zoom"] = updates["zoom"]
+            save_workspaces(ws_data)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/workspaces/<ws_id>", methods=["DELETE"])
-@editor_required
 def delete_workspace(ws_id):
-    # Check count
-    resp = supabase.table("workspaces").select("id").execute()
-    if len(resp.data or []) <= 1:
-        return jsonify({"error": "\u6700\u5f8c\u306e\u30ef\u30fc\u30af\u30b9\u30da\u30fc\u30b9\u306f\u524a\u9664\u3067\u304d\u307e\u305b\u3093"}), 400
-    # Delete properties for this workspace
-    supabase.table("properties").delete().eq("workspace_id", ws_id).execute()
-    # Delete workspace
-    supabase.table("workspaces").delete().eq("id", ws_id).execute()
-    # Update active workspace if needed
-    active = _get_app_setting("activeWorkspace")
-    if active == ws_id:
-        remaining = supabase.table("workspaces").select("id").limit(1).execute()
-        new_active = remaining.data[0]["id"] if remaining.data else "ws_1"
-        _set_app_setting("activeWorkspace", new_active)
-        bump_change()
-        return jsonify({"status": "ok", "activeWorkspace": new_active})
-    bump_change()
-    return jsonify({"status": "ok", "activeWorkspace": active})
+    ws_data = load_workspaces()
+    if len(ws_data["workspaces"]) <= 1:
+        return jsonify({"error": "最後のワークスペースは削除できません"}), 400
+    ws_data["workspaces"] = [w for w in ws_data["workspaces"] if w["id"] != ws_id]
+    if ws_data["activeWorkspace"] == ws_id:
+        ws_data["activeWorkspace"] = ws_data["workspaces"][0]["id"]
+    # Remove directory
+    ws_dir = os.path.join(WORKSPACES_DIR, ws_id)
+    if os.path.exists(ws_dir):
+        shutil.rmtree(ws_dir)
+    save_workspaces(ws_data)
+    return jsonify({"status": "ok", "activeWorkspace": ws_data["activeWorkspace"]})
 
 
 @app.route("/api/workspaces/active", methods=["PUT"])
-@editor_required
 def set_active_workspace():
     ws_id = request.json.get("id")
-    resp = supabase.table("workspaces").select("id").eq("id", ws_id).execute()
-    if not resp.data:
+    ws_data = load_workspaces()
+    if not any(w["id"] == ws_id for w in ws_data["workspaces"]):
         return jsonify({"error": "not found"}), 404
-    _set_app_setting("activeWorkspace", ws_id)
-    bump_change()
+    ws_data["activeWorkspace"] = ws_id
+    save_workspaces(ws_data)
     return jsonify({"status": "ok"})
 
 
@@ -773,31 +697,33 @@ def get_properties():
 
 
 @app.route("/api/properties/<prop_id>/memo", methods=["PUT"])
-@editor_required
 def update_memo(prop_id):
-    memo = request.json.get("memo", "")
-    resp = supabase.table("properties").update({"memo": memo}).eq("id", prop_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    bump_change()
-    return jsonify({"status": "ok"})
+    ws_id = get_active_ws_id()
+    props = load_properties(ws_id)
+    for p in props:
+        if p["id"] == prop_id:
+            p["memo"] = request.json.get("memo", "")
+            save_properties(props, ws_id)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/properties/<prop_id>/color", methods=["PUT"])
-@editor_required
 def update_color(prop_id):
+    ws_id = get_active_ws_id()
     color = request.json.get("color", "blue")
-    if color not in ("blue", "red", "green", "yellow", "black", "gray"):
+    if color not in ("blue", "red", "green"):
         color = "blue"
-    resp = supabase.table("properties").update({"color": color}).eq("id", prop_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    bump_change()
-    return jsonify({"status": "ok"})
+    props = load_properties(ws_id)
+    for p in props:
+        if p["id"] == prop_id:
+            p["color"] = color
+            save_properties(props, ws_id)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/upload", methods=["POST"])
-@editor_required
 def upload_pdf():
     ws_id = get_active_ws_id()
     if "pdf" not in request.files:
@@ -808,42 +734,29 @@ def upload_pdf():
     filename = file.filename
     filepath = os.path.join(PDF_DIR, filename)
     file.save(filepath)
+    sync_file_to_github(filepath)  # PDFもGitHubに永続化
     info = extract_property_info(filepath)
     manual_address = request.form.get("address", "").strip()
     if manual_address:
         info["address"] = manual_address
     if not info["address"]:
         return jsonify({"error": "address_not_found", "extracted": info,
-                        "filename": filename, "message": "\u4f4f\u6240\u3092\u81ea\u52d5\u62bd\u51fa\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002"})
+                        "filename": filename, "message": "住所を自動抽出できませんでした。"})
     lat, lon = geocode_address(info["address"])
     if lat is None:
         return jsonify({"error": "geocode_failed", "extracted": info,
-                        "filename": filename, "message": "\u30b8\u30aa\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002"})
+                        "filename": filename, "message": "ジオコーディングに失敗しました。"})
+    props = load_properties(ws_id)
     prop_id = f"prop_{int(time.time() * 1000)}"
-    # Upload PDF to Supabase Storage for permanent persistence
-    pdf_url = _upload_pdf_to_supabase(filepath, filename)
     new_prop = {"id": prop_id, "name": info["name"], "address": info["address"],
                 "lat": lat, "lon": lon, "filename": filename,
                 "details": info["details"], "memo": ""}
-    supabase.table("properties").insert({
-        "id": prop_id,
-        "workspace_id": ws_id,
-        "name": info["name"],
-        "address": info["address"],
-        "lat": lat,
-        "lon": lon,
-        "filename": filename,
-        "pdf_url": pdf_url,
-        "details": info["details"],
-        "memo": "",
-        "color": "blue",
-    }).execute()
-    bump_change()
+    props.append(new_prop)
+    save_properties(props, ws_id)
     return jsonify({"status": "ok", "property": new_prop})
 
 
 @app.route("/api/properties/manual", methods=["POST"])
-@editor_required
 def add_property_manual():
     ws_id = get_active_ws_id()
     data = request.json
@@ -851,83 +764,82 @@ def add_property_manual():
     address = data.get("address", "").strip()
     details = data.get("details", {})
     if not name or not address:
-        return jsonify({"error": "missing_fields", "message": "\u7269\u4ef6\u540d\u3068\u4f4f\u6240\u306f\u5fc5\u9808\u3067\u3059"}), 400
+        return jsonify({"error": "missing_fields", "message": "物件名と住所は必須です"}), 400
     lat, lon = geocode_address(address)
     if lat is None:
-        return jsonify({"error": "geocode_failed", "message": "\u4f4f\u6240\u304b\u3089\u306e\u4f4d\u7f6e\u7279\u5b9a\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002\u4f4f\u6240\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002"})
+        return jsonify({"error": "geocode_failed", "message": "住所からの位置特定に失敗しました。住所を確認してください。"})
+    props = load_properties(ws_id)
     prop_id = f"prop_{int(time.time() * 1000)}"
     new_prop = {"id": prop_id, "name": name, "address": address,
                 "lat": lat, "lon": lon, "filename": "",
                 "details": details, "memo": ""}
-    supabase.table("properties").insert({
-        "id": prop_id,
-        "workspace_id": ws_id,
-        "name": name,
-        "address": address,
-        "lat": lat,
-        "lon": lon,
-        "filename": "",
-        "details": details,
-        "memo": "",
-        "color": "blue",
-    }).execute()
-    bump_change()
+    props.append(new_prop)
+    save_properties(props, ws_id)
     return jsonify({"status": "ok", "property": new_prop})
 
 
 @app.route("/api/properties/<prop_id>/details", methods=["PUT"])
-@editor_required
 def update_details(prop_id):
-    data = request.json
-    update = {}
-    if "details" in data:
-        update["details"] = data["details"]
-    if "name" in data:
-        update["name"] = data["name"]
-    if not update:
-        return jsonify({"error": "no fields"}), 400
-    resp = supabase.table("properties").update(update).eq("id", prop_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    bump_change()
-    return jsonify({"status": "ok"})
+    ws_id = get_active_ws_id()
+    details = request.json.get("details", {})
+    props = load_properties(ws_id)
+    for p in props:
+        if p["id"] == prop_id:
+            p["details"] = details
+            save_properties(props, ws_id)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/properties/<prop_id>", methods=["DELETE"])
-@editor_required
 def delete_property(prop_id):
-    supabase.table("properties").delete().eq("id", prop_id).execute()
-    bump_change()
+    ws_id = get_active_ws_id()
+    props = [p for p in load_properties(ws_id) if p["id"] != prop_id]
+    save_properties(props, ws_id)
     return jsonify({"status": "ok"})
 
 
 @app.route("/api/properties/<prop_id>/move", methods=["PUT"])
-@editor_required
 def move_property(prop_id):
-    """Move a property to a different workspace."""
+    """物件を別のワークスペースに移動."""
+    ws_id = get_active_ws_id()
     target_ws_id = request.json.get("targetWs")
     if not target_ws_id:
         return jsonify({"error": "targetWs required"}), 400
-    resp = supabase.table("properties").select("*").eq("id", prop_id).execute()
-    if not resp.data:
+    # Find and remove from source
+    src_props = load_properties(ws_id)
+    prop = None
+    remaining = []
+    for p in src_props:
+        if p["id"] == prop_id:
+            prop = p
+        else:
+            remaining.append(p)
+    if not prop:
         return jsonify({"error": "not found"}), 404
-    supabase.table("properties").update({"workspace_id": target_ws_id}).eq("id", prop_id).execute()
-    bump_change()
+    save_properties(remaining, ws_id)
+    # Add to target
+    dst_props = load_properties(target_ws_id)
+    dst_props.append(prop)
+    save_properties(dst_props, target_ws_id)
     return jsonify({"status": "ok"})
 
 
 # --- Station geocoding ---
 
-MAJOR_STATIONS = {"\u6e0b\u8c37", "\u65b0\u5bbf", "\u6c60\u888b", "\u6771\u4eac", "\u54c1\u5ddd", "\u4e0a\u91ce", "\u6a2a\u6d5c", "\u5927\u5bae", "\u5343\u8449", "\u7acb\u5ddd", "\u753a\u7530", "\u5409\u7965\u5bfa", "\u5317\u5343\u4f4f", "\u5927\u624b\u753a", "\u79cb\u8449\u539f"}
+# Major terminal stations get larger radius
+MAJOR_STATIONS = {"渋谷", "新宿", "池袋", "東京", "品川", "上野", "横浜", "大宮", "千葉", "立川", "町田", "吉祥寺", "北千住", "大手町", "秋葉原"}
 
 @app.route("/api/geocode-station")
 def geocode_station():
+    """駅名 → 緯度経度を自動取得 (Nominatim)."""
     name = request.args.get("name", "").strip()
     if not name:
         return jsonify({"error": "name required"}), 400
-    search_name = name if name.endswith("\u99c5") else name + "\u99c5"
+    # Ensure it ends with 駅
+    search_name = name if name.endswith("駅") else name + "駅"
     query = urllib.parse.urlencode({
-        "q": search_name, "format": "json", "limit": 8, "countrycodes": "jp",
+        "q": search_name, "format": "json", "limit": 1, "countrycodes": "jp",
     })
     url = f"https://nominatim.openstreetmap.org/search?{query}"
     req = urllib.request.Request(url, headers={"User-Agent": "PropertyMapApp/1.0"})
@@ -935,62 +847,21 @@ def geocode_station():
         with urllib.request.urlopen(req, timeout=10, context=SSL_CTX) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             if data:
-                base_name = search_name.replace("\u99c5", "")
+                lat = float(data[0]["lat"])
+                lon = float(data[0]["lon"])
+                # Auto radius based on station size
+                base_name = search_name.replace("駅", "")
                 radius = 180 if base_name in MAJOR_STATIONS else 120
-                candidates = []
-                for item in data:
-                    candidates.append({
-                        "name": item.get("display_name", search_name).split(",")[0],
-                        "display": item.get("display_name", ""),
-                        "lat": float(item["lat"]),
-                        "lon": float(item["lon"]),
-                        "r": radius,
-                    })
-                return jsonify({"status": "ok", "candidates": candidates, "name": search_name})
+                return jsonify({"status": "ok", "lat": lat, "lon": lon, "r": radius, "name": search_name})
     except Exception as e:
         print(f"Station geocoding failed: {e}")
-    return jsonify({"error": "not_found", "message": f"\u300c{search_name}\u300d\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f"})
-
-
-# --- PDF replace ---
-
-@app.route("/api/properties/replace-pdf", methods=["POST"])
-@editor_required
-def replace_pdf():
-    """Replace or add PDF for an existing property."""
-    if "pdf" not in request.files:
-        return jsonify({"error": "no file"}), 400
-    file = request.files["pdf"]
-    prop_id = request.form.get("propertyId", "")
-    ws_id = request.form.get("ws", "")
-    if not prop_id:
-        return jsonify({"error": "propertyId required"}), 400
-    if not file.filename.endswith(".pdf"):
-        return jsonify({"error": "not a PDF"}), 400
-    filename = file.filename
-    filepath = os.path.join(PDF_DIR, filename)
-    file.save(filepath)
-    # Upload to Supabase Storage for permanent persistence
-    pdf_url = _upload_pdf_to_supabase(filepath, filename)
-    # Update property in DB
-    supabase.table("properties").update({"filename": filename, "pdf_url": pdf_url}).eq("id", prop_id).execute()
-    bump_change()
-    return jsonify({"status": "ok", "filename": filename})
+    return jsonify({"error": "not_found", "message": f"「{search_name}」が見つかりませんでした"})
 
 
 # --- PDF serving ---
 
 @app.route("/pdf/<path:filename>")
 def serve_pdf(filename):
-    filepath = os.path.join(PDF_DIR, filename)
-    if not os.path.exists(filepath):
-        # Try to download from Supabase Storage
-        # Look up pdf_url from DB by filename
-        resp_db = supabase.table("properties").select("pdf_url").eq("filename", filename).limit(1).execute()
-        if resp_db.data and resp_db.data[0].get("pdf_url"):
-            _download_pdf_from_supabase(resp_db.data[0]["pdf_url"], filename)
-    if not os.path.exists(filepath):
-        return jsonify({"error": "PDF not found"}), 404
     resp = send_from_directory(PDF_DIR, filename, mimetype="application/pdf")
     resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
@@ -1001,11 +872,6 @@ def serve_pdf_as_images(filename):
     import fitz
     from flask import Response
     filepath = os.path.join(PDF_DIR, filename)
-    if not os.path.exists(filepath):
-        # Try Supabase fallback
-        resp_db = supabase.table("properties").select("pdf_url").eq("filename", filename).limit(1).execute()
-        if resp_db.data and resp_db.data[0].get("pdf_url"):
-            _download_pdf_from_supabase(resp_db.data[0]["pdf_url"], filename)
     if not os.path.exists(filepath):
         return jsonify({"error": "not found"}), 404
     page_num = request.args.get("page", 0, type=int)
@@ -1026,36 +892,30 @@ def serve_pdf_as_images(filename):
 
 # ===================== Agents =====================
 
+_agents_cache = None
+_agents_mtime = 0
+
+
 def load_agents():
-    resp = supabase.table("agents").select("*").execute()
-    rows = resp.data or []
-    agents = []
-    for r in rows:
-        agents.append({
-            "id": r["id"],
-            "name": r.get("name", ""),
-            "email": r.get("email", ""),
-            "phone": r.get("phone", ""),
-            "area": r.get("area", ""),
-            "managerArea": r.get("manager_area", ""),
-            "memo": r.get("memo", ""),
-        })
-    return agents
+    global _agents_cache, _agents_mtime
+    if not os.path.exists(AGENTS_FILE):
+        return []
+    mtime = os.path.getmtime(AGENTS_FILE)
+    if _agents_cache is not None and mtime == _agents_mtime:
+        return _agents_cache
+    with open(AGENTS_FILE, "r", encoding="utf-8") as f:
+        _agents_cache = json.load(f)
+    _agents_mtime = mtime
+    return _agents_cache
 
 
 def save_agents(agents):
-    """Full overwrite of agents table."""
-    supabase.table("agents").delete().neq("id", "__never__").execute()
-    for a in agents:
-        supabase.table("agents").insert({
-            "id": a["id"],
-            "name": a.get("name", ""),
-            "email": a.get("email", ""),
-            "phone": a.get("phone", ""),
-            "area": a.get("area", ""),
-            "manager_area": a.get("managerArea", ""),
-            "memo": a.get("memo", ""),
-        }).execute()
+    global _agents_cache, _agents_mtime
+    with open(AGENTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(agents, f, ensure_ascii=False, indent=2)
+    _agents_cache = agents
+    _agents_mtime = os.path.getmtime(AGENTS_FILE)
+    sync_file_to_github(AGENTS_FILE)
     bump_change()
 
 
@@ -1065,13 +925,13 @@ def get_agents():
 
 
 @app.route("/api/agents", methods=["POST"])
-@editor_required
 def create_agent():
     data = request.json
     name = data.get("name", "").strip()
     email = data.get("email", "").strip()
     if not name or not email:
-        return jsonify({"error": "missing_fields", "message": "\u540d\u524d\u3068\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9\u306f\u5fc5\u9808\u3067\u3059"}), 400
+        return jsonify({"error": "missing_fields", "message": "名前とメールアドレスは必須です"}), 400
+    agents = load_agents()
     agent = {
         "id": f"agent_{int(time.time() * 1000)}",
         "name": name,
@@ -1081,63 +941,40 @@ def create_agent():
         "managerArea": data.get("managerArea", ""),
         "memo": data.get("memo", "").strip(),
     }
-    supabase.table("agents").insert({
-        "id": agent["id"],
-        "name": agent["name"],
-        "email": agent["email"],
-        "phone": agent["phone"],
-        "area": agent["area"],
-        "manager_area": agent["managerArea"],
-        "memo": agent["memo"],
-    }).execute()
-    bump_change()
+    agents.append(agent)
+    save_agents(agents)
     return jsonify({"status": "ok", "agent": agent})
 
 
 @app.route("/api/agents/<agent_id>", methods=["PUT"])
-@editor_required
 def update_agent(agent_id):
     data = request.json
-    update_data = {}
-    for key in ["name", "email", "phone", "area", "memo"]:
-        if key in data:
-            update_data[key] = data[key].strip() if isinstance(data[key], str) else data[key]
-    if "managerArea" in data:
-        update_data["manager_area"] = data["managerArea"].strip() if isinstance(data["managerArea"], str) else data["managerArea"]
-    resp = supabase.table("agents").update(update_data).eq("id", agent_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    # Return agent in frontend format
-    row = resp.data[0]
-    agent = {
-        "id": row["id"],
-        "name": row.get("name", ""),
-        "email": row.get("email", ""),
-        "phone": row.get("phone", ""),
-        "area": row.get("area", ""),
-        "managerArea": row.get("manager_area", ""),
-        "memo": row.get("memo", ""),
-    }
-    bump_change()
-    return jsonify({"status": "ok", "agent": agent})
+    agents = load_agents()
+    for a in agents:
+        if a["id"] == agent_id:
+            for key in ["name", "email", "phone", "area", "managerArea", "memo"]:
+                if key in data:
+                    a[key] = data[key].strip() if isinstance(data[key], str) else data[key]
+            save_agents(agents)
+            return jsonify({"status": "ok", "agent": a})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/agents/<agent_id>", methods=["DELETE"])
-@editor_required
 def delete_agent(agent_id):
-    supabase.table("agents").delete().eq("id", agent_id).execute()
-    bump_change()
+    agents = [a for a in load_agents() if a["id"] != agent_id]
+    save_agents(agents)
     return jsonify({"status": "ok"})
 
 
 @app.route("/api/agents/<agent_id>/properties")
 def get_agent_properties(agent_id):
-    resp = supabase.table("agents").select("*").eq("id", agent_id).execute()
-    if not resp.data:
+    agents = load_agents()
+    agent = next((a for a in agents if a["id"] == agent_id), None)
+    if not agent:
         return jsonify({"error": "not found"}), 404
-    agent = resp.data[0]
-    area = agent.get("area", "") or ""
-    manager_area = agent.get("manager_area", "") or ""
+    area = agent.get("area", "")
+    manager_area = agent.get("managerArea", "")
     combined = set()
     if area:
         combined.update(x.strip() for x in area.split(",") if x.strip())
@@ -1145,9 +982,9 @@ def get_agent_properties(agent_id):
         combined.update(x.strip() for x in manager_area.split(",") if x.strip())
     ws_ids = list(combined)
     all_props = []
-    ws_data = load_workspaces()
     for ws_id in ws_ids:
         props = load_properties(ws_id)
+        ws_data = load_workspaces()
         ws_name = next((w["name"] for w in ws_data["workspaces"] if w["id"] == ws_id), ws_id)
         for p in props:
             p["_wsName"] = ws_name
@@ -1157,373 +994,91 @@ def get_agent_properties(agent_id):
 
 # ===================== Schedules =====================
 
+_schedules_cache = None
+_schedules_mtime = 0
+
+
 def load_schedules():
-    resp = supabase.table("schedules").select("*").execute()
-    rows = resp.data or []
-    schedules = []
-    for r in rows:
-        schedules.append({
-            "id": r["id"],
-            "title": r.get("title", ""),
-            "agentId": r.get("agent_id", ""),
-            "propertyId": r.get("property_id", ""),
-            "type": r.get("type", "\u305d\u306e\u4ed6"),
-            "date": r.get("date", ""),
-            "startTime": r.get("start_time", "10:00"),
-            "endTime": r.get("end_time", "11:00"),
-            "memo": r.get("memo", ""),
-        })
-    return schedules
+    global _schedules_cache, _schedules_mtime
+    if not os.path.exists(SCHEDULES_FILE):
+        return []
+    mtime = os.path.getmtime(SCHEDULES_FILE)
+    if _schedules_cache is not None and mtime == _schedules_mtime:
+        return _schedules_cache
+    with open(SCHEDULES_FILE, "r", encoding="utf-8") as f:
+        _schedules_cache = json.load(f)
+    _schedules_mtime = mtime
+    return _schedules_cache
+
+
+def save_schedules(schedules):
+    global _schedules_cache, _schedules_mtime
+    with open(SCHEDULES_FILE, "w", encoding="utf-8") as f:
+        json.dump(schedules, f, ensure_ascii=False, indent=2)
+    _schedules_cache = schedules
+    _schedules_mtime = os.path.getmtime(SCHEDULES_FILE)
+    sync_file_to_github(SCHEDULES_FILE)
+    bump_change()
 
 
 @app.route("/api/schedules")
 def get_schedules():
     month = request.args.get("month", "")
+    schedules = load_schedules()
     if month:
-        # Filter by month prefix using Supabase like
-        resp = supabase.table("schedules").select("*").like("date", f"{month}%").execute()
-    else:
-        resp = supabase.table("schedules").select("*").execute()
-    rows = resp.data or []
-    schedules = []
-    for r in rows:
-        schedules.append({
-            "id": r["id"],
-            "title": r.get("title", ""),
-            "agentId": r.get("agent_id", ""),
-            "propertyId": r.get("property_id", ""),
-            "type": r.get("type", "\u305d\u306e\u4ed6"),
-            "date": r.get("date", ""),
-            "startTime": r.get("start_time", "10:00"),
-            "endTime": r.get("end_time", "11:00"),
-            "memo": r.get("memo", ""),
-        })
+        schedules = [s for s in schedules if s["date"].startswith(month)]
     return jsonify(schedules)
 
 
 @app.route("/api/schedules", methods=["POST"])
-@editor_required
 def create_schedule():
     data = request.json
     title = data.get("title", "").strip()
     date = data.get("date", "").strip()
     if not title or not date:
-        return jsonify({"error": "missing_fields", "message": "\u30bf\u30a4\u30c8\u30eb\u3068\u65e5\u4ed8\u306f\u5fc5\u9808\u3067\u3059"}), 400
+        return jsonify({"error": "missing_fields", "message": "タイトルと日付は必須です"}), 400
+    schedules = load_schedules()
     sch = {
         "id": f"sch_{int(time.time() * 1000)}",
         "title": title,
         "agentId": data.get("agentId", ""),
+        "requesterId": data.get("requesterId", ""),
+        "assigneeId": data.get("assigneeId", ""),
         "propertyId": data.get("propertyId", ""),
-        "type": data.get("type", "\u305d\u306e\u4ed6"),
+        "type": data.get("type", "その他"),
         "date": date,
         "startTime": data.get("startTime", "10:00"),
         "endTime": data.get("endTime", "11:00"),
         "memo": data.get("memo", ""),
+        "customer": data.get("customer", ""),
+        "contractType": data.get("contractType", "法人"),
+        "financing": data.get("financing", "なし"),
+        "business": data.get("business", ""),
     }
-    supabase.table("schedules").insert({
-        "id": sch["id"],
-        "title": sch["title"],
-        "agent_id": sch["agentId"],
-        "property_id": sch["propertyId"],
-        "type": sch["type"],
-        "date": sch["date"],
-        "start_time": sch["startTime"],
-        "end_time": sch["endTime"],
-        "memo": sch["memo"],
-    }).execute()
-    bump_change()
+    schedules.append(sch)
+    save_schedules(schedules)
     return jsonify({"status": "ok", "schedule": sch})
 
 
 @app.route("/api/schedules/<sch_id>", methods=["PUT"])
-@editor_required
 def update_schedule(sch_id):
     data = request.json
-    update_data = {}
-    field_map = {
-        "title": "title",
-        "agentId": "agent_id",
-        "propertyId": "property_id",
-        "type": "type",
-        "date": "date",
-        "startTime": "start_time",
-        "endTime": "end_time",
-        "memo": "memo",
-    }
-    for frontend_key, db_key in field_map.items():
-        if frontend_key in data:
-            val = data[frontend_key]
-            update_data[db_key] = val.strip() if isinstance(val, str) else val
-    resp = supabase.table("schedules").update(update_data).eq("id", sch_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    row = resp.data[0]
-    schedule = {
-        "id": row["id"],
-        "title": row.get("title", ""),
-        "agentId": row.get("agent_id", ""),
-        "propertyId": row.get("property_id", ""),
-        "type": row.get("type", ""),
-        "date": row.get("date", ""),
-        "startTime": row.get("start_time", ""),
-        "endTime": row.get("end_time", ""),
-        "memo": row.get("memo", ""),
-    }
-    bump_change()
-    return jsonify({"status": "ok", "schedule": schedule})
+    schedules = load_schedules()
+    for s in schedules:
+        if s["id"] == sch_id:
+            for key in ["title", "agentId", "requesterId", "assigneeId", "propertyId", "type", "date", "startTime", "endTime", "memo", "customer", "contractType", "financing", "business"]:
+                if key in data:
+                    s[key] = data[key].strip() if isinstance(data[key], str) else data[key]
+            save_schedules(schedules)
+            return jsonify({"status": "ok", "schedule": s})
+    return jsonify({"error": "not found"}), 404
 
 
 @app.route("/api/schedules/<sch_id>", methods=["DELETE"])
-@editor_required
 def delete_schedule(sch_id):
-    supabase.table("schedules").delete().eq("id", sch_id).execute()
-    bump_change()
+    schedules = [s for s in load_schedules() if s["id"] != sch_id]
+    save_schedules(schedules)
     return jsonify({"status": "ok"})
-
-
-# ===================== User Management =====================
-
-@app.route("/api/users")
-@admin_required
-def get_users():
-    users = _load_users()
-    # Don't expose passwords
-    return jsonify([{"email": u["email"], "name": u.get("name", ""), "role": u.get("role", "viewer")} for u in users.values()])
-
-
-@app.route("/api/users", methods=["POST"])
-@admin_required
-def create_user():
-    data = request.json
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    name = data.get("name", "").strip()
-    role = data.get("role", "viewer")
-    if not email or not password:
-        return jsonify({"error": "メールとパスワードは必須です"}), 400
-    if role not in ("admin", "viewer"):
-        role = "viewer"
-    try:
-        supabase.table("users").upsert({
-            "email": email, "password": password, "name": name or email.split("@")[0], "role": role
-        }).execute()
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    return jsonify({"status": "ok"})
-
-
-@app.route("/api/users/<email>", methods=["DELETE"])
-@admin_required
-def delete_user(email):
-    if email == session.get("user_email"):
-        return jsonify({"error": "自分自身は削除できません"}), 400
-    supabase.table("users").delete().eq("email", email).execute()
-    return jsonify({"status": "ok"})
-
-
-# ===================== Statistics =====================
-
-@app.route("/api/stats/current")
-def get_current_stats():
-    """Get real-time stats for all workspaces (current snapshot)."""
-    ws_data = load_workspaces()
-    result = []
-    for ws in ws_data.get("workspaces", []):
-        ws_id = ws["id"]
-        props = load_properties(ws_id)
-        proposals = len(props)
-        colors = [p.get("color", "blue") for p in props]
-        # 内見数: 不可(gray)、未内見(blue)以外
-        viewings = sum(1 for c in colors if c not in ("blue", "gray"))
-        # 申込数: 申込済(green) + 審査通過(yellow) + 審査落ち(black)
-        applications = sum(1 for c in colors if c in ("green", "yellow", "black"))
-        # 審査通過数
-        approvals = sum(1 for c in colors if c == "yellow")
-        result.append({
-            "workspaceId": ws_id,
-            "workspaceName": ws.get("name", ws_id),
-            "proposals": proposals,
-            "viewings": viewings,
-            "applications": applications,
-            "approvals": approvals,
-        })
-    return jsonify(result)
-
-
-@app.route("/api/stats/monthly")
-def get_monthly_stats():
-    """Get all confirmed monthly stats."""
-    resp = supabase.table("monthly_stats").select("*").order("month", desc=True).execute()
-    return jsonify(resp.data or [])
-
-
-@app.route("/api/stats/monthly", methods=["POST"])
-@editor_required
-def confirm_monthly_stats():
-    """Confirm (register) monthly stats for a workspace."""
-    data = request.json
-    ws_id = data.get("workspaceId", "")
-    month = data.get("month", "")
-    if not ws_id or not month:
-        return jsonify({"error": "workspaceId and month required"}), 400
-
-    props = load_properties(ws_id)
-    colors = [p.get("color", "blue") for p in props]
-    proposals = len(props)
-    viewings = sum(1 for c in colors if c not in ("blue", "gray"))
-    applications = sum(1 for c in colors if c in ("green", "yellow", "black"))
-    approvals = sum(1 for c in colors if c == "yellow")
-
-    # Count contracts for this workspace/month
-    contract_resp = supabase.table("contracts").select("id").eq("workspace_id", ws_id).execute()
-    contracts_count = len(contract_resp.data or [])
-
-    stat_id = f"stat_{ws_id}_{month}"
-    supabase.table("monthly_stats").upsert({
-        "id": stat_id,
-        "workspace_id": ws_id,
-        "month": month,
-        "proposals": proposals,
-        "viewings": viewings,
-        "applications": applications,
-        "approvals": approvals,
-        "contracts": contracts_count,
-        "confirmed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    }).execute()
-    bump_change()
-    return jsonify({"status": "ok", "stats": {
-        "proposals": proposals, "viewings": viewings,
-        "applications": applications, "approvals": approvals,
-        "contracts": contracts_count,
-    }})
-
-
-@app.route("/api/stats/targets")
-def get_targets():
-    """Get monthly targets."""
-    targets = _get_app_setting("monthly_targets", {
-        "proposals": 0, "viewings": 0, "applications": 0, "approvals": 0, "contracts": 0
-    })
-    return jsonify(targets)
-
-
-@app.route("/api/stats/targets", methods=["POST"])
-@editor_required
-def save_targets():
-    """Save monthly targets."""
-    data = request.json
-    _set_app_setting("monthly_targets", data)
-    return jsonify({"status": "ok"})
-
-
-# ===================== Contracts =====================
-
-@app.route("/api/contracts")
-def get_contracts():
-    """Get all contracts, optionally filtered by workspace."""
-    ws_id = request.args.get("ws")
-    query = supabase.table("contracts").select("*")
-    if ws_id:
-        query = query.eq("workspace_id", ws_id)
-    resp = query.order("created_at", desc=True).execute()
-    return jsonify(resp.data or [])
-
-
-@app.route("/api/contracts", methods=["POST"])
-@editor_required
-def create_contract():
-    """Create a contract from an approved (yellow) property."""
-    data = request.json
-    prop_id = data.get("propertyId", "")
-    ws_id = data.get("workspaceId", "")
-    if not prop_id or not ws_id:
-        return jsonify({"error": "propertyId and workspaceId required"}), 400
-    contract_id = f"contract_{int(time.time() * 1000)}"
-    contract = {
-        "id": contract_id,
-        "property_id": prop_id,
-        "workspace_id": ws_id,
-        "property_name": data.get("propertyName", ""),
-        "status": "準備中",
-        "contract_date": data.get("contractDate", ""),
-        "move_in_date": data.get("moveInDate", ""),
-        "deposit_deadline": data.get("depositDeadline", ""),
-        "key_delivery_date": data.get("keyDeliveryDate", ""),
-        "notes": data.get("notes", ""),
-        "tasks": data.get("tasks", []),
-    }
-    supabase.table("contracts").insert(contract).execute()
-    bump_change()
-    return jsonify({"status": "ok", "contract": contract})
-
-
-@app.route("/api/contracts/<contract_id>", methods=["PUT"])
-@editor_required
-def update_contract(contract_id):
-    """Update a contract."""
-    data = request.json
-    update = {}
-    for key in ["status", "contract_date", "move_in_date", "deposit_deadline",
-                 "key_delivery_date", "notes", "tasks", "documents", "property_name",
-                 "property_address", "management_company", "management_address",
-                 "management_tel", "management_fax", "rent", "area"]:
-        if key in data:
-            update[key] = data[key]
-    if not update:
-        return jsonify({"error": "no fields to update"}), 400
-    resp = supabase.table("contracts").update(update).eq("id", contract_id).execute()
-    if not resp.data:
-        return jsonify({"error": "not found"}), 404
-    bump_change()
-    return jsonify({"status": "ok", "contract": resp.data[0]})
-
-
-@app.route("/api/contracts/<contract_id>", methods=["DELETE"])
-@editor_required
-def delete_contract(contract_id):
-    supabase.table("contracts").delete().eq("id", contract_id).execute()
-    bump_change()
-    return jsonify({"status": "ok"})
-
-
-@app.route("/api/contracts/upload", methods=["POST"])
-@editor_required
-def upload_contract_doc():
-    """Upload a document (PDF/image) for a contract."""
-    if "file" not in request.files:
-        return jsonify({"error": "no file"}), 400
-    file = request.files["file"]
-    contract_id = request.form.get("contractId", "")
-    if not contract_id:
-        return jsonify({"error": "contractId required"}), 400
-    # Save to contract docs directory
-    docs_dir = os.path.join(PDF_DIR, "contract_docs")
-    os.makedirs(docs_dir, exist_ok=True)
-    filename = file.filename
-    safe_name = f"{int(time.time())}_{filename}"
-    filepath = os.path.join(docs_dir, safe_name)
-    file.save(filepath)
-    doc_url = f"/contract-docs/{safe_name}"
-    doc_info = {"name": filename, "url": doc_url, "type": "", "uploaded_at": time.strftime("%Y-%m-%d")}
-    # Auto-detect type from filename
-    lower = filename.lower()
-    if "重要事項" in filename or "重説" in filename:
-        doc_info["type"] = "重要事項説明書"
-    elif "仲介" in filename or "手数料" in filename:
-        doc_info["type"] = "仲介手数料請求書"
-    elif "請求" in filename:
-        doc_info["type"] = "請求書"
-    elif "契約" in filename:
-        doc_info["type"] = "契約書"
-    return jsonify({"status": "ok", "document": doc_info})
-
-
-@app.route("/contract-docs/<path:filename>")
-def serve_contract_doc(filename):
-    docs_dir = os.path.join(PDF_DIR, "contract_docs")
-    resp = send_from_directory(docs_dir, filename)
-    resp.headers["Cache-Control"] = "public, max-age=86400"
-    return resp
 
 
 # ===================== Main =====================
@@ -1533,7 +1088,7 @@ if __name__ == "__main__":
     import subprocess
     import threading
 
-    parser = argparse.ArgumentParser(description="\u7269\u4ef6\u30de\u30c3\u30d7\u30b5\u30fc\u30d0\u30fc")
+    parser = argparse.ArgumentParser(description="物件マップサーバー")
     parser.add_argument("--public", action="store_true")
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
@@ -1541,7 +1096,8 @@ if __name__ == "__main__":
     if args.public:
         def start_tunnel():
             import sys
-            print("\n  \u30c8\u30f3\u30cd\u30eb\u63a5\u7d9a\u4e2d...", flush=True)
+            print("\n  トンネル接続中...", flush=True)
+            # Cloudflare Tunnel (確認ページなし・直接アクセス可能)
             cf_path = "/tmp/cloudflared"
             proc = subprocess.Popen(
                 [cf_path, "tunnel", "--url", f"http://localhost:{args.port}"],
@@ -1552,9 +1108,9 @@ if __name__ == "__main__":
                 urls = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", text)
                 if urls:
                     msg = (f"\n{'='*60}\n"
-                           f"  \u5916\u90e8\u516c\u958bURL: {urls[0]}\n"
-                           f"  \u3053\u306eURL\u3092\u30b3\u30d4\u30fc\u3057\u3066\u5171\u6709\u3057\u3066\u304f\u3060\u3055\u3044\n"
-                           f"  \u78ba\u8a8d\u30da\u30fc\u30b8\u306a\u3057\u30fb\u8ab0\u3067\u3082\u5373\u30a2\u30af\u30bb\u30b9\u53ef\u80fd\n"
+                           f"  外部公開URL: {urls[0]}\n"
+                           f"  このURLをコピーして共有してください\n"
+                           f"  確認ページなし・誰でも即アクセス可能\n"
                            f"{'='*60}\n")
                     sys.stdout.write(msg); sys.stdout.flush(); break
         threading.Thread(target=start_tunnel, daemon=True).start()

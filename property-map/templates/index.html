@@ -87,20 +87,6 @@
       flex-direction: column;
     }
     #list-view.active { display: flex; }
-    #stats-view.active, #contract-view.active { display: block !important; }
-    .stat-card { background:#fff; border-radius:12px; border:1px solid #e5e7eb; padding:16px; }
-    .stat-card h4 { font-size:14px; font-weight:600; color:#374151; margin-bottom:12px; }
-    .stat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
-    .stat-item { text-align:center; padding:8px 4px; border-radius:8px; background:#f8fafc; }
-    .stat-item .num { font-size:24px; font-weight:700; color:#1e293b; }
-    .stat-item .lbl { font-size:10px; color:#64748b; margin-top:2px; }
-    .contract-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px; }
-    .contract-card h4 { font-size:15px; font-weight:600; color:#1e293b; margin-bottom:8px; }
-    .contract-status { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
-    .contract-tasks { margin-top:10px; }
-    .contract-task { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
-    .contract-task input[type=checkbox] { margin:0; }
-    .contract-task.done { color:#94a3b8; text-decoration:line-through; }
     .list-toolbar {
       padding: 56px 16px 12px; display: flex; gap: 8px; align-items: center;
       background: #fff; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
@@ -182,11 +168,6 @@
     .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
     .color-dot:hover { opacity: 0.8; }
     .color-dot.active { border-color: #1e293b; }
-
-    /* Workspace dropdown */
-    .ws-option { padding:6px 10px; font-size:13px; cursor:pointer; }
-    .ws-option:hover { background:#eff6ff; }
-    .ws-option.active { background:#2563eb; color:#fff; }
 
     /* Modal shared */
     .drop-overlay { display: none; position: fixed; inset: 0; background: rgba(37,99,235,0.15); z-index: 9999; border: 3px dashed #2563eb; align-items: center; justify-content: center; }
@@ -402,74 +383,6 @@
         </table>
       </div>
     </div>
-
-    <!-- Stats view -->
-    <div id="stats-view" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#f8fafc;z-index:500;overflow-y:auto;padding:56px 20px 20px;">
-      <div style="max-width:1100px;margin:0 auto;">
-        <h2 style="font-size:20px;font-weight:700;color:#1e293b;margin-bottom:16px;">📊 月次統計</h2>
-
-        <!-- Total + Targets -->
-        <div id="stats-total" style="margin-bottom:20px;"></div>
-
-        <!-- Current snapshot (collapsible) -->
-        <div style="margin-bottom:24px;">
-          <div onclick="document.getElementById('stats-current-body').style.display=document.getElementById('stats-current-body').style.display==='none'?'grid':'none';this.querySelector('.chevron').textContent=document.getElementById('stats-current-body').style.display==='none'?'▶':'▼'" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin-bottom:10px;">
-            <span class="chevron" style="font-size:11px;color:#64748b;">▼</span>
-            <h3 style="font-size:15px;font-weight:600;color:#374151;margin:0;">エリア別スナップショット（リアルタイム）</h3>
-          </div>
-          <div id="stats-current-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
-        </div>
-
-        <!-- Monthly confirm -->
-        <div id="stats-monthly-register" style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
-          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次登録</h3>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <select id="stats-month" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;"></select>
-            <select id="stats-ws-select" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;"></select>
-            <button onclick="confirmMonthlyStats()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">月次登録</button>
-            <span id="stats-confirm-msg" style="font-size:12px;color:#16a34a;opacity:0;transition:opacity 0.3s;"></span>
-          </div>
-        </div>
-
-        <!-- Monthly targets -->
-        <div id="stats-targets-section" style="margin-bottom:24px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;">
-          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">月次目標設定</h3>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:13px;">
-            <div><label style="font-size:11px;color:#64748b;">提案目標</label><input type="number" id="target-proposals" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-            <div><label style="font-size:11px;color:#64748b;">内見目標</label><input type="number" id="target-viewings" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-            <div><label style="font-size:11px;color:#64748b;">申込目標</label><input type="number" id="target-applications" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-            <div><label style="font-size:11px;color:#64748b;">審査通過目標</label><input type="number" id="target-approvals" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-            <div><label style="font-size:11px;color:#64748b;">契約目標</label><input type="number" id="target-contracts" value="" onchange="saveTargets()" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-          </div>
-        </div>
-
-        <!-- History -->
-        <div>
-          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">確定済み月次データ</h3>
-          <div id="stats-history" style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Contract view -->
-    <div id="contract-view" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:#f8fafc;z-index:500;overflow-y:auto;padding:56px 20px 20px;">
-      <div style="max-width:1100px;margin:0 auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="font-size:20px;font-weight:700;color:#1e293b;">📝 契約管理</h2>
-        </div>
-        <!-- Approved properties (yellow) available to start contract -->
-        <div style="margin-bottom:24px;">
-          <h3 style="font-size:15px;font-weight:600;color:#16a34a;margin-bottom:10px;">申込済以降の物件（契約開始可能）</h3>
-          <div id="contract-approved" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;"></div>
-        </div>
-        <!-- Active contracts -->
-        <div>
-          <h3 style="font-size:15px;font-weight:600;color:#374151;margin-bottom:10px;">契約一覧</h3>
-          <div id="contract-list"></div>
-        </div>
-      </div>
-    </div>
-
     <div id="sidebar" class="collapsed">
       <div class="sidebar-header">
         <h2 id="sidebar-title">物件情報</h2>
@@ -485,28 +398,14 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="ws-panel">
-      <div id="ws-select-wrap" style="position:relative;min-width:130px;">
-        <div id="ws-select-btn" onclick="toggleWsDropdown()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;user-select:none;">
-          <span id="ws-select-label">エリア選択</span>
-          <span style="font-size:10px;color:#94a3b8;">▼</span>
-        </div>
-        <div id="ws-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:2000;max-height:250px;overflow:hidden;flex-direction:column;">
-          <input id="ws-search" type="text" placeholder="エリア検索..." oninput="filterWsDropdown()" style="padding:6px 10px;border:none;border-bottom:1px solid #e5e7eb;font-size:13px;font-family:inherit;outline:none;">
-          <div id="ws-options" style="overflow-y:auto;max-height:200px;"></div>
-        </div>
-      </div>
-      <input type="hidden" id="ws-select" value="">
+      <select id="ws-select" onchange="switchWorkspace(this.value)"></select>
       <button class="ws-btn" onclick="openWsModal('create')" title="新規作成">+</button>
       <button class="ws-btn" onclick="openWsModal('settings')" title="設定">&#9881;</button>
       <button class="ws-btn" onclick="deleteWorkspace()" title="このエリアを削除" style="color:#dc2626;font-size:13px;">&#128465;</button>
-      <button class="ws-btn" id="admin-settings-btn" onclick="openUserManagement()" title="ユーザー管理" style="color:#64748b;font-size:12px;display:none;">&#128101;</button>
-      <button class="ws-btn" onclick="doLogout()" title="ログアウト" style="color:#64748b;font-size:12px;">&#8617;</button>
     </div>
     <div class="view-toggle">
       <button id="view-map-btn" class="active" onclick="setView('map')">&#x1F5FA; 地図</button>
       <button id="view-list-btn" onclick="setView('list')">&#x1F4CB; 一覧</button>
-      <button id="view-stats-btn" onclick="setView('stats')" style="border-left:1px solid #d1d5db;">&#x1F4CA; 統計</button>
-      <button id="view-contract-btn" onclick="setView('contract')" style="border-left:1px solid #d1d5db;">&#x1F4DD; 契約</button>
     </div>
     <button class="upload-btn" onclick="document.getElementById('file-input').click()">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -519,13 +418,7 @@
     </button>
     <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
     <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
-    <div style="display:flex;align-items:center;gap:2px;">
-      <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
-      <select id="bgm-select" onchange="selectBgm(this.value)" style="padding:4px 6px;border:1px solid #d1d5db;border-radius:6px;font-size:10px;background:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-        <option value="0">物件探し1</option>
-        <option value="1">物件探し2</option>
-      </select>
-    </div>
+    <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
     <div id="dancing-cat" style="display:none;pointer-events:none;">
       <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
         <!-- body -->
@@ -575,23 +468,11 @@
         <path d="M56,54 Q68,46 64,34" fill="none" stroke="#fcd34d" stroke-width="4" stroke-linecap="round" style="animation:catTail 0.858s ease-in-out infinite;transform-origin:56px 54px;"/>
       </svg>
     </div>
-    <audio id="bgm-audio" preload="none"></audio>
-    <button id="reopen-compare-btn" onclick="toggleComparePanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#374151;">条件比較</button>
-    <button id="reopen-criteria-btn" onclick="toggleCriteriaPanel()" class="ws-btn" style="font-size:10px;width:auto;padding:0 7px;box-shadow:0 2px 8px rgba(0,0,0,0.15);white-space:nowrap;background:#fff;color:#0891b2;">選定基準</button>
-    <div class="compare-panel" id="compare-panel" style="display:none;">
+    <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
+    <div class="compare-panel" id="compare-panel">
       <label>条件比較</label>
       <div class="compare-chips" id="compare-chips"></div>
     </div>
-  </div>
-
-
-  <!-- PDF overlay (covers map area) -->
-  <div id="pdf-overlay" style="display:none;position:absolute;top:0;left:0;right:480px;bottom:0;z-index:600;background:#4a4a4a;flex-direction:column;">
-    <div style="padding:4px 12px;background:#333;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-      <span id="pdf-overlay-title" style="font-size:13px;font-weight:500;color:#e5e7eb;">PDF表示</span>
-      <button onclick="closePdfOverlay()" style="padding:3px 10px;border:1px solid #555;border-radius:4px;background:#444;color:#fff;cursor:pointer;font-size:12px;">✕ 閉じる</button>
-    </div>
-    <iframe id="pdf-overlay-frame" src="" style="flex:1;border:none;width:100%;"></iframe>
   </div>
 
   <!-- Map controls (bottom-right) -->
@@ -624,7 +505,7 @@
   <div id="agent-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
     <div class="cal-toolbar">
       <h2 style="min-width:auto;">エージェント管理</h2>
-      <button class="cal-nav-btn" id="agent-add-btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="showAgentForm()">+ 新規登録</button>
+      <button class="cal-nav-btn" style="background:#7c3aed;color:#fff;border-color:#7c3aed;" onclick="showAgentForm()">+ 新規登録</button>
       <button class="cal-close-btn" onclick="closeAgentView()">&times; 閉じる</button>
     </div>
     <div style="flex:1;display:flex;overflow:hidden;">
@@ -646,7 +527,7 @@
       <button class="cal-nav-btn" onclick="calToday()">今日</button>
       <button class="cal-nav-btn" id="cal-month-btn" onclick="setCalView('month')">月</button>
       <button class="cal-nav-btn" id="cal-week-btn" onclick="setCalView('week')">週</button>
-      <button class="cal-nav-btn" id="schedule-add-btn" style="background:#2563eb;color:#fff;" onclick="openScheduleModal()">+ 予定を追加</button>
+      <button class="cal-nav-btn" style="background:#2563eb;color:#fff;" onclick="openScheduleModal()">+ 予定を追加</button>
       <button class="cal-close-btn" onclick="closeCalendar()">&times; 閉じる</button>
     </div>
     <div id="cal-day-headers" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
@@ -669,11 +550,32 @@
         <div><label>終了時間</label><input type="time" id="sch-end" value="11:00"></div>
       </div>
       <label>エージェント</label>
-      <select id="sch-agent" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+      <div style="display:flex;gap:4px;margin-bottom:6px;">
+        <button type="button" class="sch-role-tab active" data-role="requester" onclick="setSchRoleTab('requester')" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:6px 6px 0 0;background:#0891b2;color:#fff;cursor:pointer;font-size:13px;">依頼者</button>
+        <button type="button" class="sch-role-tab" data-role="assignee" onclick="setSchRoleTab('assignee')" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:6px 6px 0 0;background:#fff;color:#374151;cursor:pointer;font-size:13px;">担当者</button>
+      </div>
+      <select id="sch-requester" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:8px;">
         <option value="">選択なし</option>
       </select>
+      <select id="sch-assignee" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;display:none;">
+        <option value="">選択なし</option>
+      </select>
+      <select id="sch-agent" style="display:none;"><option value=""></option></select>
+      <label>お客様名 <span style="color:#dc2626">*</span></label>
+      <input type="text" id="sch-customer" placeholder="例: 山田太郎 / 株式会社ABC">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label>契約種別 <span style="color:#dc2626">*</span></label><select id="sch-contract-type" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+          <option value="法人">法人</option><option value="個人">個人</option>
+        </select></div>
+        <div><label>融資 <span style="color:#dc2626">*</span></label><select id="sch-financing" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+          <option value="なし">なし</option><option value="あり">あり</option>
+        </select></div>
+      </div>
+      <label>既存事業内容 <span style="color:#dc2626">*</span></label>
+      <input type="text" id="sch-business" placeholder="例: 飲食店（カフェ経営）">
       <label>物件</label>
-      <select id="sch-property" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
+      <input type="text" id="sch-property-search" placeholder="物件名・住所で検索..." style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:4px;" oninput="filterSchPropertyList(this.value)">
+      <select id="sch-property" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;" size="5">
         <option value="">選択なし</option>
       </select>
       <label>メモ</label>
@@ -759,30 +661,6 @@
     </div>
   </div>
 
-  <!-- User Management Modal -->
-  <div class="modal-overlay" id="user-mgmt-modal">
-    <div class="modal" style="width:550px;">
-      <h3>👥 ユーザー管理</h3>
-      <div id="user-list" style="margin-bottom:16px;"></div>
-      <div style="padding-top:12px;border-top:1px solid #e5e7eb;">
-        <h4 style="font-size:14px;margin-bottom:8px;">新規ユーザー追加</h4>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><label>名前</label><input type="text" id="new-user-name" placeholder="例: 山田太郎"></div>
-          <div><label>メールアドレス</label><input type="text" id="new-user-email" placeholder="例: user@example.com"></div>
-          <div><label>パスワード</label><input type="text" id="new-user-pass" placeholder="パスワード"></div>
-          <div><label>権限</label><select id="new-user-role" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;margin-bottom:12px;">
-            <option value="viewer">閲覧者</option><option value="admin">管理者</option>
-          </select></div>
-        </div>
-        <div id="user-mgmt-status" style="font-size:12px;display:none;margin-bottom:8px;"></div>
-        <div class="btn-row">
-          <button class="btn btn-secondary" onclick="closeUserManagement()">閉じる</button>
-          <button class="btn btn-primary" onclick="addUser()">追加</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     // === State ===
@@ -799,11 +677,10 @@
     let wsModalMode = "create";
 
     // === Pin icons ===
-    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" }, gray: { fill: "#9ca3af", label: "不可" } };
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
-      const inner = '#fff';
-      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="${inner}"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
+      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
     }
 
     // === Map ===
@@ -823,62 +700,15 @@
       const res = await fetch("/api/workspaces");
       workspacesData = await res.json();
       activeWorkspaceId = workspacesData.activeWorkspace;
-      document.getElementById("ws-select").value = activeWorkspaceId;
-      renderWsDropdownOptions();
-      updateWsLabel();
-    }
-
-    function renderWsDropdownOptions(filter) {
-      const container = document.getElementById("ws-options");
-      const q = (filter || "").toLowerCase();
-      // 「全物件」を先頭に追加
-      let html = '';
-      if (!q || "全物件".includes(q)) {
-        html += `<div class="ws-option${activeWorkspaceId === '_all' ? ' active' : ''}" onclick="selectWsOption('_all')" style="font-weight:600;border-bottom:1px solid #e5e7eb;">📋 全物件</div>`;
-      }
-      html += workspacesData.workspaces
-        .filter(ws => !q || ws.name.toLowerCase().includes(q))
-        .map(ws => `<div class="ws-option${ws.id === activeWorkspaceId ? ' active' : ''}" onclick="selectWsOption('${ws.id}')">${esc(ws.name)}</div>`)
-        .join("");
-      container.innerHTML = html || '<div style="padding:8px 10px;color:#94a3b8;font-size:12px;">該当なし</div>';
-    }
-
-    function updateWsLabel() {
-      if (activeWorkspaceId === '_all') {
-        document.getElementById("ws-select-label").textContent = "📋 全物件";
-        return;
-      }
-      const ws = workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
-      document.getElementById("ws-select-label").textContent = ws ? ws.name : "エリア選択";
-    }
-
-    function toggleWsDropdown() {
-      const dd = document.getElementById("ws-dropdown");
-      const isOpen = dd.style.display !== "none";
-      dd.style.display = isOpen ? "none" : "flex";
-      if (!isOpen) {
-        document.getElementById("ws-search").value = "";
-        renderWsDropdownOptions();
-        document.getElementById("ws-search").focus();
+      const sel = document.getElementById("ws-select");
+      sel.innerHTML = "";
+      for (const ws of workspacesData.workspaces) {
+        const opt = document.createElement("option");
+        opt.value = ws.id; opt.textContent = ws.name;
+        if (ws.id === activeWorkspaceId) opt.selected = true;
+        sel.appendChild(opt);
       }
     }
-
-    function filterWsDropdown() {
-      renderWsDropdownOptions(document.getElementById("ws-search").value);
-    }
-
-    function selectWsOption(wsId) {
-      document.getElementById("ws-dropdown").style.display = "none";
-      switchWorkspace(wsId);
-    }
-
-    // Close dropdown on outside click
-    document.addEventListener("click", e => {
-      const wrap = document.getElementById("ws-select-wrap");
-      if (wrap && !wrap.contains(e.target)) {
-        document.getElementById("ws-dropdown").style.display = "none";
-      }
-    });
 
     function getActiveWs() {
       return workspacesData.workspaces.find(w => w.id === activeWorkspaceId);
@@ -886,39 +716,23 @@
 
     async function switchWorkspace(wsId) {
       activeWorkspaceId = wsId;
-      if (wsId !== '_all') {
-        await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
-      }
+      await fetch("/api/workspaces/active", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wsId }) });
       document.getElementById("ws-select").value = wsId;
-      updateWsLabel();
-      renderWsDropdownOptions();
-
-      if (wsId === '_all') {
-        // 全物件モード: 全エリアの駅を表示
-        const allStations = [];
-        workspacesData.workspaces.forEach(ws => (ws.stations || []).forEach(s => allStations.push(s)));
-        renderStations(allStations);
-      } else {
-        const ws = getActiveWs();
-        if (ws) {
-          renderStations(ws.stations || []);
-          if (ws.stations && ws.stations.length > 0) {
-            const pts = ws.stations.map(s => [s.lat, s.lon]);
-            map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16, animate: true });
-          } else if (ws.center) {
-            map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14, { animate: true });
-          }
+      const ws = getActiveWs();
+      if (ws) {
+        renderStations(ws.stations || []);
+        // 駅が登録されている場合は全駅が見える範囲にフィット
+        if (ws.stations && ws.stations.length > 0) {
+          const pts = ws.stations.map(s => [s.lat, s.lon]);
+          map.fitBounds(L.latLngBounds(pts).pad(0.3), { maxZoom: 16, animate: true });
+        } else if (ws.center) {
+          map.setView([ws.center.lat, ws.center.lon], ws.zoom || 14, { animate: true });
         }
       }
       closeSidebar();
       clearInfoLabels();
       activeCompareKey = null;
       await loadProperties();
-      // 全物件モード: 全ピンが見えるようにフィット
-      if (wsId === '_all') {
-        const vals = Object.values(markers);
-        if (vals.length > 0) map.fitBounds(L.featureGroup(vals).getBounds().pad(0.3), { maxZoom: 14 });
-      }
       if (currentView === "list") renderListView();
       renderCriteriaFloat();
     }
@@ -975,33 +789,7 @@
       selectedPropId = prop.id;
       document.getElementById("sidebar").classList.remove("collapsed");
       document.getElementById("criteria-float").style.display = "none";
-      const titleEl = document.getElementById("sidebar-title");
-      titleEl.textContent = prop.name;
-      titleEl.style.cursor = "pointer";
-      titleEl.title = "クリックで物件名を編集";
-      titleEl.onclick = () => {
-        const input = document.createElement("input");
-        input.type = "text"; input.value = prop.name;
-        input.style.cssText = "background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);border-radius:4px;color:#fff;font-size:16px;font-weight:600;padding:2px 6px;width:200px;font-family:inherit;";
-        titleEl.replaceWith(input); input.focus(); input.select();
-        const save = async () => {
-          const v = input.value.trim();
-          if (v && v !== prop.name) {
-            prop.name = v;
-            await fetch(`/api/properties/${prop.id}/details?ws=${prop.workspace_id || activeWorkspaceId}`, {
-              method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ name: v })
-            });
-            if (markers[prop.id]) markers[prop.id].unbindTooltip().bindTooltip(v, { direction: "top", offset: [0, -40] });
-          }
-          // Restore title element
-          const newTitle = document.createElement("h2");
-          newTitle.id = "sidebar-title";
-          input.replaceWith(newTitle);
-          showProperty(prop);
-        };
-        input.addEventListener("blur", save);
-        input.addEventListener("keydown", e => { if (e.key === "Enter") input.blur(); if (e.key === "Escape") { input.value = prop.name; input.blur(); } });
-      };
+      document.getElementById("sidebar-title").textContent = prop.name;
       const pinColor = PIN_COLORS[prop.color || "blue"]?.fill || "#2563eb";
       document.querySelector(".sidebar-header").style.background = pinColor;
       const ws = getActiveWs();
@@ -1026,8 +814,7 @@
           detailRows += `<div class="detail-row"><input class="detail-key" value="${esc(k)}"><input class="detail-val" value="${esc(v)}"><button class="detail-del" title="削除">&times;</button></div>`;
         }
       }
-      const hasPdf = prop.filename && prop.filename.trim();
-      const pdfUrl = hasPdf ? "/pdf/" + encodeURIComponent(prop.filename) : "";
+      const pdfUrl = "/pdf/" + encodeURIComponent(prop.filename);
       const currentColor = prop.color || "blue";
       let colorDots = "";
       for (const [key, c] of Object.entries(PIN_COLORS)) {
@@ -1036,7 +823,7 @@
 
       content.innerHTML = `<div class="prop-info">
         <h3>${esc(prop.name)}</h3><div class="address">${esc(prop.address)}</div>
-        <div class="color-picker">${colorDots}</div>
+        <div class="color-picker"><label>ステータス</label>${colorDots}</div>
         <div class="details-section"><div class="section-header"><label>物件情報</label><span class="details-saved" id="details-saved">保存しました</span></div>
           <div style="margin-bottom:8px"><label style="font-size:12px;color:#64748b;margin-bottom:2px;display:block;">備考</label><textarea id="biko-input" style="width:100%;height:100px;border:1px solid #d1d5db;border-radius:6px;padding:8px;font-size:12px;resize:vertical;font-family:inherit;" placeholder="備考...">${esc(bikoValue)}</textarea></div>
           <div id="details-list">${detailRows}</div>
@@ -1044,21 +831,7 @@
           ${companyRows ? `<div style="margin-top:12px;padding-top:8px;border-top:1px solid #e5e7eb;"><label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block;">管理会社情報</label><div id="company-list">${companyRows}</div></div>` : ''}
         </div>
         <div class="memo-section"><label>メモ</label><textarea id="memo-input" placeholder="メモを入力...">${esc(prop.memo || "")}</textarea><div class="memo-saved" id="memo-saved">保存しました</div></div>
-        <!-- 外観確認 -->
-        <div style="margin-bottom:8px;">
-          <button class="pdf-open-btn" id="streetview-btn" style="cursor:pointer;border:none;background:#e0f2fe;color:#0369a1;border-color:#bae6fd;display:block;width:100%;">&#127758; 外観を確認</button>
-        </div>
-        <div class="pdf-section" id="pdf-section-area">
-          ${hasPdf ? `<div style="display:flex;gap:6px;margin-bottom:6px;">
-            <button class="pdf-open-btn" id="pdf-show-btn" style="flex:1;cursor:pointer;border:none;">&#128196; PDFを表示</button>
-            <a href="${pdfUrl}" target="_blank" style="padding:10px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;font-size:12px;text-decoration:none;display:flex;align-items:center;" title="新しいタブで開く/ダウンロード">&#11015;</a>
-          </div>` : `<p style="text-align:center;color:#94a3b8;font-size:13px;margin-bottom:8px;">PDFなし</p>`}
-          <label class="pdf-open-btn" style="cursor:pointer;background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;display:block;margin-bottom:0;">
-            &#128257; PDF${prop.filename ? 'を差し替え' : 'をアップロード'}
-            <input type="file" accept=".pdf" style="display:none;" id="pdf-replace-input">
-          </label>
-          <div id="pdf-replace-status" style="font-size:12px;margin-top:4px;display:none;"></div>
-        </div>
+        ${prop.filename ? `<div class="pdf-section"><a class="pdf-open-btn" href="${pdfUrl}" target="_blank">PDFをダウンロード</a><div class="pdf-pages" id="pdf-pages"></div></div>` : `<div class="pdf-section"><p style="text-align:center;color:#94a3b8;font-size:13px;">PDFなし</p></div>`}
         <div class="prop-actions">
           <select class="move-select" id="move-to-ws">
             <option value="" disabled selected>他エリアに移動...</option>
@@ -1132,76 +905,15 @@
         r.innerHTML = `<input class="detail-key" placeholder="項目名"><input class="detail-val" placeholder="値"><button class="detail-del" title="削除">&times;</button>`;
         document.getElementById("details-list").appendChild(r); r.querySelector(".detail-key").focus();
       });
-      // PDF show button
-      const pdfShowBtn = document.getElementById("pdf-show-btn");
-      if (pdfShowBtn && hasPdf) {
-        // First check if PDF exists on server
-        fetch(pdfUrl, { method: "HEAD" }).then(res => {
-          if (!res.ok) {
-            pdfShowBtn.style.opacity = "0.5";
-            pdfShowBtn.title = "PDFファイルが見つかりません。差し替えてください。";
-          }
-        }).catch(() => {});
-        pdfShowBtn.addEventListener("click", () => {
-          const overlay = document.getElementById("pdf-overlay");
-          if (overlay.style.display === "flex") {
-            closePdfOverlay();
-            pdfShowBtn.innerHTML = "&#128196; PDFを表示";
-          } else {
-            showPdfOverlay(pdfUrl);
-            pdfShowBtn.innerHTML = "&#10005; 閉じる";
-          }
-        });
+      // PDF images (only if file exists)
+      if (prop.filename) {
+        const imgUrl = "/pdf-images/" + encodeURIComponent(prop.filename);
+        const pdfEl = document.getElementById("pdf-pages");
+        pdfEl.innerHTML = '<p style="text-align:center;color:#64748b;font-size:13px;">PDF読み込み中...</p>';
+        fetch(imgUrl + "?page=0").then(res => { if (!res.ok) throw 0; const tp = parseInt(res.headers.get("X-Total-Pages") || "1"); return res.blob().then(b => ({ b, tp })); })
+          .then(({ b, tp }) => { let h = `<img src="${URL.createObjectURL(b)}">`; for (let i = 1; i < tp; i++) h += `<img src="${imgUrl}?page=${i}" loading="lazy">`; pdfEl.innerHTML = h; })
+          .catch(() => { pdfEl.innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:13px;">PDF表示に失敗しました</p>'; });
       }
-      // Street View button
-      const svBtn = document.getElementById("streetview-btn");
-      let svActive = false;
-      if (svBtn) {
-        svBtn.addEventListener("click", () => {
-          if (svActive) {
-            closeSatelliteView();
-            svBtn.innerHTML = "&#127758; 外観を確認";
-            svBtn.style.background = "#e0f2fe";
-            svBtn.style.color = "#0369a1";
-            svActive = false;
-          } else {
-            showStreetView(prop.lat, prop.lon, prop.name);
-            svBtn.innerHTML = "&#10005; 衛星表示を閉じる";
-            svBtn.style.background = "#dc2626";
-            svBtn.style.color = "#fff";
-            svActive = true;
-          }
-        });
-      }
-      // PDF replace
-      document.getElementById("pdf-replace-input").addEventListener("change", async function() {
-        const file = this.files[0];
-        if (!file || !file.name.endsWith(".pdf")) return;
-        const status = document.getElementById("pdf-replace-status");
-        status.style.display = "block";
-        status.textContent = "アップロード中...";
-        status.style.color = "#64748b";
-        const formData = new FormData();
-        formData.append("pdf", file);
-        formData.append("propertyId", prop.id);
-        formData.append("ws", prop.workspace_id || activeWorkspaceId);
-        try {
-          const res = await fetch("/api/properties/replace-pdf", { method: "POST", body: formData });
-          const data = await res.json();
-          if (data.status === "ok") {
-            prop.filename = data.filename;
-            status.textContent = "差し替え完了";
-            status.style.color = "#16a34a";
-            setTimeout(() => showProperty(prop), 1000);
-          } else {
-            status.textContent = data.message || "エラー";
-            status.style.color = "#dc2626";
-          }
-        } catch(e) {
-          status.textContent = "アップロード失敗";
-          status.style.color = "#dc2626";
-        }
-      });
       // Move to another workspace
       document.getElementById("move-to-ws").addEventListener("change", async function() {
         const targetWsId = this.value;
@@ -1218,7 +930,7 @@
       // Delete property
       document.getElementById("delete-prop-btn").addEventListener("click", () => deleteProperty(prop));
 
-      requestAnimationFrame(() => { map.invalidateSize(); enforceViewerMode(); });
+      requestAnimationFrame(() => map.invalidateSize());
     }
 
     async function saveMemo(propId, memo) {
@@ -1238,8 +950,7 @@
 
     function closeSidebar() {
       document.getElementById("sidebar").classList.add("collapsed"); selectedPropId = null;
-      if (currentView === "map" && criteriaVisible) document.getElementById("criteria-float").style.display = "block";
-      closeSatelliteView();
+      if (currentView === "map") document.getElementById("criteria-float").style.display = "block";
       setTimeout(() => map.invalidateSize(), 200);
     }
 
@@ -1308,8 +1019,6 @@
 
     // Station data held in memory during modal editing
     let editingStations = [];
-    let pinAdjustIndex = -1; // currently adjusting station index
-    let pinAdjustMarker = null;
 
     function renderStationList() {
       const container = document.getElementById("ws-stations");
@@ -1317,75 +1026,13 @@
       editingStations.forEach((st, i) => {
         const div = document.createElement("div");
         div.className = "station-item";
-        const isAdjusting = (pinAdjustIndex === i);
         div.innerHTML = `<span class="st-name">${esc(st.name)}</span>
           <span class="st-coord">${st.lat.toFixed(4)}, ${st.lon.toFixed(4)}</span>
           <span class="st-radius">半径${st.r}m</span>
-          <button class="pin-adj-btn" title="地図上でピン位置を調整" style="width:22px;height:22px;border:none;background:${isAdjusting ? '#2563eb' : 'none'};color:${isAdjusting ? '#fff' : '#2563eb'};cursor:pointer;font-size:12px;border-radius:4px;margin-left:auto;">📍</button>
           <button class="del-btn" title="削除">&times;</button>`;
-        div.querySelector(".del-btn").addEventListener("click", () => { editingStations.splice(i, 1); cancelPinAdjust(); renderStationList(); });
-        div.querySelector(".pin-adj-btn").addEventListener("click", () => {
-          if (pinAdjustIndex === i) {
-            cancelPinAdjust();
-          } else {
-            startPinAdjust(i);
-          }
-          renderStationList();
-        });
+        div.querySelector(".del-btn").addEventListener("click", () => { editingStations.splice(i, 1); renderStationList(); });
         container.appendChild(div);
       });
-      if (pinAdjustIndex >= 0) {
-        const msg = document.createElement("div");
-        msg.style.cssText = "padding:6px 8px;background:#dbeafe;border-radius:4px;font-size:11px;color:#2563eb;margin-top:4px;text-align:center;";
-        msg.textContent = `「${editingStations[pinAdjustIndex]?.name}」の位置を地図上でクリックして設定してください`;
-        container.appendChild(msg);
-      }
-    }
-
-    function startPinAdjust(idx) {
-      cancelPinAdjust();
-      pinAdjustIndex = idx;
-      const st = editingStations[idx];
-      // Close modal temporarily to show map
-      document.getElementById("ws-modal").style.opacity = "0.3";
-      document.getElementById("ws-modal").style.pointerEvents = "none";
-      // Show temporary marker
-      pinAdjustMarker = L.marker([st.lat, st.lon], {
-        icon: L.divIcon({ className: "", iconSize: null, html: '<div style="width:20px;height:20px;background:#dc2626;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>' }),
-        draggable: true
-      }).addTo(map);
-      map.setView([st.lat, st.lon], 16);
-      // Drag to adjust
-      pinAdjustMarker.on("dragend", () => {
-        const pos = pinAdjustMarker.getLatLng();
-        editingStations[idx].lat = pos.lat;
-        editingStations[idx].lon = pos.lng;
-        finishPinAdjust();
-      });
-      // Click map to set position
-      map._pinAdjustHandler = (e) => {
-        editingStations[idx].lat = e.latlng.lat;
-        editingStations[idx].lon = e.latlng.lng;
-        finishPinAdjust();
-      };
-      map.on("click", map._pinAdjustHandler);
-    }
-
-    function finishPinAdjust() {
-      if (pinAdjustMarker) { map.removeLayer(pinAdjustMarker); pinAdjustMarker = null; }
-      if (map._pinAdjustHandler) { map.off("click", map._pinAdjustHandler); map._pinAdjustHandler = null; }
-      pinAdjustIndex = -1;
-      document.getElementById("ws-modal").style.opacity = "1";
-      document.getElementById("ws-modal").style.pointerEvents = "auto";
-      renderStationList();
-    }
-
-    function cancelPinAdjust() {
-      if (pinAdjustMarker) { map.removeLayer(pinAdjustMarker); pinAdjustMarker = null; }
-      if (map._pinAdjustHandler) { map.off("click", map._pinAdjustHandler); map._pinAdjustHandler = null; }
-      pinAdjustIndex = -1;
-      const modal = document.getElementById("ws-modal");
-      if (modal) { modal.style.opacity = "1"; modal.style.pointerEvents = "auto"; }
     }
 
     async function searchStation() {
@@ -1396,38 +1043,23 @@
       if (!name) return;
 
       btn.disabled = true; btn.textContent = "検索中...";
-      status.innerHTML = ""; status.style.color = "#64748b";
+      status.textContent = ""; status.style.color = "#64748b";
 
       try {
         const res = await fetch(`/api/geocode-station?name=${encodeURIComponent(name)}`);
         const data = await res.json();
-        if (data.status === "ok" && data.candidates && data.candidates.length > 0) {
-          // Show candidate list for selection
-          status.innerHTML = `<div style="margin-top:6px;font-size:12px;color:#374151;font-weight:500;">候補を選択してください:</div>`;
-          const list = document.createElement("div");
-          list.style.cssText = "max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;margin-top:4px;background:#fff;";
-          data.candidates.forEach((c, i) => {
-            const row = document.createElement("div");
-            row.style.cssText = "padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;align-items:center;";
-            row.onmouseenter = () => row.style.background = "#eff6ff";
-            row.onmouseleave = () => row.style.background = "#fff";
-            const displayParts = c.display.split(",").slice(0, 3).join(", ");
-            row.innerHTML = `<div><b>${esc(c.name)}</b><div style="color:#94a3b8;font-size:10px;margin-top:1px;">${esc(displayParts)}</div></div>
-              <div style="text-align:right;color:#64748b;font-size:10px;">${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}</div>`;
-            row.onclick = () => {
-              editingStations.push({ name: c.name, lat: c.lat, lon: c.lon, r: c.r });
-              renderStationList();
-              input.value = "";
-              status.innerHTML = `<span style="color:#16a34a;">${esc(c.name)} を追加しました</span>`;
-            };
-            list.appendChild(row);
-          });
-          status.appendChild(list);
+        if (data.status === "ok") {
+          editingStations.push({ name: data.name, lat: data.lat, lon: data.lon, r: data.r });
+          renderStationList();
+          input.value = "";
+          status.textContent = `${data.name} を追加しました`;
+          status.style.color = "#16a34a";
         } else {
-          status.innerHTML = `<span style="color:#dc2626;">${data.message || "見つかりませんでした"}</span>`;
+          status.textContent = data.message || "見つかりませんでした";
+          status.style.color = "#dc2626";
         }
       } catch (e) {
-        status.innerHTML = '<span style="color:#dc2626;">検索エラー</span>';
+        status.textContent = "検索エラー"; status.style.color = "#dc2626";
       }
       btn.disabled = false; btn.textContent = "検索して追加";
     }
@@ -1492,7 +1124,6 @@
 
     const LIST_COLUMNS = [
       { key: "_name", label: "物件名", detail: false },
-      { key: "_area", label: "エリア", detail: false },
       { key: "賃料", label: "賃料", detail: true },
       { key: "共益費", label: "共益費", detail: true },
       { key: "面積", label: "面積", detail: true },
@@ -1504,43 +1135,15 @@
       { key: "TEL", label: "TEL", detail: true },
     ];
 
-    let compareVisible = false;
-    let criteriaVisible = false;
-
     function setView(mode) {
       currentView = mode;
-      const views = ["map","list","stats","contract"];
-      views.forEach(v => {
-        const btn = document.getElementById(`view-${v}-btn`);
-        if (btn) btn.classList.toggle("active", mode === v);
-      });
+      document.getElementById("view-map-btn").classList.toggle("active", mode === "map");
+      document.getElementById("view-list-btn").classList.toggle("active", mode === "list");
       document.getElementById("list-view").classList.toggle("active", mode === "list");
-      document.getElementById("stats-view").classList.toggle("active", mode === "stats");
-      document.getElementById("contract-view").classList.toggle("active", mode === "contract");
-      document.getElementById("compare-panel").style.display = (mode === "map" && compareVisible) ? "" : "none";
-      document.getElementById("criteria-float").style.display = (mode === "map" && criteriaVisible) ? "block" : "none";
-      document.getElementById("reopen-compare-btn").style.display = (mode === "map") ? "" : "none";
-      document.getElementById("reopen-criteria-btn").style.display = (mode === "map") ? "" : "none";
+      document.getElementById("compare-panel").style.display = mode === "list" ? "none" : "";
+      document.getElementById("criteria-float").style.display = mode === "list" ? "none" : "block";
       if (mode === "list") renderListView();
-      if (mode === "stats") renderStatsView();
-      if (mode === "contract") renderContractView();
-      if (mode === "map") setTimeout(() => map.invalidateSize(), 100);
-    }
-
-    function toggleComparePanel() {
-      compareVisible = !compareVisible;
-      document.getElementById("compare-panel").style.display = compareVisible ? "" : "none";
-      const btn = document.getElementById("reopen-compare-btn");
-      btn.style.background = compareVisible ? "#2563eb" : "#fff";
-      btn.style.color = compareVisible ? "#fff" : "#374151";
-    }
-
-    function toggleCriteriaPanel() {
-      criteriaVisible = !criteriaVisible;
-      document.getElementById("criteria-float").style.display = criteriaVisible ? "block" : "none";
-      const btn = document.getElementById("reopen-criteria-btn");
-      btn.style.background = criteriaVisible ? "#0891b2" : "#fff";
-      btn.style.color = criteriaVisible ? "#fff" : "#0891b2";
+      else setTimeout(() => map.invalidateSize(), 100);
     }
 
     function renderListView() {
@@ -1576,23 +1179,15 @@
 
       // Body
       const body = document.getElementById("list-body");
-      // Build workspace name lookup
-      const wsNameMap = {};
-      workspacesData.workspaces.forEach(ws => wsNameMap[ws.id] = ws.name);
-
       body.innerHTML = filtered.map(p => {
         const color = PIN_COLORS[p.color || "blue"]?.fill || "#2563eb";
-        const areaName = wsNameMap[p.workspace_id] || "";
         return `<tr data-id="${p.id}">` +
           LIST_COLUMNS.map(col => {
             let val;
             if (col.key === "_name") {
-              val = `<span class="color-indicator" style="background:${color}"></span><span class="editable-name" data-prop="${p.id}">${esc(p.name)}</span>`;
-            } else if (col.key === "_area") {
-              val = `<span style="font-size:11px;color:#64748b;">${esc(areaName)}</span>`;
+              val = `<span class="color-indicator" style="background:${color}"></span>${esc(p.name)}`;
             } else {
-              const raw = (p.details && p.details[col.key]) || "-";
-              val = `<span class="editable-cell" data-prop="${p.id}" data-key="${col.key}">${esc(raw)}</span>`;
+              val = esc((p.details && p.details[col.key]) || "-");
             }
             return `<td>${val}</td>`;
           }).join("") +
@@ -1605,9 +1200,6 @@
       body.querySelectorAll("tr").forEach(tr => {
         tr.addEventListener("click", e => {
           if (e.target.classList.contains("row-del") || e.target.closest(".list-memo-row")) return;
-          // Don't trigger row click when editing a cell
-          if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-          if (e.target.classList.contains("editable-name") || e.target.classList.contains("editable-cell")) return;
           const prop = properties.find(p => p.id === tr.dataset.id);
           if (!prop) return;
           // Remove existing memo rows
@@ -1669,65 +1261,11 @@
         });
       });
 
-      // Double-click editable cell → inline edit
-      body.querySelectorAll(".editable-cell").forEach(span => {
-        span.style.cursor = "pointer";
-        span.addEventListener("dblclick", e => {
+      // Double-click cell → toggle full text
+      body.querySelectorAll("td").forEach(td => {
+        td.addEventListener("dblclick", e => {
           e.stopPropagation();
-          const propId = span.dataset.prop;
-          const key = span.dataset.key;
-          const prop = properties.find(p => p.id === propId);
-          if (!prop) return;
-          const current = (prop.details && prop.details[key]) || "";
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = current;
-          input.style.cssText = "width:100%;padding:2px 4px;border:1px solid #2563eb;border-radius:3px;font-size:12px;font-family:inherit;";
-          span.replaceWith(input);
-          input.focus();
-          input.select();
-          const save = async () => {
-            const newVal = input.value.trim();
-            if (!prop.details) prop.details = {};
-            prop.details[key] = newVal || "-";
-            await fetch(`/api/properties/${propId}/details?ws=${prop.workspace_id || activeWorkspaceId}`, {
-              method: "PUT", headers: {"Content-Type":"application/json"},
-              body: JSON.stringify({ details: prop.details })
-            });
-            renderListView();
-          };
-          input.addEventListener("blur", save);
-          input.addEventListener("keydown", e2 => { if (e2.key === "Enter") { e2.preventDefault(); input.blur(); } if (e2.key === "Escape") { input.value = current; input.blur(); } });
-          input.addEventListener("click", e2 => e2.stopPropagation());
-        });
-      });
-
-      // Double-click property name → inline edit
-      body.querySelectorAll(".editable-name").forEach(span => {
-        span.style.cursor = "pointer";
-        span.addEventListener("dblclick", e => {
-          e.stopPropagation();
-          const propId = span.dataset.prop;
-          const prop = properties.find(p => p.id === propId);
-          if (!prop) return;
-          const current = prop.name || "";
-          const input = document.createElement("input");
-          input.type = "text"; input.value = current;
-          input.style.cssText = "width:100%;padding:2px 4px;border:1px solid #2563eb;border-radius:3px;font-size:12px;font-weight:600;font-family:inherit;";
-          span.replaceWith(input); input.focus(); input.select();
-          const save = async () => {
-            const v = input.value.trim();
-            if (v && v !== current) {
-              prop.name = v;
-              await fetch(`/api/properties/${propId}/details?ws=${prop.workspace_id || activeWorkspaceId}`, {
-                method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ name: v })
-              });
-            }
-            renderListView();
-          };
-          input.addEventListener("blur", save);
-          input.addEventListener("keydown", e2 => { if (e2.key === "Enter") input.blur(); if (e2.key === "Escape") { input.value = current; input.blur(); } });
-          input.addEventListener("click", e2 => e2.stopPropagation());
+          td.classList.toggle("expanded");
         });
       });
 
@@ -1749,7 +1287,6 @@
           renderListView();
         };
       });
-      enforceViewerMode();
     }
 
     // === Compare ===
@@ -1889,7 +1426,7 @@
       // Find managers and staff for this workspace
       const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
       const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
-      panel.style.display = criteriaVisible ? "block" : "none";
+      panel.style.display = "block";
       panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
         <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
           <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
@@ -1940,92 +1477,13 @@
     function closeCriteriaPanel() { document.getElementById("criteria-view").style.display = "none"; }
 
     // === BGM ===
-    // === PDF / Street View Overlay ===
-    function showPdfOverlay(url) {
-      const overlay = document.getElementById("pdf-overlay");
-      document.getElementById("pdf-overlay-title").textContent = "PDF表示";
-      document.getElementById("pdf-overlay-frame").src = url + "#toolbar=0&navpanes=0&view=FitH";
-      overlay.style.display = "flex";
-      document.querySelector(".toolbar").style.display = "none";
-      document.getElementById("compare-panel").style.display = "none";
-      document.getElementById("criteria-float").style.display = "none";
-    }
-    let satelliteLayer = null;
-    function showStreetView(lat, lon, name) {
-      // Open Google Street View in new tab
-      window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`, '_blank');
-      // Show satellite view on map
-      if (!satelliteLayer) {
-        satelliteLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-          maxZoom: 20, attribution: 'Google Satellite'
-        });
-      }
-      satelliteLayer.addTo(map);
-      map.setView([lat, lon], 18);
-      // Update button to allow closing satellite view
-    }
-    function closeSatelliteView() {
-      if (satelliteLayer) { map.removeLayer(satelliteLayer); }
-    }
-    function closePdfOverlay() {
-      const overlay = document.getElementById("pdf-overlay");
-      overlay.style.display = "none";
-      document.getElementById("pdf-overlay-frame").src = "";
-      const btn = document.getElementById("pdf-show-btn");
-      if (btn) btn.innerHTML = "&#128196; PDFを表示";
-      const svBtn = document.getElementById("streetview-btn");
-      if (svBtn) svBtn.innerHTML = "&#127758; 外観を確認";
-      document.querySelector(".toolbar").style.display = "flex";
-      if (compareVisible) document.getElementById("compare-panel").style.display = "";
-      const sidebarOpen = !document.getElementById("sidebar").classList.contains("collapsed");
-      if (criteriaVisible && !sidebarOpen) document.getElementById("criteria-float").style.display = "block";
-    }
-
-    const bgmTracks = [
-      "https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3",
-      "https://cdn1.suno.ai/9fa9c9a5-d849-4fcd-8ef5-33f61fac6fd1.mp3",
-    ];
-    let bgmIndex = 0;
-
-    let bgmPlaying = false;
-
     function toggleBgm() {
       const audio = document.getElementById("bgm-audio");
       const btn = document.getElementById("bgm-btn");
       const cat = document.getElementById("dancing-cat");
-      if (!bgmPlaying) {
-        audio.src = bgmTracks[bgmIndex];
-        audio.play().catch(() => {});
-        bgmPlaying = true;
-        btn.innerHTML = "&#9724;";
-        btn.title = "BGM停止";
-        cat.style.display = "block";
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-        bgmPlaying = false;
-        btn.innerHTML = "&#9654;";
-        btn.title = "BGM再生";
-        cat.style.display = "none";
-      }
+      if (audio.paused) { audio.play(); btn.innerHTML = "&#9724;"; btn.title = "BGM停止"; cat.style.display = "block"; }
+      else { audio.pause(); btn.innerHTML = "&#9654;"; btn.title = "BGM再生"; cat.style.display = "none"; }
     }
-
-    function selectBgm(idx) {
-      bgmIndex = parseInt(idx);
-      const audio = document.getElementById("bgm-audio");
-      audio.src = bgmTracks[bgmIndex];
-      if (bgmPlaying) audio.play().catch(() => {});
-    }
-
-    // Auto-play next track when current ends
-    document.getElementById("bgm-audio").addEventListener("ended", () => {
-      if (!bgmPlaying) return;
-      bgmIndex = (bgmIndex + 1) % bgmTracks.length;
-      const audio = document.getElementById("bgm-audio");
-      audio.src = bgmTracks[bgmIndex];
-      audio.play().catch(() => {});
-      document.getElementById("bgm-select").value = bgmIndex;
-    });
 
     // === Util ===
     const _escDiv = document.createElement("div");
@@ -2049,7 +1507,6 @@
       view.style.display = "flex";
       renderAgentLeftPanel();
       showAgentForm();
-      enforceViewerMode();
     }
     function closeAgentView() { document.getElementById("agent-view").style.display = "none"; selectedAgentId = null; }
 
@@ -2108,62 +1565,17 @@
       const props = await res.json();
       const container = document.getElementById("agent-props-container");
       if (!props.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px;">担当エリア内に物件がありません</p>'; return; }
-      const editableKeys = ["賃料","面積"];
       container.innerHTML = `<table class="agent-props-table">
         <thead><tr><th>物件名</th><th>エリア</th><th>住所</th><th>賃料</th><th>面積</th><th>メモ</th></tr></thead>
         <tbody>${props.map(p => `<tr>
           <td>${esc(p.name)}</td>
           <td>${esc(p._wsName || "")}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.address)}</td>
-          <td><span class="agent-editable" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" data-key="賃料">${esc((p.details && p.details["賃料"]) || "-")}</span></td>
-          <td><span class="agent-editable" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" data-key="面積">${esc((p.details && p.details["面積"]) || "-")}</span></td>
-          <td><span class="agent-editable-memo" data-propid="${p.id}" data-wsid="${p.workspace_id||p._wsId||''}" style="max-width:250px;white-space:pre-wrap;font-size:12px;color:#64748b;display:block;">${esc(p.memo || "-")}</span></td>
+          <td>${esc((p.details && p.details["賃料"]) || "-")}</td>
+          <td>${esc((p.details && p.details["面積"]) || "-")}</td>
+          <td style="max-width:250px;white-space:pre-wrap;font-size:12px;color:#64748b;">${esc(p.memo || "-")}</td>
         </tr>`).join("")}</tbody>
       </table>`;
-      // Inline editing for agent property cells
-      container.querySelectorAll(".agent-editable").forEach(span => {
-        span.style.cursor = "pointer";
-        span.title = "ダブルクリックで編集";
-        span.addEventListener("dblclick", e => {
-          e.stopPropagation();
-          const propId = span.dataset.propid, wsId = span.dataset.wsid, key = span.dataset.key;
-          const p = props.find(x => x.id === propId);
-          const current = (p && p.details && p.details[key]) || "";
-          const input = document.createElement("input");
-          input.type = "text"; input.value = current;
-          input.style.cssText = "width:100%;padding:2px 4px;border:1px solid #7c3aed;border-radius:3px;font-size:12px;";
-          span.replaceWith(input); input.focus(); input.select();
-          const save = async () => {
-            const v = input.value.trim();
-            if (p) { if (!p.details) p.details = {}; p.details[key] = v || "-"; }
-            await fetch(`/api/properties/${propId}/details?ws=${wsId}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ details: p.details }) });
-            showAgentDetail(id);
-          };
-          input.addEventListener("blur", save);
-          input.addEventListener("keydown", e2 => { if (e2.key==="Enter") input.blur(); if (e2.key==="Escape") { input.value=current; input.blur(); } });
-        });
-      });
-      container.querySelectorAll(".agent-editable-memo").forEach(span => {
-        span.style.cursor = "pointer";
-        span.title = "ダブルクリックで編集";
-        span.addEventListener("dblclick", e => {
-          e.stopPropagation();
-          const propId = span.dataset.propid, wsId = span.dataset.wsid;
-          const p = props.find(x => x.id === propId);
-          const current = p ? (p.memo || "") : "";
-          const ta = document.createElement("textarea");
-          ta.value = current;
-          ta.style.cssText = "width:100%;height:50px;padding:4px;border:1px solid #7c3aed;border-radius:3px;font-size:12px;resize:vertical;";
-          span.replaceWith(ta); ta.focus();
-          const save = async () => {
-            if (p) p.memo = ta.value;
-            await fetch(`/api/properties/${propId}/memo?ws=${wsId}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ memo: ta.value }) });
-            showAgentDetail(id);
-          };
-          ta.addEventListener("blur", save);
-        });
-      });
-      enforceViewerMode();
     }
 
     function showAgentForm(agent) {
@@ -2273,7 +1685,6 @@
       calDate = new Date();
       document.getElementById("calendar-view").classList.add("active");
       renderCalendar();
-      enforceViewerMode();
     }
     function closeCalendar() { document.getElementById("calendar-view").classList.remove("active"); }
 
@@ -2304,7 +1715,6 @@
 
       if (calViewMode === "month") renderMonthView(y, m);
       else renderWeekView();
-      enforceViewerMode();
     }
 
     function renderMonthView(y, m) {
@@ -2379,7 +1789,7 @@
     }
 
     // === Schedule Modal ===
-    function openScheduleModal(dateStr) {
+    async function openScheduleModal(dateStr) {
       document.getElementById("sch-edit-id").value = "";
       document.getElementById("schedule-modal-title").textContent = "予定を追加";
       document.getElementById("sch-title").value = "";
@@ -2388,31 +1798,74 @@
       document.getElementById("sch-start").value = "10:00";
       document.getElementById("sch-end").value = "11:00";
       document.getElementById("sch-memo").value = "";
+      document.getElementById("sch-customer").value = "";
+      document.getElementById("sch-contract-type").value = "法人";
+      document.getElementById("sch-financing").value = "なし";
+      document.getElementById("sch-business").value = "";
+      document.getElementById("sch-property-search").value = "";
       document.getElementById("sch-status").style.display = "none";
       document.getElementById("sch-gcal-link").style.display = "none";
-      // Populate agent dropdown
-      const agentSel = document.getElementById("sch-agent");
-      agentSel.innerHTML = '<option value="">選択なし</option>' + agentsData.map(a => `<option value="${a.id}">${esc(a.name)} (${esc(a.company||"")})</option>`).join("");
-      // Populate property dropdown
-      const propSel = document.getElementById("sch-property");
-      propSel.innerHTML = '<option value="">選択なし</option>' + properties.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+      // Populate agent dropdowns (requester / assignee)
+      const agentOptions = '<option value="">選択なし</option>' + agentsData.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join("");
+      document.getElementById("sch-requester").innerHTML = agentOptions;
+      document.getElementById("sch-assignee").innerHTML = agentOptions;
+      setSchRoleTab("requester");
+      // Populate property dropdown (all properties from all workspaces)
+      await loadAllPropertiesForSchedule();
+      renderSchPropertyList("");
       document.getElementById("schedule-modal").classList.add("active");
     }
 
-    function editSchedule(id) {
+    // Load all properties across workspaces
+    let _allPropsForSchedule = [];
+    async function loadAllPropertiesForSchedule() {
+      _allPropsForSchedule = [];
+      for (const ws of workspacesData.workspaces) {
+        try {
+          const res = await fetch(`/api/properties?ws=${ws.id}`);
+          const props = await res.json();
+          for (const p of props) { p._wsName = ws.name; _allPropsForSchedule.push(p); }
+        } catch(e) {}
+      }
+    }
+    function renderSchPropertyList(filter) {
+      const propSel = document.getElementById("sch-property");
+      const f = (filter || "").toLowerCase();
+      const list = _allPropsForSchedule.filter(p => !f || (p.name + " " + (p.address || "") + " " + (p._wsName || "")).toLowerCase().includes(f));
+      propSel.innerHTML = '<option value="">選択なし</option>' + list.map(p => `<option value="${p.id}">${esc(p.name)} [${esc(p._wsName || "")}]</option>`).join("");
+    }
+    function filterSchPropertyList(val) { renderSchPropertyList(val); }
+
+    async function editSchedule(id) {
       const s = schedulesData.find(x => x.id === id);
       if (!s) return;
-      openScheduleModal(s.date);
+      await openScheduleModal(s.date);
       document.getElementById("sch-edit-id").value = id;
       document.getElementById("schedule-modal-title").textContent = "予定を編集";
       document.getElementById("sch-title").value = s.title;
       document.getElementById("sch-type").value = s.type;
       document.getElementById("sch-start").value = s.startTime;
       document.getElementById("sch-end").value = s.endTime;
-      document.getElementById("sch-agent").value = s.agentId || "";
+      document.getElementById("sch-requester").value = s.requesterId || s.agentId || "";
+      document.getElementById("sch-assignee").value = s.assigneeId || "";
       document.getElementById("sch-property").value = s.propertyId || "";
       document.getElementById("sch-memo").value = s.memo || "";
+      document.getElementById("sch-customer").value = s.customer || "";
+      document.getElementById("sch-contract-type").value = s.contractType || "法人";
+      document.getElementById("sch-financing").value = s.financing || "なし";
+      document.getElementById("sch-business").value = s.business || "";
       updateGcalLink();
+    }
+
+    function setSchRoleTab(role) {
+      document.querySelectorAll(".sch-role-tab").forEach(btn => {
+        const active = btn.dataset.role === role;
+        btn.classList.toggle("active", active);
+        btn.style.background = active ? "#0891b2" : "#fff";
+        btn.style.color = active ? "#fff" : "#374151";
+      });
+      document.getElementById("sch-requester").style.display = role === "requester" ? "block" : "none";
+      document.getElementById("sch-assignee").style.display = role === "assignee" ? "block" : "none";
     }
 
     function closeScheduleModal() { document.getElementById("schedule-modal").classList.remove("active"); }
@@ -2422,18 +1875,23 @@
       const date = document.getElementById("sch-date").value;
       const start = document.getElementById("sch-start").value;
       const end = document.getElementById("sch-end").value;
-      const agentId = document.getElementById("sch-agent").value;
+      const requesterId = document.getElementById("sch-requester").value;
+      const assigneeId = document.getElementById("sch-assignee").value;
       const link = document.getElementById("sch-gcal-link");
       if (!title || !date) { link.style.display = "none"; return; }
       const startDt = date.replace(/-/g,"") + "T" + start.replace(":","") + "00";
       const endDt = date.replace(/-/g,"") + "T" + end.replace(":","") + "00";
-      const agent = agentsData.find(a => a.id === agentId);
+      const requester = agentsData.find(a => a.id === requesterId);
+      const assignee = agentsData.find(a => a.id === assigneeId);
       const propId = document.getElementById("sch-property").value;
       const prop = properties.find(p => p.id === propId);
       let details = document.getElementById("sch-type").value;
-      if (prop) details += " - " + prop.name + " (" + prop.address + ")";
+      if (requester) details += "\n依頼者: " + requester.name;
+      if (assignee) details += "\n担当者: " + assignee.name;
+      if (prop) details += "\n物件: " + prop.name + " (" + prop.address + ")";
       let url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDt}/${endDt}&details=${encodeURIComponent(details)}`;
-      if (agent) url += `&add=${encodeURIComponent(agent.email)}`;
+      const emails = [requester, assignee].filter(a => a && a.email).map(a => a.email);
+      if (emails.length) url += `&add=${encodeURIComponent(emails.join(","))}`;
       link.href = url;
       link.style.display = "inline-block";
     }
@@ -2446,12 +1904,20 @@
         date: document.getElementById("sch-date").value,
         startTime: document.getElementById("sch-start").value,
         endTime: document.getElementById("sch-end").value,
-        agentId: document.getElementById("sch-agent").value,
+        requesterId: document.getElementById("sch-requester").value,
+        assigneeId: document.getElementById("sch-assignee").value,
+        agentId: document.getElementById("sch-requester").value,
         propertyId: document.getElementById("sch-property").value,
         memo: document.getElementById("sch-memo").value.trim(),
+        customer: document.getElementById("sch-customer").value.trim(),
+        contractType: document.getElementById("sch-contract-type").value,
+        financing: document.getElementById("sch-financing").value,
+        business: document.getElementById("sch-business").value.trim(),
       };
       const status = document.getElementById("sch-status");
       if (!data.title || !data.date) { status.style.display = "block"; status.textContent = "タイトルと日付は必須です"; status.style.color = "#dc2626"; return; }
+      if (!data.customer) { status.style.display = "block"; status.textContent = "お客様名は必須です"; status.style.color = "#dc2626"; return; }
+      if (!data.business) { status.style.display = "block"; status.textContent = "既存事業内容は必須です"; status.style.color = "#dc2626"; return; }
       const url = editId ? `/api/schedules/${editId}` : "/api/schedules";
       const method = editId ? "PUT" : "POST";
       const res = await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(data) });
@@ -2498,191 +1964,10 @@
       try {
         const res = await fetch("/api/auth-check");
         const data = await res.json();
-        if (data.loggedIn) { document.getElementById("login-screen").style.display = "none"; applyUserRole(data.role); return true; }
+        if (data.loggedIn) { document.getElementById("login-screen").style.display = "none"; return true; }
       } catch(e) {}
       document.getElementById("login-screen").style.display = "flex";
       return false;
-    }
-
-    let currentUserRole = "viewer";
-
-    async function doLogout() {
-      if (!confirm("ログアウトしますか？")) return;
-      await fetch("/api/logout", { method: "POST" });
-      document.getElementById("login-screen").style.display = "flex";
-    }
-
-    function applyUserRole(role) {
-      currentUserRole = role || "viewer";
-      const adminBtn = document.getElementById("admin-settings-btn");
-      if (adminBtn) adminBtn.style.display = (role === "admin") ? "" : "none";
-      if (role === "viewer") {
-        document.querySelectorAll(".upload-btn, .manual-add-btn").forEach(el => el.style.display = "none");
-        document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
-          if (btn.title === "新規作成" || btn.title === "このエリアを削除" || btn.title === "設定") btn.style.display = "none";
-        });
-        // Agent/Schedule buttons remain visible (read-only mode enforced inside)
-      }
-    }
-
-    // Re-apply viewer restrictions after DOM updates (sidebar, list, etc.)
-    function enforceViewerMode() {
-      if (currentUserRole !== "viewer") return;
-
-      // === Sidebar ===
-      // Hide delete, move, replace buttons
-      document.querySelectorAll(".prop-action-delete, #move-to-ws, #delete-prop-btn").forEach(el => el.style.display = "none");
-      document.querySelectorAll(".prop-actions").forEach(el => el.style.display = "none");
-      // Hide PDF replace label (keep PDF display/download)
-      document.querySelectorAll("label").forEach(el => {
-        if ((el.textContent.includes("差し替え") || el.textContent.includes("アップロード")) && el.querySelector("input[type=file]")) el.style.display = "none";
-      });
-      // Hide detail-add, detail-del buttons
-      document.querySelectorAll(".detail-add, .detail-del").forEach(el => el.style.display = "none");
-      // Make all sidebar textareas and inputs readonly
-      document.querySelectorAll("#sidebar-content textarea, #sidebar-content .detail-key, #sidebar-content .detail-val").forEach(el => {
-        el.readOnly = true;
-        el.style.opacity = "0.7";
-        el.style.pointerEvents = "none";
-      });
-      // Disable sidebar title click (rename)
-      const sidebarTitle = document.getElementById("sidebar-title");
-      if (sidebarTitle) { sidebarTitle.style.cursor = "default"; sidebarTitle.onclick = null; }
-      // Disable color dots (status change)
-      document.querySelectorAll(".color-dot").forEach(el => {
-        el.style.pointerEvents = "none";
-        el.style.opacity = "0.5";
-      });
-
-      // === List view ===
-      // Disable editable cells (name, details)
-      document.querySelectorAll(".editable-cell, .editable-name").forEach(el => {
-        el.style.cursor = "default";
-        el.replaceWith(el.cloneNode(true));
-      });
-      // Hide row delete buttons
-      document.querySelectorAll(".row-del").forEach(el => el.style.display = "none");
-      // Disable memo textareas in list memo panels
-      document.querySelectorAll(".list-memo-input").forEach(el => {
-        el.readOnly = true;
-        el.style.opacity = "0.7";
-      });
-      // Disable status select in list memo panels
-      document.querySelectorAll(".memo-status-select").forEach(el => {
-        el.disabled = true;
-        el.style.opacity = "0.7";
-      });
-
-      // === Agent view ===
-      document.querySelectorAll(".agent-editable, .agent-editable-memo").forEach(el => {
-        el.style.cursor = "default";
-        el.replaceWith(el.cloneNode(true));
-      });
-
-      // === Agent view ===
-      const agentAddBtn = document.getElementById("agent-add-btn");
-      if (agentAddBtn) agentAddBtn.style.display = "none";
-      // Hide edit/delete buttons in agent detail
-      document.querySelectorAll("#agent-view .cal-nav-btn").forEach(btn => {
-        const t = btn.textContent || "";
-        if (t.includes("編集") || t.includes("削除")) btn.style.display = "none";
-      });
-      // Hide agent form save/cancel buttons
-      document.querySelectorAll("#agent-view .btn-primary, #agent-view .btn-secondary").forEach(btn => {
-        if (!btn.textContent.includes("閉じる")) btn.style.display = "none";
-      });
-
-      // === Schedule view ===
-      const schedAddBtn = document.getElementById("schedule-add-btn");
-      if (schedAddBtn) schedAddBtn.style.display = "none";
-      // Disable clicking on calendar days to create events (viewer)
-      document.querySelectorAll(".cal-day, .cal-week-cell").forEach(el => {
-        el.style.cursor = "default";
-        el.onclick = null;
-      });
-
-      // === Stats view ===
-      const statsRegister = document.getElementById("stats-monthly-register");
-      if (statsRegister) statsRegister.style.display = "none";
-      const statsTargets = document.getElementById("stats-targets-section");
-      if (statsTargets) statsTargets.style.display = "none";
-
-      // === Contract view ===
-      // Hide contract start buttons
-      document.querySelectorAll("#contract-approved button").forEach(btn => {
-        if (btn.textContent.includes("契約開始")) btn.style.display = "none";
-      });
-      // Make contract fields readonly
-      document.querySelectorAll("#contract-list select, #contract-list input, #contract-list textarea").forEach(el => {
-        el.disabled = true;
-        el.style.opacity = "0.7";
-      });
-      // Hide contract delete/task add buttons
-      document.querySelectorAll("#contract-list button").forEach(btn => {
-        const text = btn.textContent || btn.innerText;
-        if (text.includes("削除") || text.includes("追加") || text.includes("アップロード")) btn.style.display = "none";
-      });
-
-      // === Toolbar ===
-      document.querySelectorAll(".upload-btn, .manual-add-btn").forEach(el => el.style.display = "none");
-      document.querySelectorAll(".ws-panel .ws-btn").forEach(btn => {
-        if (btn.title === "新規作成" || btn.title === "このエリアを削除" || btn.title === "設定") btn.style.display = "none";
-      });
-    }
-
-    // === User Management ===
-    async function openUserManagement() {
-      document.getElementById("user-mgmt-modal").classList.add("active");
-      await renderUserList();
-    }
-    function closeUserManagement() {
-      document.getElementById("user-mgmt-modal").classList.remove("active");
-    }
-    async function renderUserList() {
-      const res = await fetch("/api/users");
-      if (!res.ok) { document.getElementById("user-list").innerHTML = '<p style="color:#dc2626;">管理者権限が必要です</p>'; return; }
-      const users = await res.json();
-      const roleLabels = { admin: "管理者", viewer: "閲覧者" };
-      const roleColors = { admin: "#2563eb", viewer: "#64748b" };
-      document.getElementById("user-list").innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:#f1f5f9;">
-          <th style="padding:8px;text-align:left;">名前</th>
-          <th style="padding:8px;text-align:left;">メール</th>
-          <th style="padding:8px;text-align:center;">権限</th>
-          <th style="padding:8px;width:40px;"></th>
-        </tr></thead>
-        <tbody>${users.map(u => `<tr style="border-top:1px solid #f1f5f9;">
-          <td style="padding:6px 8px;">${esc(u.name || "")}</td>
-          <td style="padding:6px 8px;">${esc(u.email)}</td>
-          <td style="padding:6px 8px;text-align:center;"><span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:${u.role==='admin'?'#dbeafe':'#f1f5f9'};color:${roleColors[u.role]||'#64748b'};">${roleLabels[u.role]||u.role}</span></td>
-          <td style="padding:6px 8px;"><button onclick="deleteUser('${u.email}')" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;" title="削除">&times;</button></td>
-        </tr>`).join("")}</tbody>
-      </table>`;
-    }
-    async function addUser() {
-      const name = document.getElementById("new-user-name").value.trim();
-      const email = document.getElementById("new-user-email").value.trim();
-      const password = document.getElementById("new-user-pass").value;
-      const role = document.getElementById("new-user-role").value;
-      const status = document.getElementById("user-mgmt-status");
-      if (!email || !password) { status.style.display = "block"; status.textContent = "メールとパスワードは必須です"; status.style.color = "#dc2626"; return; }
-      const res = await fetch("/api/users", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ name, email, password, role }) });
-      const data = await res.json();
-      if (data.status === "ok") {
-        status.style.display = "block"; status.textContent = "追加しました"; status.style.color = "#16a34a";
-        document.getElementById("new-user-name").value = "";
-        document.getElementById("new-user-email").value = "";
-        document.getElementById("new-user-pass").value = "";
-        await renderUserList();
-        setTimeout(() => status.style.display = "none", 2000);
-      } else {
-        status.style.display = "block"; status.textContent = data.error || "エラー"; status.style.color = "#dc2626";
-      }
-    }
-    async function deleteUser(email) {
-      if (!confirm(`${email} を削除しますか？`)) return;
-      await fetch(`/api/users/${encodeURIComponent(email)}`, { method: "DELETE" });
-      await renderUserList();
     }
 
     async function doLogin() {
@@ -2695,7 +1980,6 @@
       const data = await res.json();
       if (data.status === "ok") {
         document.getElementById("login-screen").style.display = "none";
-        applyUserRole(data.role);
         initApp();
       } else {
         errorEl.textContent = data.message || "ログインに失敗しました";
@@ -2706,432 +1990,6 @@
     // Enter key to login
     document.getElementById("login-password").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
     document.getElementById("login-email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("login-password").focus(); });
-
-    // ================================================================
-    // STATS VIEW
-    // ================================================================
-    let monthlyTargets = { proposals: 0, viewings: 0, applications: 0, approvals: 0, contracts: 0 };
-
-    async function loadTargets() {
-      try {
-        const res = await fetch("/api/stats/targets");
-        const data = await res.json();
-        if (data && data.proposals !== undefined) monthlyTargets = data;
-      } catch(e) {}
-      document.getElementById("target-proposals").value = monthlyTargets.proposals || "";
-      document.getElementById("target-viewings").value = monthlyTargets.viewings || "";
-      document.getElementById("target-applications").value = monthlyTargets.applications || "";
-      document.getElementById("target-approvals").value = monthlyTargets.approvals || "";
-      document.getElementById("target-contracts").value = monthlyTargets.contracts || "";
-    }
-
-    async function saveTargets() {
-      monthlyTargets = {
-        proposals: parseInt(document.getElementById("target-proposals").value) || 0,
-        viewings: parseInt(document.getElementById("target-viewings").value) || 0,
-        applications: parseInt(document.getElementById("target-applications").value) || 0,
-        approvals: parseInt(document.getElementById("target-approvals").value) || 0,
-        contracts: parseInt(document.getElementById("target-contracts").value) || 0,
-      };
-      await fetch("/api/stats/targets", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(monthlyTargets) });
-      renderStatsView();
-    }
-
-    function pct(a, b) { return b > 0 ? Math.round(a / b * 100) : 0; }
-    function pctBar(val, target, color) {
-      const p = target > 0 ? Math.min(100, Math.round(val / target * 100)) : 0;
-      return `<div style="display:flex;align-items:center;gap:6px;"><div style="flex:1;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${p}%;background:${color};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:600;color:${p>=100?'#16a34a':'#64748b'};min-width:35px;text-align:right;">${p}%</span></div>`;
-    }
-
-    async function renderStatsView() {
-      // Populate month selector
-      const monthSel = document.getElementById("stats-month");
-      if (!monthSel.options.length || monthSel.options.length <= 1) {
-        monthSel.innerHTML = "";
-        const now = new Date();
-        for (let i = 0; i < 12; i++) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-          const label = `${d.getFullYear()}年${d.getMonth()+1}月`;
-          monthSel.innerHTML += `<option value="${val}">${label}</option>`;
-        }
-      }
-      const wsSel = document.getElementById("stats-ws-select");
-      wsSel.innerHTML = workspacesData.workspaces.map(ws => `<option value="${ws.id}">${esc(ws.name)}</option>`).join("");
-
-      await loadTargets();
-
-      // Current snapshot
-      try {
-        const res = await fetch("/api/stats/current");
-        const stats = await res.json();
-
-        // Total across all workspaces
-        const total = { proposals: 0, viewings: 0, applications: 0, approvals: 0, contracts: 0 };
-        stats.forEach(s => { total.proposals += s.proposals; total.viewings += s.viewings; total.applications += s.applications; total.approvals += s.approvals; });
-
-        // Conversion rates
-        const r1 = pct(total.viewings, total.proposals);
-        const r2 = pct(total.applications, total.viewings);
-        const r3 = pct(total.approvals, total.applications);
-
-        const t = monthlyTargets;
-        document.getElementById("stats-total").innerHTML = `
-          <div class="stat-card" style="border:2px solid #2563eb;">
-            <h4 style="color:#2563eb;font-size:16px;">全エリア統合</h4>
-            <div class="stat-grid" style="margin-bottom:12px;">
-              <div class="stat-item"><div class="num" style="color:#2563eb">${total.proposals}</div><div class="lbl">提案数</div>${t.proposals ? pctBar(total.proposals, t.proposals, '#2563eb') : ''}</div>
-              <div class="stat-item"><div class="num" style="color:#dc2626">${total.viewings}</div><div class="lbl">内見数</div>${t.viewings ? pctBar(total.viewings, t.viewings, '#dc2626') : ''}</div>
-              <div class="stat-item"><div class="num" style="color:#16a34a">${total.applications}</div><div class="lbl">申込数</div>${t.applications ? pctBar(total.applications, t.applications, '#16a34a') : ''}</div>
-              <div class="stat-item"><div class="num" style="color:#eab308">${total.approvals}</div><div class="lbl">審査通過</div>${t.approvals ? pctBar(total.approvals, t.approvals, '#eab308') : ''}</div>
-              <div class="stat-item"><div class="num" style="color:#7c3aed">${total.contracts}</div><div class="lbl">契約数</div>${t.contracts ? pctBar(total.contracts, t.contracts, '#7c3aed') : ''}</div>
-            </div>
-            <div style="display:flex;gap:12px;font-size:12px;color:#64748b;border-top:1px solid #e5e7eb;padding-top:8px;">
-              <span>提案→内見: <b style="color:#1e293b">${r1}%</b></span>
-              <span>内見→申込: <b style="color:#1e293b">${r2}%</b></span>
-              <span>申込→審査通過: <b style="color:#1e293b">${r3}%</b></span>
-            </div>
-          </div>`;
-
-        // Per-workspace cards
-        const container = document.getElementById("stats-current-body");
-        container.innerHTML = stats.map(s => {
-          const sr1 = pct(s.viewings, s.proposals);
-          const sr2 = pct(s.applications, s.viewings);
-          const sr3 = pct(s.approvals, s.applications);
-          return `<div class="stat-card">
-            <h4>${esc(s.workspaceName)}</h4>
-            <div class="stat-grid">
-              <div class="stat-item"><div class="num" style="color:#2563eb">${s.proposals}</div><div class="lbl">提案数</div></div>
-              <div class="stat-item"><div class="num" style="color:#dc2626">${s.viewings}</div><div class="lbl">内見数</div></div>
-              <div class="stat-item"><div class="num" style="color:#16a34a">${s.applications}</div><div class="lbl">申込数</div></div>
-              <div class="stat-item"><div class="num" style="color:#eab308">${s.approvals}</div><div class="lbl">審査通過</div></div>
-              <div class="stat-item"><div class="num" style="color:#7c3aed">-</div><div class="lbl">契約数</div></div>
-            </div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:6px;">移行率: 提案→内見 ${sr1}% | 内見→申込 ${sr2}% | 申込→通過 ${sr3}%</div>
-          </div>`;
-        }).join("");
-      } catch(e) { console.error("Stats load error:", e); }
-
-      // History
-      try {
-        const res = await fetch("/api/stats/monthly");
-        const history = await res.json();
-        const container = document.getElementById("stats-history");
-        if (!history.length) {
-          container.innerHTML = '<p style="padding:20px;text-align:center;color:#94a3b8;font-size:13px;">確定済みデータはありません</p>';
-        } else {
-          const wsNames = {};
-          workspacesData.workspaces.forEach(ws => wsNames[ws.id] = ws.name);
-          container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead><tr style="background:#f1f5f9;">
-              <th style="padding:10px;text-align:left;">月</th><th style="padding:10px;text-align:left;">エリア</th>
-              <th style="padding:10px;text-align:center;">提案</th><th style="padding:10px;text-align:center;">内見</th>
-              <th style="padding:10px;text-align:center;">申込</th><th style="padding:10px;text-align:center;">審査通過</th>
-              <th style="padding:10px;text-align:center;">契約</th>
-              <th style="padding:10px;text-align:center;">提→内</th><th style="padding:10px;text-align:center;">内→申</th><th style="padding:10px;text-align:center;">申→通</th>
-              <th style="padding:10px;text-align:right;">確定日</th>
-            </tr></thead>
-            <tbody>${history.map(h => {
-              const hr1 = pct(h.viewings, h.proposals);
-              const hr2 = pct(h.applications, h.viewings);
-              const hr3 = pct(h.approvals, h.applications);
-              return `<tr style="border-top:1px solid #f1f5f9;">
-              <td style="padding:8px 10px;font-weight:500;">${esc(h.month)}</td>
-              <td style="padding:8px 10px;">${esc(wsNames[h.workspace_id] || h.workspace_id)}</td>
-              <td style="padding:8px 10px;text-align:center;">${h.proposals}</td>
-              <td style="padding:8px 10px;text-align:center;">${h.viewings}</td>
-              <td style="padding:8px 10px;text-align:center;">${h.applications}</td>
-              <td style="padding:8px 10px;text-align:center;">${h.approvals}</td>
-              <td style="padding:8px 10px;text-align:center;">${h.contracts}</td>
-              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr1}%</td>
-              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr2}%</td>
-              <td style="padding:8px 10px;text-align:center;color:#64748b;">${hr3}%</td>
-              <td style="padding:8px 10px;text-align:right;color:#64748b;font-size:12px;">${h.confirmed_at ? new Date(h.confirmed_at).toLocaleDateString('ja-JP') : '-'}</td>
-            </tr>`;}).join("")}</tbody>
-          </table>`;
-        }
-      } catch(e) { console.error("Stats history error:", e); }
-      enforceViewerMode();
-    }
-
-    async function confirmMonthlyStats() {
-      const month = document.getElementById("stats-month").value;
-      const wsId = document.getElementById("stats-ws-select").value;
-      if (!month || !wsId) return;
-      const wsName = workspacesData.workspaces.find(w => w.id === wsId)?.name || wsId;
-      if (!confirm(`${wsName} の ${month} のデータを月次登録しますか？`)) return;
-      const res = await fetch("/api/stats/monthly", { method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ workspaceId: wsId, month }) });
-      const data = await res.json();
-      if (data.status === "ok") {
-        const msg = document.getElementById("stats-confirm-msg");
-        msg.textContent = `${wsName} ${month} を登録しました`;
-        msg.style.opacity = "1";
-        setTimeout(() => msg.style.opacity = "0", 3000);
-        renderStatsView();
-      }
-    }
-
-    // ================================================================
-    // CONTRACT VIEW
-    // ================================================================
-    let contractsData = [];
-    const CONTRACT_STATUSES = [
-      { value: "準備中", color: "#64748b", bg: "#f1f5f9" },
-      { value: "書類確認済", color: "#0891b2", bg: "#cffafe" },
-      { value: "重説依頼済", color: "#2563eb", bg: "#dbeafe" },
-      { value: "重説実施済", color: "#4f46e5", bg: "#e0e7ff" },
-      { value: "書類返送済", color: "#ea580c", bg: "#ffedd5" },
-      { value: "初期費用入金済", color: "#d97706", bg: "#fef3c7" },
-      { value: "仲介手数料支払済", color: "#059669", bg: "#d1fae5" },
-      { value: "鍵渡し済", color: "#16a34a", bg: "#dcfce7" },
-      { value: "入居済", color: "#7c3aed", bg: "#ede9fe" },
-    ];
-
-    async function renderContractView() {
-      // Load properties with status: 申込済(green), 審査通過(yellow), 審査落ち(black)
-      const approvedProps = [];
-      const contractColors = new Set(["green", "yellow", "black"]);
-      for (const ws of workspacesData.workspaces) {
-        const res = await fetch(`/api/properties?ws=${ws.id}`);
-        const props = await res.json();
-        props.filter(p => contractColors.has(p.color)).forEach(p => {
-          p._wsName = ws.name; p._wsId = ws.id;
-          approvedProps.push(p);
-        });
-      }
-      // Load contracts
-      const cRes = await fetch("/api/contracts");
-      contractsData = await cRes.json();
-      const contractedPropIds = new Set(contractsData.map(c => c.property_id));
-
-      // Approved properties not yet in contracts
-      const available = approvedProps.filter(p => !contractedPropIds.has(p.id));
-      const approvedEl = document.getElementById("contract-approved");
-      if (!available.length) {
-        approvedEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">対象物件はありません</p>';
-      } else {
-        approvedEl.innerHTML = available.map(p => {
-          const pc = PIN_COLORS[p.color] || PIN_COLORS.blue;
-          return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:600;font-size:14px;color:#1e293b;">${esc(p.name)} <span style="font-size:11px;padding:2px 6px;border-radius:8px;background:${pc.fill};color:#fff;font-weight:500;">${pc.label}</span></div>
-              <div style="font-size:12px;color:#64748b;">${esc(p._wsName)} | ${esc(p.address)}</div>
-            </div>
-            <button onclick="startContract('${p.id}','${p._wsId}','${esc(p.name).replace(/'/g,"\\'")}')"
-              style="padding:6px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;">契約開始</button>
-          </div>`;
-        }).join("");
-      }
-
-      // Contracts list
-      const wsNames = {};
-      workspacesData.workspaces.forEach(ws => wsNames[ws.id] = ws.name);
-      const listEl = document.getElementById("contract-list");
-      if (!contractsData.length) {
-        listEl.innerHTML = '<p style="color:#94a3b8;font-size:13px;">契約データはありません</p>';
-      } else {
-        listEl.innerHTML = contractsData.map(c => {
-          const st = CONTRACT_STATUSES.find(s => s.value === c.status) || CONTRACT_STATUSES[0];
-          const tasks = c.tasks || [];
-          const docs = c.documents || [];
-          // Find the property to show management company info
-          const propData = approvedProps.find(p => p.id === c.property_id);
-          const mgmt = propData?.details || {};
-          return `<div class="contract-card" id="contract-${c.id}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-              <div>
-                <h4>${esc(c.property_name)}</h4>
-                <div style="font-size:12px;color:#64748b;margin-bottom:6px;">${esc(wsNames[c.workspace_id] || '')}</div>
-                <span class="contract-status" style="background:${st.bg};color:${st.color};">${st.value}</span>
-              </div>
-              <div style="display:flex;gap:4px;">
-                <button onclick="deleteContract('${c.id}')" style="padding:4px 8px;border:1px solid #fecaca;background:#fff;color:#dc2626;border-radius:4px;font-size:11px;cursor:pointer;">削除</button>
-              </div>
-            </div>
-            <!-- 物件・管理会社情報（編集可能） -->
-            <div style="margin-top:10px;padding:10px 12px;background:#f8fafc;border-radius:6px;font-size:12px;">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                <div><label style="font-size:10px;color:#64748b;">物件住所</label>
-                  <input type="text" value="${esc(c.property_address || propData?.address || '')}" onchange="updateContractField('${c.id}','property_address',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">管理会社</label>
-                  <input type="text" value="${esc(c.management_company || mgmt['管理会社'] || '')}" onchange="updateContractField('${c.id}','management_company',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">管理会社住所</label>
-                  <input type="text" value="${esc(c.management_address || '')}" onchange="updateContractField('${c.id}','management_address',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">TEL</label>
-                  <input type="text" value="${esc(c.management_tel || mgmt['TEL'] || '')}" onchange="updateContractField('${c.id}','management_tel',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">FAX</label>
-                  <input type="text" value="${esc(c.management_fax || mgmt['FAX'] || '')}" onchange="updateContractField('${c.id}','management_fax',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">賃料</label>
-                  <input type="text" value="${esc(c.rent || mgmt['賃料'] || '')}" onchange="updateContractField('${c.id}','rent',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-                <div><label style="font-size:10px;color:#64748b;">面積</label>
-                  <input type="text" value="${esc(c.area || mgmt['面積'] || '')}" onchange="updateContractField('${c.id}','area',this.value)" style="width:100%;padding:3px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;"></div>
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px;font-size:13px;">
-              <div><label style="font-size:11px;color:#64748b;display:block;">ステータス</label>
-                <select onchange="updateContractField('${c.id}','status',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;">
-                  ${CONTRACT_STATUSES.map(s => `<option value="${s.value}"${s.value===c.status?' selected':''}>${s.value}</option>`).join('')}
-                </select></div>
-              <div><label style="font-size:11px;color:#64748b;display:block;">契約予定日</label>
-                <input type="date" value="${c.contract_date||''}" onchange="updateContractField('${c.id}','contract_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-              <div><label style="font-size:11px;color:#64748b;display:block;">入居予定日</label>
-                <input type="date" value="${c.move_in_date||''}" onchange="updateContractField('${c.id}','move_in_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-              <div><label style="font-size:11px;color:#64748b;display:block;">初期費用入金期限</label>
-                <input type="date" value="${c.deposit_deadline||''}" onchange="updateContractField('${c.id}','deposit_deadline',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-              <div><label style="font-size:11px;color:#64748b;display:block;">鍵引渡日</label>
-                <input type="date" value="${c.key_delivery_date||''}" onchange="updateContractField('${c.id}','key_delivery_date',this.value)" style="width:100%;padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;"></div>
-            </div>
-            <div style="margin-top:10px;"><label style="font-size:11px;color:#64748b;display:block;">備考</label>
-              <textarea onchange="updateContractField('${c.id}','notes',this.value)" style="width:100%;height:50px;padding:6px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;resize:vertical;font-family:inherit;" placeholder="メモ...">${esc(c.notes||'')}</textarea>
-            </div>
-            <!-- 書類アップロード -->
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="font-size:12px;font-weight:600;color:#374151;">📎 書類</label>
-                <label style="font-size:11px;padding:2px 8px;border:1px dashed #cbd5e1;background:none;color:#2563eb;border-radius:4px;cursor:pointer;">
-                  + アップロード
-                  <input type="file" accept=".pdf,.jpg,.png,.jpeg" style="display:none;" onchange="uploadContractDoc('${c.id}',event)">
-                </label>
-              </div>
-              ${docs.map((d, i) => `
-                <div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;">
-                  <span style="color:#2563eb;">📄</span>
-                  <a href="${esc(d.url)}" target="_blank" style="color:#2563eb;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d.name)}</a>
-                  <span style="color:#94a3b8;font-size:10px;">${esc(d.type || '')}</span>
-                  <button onclick="removeContractDoc('${c.id}',${i})" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;">&times;</button>
-                </div>
-              `).join('')}
-              ${!docs.length ? '<p style="font-size:11px;color:#94a3b8;">書類はまだアップロードされていません</p>' : ''}
-            </div>
-            <!-- タスク / スケジュール -->
-            <div class="contract-tasks" style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="font-size:12px;font-weight:600;color:#374151;">📋 タスク / スケジュール</label>
-                <button onclick="addContractTask('${c.id}')" style="font-size:11px;padding:2px 8px;border:1px dashed #cbd5e1;background:none;color:#2563eb;border-radius:4px;cursor:pointer;">+ 追加</button>
-              </div>
-              ${tasks.map((t, i) => `
-                <div class="contract-task${t.done?' done':''}" style="display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9;">
-                  <input type="checkbox" ${t.done?'checked':''} onchange="toggleContractTask('${c.id}',${i})">
-                  <input type="date" value="${t.date||''}" onchange="updateContractTaskDate('${c.id}',${i},this.value)" style="padding:2px 4px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;width:130px;">
-                  <input type="text" value="${esc(t.title||'')}" onchange="updateContractTaskTitle('${c.id}',${i},this.value)" style="flex:1;padding:2px 6px;border:1px solid #e5e7eb;border-radius:4px;font-size:13px;" placeholder="タスク名">
-                  <button onclick="removeContractTask('${c.id}',${i})" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:14px;">&times;</button>
-                </div>
-              `).join('')}
-            </div>
-          </div>`;
-        }).join("");
-      }
-      enforceViewerMode();
-    }
-
-    async function startContract(propId, wsId, propName) {
-      const res = await fetch("/api/contracts", { method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ propertyId: propId, workspaceId: wsId, propertyName: propName,
-          tasks: [
-            { title: "書類確認", date: "", done: false },
-            { title: "重説依頼", date: "", done: false },
-            { title: "重説実施", date: "", done: false },
-            { title: "書類返送", date: "", done: false },
-            { title: "初期費用入金", date: "", done: false },
-            { title: "仲介手数料入金", date: "", done: false },
-            { title: "鍵渡し", date: "", done: false },
-            { title: "入居", date: "", done: false },
-          ],
-          documents: []
-        })
-      });
-      if ((await res.json()).status === "ok") renderContractView();
-    }
-
-    async function updateContractField(id, field, value) {
-      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({[field]: value}) });
-    }
-
-    async function deleteContract(id) {
-      if (!confirm("この契約データを削除しますか？")) return;
-      await fetch(`/api/contracts/${id}`, { method:"DELETE" });
-      renderContractView();
-    }
-
-    function _getContractTasks(id) {
-      const c = contractsData.find(x => x.id === id);
-      return c ? (c.tasks || []) : [];
-    }
-    async function _saveContractTasks(id, tasks) {
-      const c = contractsData.find(x => x.id === id);
-      if (c) c.tasks = tasks;
-      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ tasks }) });
-      renderContractView();
-    }
-    async function addContractTask(id) {
-      const tasks = _getContractTasks(id);
-      tasks.push({ title: "", date: "", done: false });
-      await _saveContractTasks(id, tasks);
-    }
-    async function toggleContractTask(id, idx) {
-      const tasks = _getContractTasks(id);
-      if (tasks[idx]) tasks[idx].done = !tasks[idx].done;
-      await _saveContractTasks(id, tasks);
-    }
-    async function updateContractTaskDate(id, idx, val) {
-      const tasks = _getContractTasks(id);
-      if (tasks[idx]) tasks[idx].date = val;
-      await _saveContractTasks(id, tasks);
-    }
-    async function updateContractTaskTitle(id, idx, val) {
-      const tasks = _getContractTasks(id);
-      if (tasks[idx]) tasks[idx].title = val;
-      await fetch(`/api/contracts/${id}`, { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ tasks }) });
-      const c = contractsData.find(x => x.id === id);
-      if (c) c.tasks = tasks;
-    }
-    async function removeContractTask(id, idx) {
-      const tasks = _getContractTasks(id);
-      tasks.splice(idx, 1);
-      await _saveContractTasks(id, tasks);
-    }
-
-    // ================================================================
-    // CONTRACT DOCUMENTS
-    // ================================================================
-    async function uploadContractDoc(contractId, event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('contractId', contractId);
-      const res = await fetch('/api/contracts/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.status === 'ok') {
-        // Update contract documents array
-        const c = contractsData.find(x => x.id === contractId);
-        if (c) {
-          if (!c.documents) c.documents = [];
-          c.documents.push(data.document);
-          await fetch(`/api/contracts/${contractId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ documents: c.documents }) });
-        }
-        renderContractView();
-      } else {
-        alert('アップロードに失敗しました: ' + (data.error || ''));
-      }
-      event.target.value = '';
-    }
-
-    async function removeContractDoc(contractId, idx) {
-      if (!confirm('この書類を削除しますか？')) return;
-      const c = contractsData.find(x => x.id === contractId);
-      if (c && c.documents) {
-        c.documents.splice(idx, 1);
-        await fetch(`/api/contracts/${contractId}`, { method:'PUT', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ documents: c.documents }) });
-        renderContractView();
-      }
-    }
-
-    // ================================================================
 
     async function initApp() {
       map.invalidateSize();
