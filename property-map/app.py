@@ -589,6 +589,36 @@ def get_sync():
     return jsonify({"ts": _last_change_ts})
 
 
+@app.route("/api/debug/data")
+def debug_data():
+    """TEMPORARY: List all files/dirs in DATA_DIR for recovery."""
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    result = {"DATA_DIR": DATA_DIR, "tree": {}}
+    try:
+        for root, dirs, files in os.walk(DATA_DIR):
+            rel = os.path.relpath(root, DATA_DIR)
+            result["tree"][rel] = {"dirs": dirs, "files": files}
+        # Also read workspaces.json if exists
+        wf = os.path.join(DATA_DIR, "workspaces.json")
+        if os.path.exists(wf):
+            with open(wf, "r", encoding="utf-8") as f:
+                result["workspaces_json"] = json.load(f)
+        # Read all properties.json in workspaces/
+        ws_root = os.path.join(DATA_DIR, "workspaces")
+        if os.path.isdir(ws_root):
+            props = {}
+            for wd in os.listdir(ws_root):
+                pfile = os.path.join(ws_root, wd, "properties.json")
+                if os.path.exists(pfile):
+                    with open(pfile, "r", encoding="utf-8") as f:
+                        props[wd] = json.load(f)
+            result["all_workspace_properties"] = props
+    except Exception as e:
+        result["error"] = str(e)
+    return jsonify(result)
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
