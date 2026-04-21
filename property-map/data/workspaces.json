@@ -3,7 +3,7 @@
   "workspaces": [
     {
       "id": "ws_1",
-      "name": "新オフィス用",
+      "name": "新オフィス・研修室",
       "stations": [
         {
           "name": "渋谷駅",
@@ -66,7 +66,7 @@
     },
     {
       "id": "ws_1775573727463",
-      "name": "K新宿 (2)",
+      "name": "神田・秋葉原",
       "stations": [
         {
           "name": "新宿駅",
@@ -83,7 +83,7 @@
     },
     {
       "id": "ws_1775610444930",
-      "name": "T/B本厚木",
+      "name": "K/T本厚木/海老名/小田原",
       "stations": [
         {
           "name": "本厚木駅",
@@ -97,6 +97,270 @@
         "lon": 139.70690000000005
       },
       "zoom": 15
+    },
+    {
+      "id": "ws_1776812712000",
+      "name": "T町田",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712001",
+      "name": "T新越谷/南越谷",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712002",
+      "name": "K/T梅田",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712003",
+      "name": "B/T船橋",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712004",
+      "name": "B/T銀座",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712005",
+      "name": "B/T川崎",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712006",
+      "name": "T八王子",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712007",
+      "name": "T/K仙台",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712008",
+      "name": "T二子玉川",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712009",
+      "name": "T吉祥寺",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712010",
+      "name": "T蒲田",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712011",
+      "name": "L横浜",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712012",
+      "name": "B稲毛",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712013",
+      "name": "B/T日暮里",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712014",
+      "name": "T川口",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712015",
+      "name": "Lセンター南",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712016",
+      "name": "L戸塚",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712017",
+      "name": "T千葉",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712018",
+      "name": "T大船",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712019",
+      "name": "T上野",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712020",
+      "name": "ss/L仙台",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712021",
+      "name": "T立川",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712022",
+      "name": "T沼津",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
+    },
+    {
+      "id": "ws_1776812712023",
+      "name": "B平塚",
+      "stations": [],
+      "center": {
+        "lat": 35.6595,
+        "lon": 139.7005
+      },
+      "zoom": 14,
+      "criteria": {}
     }
   ]
 }
