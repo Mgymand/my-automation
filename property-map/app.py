@@ -75,23 +75,20 @@ def _github_api(method, path, data=None):
         return None
 
 
-def sync_file_to_github(local_path):
-    """Upload a local file to GitHub repo (non-blocking)."""
+def sync_file_to_github(local_path, blocking=False):
+    """Upload a local file to GitHub repo. Async by default, blocking for critical files like PDF."""
     if not GITHUB_TOKEN:
         return
     import threading, base64
     def _sync():
         try:
-            # Relative path within data dir
             rel = os.path.relpath(local_path, DATA_DIR)
             gh_path = GITHUB_DATA_PREFIX + rel
             with open(local_path, "rb") as f:
                 content = base64.b64encode(f.read()).decode("ascii")
-            # Get current file SHA (needed for update)
             api_path = f"/repos/{GITHUB_REPO}/contents/{gh_path}?ref={GITHUB_BRANCH}"
             existing = _github_api("GET", api_path)
             sha = existing.get("sha") if existing else None
-            # Create or update
             payload = {
                 "message": f"Auto-sync: {rel}",
                 "content": content,
@@ -102,7 +99,10 @@ def sync_file_to_github(local_path):
             _github_api("PUT", f"/repos/{GITHUB_REPO}/contents/{gh_path}", payload)
         except Exception as e:
             print(f"GitHub sync error: {e}")
-    threading.Thread(target=_sync, daemon=True).start()
+    if blocking:
+        _sync()
+    else:
+        threading.Thread(target=_sync, daemon=True).start()
 
 
 # --- Workspace helpers ---
@@ -619,6 +619,115 @@ def debug_data():
     return jsonify(result)
 
 
+@app.route("/api/backup/download")
+def backup_download():
+    """Create a ZIP of all data and send it."""
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    import zipfile, io
+    from datetime import datetime
+    from flask import send_file
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for root, dirs, files in os.walk(DATA_DIR):
+            for f in files:
+                fpath = os.path.join(root, f)
+                arcname = os.path.relpath(fpath, DATA_DIR)
+                zf.write(fpath, arcname)
+    buf.seek(0)
+    filename = f"estateforce_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    return send_file(buf, mimetype="application/zip", as_attachment=True, download_name=filename)
+
+
+@app.route("/api/backup/restore", methods=["POST"])
+def backup_restore():
+    """Restore from uploaded ZIP."""
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    import zipfile, io
+    if "backup" not in request.files:
+        return jsonify({"error": "no file"}), 400
+    file = request.files["backup"]
+    try:
+        data = file.read()
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            for name in zf.namelist():
+                # Security: prevent path traversal
+                if ".." in name or name.startswith("/"):
+                    continue
+                target = os.path.join(DATA_DIR, name)
+                os.makedirs(os.path.dirname(target), exist_ok=True)
+                with open(target, "wb") as f:
+                    f.write(zf.read(name))
+                # Sync to GitHub
+                try:
+                    sync_file_to_github(target)
+                except Exception:
+                    pass
+        # Clear caches
+        global _ws_cache, _ws_mtime, _prop_cache, _agents_cache, _agents_mtime, _schedules_cache, _schedules_mtime
+        _ws_cache = None; _ws_mtime = 0
+        _prop_cache = {}
+        _agents_cache = None; _agents_mtime = 0
+        _schedules_cache = None; _schedules_mtime = 0
+        bump_change()
+        return jsonify({"status": "ok", "message": "バックアップを復元しました"})
+    except Exception as e:
+        return jsonify({"error": "restore_failed", "message": str(e)}), 500
+
+
+@app.route("/api/stats/monthly")
+def stats_monthly():
+    """Monthly statistics: status transitions and archive counts."""
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    from datetime import datetime
+    # Collect all properties across all workspaces (including archived)
+    ws_data = load_workspaces()
+    all_entries = []  # each: {ws_id, ws_name, archived, color, archivedAt, createdAt(=prop id timestamp)}
+    for ws in ws_data.get("workspaces", []):
+        try:
+            props = load_properties(ws["id"])
+        except Exception:
+            props = []
+        for p in props:
+            # Extract timestamp from prop_id
+            pid = p.get("id", "")
+            try:
+                ts = int(pid.split("_")[1]) / 1000 if pid.startswith("prop_") else 0
+            except Exception:
+                ts = 0
+            all_entries.append({
+                "wsId": ws["id"],
+                "wsName": ws["name"],
+                "archived": ws.get("archived", False),
+                "color": p.get("color", "blue"),
+                "createdAt": ts,
+                "contractedAt": p.get("contractedAt", 0),
+                "name": p.get("name", ""),
+            })
+    return jsonify({
+        "workspaces": [{"id": w["id"], "name": w["name"], "archived": w.get("archived", False), "archivedAt": w.get("archivedAt", 0)} for w in ws_data.get("workspaces", [])],
+        "entries": all_entries,
+    })
+
+
+@app.route("/api/properties/<prop_id>/contract", methods=["PUT"])
+def mark_contracted(prop_id):
+    """Mark a property as contracted (rainbow) with timestamp."""
+    if not session.get("logged_in"):
+        return jsonify({"error": "unauthorized"}), 401
+    ws_id = get_active_ws_id()
+    props = load_properties(ws_id)
+    for p in props:
+        if p["id"] == prop_id:
+            p["color"] = "rainbow"
+            p["contractedAt"] = int(time.time() * 1000)
+            save_properties(props, ws_id)
+            return jsonify({"status": "ok"})
+    return jsonify({"error": "not found"}), 404
+
+
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
@@ -687,6 +796,9 @@ def update_workspace(ws_id):
             if "stations" in updates: ws["stations"] = updates["stations"]
             if "center" in updates: ws["center"] = updates["center"]
             if "zoom" in updates: ws["zoom"] = updates["zoom"]
+            if "criteria" in updates: ws["criteria"] = updates["criteria"]
+            if "archived" in updates: ws["archived"] = updates["archived"]
+            if "archivedAt" in updates: ws["archivedAt"] = updates["archivedAt"]
             save_workspaces(ws_data)
             return jsonify({"status": "ok"})
     return jsonify({"error": "not found"}), 404
@@ -764,7 +876,7 @@ def upload_pdf():
     filename = file.filename
     filepath = os.path.join(PDF_DIR, filename)
     file.save(filepath)
-    sync_file_to_github(filepath)  # PDFもGitHubに永続化
+    sync_file_to_github(filepath, blocking=True)  # PDFは同期的にGitHubに確実に保存
     info = extract_property_info(filepath)
     manual_address = request.form.get("address", "").strip()
     if manual_address:

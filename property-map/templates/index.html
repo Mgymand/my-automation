@@ -418,6 +418,9 @@
     </button>
     <button class="agent-btn" onclick="openAgentView()">&#128100; エージェント</button>
     <button class="schedule-btn" onclick="openCalendar()">&#128197; スケジュール</button>
+    <button class="ws-btn" onclick="openContractView()" title="契約管理" style="padding:7px 14px;width:auto;background:#dc2626;color:#fff;border:none;font-size:13px;font-weight:500;">&#128220; 契約管理</button>
+    <button class="ws-btn" onclick="openStatsView()" title="月次統計" style="padding:7px 14px;width:auto;background:#8b5cf6;color:#fff;border:none;font-size:13px;font-weight:500;">&#128200; 統計</button>
+    <button class="ws-btn" onclick="openBackupView()" title="バックアップ" style="padding:7px 14px;width:auto;background:#64748b;color:#fff;border:none;font-size:13px;font-weight:500;">&#128190; バックアップ</button>
     <button class="ws-btn" id="bgm-btn" onclick="toggleBgm()" title="BGM再生/停止" style="font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">&#9654;</button>
     <div id="dancing-cat" style="display:none;pointer-events:none;">
       <svg viewBox="0 0 80 80" width="40" height="40" style="animation:catBounce 0.429s ease-in-out infinite;">
@@ -502,6 +505,35 @@
 
 
   <!-- Agent view (full screen) -->
+  <!-- Contract management view -->
+  <div id="contract-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
+    <div class="cal-toolbar">
+      <h2 style="min-width:auto;">契約管理</h2>
+      <button class="cal-nav-btn" id="contract-tab-progress" onclick="setContractTab('progress')" style="background:#dc2626;color:#fff;border-color:#dc2626;">進行中</button>
+      <button class="cal-nav-btn" id="contract-tab-completed" onclick="setContractTab('completed')">契約完了</button>
+      <button class="cal-close-btn" onclick="closeContractView()">&times; 閉じる</button>
+    </div>
+    <div id="contract-body" style="flex:1;overflow-y:auto;padding:20px;"></div>
+  </div>
+
+  <!-- Monthly stats view -->
+  <div id="stats-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
+    <div class="cal-toolbar">
+      <h2 style="min-width:auto;">月次統計</h2>
+      <button class="cal-close-btn" onclick="closeStatsView()">&times; 閉じる</button>
+    </div>
+    <div id="stats-body" style="flex:1;overflow-y:auto;padding:20px;"></div>
+  </div>
+
+  <!-- Backup view -->
+  <div id="backup-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
+    <div class="cal-toolbar">
+      <h2 style="min-width:auto;">バックアップ管理</h2>
+      <button class="cal-close-btn" onclick="closeBackupView()">&times; 閉じる</button>
+    </div>
+    <div id="backup-body" style="flex:1;overflow-y:auto;padding:20px;"></div>
+  </div>
+
   <div id="agent-view" style="display:none;position:fixed;inset:0;background:#f8fafc;z-index:2000;flex-direction:column;">
     <div class="cal-toolbar">
       <h2 style="min-width:auto;">エージェント管理</h2>
@@ -677,10 +709,11 @@
     let wsModalMode = "create";
 
     // === Pin icons ===
-    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" } };
+    const PIN_COLORS = { blue: { fill: "#2563eb", label: "未内見" }, red: { fill: "#dc2626", label: "内見済" }, green: { fill: "#16a34a", label: "申込済" }, yellow: { fill: "#eab308", label: "審査通過" }, black: { fill: "#1e293b", label: "審査落ち" }, rainbow: { fill: "url(#rainbow-gradient)", label: "契約済" } };
     const pinIcons = {};
     for (const [key, c] of Object.entries(PIN_COLORS)) {
-      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40"><path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
+      const gradient = key === "rainbow" ? `<defs><linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff0000"/><stop offset="20%" stop-color="#ff8800"/><stop offset="40%" stop-color="#ffee00"/><stop offset="60%" stop-color="#00cc00"/><stop offset="80%" stop-color="#0066ff"/><stop offset="100%" stop-color="#cc00ff"/></linearGradient></defs>` : "";
+      pinIcons[key] = L.divIcon({ className: "pin-marker", html: `<svg width="28" height="40" viewBox="0 0 28 40">${gradient}<path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${c.fill}"/><circle cx="14" cy="13" r="6" fill="#fff"/></svg>`, iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -40] });
     }
 
     // === Map ===
@@ -1476,6 +1509,279 @@
     }
     function closeCriteriaPanel() { document.getElementById("criteria-view").style.display = "none"; }
 
+    // === Contract management ===
+    let contractTab = "progress";
+
+    async function openContractView() {
+      document.getElementById("contract-view").style.display = "flex";
+      hideCriteriaFloat();
+      await loadWorkspaces();
+      for (const ws of workspacesData.workspaces) {
+        try { const r = await fetch(`/api/properties?ws=${ws.id}`); ws._props = await r.json(); } catch(e) { ws._props = []; }
+      }
+      renderContractView();
+    }
+    function closeContractView() {
+      document.getElementById("contract-view").style.display = "none";
+      if (currentView === "map" && document.getElementById("sidebar").classList.contains("collapsed")) {
+        document.getElementById("criteria-float").style.display = "block";
+      }
+    }
+    function setContractTab(tab) {
+      contractTab = tab;
+      document.getElementById("contract-tab-progress").style.background = tab === "progress" ? "#dc2626" : "#fff";
+      document.getElementById("contract-tab-progress").style.color = tab === "progress" ? "#fff" : "#374151";
+      document.getElementById("contract-tab-progress").style.borderColor = tab === "progress" ? "#dc2626" : "#d1d5db";
+      document.getElementById("contract-tab-completed").style.background = tab === "completed" ? "#dc2626" : "#fff";
+      document.getElementById("contract-tab-completed").style.color = tab === "completed" ? "#fff" : "#374151";
+      document.getElementById("contract-tab-completed").style.borderColor = tab === "completed" ? "#dc2626" : "#d1d5db";
+      renderContractView();
+    }
+    function renderContractView() {
+      const body = document.getElementById("contract-body");
+      const wsList = workspacesData.workspaces;
+      let html = "";
+      if (contractTab === "progress") {
+        // Show workspaces (not archived) with properties in 申込済 or 審査通過
+        for (const ws of wsList) {
+          if (ws.archived) continue;
+          const targetProps = (ws._props || []).filter(p => p.color === "green" || p.color === "yellow");
+          if (!targetProps.length) continue;
+          html += `<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <h3 style="font-size:16px;color:#dc2626;margin-bottom:12px;">${esc(ws.name)}</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="border-bottom:2px solid #e5e7eb;"><th style="text-align:left;padding:8px;">物件名</th><th style="text-align:left;padding:8px;">ステータス</th><th style="text-align:left;padding:8px;">タスク完了</th><th style="text-align:left;padding:8px;">操作</th></tr></thead>
+              <tbody>`;
+          for (const p of targetProps) {
+            const c = PIN_COLORS[p.color];
+            // Check if all tasks/schedules are completed for this property
+            const relatedScheds = (schedulesData || []).filter(s => s.propertyId === p.id);
+            const allDone = relatedScheds.length > 0 && relatedScheds.every(s => s.completed);
+            html += `<tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:8px;">${esc(p.name)}</td>
+              <td style="padding:8px;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;background:${c.fill};color:#fff;font-size:11px;">${c.label}</span></td>
+              <td style="padding:8px;">${relatedScheds.length ? `${relatedScheds.filter(s=>s.completed).length}/${relatedScheds.length}` : "未設定"}</td>
+              <td style="padding:8px;">
+                ${p.color === "yellow" ? `<button class="cal-nav-btn" onclick="markContracted('${ws.id}','${p.id}')" style="background:#fff;border:1px solid #d1d5db;padding:4px 10px;font-size:11px;cursor:pointer;">契約完了にする</button>` : ""}
+              </td>
+            </tr>`;
+          }
+          html += `</tbody></table>
+            ${targetProps.every(p => p.color === "rainbow" || (p.color === "yellow" && false)) ? `<div style="margin-top:12px;"><button class="cal-nav-btn" onclick="archiveWorkspace('${ws.id}')" style="background:linear-gradient(90deg,#ff0000,#ff8800,#ffee00,#00cc00,#0066ff,#cc00ff);color:#fff;border:none;padding:6px 14px;font-size:12px;font-weight:600;">エリアをアーカイブ</button></div>` : ""}
+          </div>`;
+        }
+        if (!html) html = '<p style="color:#94a3b8;text-align:center;margin-top:40px;">申込済・審査通過の物件はありません</p>';
+      } else {
+        // Completed tab: archived workspaces
+        const archived = wsList.filter(w => w.archived);
+        if (!archived.length) { html = '<p style="color:#94a3b8;text-align:center;margin-top:40px;">契約完了（アーカイブ済み）のエリアはありません</p>'; }
+        else {
+          for (const ws of archived) {
+            const ts = ws.archivedAt ? new Date(ws.archivedAt).toLocaleDateString("ja-JP") : "-";
+            const props = ws._props || [];
+            html += `<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h3 style="font-size:16px;background:linear-gradient(90deg,#ff0000,#ff8800,#ffee00,#00cc00,#0066ff,#cc00ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${esc(ws.name)}</h3>
+                <div><span style="color:#64748b;font-size:12px;margin-right:12px;">契約日: ${ts}</span><button class="cal-nav-btn" onclick="unarchiveWorkspace('${ws.id}')" style="font-size:11px;">アーカイブ解除</button></div>
+              </div>
+              <p style="color:#64748b;font-size:13px;">物件数: ${props.length}</p>
+            </div>`;
+          }
+        }
+      }
+      body.innerHTML = html;
+    }
+    async function markContracted(wsId, propId) {
+      if (!confirm("この物件を契約完了にしますか？")) return;
+      await fetch(`/api/properties/${propId}/contract?ws=${wsId}`, { method: "PUT" });
+      syncTs();
+      // Reload properties
+      const ws = workspacesData.workspaces.find(w => w.id === wsId);
+      if (ws) { const r = await fetch(`/api/properties?ws=${wsId}`); ws._props = await r.json(); }
+      renderContractView();
+    }
+    async function archiveWorkspace(wsId) {
+      if (!confirm("このエリアをアーカイブしますか？（データは保持されます）")) return;
+      await fetch(`/api/workspaces/${wsId}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ archived: true, archivedAt: Date.now() }) });
+      syncTs();
+      await loadWorkspaces();
+      renderContractView();
+    }
+    async function unarchiveWorkspace(wsId) {
+      if (!confirm("このエリアのアーカイブを解除しますか？")) return;
+      await fetch(`/api/workspaces/${wsId}`, { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ archived: false, archivedAt: 0 }) });
+      syncTs();
+      await loadWorkspaces();
+      renderContractView();
+    }
+
+    // === Monthly statistics ===
+    async function openStatsView() {
+      document.getElementById("stats-view").style.display = "flex";
+      hideCriteriaFloat();
+      const res = await fetch("/api/stats/monthly");
+      const data = await res.json();
+      renderStatsView(data);
+    }
+    function closeStatsView() {
+      document.getElementById("stats-view").style.display = "none";
+      if (currentView === "map" && document.getElementById("sidebar").classList.contains("collapsed")) {
+        document.getElementById("criteria-float").style.display = "block";
+      }
+    }
+    function renderStatsView(data) {
+      const body = document.getElementById("stats-body");
+      const entries = data.entries || [];
+      const wsList = data.workspaces || [];
+      // Build monthly aggregation (last 12 months)
+      const now = new Date();
+      const months = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`,
+          label: `${d.getFullYear()}/${d.getMonth()+1}`,
+          start: d.getTime(),
+          end: new Date(d.getFullYear(), d.getMonth()+1, 1).getTime(),
+        });
+      }
+      // Count by status per month based on createdAt
+      const statusKeys = ["blue","red","green","yellow","rainbow"];
+      const statusLabels = {blue:"提案",red:"内見",green:"申込",yellow:"審査通過",rainbow:"契約済"};
+      const statusColors = {blue:"#2563eb",red:"#dc2626",green:"#16a34a",yellow:"#eab308",rainbow:"#cc00ff"};
+      // monthlyCounts[statusKey][monthIdx] = count
+      const monthlyCounts = {};
+      for (const s of statusKeys) monthlyCounts[s] = months.map(() => 0);
+      for (const e of entries) {
+        const createdMs = e.createdAt * 1000;
+        for (let i = 0; i < months.length; i++) {
+          if (createdMs >= months[i].start && createdMs < months[i].end) {
+            if (monthlyCounts[e.color]) monthlyCounts[e.color][i]++;
+            break;
+          }
+        }
+      }
+      // Build area-by-month matrix (contracted count)
+      const areaMatrix = {};
+      for (const ws of wsList) {
+        areaMatrix[ws.id] = { name: ws.name, counts: months.map(() => 0) };
+      }
+      for (const e of entries) {
+        if (e.color !== "rainbow") continue;
+        const ts = e.contractedAt || (e.createdAt * 1000);
+        for (let i = 0; i < months.length; i++) {
+          if (ts >= months[i].start && ts < months[i].end) {
+            if (areaMatrix[e.wsId]) areaMatrix[e.wsId].counts[i]++;
+            break;
+          }
+        }
+      }
+      // Totals
+      const totals = {};
+      for (const s of statusKeys) totals[s] = monthlyCounts[s].reduce((a,b)=>a+b,0);
+
+      // Build SVG line chart
+      const chartW = 900, chartH = 260, padL = 40, padR = 20, padT = 20, padB = 40;
+      const maxY = Math.max(1, ...statusKeys.flatMap(s => monthlyCounts[s]));
+      const xStep = (chartW - padL - padR) / (months.length - 1);
+      const yScale = (chartH - padT - padB) / maxY;
+      let chartSvg = `<svg width="100%" viewBox="0 0 ${chartW} ${chartH}" style="background:#fff;border-radius:8px;border:1px solid #e5e7eb;">`;
+      // Y axis grid
+      for (let y = 0; y <= 5; y++) {
+        const yVal = Math.round(maxY * y / 5);
+        const yPx = chartH - padB - yVal * yScale;
+        chartSvg += `<line x1="${padL}" y1="${yPx}" x2="${chartW-padR}" y2="${yPx}" stroke="#f1f5f9" stroke-width="1"/>`;
+        chartSvg += `<text x="${padL-6}" y="${yPx+4}" font-size="10" fill="#94a3b8" text-anchor="end">${yVal}</text>`;
+      }
+      // X axis labels
+      for (let i = 0; i < months.length; i++) {
+        const x = padL + i * xStep;
+        chartSvg += `<text x="${x}" y="${chartH - padB + 16}" font-size="10" fill="#64748b" text-anchor="middle">${months[i].label}</text>`;
+      }
+      // Lines
+      for (const s of statusKeys) {
+        const pts = monthlyCounts[s].map((v, i) => `${padL + i * xStep},${chartH - padB - v * yScale}`).join(" ");
+        chartSvg += `<polyline points="${pts}" fill="none" stroke="${statusColors[s]}" stroke-width="2"/>`;
+        for (let i = 0; i < monthlyCounts[s].length; i++) {
+          const v = monthlyCounts[s][i];
+          if (v > 0) chartSvg += `<circle cx="${padL + i * xStep}" cy="${chartH - padB - v * yScale}" r="3" fill="${statusColors[s]}"/>`;
+        }
+      }
+      chartSvg += `</svg>`;
+
+      // Legend
+      const legend = statusKeys.map(s => `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:12px;"><span style="width:12px;height:3px;background:${statusColors[s]};display:inline-block;"></span>${statusLabels[s]} (${totals[s]})</span>`).join("");
+
+      // Area matrix table
+      let matrixHtml = `<div style="overflow-x:auto;background:#fff;border-radius:8px;padding:12px;border:1px solid #e5e7eb;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#f1f5f9;"><th style="text-align:left;padding:6px 8px;position:sticky;left:0;background:#f1f5f9;">エリア</th>`;
+      for (const m of months) matrixHtml += `<th style="text-align:center;padding:6px 8px;white-space:nowrap;">${m.label}</th>`;
+      matrixHtml += `<th style="text-align:center;padding:6px 8px;background:#fef3c7;">合計</th></tr></thead><tbody>`;
+      for (const wsId in areaMatrix) {
+        const row = areaMatrix[wsId];
+        const total = row.counts.reduce((a,b)=>a+b,0);
+        if (total === 0) continue; // Hide areas with 0 contracts
+        matrixHtml += `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:6px 8px;font-weight:600;position:sticky;left:0;background:#fff;">${esc(row.name)}</td>`;
+        for (const c of row.counts) matrixHtml += `<td style="text-align:center;padding:6px 8px;color:${c>0?'#16a34a':'#cbd5e1'};font-weight:${c>0?'600':'400'};">${c}</td>`;
+        matrixHtml += `<td style="text-align:center;padding:6px 8px;background:#fef3c7;font-weight:700;">${total}</td></tr>`;
+      }
+      matrixHtml += `</tbody></table></div>`;
+
+      body.innerHTML = `<div style="max-width:1200px;margin:0 auto;">
+        <h3 style="font-size:16px;margin-bottom:8px;">月次推移グラフ（過去12ヶ月）</h3>
+        <div style="margin-bottom:4px;">${legend}</div>
+        ${chartSvg}
+        <h3 style="font-size:16px;margin:20px 0 8px;">エリア別 契約数マトリクス</h3>
+        ${matrixHtml}
+      </div>`;
+    }
+
+    // === Backup ===
+    function openBackupView() {
+      document.getElementById("backup-view").style.display = "flex";
+      hideCriteriaFloat();
+      const body = document.getElementById("backup-body");
+      body.innerHTML = `<div style="max-width:700px;margin:0 auto;">
+        <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <h3 style="font-size:16px;margin-bottom:8px;">📥 バックアップをダウンロード</h3>
+          <p style="color:#64748b;font-size:13px;margin-bottom:12px;">全データ（物件、PDF、エージェント、スケジュール、ワークスペース）をZIPでダウンロードします。</p>
+          <a href="/api/backup/download" class="cal-nav-btn" style="display:inline-block;background:#16a34a;color:#fff;border-color:#16a34a;text-decoration:none;padding:10px 20px;">ZIPダウンロード</a>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <h3 style="font-size:16px;margin-bottom:8px;">📤 バックアップから復元</h3>
+          <p style="color:#64748b;font-size:13px;margin-bottom:12px;">以前ダウンロードしたZIPを選択して復元します。<br><strong style="color:#dc2626;">注意: 既存のデータは上書きされます。</strong></p>
+          <input type="file" id="backup-file" accept=".zip" style="margin-bottom:12px;">
+          <div><button class="cal-nav-btn" onclick="restoreBackup()" style="background:#dc2626;color:#fff;border-color:#dc2626;padding:10px 20px;">復元実行</button></div>
+          <div id="backup-status" style="margin-top:12px;font-size:13px;"></div>
+        </div>
+        <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:16px;font-size:13px;color:#1e40af;">
+          💡 定期的にバックアップをダウンロードしておくことをお勧めします。PDFファイルは自動的にGitHubにも同期されます。
+        </div>
+      </div>`;
+    }
+    function closeBackupView() {
+      document.getElementById("backup-view").style.display = "none";
+      if (currentView === "map" && document.getElementById("sidebar").classList.contains("collapsed")) {
+        document.getElementById("criteria-float").style.display = "block";
+      }
+    }
+    async function restoreBackup() {
+      const fileInput = document.getElementById("backup-file");
+      const status = document.getElementById("backup-status");
+      if (!fileInput.files.length) { status.textContent = "ファイルを選択してください"; status.style.color = "#dc2626"; return; }
+      if (!confirm("既存のデータが上書きされます。続行しますか？")) return;
+      status.textContent = "復元中..."; status.style.color = "#64748b";
+      const fd = new FormData();
+      fd.append("backup", fileInput.files[0]);
+      try {
+        const res = await fetch("/api/backup/restore", { method: "POST", body: fd });
+        const data = await res.json();
+        if (data.status === "ok") { status.textContent = "復元完了！ページを再読み込みします..."; status.style.color = "#16a34a"; setTimeout(()=>window.location.reload(), 1500); }
+        else { status.textContent = "エラー: " + (data.message || "失敗"); status.style.color = "#dc2626"; }
+      } catch(e) { status.textContent = "エラー: " + e.message; status.style.color = "#dc2626"; }
+    }
+
     // === BGM ===
     function toggleBgm() {
       const audio = document.getElementById("bgm-audio");
@@ -1500,15 +1806,25 @@
       agentsData = await res.json();
     }
 
+    function hideCriteriaFloat() { const el = document.getElementById("criteria-float"); if (el) el.style.display = "none"; }
+    function showCriteriaFloatIfMap() { if (currentView === "map" && !document.getElementById("sidebar").classList.contains("collapsed") === false) { const el = document.getElementById("criteria-float"); if (el) el.style.display = "block"; } }
+
     async function openAgentView() {
       await loadWorkspaces();
       await loadAgents();
       const view = document.getElementById("agent-view");
       view.style.display = "flex";
+      hideCriteriaFloat();
       renderAgentLeftPanel();
       showAgentForm();
     }
-    function closeAgentView() { document.getElementById("agent-view").style.display = "none"; selectedAgentId = null; }
+    function closeAgentView() {
+      document.getElementById("agent-view").style.display = "none";
+      selectedAgentId = null;
+      if (currentView === "map" && document.getElementById("sidebar").classList.contains("collapsed")) {
+        document.getElementById("criteria-float").style.display = "block";
+      }
+    }
 
     function renderAgentLeftPanel() {
       const left = document.getElementById("agent-left");
@@ -1684,9 +2000,15 @@
     function openCalendar() {
       calDate = new Date();
       document.getElementById("calendar-view").classList.add("active");
+      hideCriteriaFloat();
       renderCalendar();
     }
-    function closeCalendar() { document.getElementById("calendar-view").classList.remove("active"); }
+    function closeCalendar() {
+      document.getElementById("calendar-view").classList.remove("active");
+      if (currentView === "map" && document.getElementById("sidebar").classList.contains("collapsed")) {
+        document.getElementById("criteria-float").style.display = "block";
+      }
+    }
 
     function calNav(dir) {
       if (calViewMode === "month") calDate.setMonth(calDate.getMonth() + dir);
