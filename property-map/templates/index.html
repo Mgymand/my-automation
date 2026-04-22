@@ -154,8 +154,14 @@
     .upload-btn:hover { background: #1d4ed8; }
 
     /* Compare panel */
-    .compare-panel { background: #fff; border-radius: 8px; padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 6px; }
-    .compare-panel label { font-size: 12px; font-weight: 600; color: #374151; white-space: nowrap; }
+    .compare-panel { position: fixed; top: 12px; right: 12px; z-index: 1001; background: #fff; border-radius: 10px; padding: 8px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
+    .compare-panel.collapsed { padding: 6px 12px; }
+    .compare-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+    .compare-panel.collapsed .compare-panel-header { margin-bottom: 0; }
+    .compare-panel-header label { font-size: 11px; font-weight: 600; color: #374151; }
+    .compare-panel-toggle { background: none; border: 1px solid #d1d5db; border-radius: 4px; width: 22px; height: 20px; font-size: 12px; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .compare-panel-toggle:hover { background: #f1f5f9; }
+    .compare-panel.collapsed .compare-chips { display: none; }
     .compare-chips { display: flex; gap: 4px; flex-wrap: wrap; }
     .compare-chip { font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #374151; white-space: nowrap; transition: all 0.15s; }
     .compare-chip:hover { border-color: #2563eb; color: #2563eb; }
@@ -310,6 +316,10 @@
     .criteria-value.empty { color: #94a3b8; font-weight: 400; font-style: italic; }
     /* Criteria floating panel - top right of map */
     .criteria-float { position: fixed; top: 12px; right: 12px; z-index: 1001; background: rgba(240,253,250,0.95); backdrop-filter: blur(6px); border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 14px; font-size: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
+    .criteria-float.collapsed { padding: 6px 12px; }
+    .criteria-float.collapsed .criteria-float-grid { display: none; }
+    .criteria-float-toggle { background: none; border: 1px solid #99f6e4; border-radius: 4px; width: 22px; height: 20px; font-size: 12px; cursor: pointer; color: #0891b2; padding: 0; display: flex; align-items: center; justify-content: center; margin-left: auto; }
+    .criteria-float-toggle:hover { background: #fff; }
     .criteria-float-title { font-weight: 600; color: #0891b2; margin-bottom: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
     .criteria-float-grid { display: flex; flex-direction: column; gap: 4px; }
     .criteria-float-field { display: flex; align-items: center; gap: 6px; }
@@ -472,10 +482,15 @@
       </svg>
     </div>
     <audio id="bgm-audio" src="https://cdn1.suno.ai/d345e956-76bd-4212-911d-7fb5931ba8a9.mp3" loop preload="none"></audio>
-    <div class="compare-panel" id="compare-panel">
+  </div>
+
+  <!-- Right-side floating panels (stacked) -->
+  <div class="compare-panel" id="compare-panel">
+    <div class="compare-panel-header">
       <label>条件比較</label>
-      <div class="compare-chips" id="compare-chips"></div>
+      <button class="compare-panel-toggle" onclick="toggleComparePanel()" id="compare-panel-toggle-btn" title="折りたたみ/展開">−</button>
     </div>
+    <div class="compare-chips" id="compare-chips"></div>
   </div>
 
   <!-- Map controls (bottom-right) -->
@@ -1333,6 +1348,7 @@
       for (const k of allKeys) { if (k !== "備考" && k !== "FAX") ordered.push(k); }
       const c = document.getElementById("compare-chips"); c.innerHTML = "";
       for (const key of ordered) { const chip = document.createElement("span"); chip.className = "compare-chip" + (key === activeCompareKey ? " active" : ""); chip.textContent = key; chip.addEventListener("click", () => toggleCompare(key)); c.appendChild(chip); }
+      if (typeof positionCriteriaFloat === "function") setTimeout(positionCriteriaFloat, 50);
     }
     function toggleCompare(key) { if (activeCompareKey === key) { activeCompareKey = null; clearInfoLabels(); } else { activeCompareKey = key; showInfoLabels(key); } document.querySelectorAll(".compare-chip").forEach(c => c.classList.toggle("active", c.textContent === activeCompareKey)); }
     function clearInfoLabels() { infoLabels.forEach(m => map.removeLayer(m)); infoLabels = []; }
@@ -1460,8 +1476,12 @@
       const managers = agentsData.filter(a => a.managerArea && a.managerArea.split(",").includes(ws.id));
       const staff = agentsData.filter(a => a.area && a.area.split(",").includes(ws.id));
       panel.style.display = "block";
-      panel.innerHTML = `<div class="criteria-float-title">選定基準 - ${esc(ws.name)} <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span></div>
-        <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;">
+      panel.innerHTML = `<div class="criteria-float-title">
+          <span>選定基準 - ${esc(ws.name)}</span>
+          <span class="criteria-float-saved" id="criteria-float-saved">保存しました</span>
+          <button class="criteria-float-toggle" onclick="toggleCriteriaFloat()" id="criteria-float-toggle-btn" title="折りたたみ/展開">−</button>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:6px;font-size:11px;" class="criteria-float-grid">
           <div><span style="color:#0891b2;font-weight:600;">責任者:</span> ${managers.length ? managers.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
           <div><span style="color:#7c3aed;font-weight:600;">担当者:</span> ${staff.length ? staff.map(a => esc(a.name)).join(", ") : '<span style="color:#94a3b8">未設定</span>'}</div>
         </div>
@@ -1486,6 +1506,8 @@
           }, 800);
         });
       });
+      // Position below compare panel
+      setTimeout(positionCriteriaFloat, 50);
     }
 
     // === Criteria panel ===
@@ -1807,6 +1829,31 @@
     }
 
     function hideCriteriaFloat() { const el = document.getElementById("criteria-float"); if (el) el.style.display = "none"; }
+
+    // Toggle collapse for compare panel
+    function toggleComparePanel() {
+      const panel = document.getElementById("compare-panel");
+      const btn = document.getElementById("compare-panel-toggle-btn");
+      panel.classList.toggle("collapsed");
+      if (btn) btn.textContent = panel.classList.contains("collapsed") ? "+" : "−";
+      positionCriteriaFloat();
+    }
+    // Toggle collapse for criteria float
+    function toggleCriteriaFloat() {
+      const panel = document.getElementById("criteria-float");
+      const btn = document.getElementById("criteria-float-toggle-btn");
+      panel.classList.toggle("collapsed");
+      if (btn) btn.textContent = panel.classList.contains("collapsed") ? "+" : "−";
+    }
+    // Position criteria float below the compare panel
+    function positionCriteriaFloat() {
+      const compare = document.getElementById("compare-panel");
+      const criteria = document.getElementById("criteria-float");
+      if (!compare || !criteria) return;
+      const rect = compare.getBoundingClientRect();
+      criteria.style.top = (rect.bottom + 8) + "px";
+    }
+    window.addEventListener("resize", positionCriteriaFloat);
     function showCriteriaFloatIfMap() { if (currentView === "map" && !document.getElementById("sidebar").classList.contains("collapsed") === false) { const el = document.getElementById("criteria-float"); if (el) el.style.display = "block"; } }
 
     async function openAgentView() {
