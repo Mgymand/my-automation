@@ -577,16 +577,61 @@ def _extract_infosheet(text, lines, details, remarks):
 # --- Sync / polling ---
 _last_change_ts = time.time()
 
+# SSE event listeners (in-memory queues)
+import queue as _queue_mod
+_event_listeners = []
+
 
 def bump_change():
     global _last_change_ts
     _last_change_ts = time.time()
+    # Broadcast to all SSE clients
+    msg = f"event: change\ndata: {json.dumps({'ts': _last_change_ts})}\n\n"
+    for q in list(_event_listeners):
+        try:
+            q.put_nowait(msg)
+        except Exception:
+            pass
 
 
 @app.route("/api/sync")
 def get_sync():
-    """Return current change timestamp for polling."""
+    """Return current change timestamp for polling (fallback)."""
     return jsonify({"ts": _last_change_ts})
+
+
+@app.route("/api/events")
+def sse_events():
+    """Server-Sent Events endpoint for real-time change notifications."""
+    if not session.get("logged_in"):
+        return "unauthorized", 401
+    from flask import Response, stream_with_context
+    def gen():
+        q = _queue_mod.Queue(maxsize=100)
+        _event_listeners.append(q)
+        try:
+            # Initial connect message
+            yield ": connected\n\n"
+            yield f"event: init\ndata: {json.dumps({'ts': _last_change_ts})}\n\n"
+            while True:
+                try:
+                    msg = q.get(timeout=15)
+                    yield msg
+                except _queue_mod.Empty:
+                    # Keep-alive ping
+                    yield ": ping\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            try:
+                _event_listeners.remove(q)
+            except Exception:
+                pass
+    resp = Response(stream_with_context(gen()), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"
+    resp.headers["Connection"] = "keep-alive"
+    return resp
 
 
 @app.route("/api/debug/data")

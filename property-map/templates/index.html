@@ -2329,7 +2329,43 @@
         _lastSyncTs = data.ts;
       } catch (e) { /* ignore network errors */ }
     }
-    setInterval(pollSync, 3000);
+    // Use SSE if available, fallback to polling
+    let _eventSource = null;
+    let _sseConnected = false;
+    let _pollInterval = null;
+    async function applyChange() {
+      const openPropId = selectedPropId;
+      await loadProperties();
+      await loadAgents();
+      renderMarkers();
+      if (currentView === "list") renderListView();
+      if (openPropId) { const p = properties.find(x => x.id === openPropId); if (p) showProperty(p); }
+    }
+    function connectSSE() {
+      try {
+        if (_eventSource) _eventSource.close();
+        _eventSource = new EventSource("/api/events");
+        _eventSource.addEventListener("init", (e) => {
+          try { const d = JSON.parse(e.data); _lastSyncTs = d.ts; _sseConnected = true; if (_pollInterval) { clearInterval(_pollInterval); _pollInterval = null; } } catch(_) {}
+        });
+        _eventSource.addEventListener("change", async (e) => {
+          try {
+            const d = JSON.parse(e.data);
+            if (_lastSyncTs > 0 && d.ts > _lastSyncTs) { await applyChange(); }
+            _lastSyncTs = d.ts;
+          } catch(_) {}
+        });
+        _eventSource.onerror = () => {
+          _sseConnected = false;
+          if (!_pollInterval) _pollInterval = setInterval(pollSync, 5000);
+          // Attempt reconnect after 10s
+          setTimeout(() => { if (!_sseConnected) connectSSE(); }, 10000);
+        };
+      } catch(e) {
+        if (!_pollInterval) _pollInterval = setInterval(pollSync, 5000);
+      }
+    }
+    // Start SSE after login (initApp calls it)
 
     // === Login ===
     async function checkAuth() {
@@ -2380,6 +2416,8 @@
       await loadAgents();
       renderCriteriaFloat();
       _lastSyncTs = Date.now() / 1000;
+      // Start real-time sync via SSE
+      if (typeof connectSSE === "function") connectSSE();
     }
 
     // === Init ===
