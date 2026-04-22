@@ -154,7 +154,7 @@
     .upload-btn:hover { background: #1d4ed8; }
 
     /* Compare panel */
-    .compare-panel { position: fixed; top: 12px; right: 12px; z-index: 1001; background: #fff; border-radius: 10px; padding: 8px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
+    .compare-panel { position: fixed; left: 12px; z-index: 1001; background: #fff; border-radius: 10px; padding: 8px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
     .compare-panel.collapsed { padding: 6px 12px; }
     .compare-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
     .compare-panel.collapsed .compare-panel-header { margin-bottom: 0; }
@@ -315,7 +315,7 @@
     .criteria-value { font-size: 15px; font-weight: 600; color: #1e293b; margin-top: 1px; }
     .criteria-value.empty { color: #94a3b8; font-weight: 400; font-style: italic; }
     /* Criteria floating panel - top right of map */
-    .criteria-float { position: fixed; top: 12px; right: 12px; z-index: 1001; background: rgba(240,253,250,0.95); backdrop-filter: blur(6px); border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 14px; font-size: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
+    .criteria-float { position: fixed; left: 12px; z-index: 1001; background: rgba(240,253,250,0.95); backdrop-filter: blur(6px); border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 14px; font-size: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 280px; }
     .criteria-float.collapsed { padding: 6px 12px; }
     .criteria-float.collapsed .criteria-float-grid { display: none; }
     .criteria-float-toggle { background: none; border: 1px solid #99f6e4; border-radius: 4px; width: 22px; height: 20px; font-size: 12px; cursor: pointer; color: #0891b2; padding: 0; display: flex; align-items: center; justify-content: center; margin-left: auto; }
@@ -1845,13 +1845,16 @@
       panel.classList.toggle("collapsed");
       if (btn) btn.textContent = panel.classList.contains("collapsed") ? "+" : "−";
     }
-    // Position criteria float below the compare panel
+    // Position panels stacked below the toolbar at top-left
     function positionCriteriaFloat() {
+      const toolbar = document.querySelector(".toolbar");
       const compare = document.getElementById("compare-panel");
       const criteria = document.getElementById("criteria-float");
-      if (!compare || !criteria) return;
-      const rect = compare.getBoundingClientRect();
-      criteria.style.top = (rect.bottom + 8) + "px";
+      if (!compare || !criteria || !toolbar) return;
+      const tbRect = toolbar.getBoundingClientRect();
+      compare.style.top = (tbRect.bottom + 8) + "px";
+      const cRect = compare.getBoundingClientRect();
+      criteria.style.top = (cRect.bottom + 8) + "px";
     }
     window.addEventListener("resize", positionCriteriaFloat);
     function showCriteriaFloatIfMap() { if (currentView === "map" && !document.getElementById("sidebar").classList.contains("collapsed") === false) { const el = document.getElementById("criteria-float"); if (el) el.style.display = "block"; } }
