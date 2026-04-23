@@ -1,0 +1,122 @@
+# ============================================================
+# Estateforce v8 - 設定ファイル（岩本様のご回答を反映済み）
+# ============================================================
+# 配置先: config/estateforce_config.yaml
+# ============================================================
+
+# --- 期日・運用モデル ---
+mvp_due_date: "2026-04-30"  # 今月末目標
+continuous_mode: true         # 夜間継続稼働モード
+notification_points: 5        # 通知は最大5回
+
+# --- ブランチ方針 ---
+branch_strategy: "reimplement_on_frosty_swartz"
+# romantic-murdock の成果は参考のみ。frosty-swartz 完全版の上で再実装。
+
+# --- Claude API ---
+claude_default_model: "claude-haiku-4-5"
+claude_api_monthly_budget_jpy: 4000
+sonnet_enabled_in_initial_session: true  # M6精度改善時のみ限定使用
+session_cost_target_jpy: 1000            # 本セッション目標
+
+# --- スコープ判断 ---
+mobile_optimization_priority: "mvp_required"
+hpb_scraping_decision: "phase_2_pending"
+multi_user_in_mvp: true
+multi_user_dummy_users: true  # Claude Code がダミーユーザー作成
+
+# --- Salesforce ---
+salesforce:
+  # 認証情報は環境変数で設定（Render Environment タブ）
+  # 環境変数未設定時は SF_MOCK_MODE=true で動作
+  pm_object_api_name: "PM__c"
+  candidate_property_field_names:
+    - "候補物件1__c"
+    - "候補物件2__c"
+    - "候補物件3__c"
+  candidate_property_field_type: "text"
+  store_area_field_type: "picklist"
+  write_scope: "candidate_only"
+  mock_mode_when_no_auth: true
+
+# --- Slack（Grid移行完了まで実装スキップ） ---
+slack:
+  skip_implementation_in_v8: true   # v8では実装しない
+  log_notifications_to_ef_only: true  # EF内ログのみ蓄積
+  # Grid移行後に追加設定予定
+  channels:
+    daily: "#daily"
+    alerts: "#alerts"
+    team: "#team-realestate"
+
+# --- Google Calendar ---
+google_calendar:
+  # v8では既存実装を維持、拡張は次セッション
+  extend_in_v8: false
+
+# --- PDF分類 ---
+pdf_classification:
+  categories:
+    - "マイソク"
+    - "重要事項説明書"
+    - "賃貸借契約書"
+    - "図面"
+    - "現況確認書"
+    - "重要事項調査報告書"
+    - "その他"
+  acceptable_accuracy: 0.80
+  use_sonnet_for_accuracy_improvement: true  # 必要時のみ
+
+# --- SLDS UI ---
+slds:
+  components_in_v8:
+    - "Toast"
+    - "InlineEdit"
+    - "Path"  # v8で新規導入
+
+# --- ダミーユーザー（M7）---
+dummy_users:
+  - id: "u001"
+    name: "テスト管理者"
+    email: "test_admin@example.com"
+    role: "admin"
+  - id: "u002"
+    name: "テスト担当者"
+    email: "test_member@example.com"
+    role: "member"
+  - id: "u003"
+    name: "テスト閲覧者"
+    email: "test_viewer@example.com"
+    role: "viewer"
+
+# 岩本様は admin として別途設定
+primary_admin:
+  name: "岩本賢伸"
+  email: "k.iwamoto@lime-fit.com"
+  role: "admin"
+
+# --- 物件マスタの美容業界特化フィールド ---
+property_master_extra_fields:
+  - "水回り設備"
+  - "電源容量"
+  - "換気・排煙設備"
+  - "天井高"
+  - "業種制限"
+  - "夜間営業可否"
+  - "居抜き/スケルトン区分"
+  - "内装解体費用負担"
+  - "HPB未掲載競合手動登録"
+
+# --- セッション運用 ---
+session:
+  time_box_minutes: 720            # 12時間
+  handover_start_at_minutes: 660   # 11時間経過時点で引継ぎシート作成へ
+  backup_at_session_start: true    # 開始時にGitHubバックアップ必須
+
+# --- 通知待機設定 ---
+notification_wait:
+  N1_branch_integration: 30  # 分
+  N2_sf_auth: 60
+  N3_user_confirmation: 30
+  N4_design_decision: 30
+  N5_completion: 0  # 待機なし
