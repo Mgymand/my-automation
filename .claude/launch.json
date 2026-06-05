@@ -6,6 +6,36 @@
       "runtimeExecutable": "/opt/homebrew/bin/python3",
       "runtimeArgs": ["property-map/app.py"],
       "port": 5000
+    },
+    {
+      "name": "lueur-website",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "website/nextjs-site"],
+      "port": 3000
+    },
+    {
+      "name": "office-move-video",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
+      "runtimeArgs": ["-m", "http.server", "8123", "--directory", "office-move-2026/video"],
+      "port": 8123
+    },
+    {
+      "name": "wec",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "wec", "--", "-p", "3100"],
+      "port": 3100
+    },
+    {
+      "name": "hajimaru",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
+      "runtimeArgs": ["-m", "http.server", "8200", "--directory", "website/hajimaru"],
+      "port": 8200
+    },
+    {
+      "name": "zehitomo-blog",
+      "runtimeExecutable": "/opt/homebrew/bin/python3",
+      "runtimeArgs": ["-m", "http.server", "8300", "--directory", "zehitomo-blog"],
+      "port": 8300
     }
   ]
 }
