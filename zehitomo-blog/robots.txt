@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://my-automation-seven.vercel.app/sitemap.xml

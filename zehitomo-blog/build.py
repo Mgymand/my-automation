@@ -11,18 +11,32 @@
 """
 import os
 import html
+import json
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# このブログの公開ドメイン（Vercel）
+DOMAIN = "https://my-automation-seven.vercel.app"
+BLOG_NAME = "住まいの修理コラム"
+PUBLISH_DATE = "2026-06-05"
 
 # サイト本体（誘導先）
 SITE_URL = "https://site-five-blush-72.vercel.app"
 SITE_NAME = "住まいの修理マッチング"
 TEL = "090-1386-7439"
 TEL_LINK = "tel:09013867439"
+TEL_E164 = "+81-90-1386-7439"
 EMAIL = "gtiwamoto@gmail.com"
 EMAIL_LINK = "mailto:gtiwamoto@gmail.com?subject=" + "住まいの修理のお問い合わせ"
 LINE_URL = "https://lin.ee/Q03KlWx"
 AREA = "東京23区全域"
+
+# 対応エリア（東京23区）
+WARDS = [
+    "千代田区", "中央区", "港区", "新宿区", "文京区", "台東区", "墨田区", "江東区",
+    "品川区", "目黒区", "大田区", "世田谷区", "渋谷区", "中野区", "杉並区", "豊島区",
+    "北区", "荒川区", "板橋区", "練馬区", "足立区", "葛飾区", "江戸川区",
+]
 
 # ゼヒトモ連携スニペット（各記事末尾に必須）
 ZEHITOMO_SNIPPET = (
@@ -602,17 +616,21 @@ def article_html(a):
 <title>{esc(a["title"])}</title>
 <meta name="description" content="{esc(a["desc"])}">
 <meta name="keywords" content="{esc(a["keyword"])},東京23区,即日,修理,リフォーム">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="{esc(SITE_NAME)}">
 <meta property="og:title" content="{esc(a["title"])}">
 <meta property="og:description" content="{esc(a["desc"])}">
 <meta property="og:type" content="article">
-<link rel="canonical" href="{a['slug']}.html">
+<meta property="og:url" content="{DOMAIN}/{a['slug']}.html">
+<meta property="og:site_name" content="{esc(BLOG_NAME)}">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{esc(a["title"])}">
+<meta name="twitter:description" content="{esc(a["desc"])}">
+<link rel="canonical" href="{DOMAIN}/{a['slug']}.html">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
-{{
-  "@context":"https://schema.org",
-  "@type":"FAQPage",
-  "mainEntity":[{faq_jsonld(a)}]
-}}
+{article_jsonld(a, topic)}
 </script>
 </head>
 <body>
@@ -689,19 +707,98 @@ def article_html(a):
 """
 
 
-def faq_jsonld(a):
-    parts = []
-    for q, ans in a["faq"]:
-        parts.append(
-            '{"@type":"Question","name":%s,"acceptedAnswer":{"@type":"Answer","text":%s}}'
-            % (json_str(q), json_str(ans))
-        )
-    return ",".join(parts)
+def _dump(obj):
+    return json.dumps(obj, ensure_ascii=False, indent=2)
 
 
-def json_str(s):
-    import json
-    return json.dumps(s, ensure_ascii=False)
+def local_business_node():
+    """全ページ共通の地域ビジネス（ローカルSEO）ノード"""
+    return {
+        "@type": ["LocalBusiness", "HomeAndConstructionBusiness"],
+        "@id": DOMAIN + "/#business",
+        "name": SITE_NAME,
+        "url": SITE_URL,
+        "telephone": TEL_E164,
+        "email": EMAIL,
+        "image": DOMAIN + "/index.html",
+        "description": "東京23区全域に対応する住宅修理・リフォームサービス。"
+        "壁・床・水回り・鍵・電気など100種類以上の修理に最短即日で対応。"
+        "出張費・見積費用0円、追加料金なしの明朗会計、施工保証あり。",
+        "areaServed": [
+            {"@type": "AdministrativeArea", "name": "東京都" + w} for w in WARDS
+        ],
+        "address": {"@type": "PostalAddress", "addressRegion": "東京都", "addressCountry": "JP"},
+        "priceRange": "¥¥",
+        "openingHours": "Mo-Su 08:00-21:00",
+        "sameAs": [
+            "https://www.zehitomo.com/profile/%E5%B2%A9%E6%9C%AC-%E8%B3%A2%E4%BC%B8-v15BjMo3R/pro"
+        ],
+    }
+
+
+def article_jsonld(a, topic):
+    page_url = DOMAIN + "/" + a["slug"] + ".html"
+    blog_posting = {
+        "@type": "BlogPosting",
+        "@id": page_url + "#article",
+        "headline": a["title"],
+        "description": a["desc"],
+        "url": page_url,
+        "mainEntityOfPage": page_url,
+        "inLanguage": "ja",
+        "datePublished": PUBLISH_DATE,
+        "dateModified": PUBLISH_DATE,
+        "keywords": a["keyword"] + ",東京23区,即日,修理,リフォーム",
+        "articleSection": topic,
+        "author": {"@id": DOMAIN + "/#business"},
+        "publisher": {"@id": DOMAIN + "/#business"},
+    }
+    breadcrumb = {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "記事一覧", "item": DOMAIN + "/"},
+            {"@type": "ListItem", "position": 2, "name": topic, "item": page_url},
+        ],
+    }
+    faq = {
+        "@type": "FAQPage",
+        "@id": page_url + "#faq",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": q,
+                "acceptedAnswer": {"@type": "Answer", "text": ans},
+            }
+            for q, ans in a["faq"]
+        ],
+    }
+    graph = {"@context": "https://schema.org", "@graph": [local_business_node(), blog_posting, breadcrumb, faq]}
+    return _dump(graph)
+
+
+def index_jsonld():
+    items = {
+        "@type": "ItemList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": i + 1,
+                "url": DOMAIN + "/" + a["slug"] + ".html",
+                "name": a["title"],
+            }
+            for i, a in enumerate(ARTICLES)
+        ],
+    }
+    website = {
+        "@type": "WebSite",
+        "@id": DOMAIN + "/#website",
+        "url": DOMAIN + "/",
+        "name": BLOG_NAME,
+        "inLanguage": "ja",
+        "publisher": {"@id": DOMAIN + "/#business"},
+    }
+    graph = {"@context": "https://schema.org", "@graph": [local_business_node(), website, items]}
+    return _dump(graph)
 
 
 def index_html():
@@ -719,7 +816,19 @@ def index_html():
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>住まいの修理コラム｜東京23区・即日対応の住宅修理／リフォーム</title>
 <meta name="description" content="トイレ・蛇口・排水・給湯器・鍵・壁紙・床・エアコン・建具・電気まで。東京23区の住宅修理に役立つコラムと、最短即日・無料見積もりの修理サービスをご案内します。">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="住まいの修理コラム｜東京23区・即日対応の住宅修理／リフォーム">
+<meta property="og:description" content="東京23区の住宅修理に役立つコラム。トイレ・蛇口・排水・給湯器・鍵・壁紙・床・エアコン・建具・電気まで最短即日・無料見積もりで対応。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{DOMAIN}/">
+<meta property="og:site_name" content="{esc(BLOG_NAME)}">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="{DOMAIN}/">
 <link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{index_jsonld()}
+</script>
 </head>
 <body>
 {header_html()}
@@ -746,6 +855,35 @@ def index_html():
 """
 
 
+def sitemap_xml():
+    urls = [DOMAIN + "/"] + [DOMAIN + "/" + a["slug"] + ".html" for a in ARTICLES]
+    rows = []
+    for i, u in enumerate(urls):
+        prio = "1.0" if i == 0 else "0.8"
+        rows.append(
+            "  <url>\n"
+            f"    <loc>{u}</loc>\n"
+            f"    <lastmod>{PUBLISH_DATE}</lastmod>\n"
+            "    <changefreq>weekly</changefreq>\n"
+            f"    <priority>{prio}</priority>\n"
+            "  </url>"
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(rows)
+        + "\n</urlset>\n"
+    )
+
+
+def robots_txt():
+    return (
+        "User-agent: *\n"
+        "Allow: /\n\n"
+        f"Sitemap: {DOMAIN}/sitemap.xml\n"
+    )
+
+
 def main():
     # CSS
     with open(os.path.join(OUT_DIR, "style.css"), "w", encoding="utf-8") as f:
@@ -758,7 +896,15 @@ def main():
         path = os.path.join(OUT_DIR, a["slug"] + ".html")
         with open(path, "w", encoding="utf-8") as f:
             f.write(article_html(a))
-    print(f"Generated {len(ARTICLES)} articles + index.html + style.css in {OUT_DIR}")
+    # sitemap & robots
+    with open(os.path.join(OUT_DIR, "sitemap.xml"), "w", encoding="utf-8") as f:
+        f.write(sitemap_xml())
+    with open(os.path.join(OUT_DIR, "robots.txt"), "w", encoding="utf-8") as f:
+        f.write(robots_txt())
+    print(
+        f"Generated {len(ARTICLES)} articles + index.html + style.css "
+        f"+ sitemap.xml + robots.txt in {OUT_DIR}"
+    )
 
 
 if __name__ == "__main__":
