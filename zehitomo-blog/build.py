@@ -21,6 +21,7 @@ TEL = "090-1386-7439"
 TEL_LINK = "tel:09013867439"
 EMAIL = "gtiwamoto@gmail.com"
 EMAIL_LINK = "mailto:gtiwamoto@gmail.com?subject=" + "住まいの修理のお問い合わせ"
+LINE_URL = "https://lin.ee/Q03KlWx"
 AREA = "東京23区全域"
 
 # ゼヒトモ連携スニペット（各記事末尾に必須）
@@ -502,7 +503,11 @@ table.price tr:last-child td,table.price tr:last-child th{border-bottom:0}
 .cta-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .btn{display:inline-block;padding:14px 26px;border-radius:999px;font-weight:700;font-size:16px}
 .btn-tel{background:var(--brand);color:#fff}
+.btn-line{background:#06c755;color:#fff}
 .btn-mail{background:var(--accent);color:#fff}
+.cta .consult{display:inline-block;margin-bottom:10px;font-weight:700;color:var(--accent);
+  font-size:15px;letter-spacing:.04em}
+.cta .mailrow{margin-top:14px;font-size:14px;color:var(--muted)}
 .btn-site{background:#fff;color:var(--brand);border:2px solid var(--brand)}
 .btn:hover{opacity:.9;text-decoration:none}
 .related{margin:34px 0}
@@ -540,6 +545,7 @@ def footer_html():
     <div><strong>{esc(SITE_NAME)}</strong><br>東京23区全域・住宅の修理／リフォーム</div>
     <div>
       <a href="{TEL_LINK}">☎ {TEL}</a>
+      <a href="{LINE_URL}" target="_blank" rel="noopener">LINEで相談</a>
       <a href="{EMAIL_LINK}">✉ {EMAIL}</a><br>
       <a href="{SITE_URL}" target="_blank" rel="noopener">公式サイトはこちら</a>
     </div>
@@ -550,13 +556,15 @@ def footer_html():
 
 def cta_html(topic):
     return f"""<div class="cta">
+  <span class="consult">＼ ご相談はこちら ／</span>
   <h3>{esc(topic)}でお困りなら、まずは無料相談</h3>
   <p>東京23区全域・最短即日対応／出張費・見積費用0円／追加料金なしの明朗会計</p>
   <div class="cta-btns">
-    <a class="btn btn-tel" href="{TEL_LINK}">☎ 今すぐ電話する</a>
-    <a class="btn btn-mail" href="{EMAIL_LINK}">✉ メールで相談する</a>
+    <a class="btn btn-tel" href="{TEL_LINK}">☎ 電話で相談（{TEL}）</a>
+    <a class="btn btn-line" href="{LINE_URL}" target="_blank" rel="noopener">LINEで相談する</a>
     <a class="btn btn-site" href="{SITE_URL}" target="_blank" rel="noopener">公式サイトを見る</a>
   </div>
+  <p class="mailrow">メールでのご相談は <a href="{EMAIL_LINK}">{EMAIL}</a> まで</p>
 </div>"""
 
 
@@ -654,7 +662,7 @@ def article_html(a):
 
   <h2>ご依頼の流れ</h2>
   <ul class="check">
-    <li>お電話（{TEL}）またはメール（{EMAIL}）で症状をご連絡（写真があるとスムーズ）</li>
+    <li>お電話（{TEL}）・LINE・メール（{EMAIL}）で症状をご連絡（写真があるとスムーズ）</li>
     <li>訪問日時の調整（東京23区は最短即日）</li>
     <li>現地確認・無料お見積もり</li>
     <li>ご納得のうえで作業／お支払い・施工保証のご案内</li>

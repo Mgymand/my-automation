@@ -43,7 +43,11 @@ table.price tr:last-child td,table.price tr:last-child th{border-bottom:0}
 .cta-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .btn{display:inline-block;padding:14px 26px;border-radius:999px;font-weight:700;font-size:16px}
 .btn-tel{background:var(--brand);color:#fff}
+.btn-line{background:#06c755;color:#fff}
 .btn-mail{background:var(--accent);color:#fff}
+.cta .consult{display:inline-block;margin-bottom:10px;font-weight:700;color:var(--accent);
+  font-size:15px;letter-spacing:.04em}
+.cta .mailrow{margin-top:14px;font-size:14px;color:var(--muted)}
 .btn-site{background:#fff;color:var(--brand);border:2px solid var(--brand)}
 .btn:hover{opacity:.9;text-decoration:none}
 .related{margin:34px 0}
