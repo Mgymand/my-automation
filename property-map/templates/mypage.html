@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{{ customer_name }}様 ご提案物件 | 営業クラウド</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      background: #f4f6fa; color: #0f172a; -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      background: linear-gradient(135deg, #0f1d40, #1d4ed8);
+      color: #fff; padding: 22px 18px 18px;
+    }
+    .header .brand { font-size: 11px; font-weight: 700; opacity: 0.75; letter-spacing: 0.06em; }
+    .header h1 { font-size: 18px; font-weight: 800; margin-top: 4px; }
+    .header .lead { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+    .preview-banner {
+      background: #fffbeb; border-bottom: 1px solid #fde68a; color: #b45309;
+      font-size: 12px; font-weight: 700; padding: 8px 18px; display: none;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 16px 14px 60px; }
+
+    /* ログインゲート */
+    .gate { text-align: center; padding: 40px 20px; display: none; }
+    .gate .icon { font-size: 40px; margin-bottom: 10px; }
+    .gate h2 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+    .gate p { font-size: 13px; color: #64748b; line-height: 1.8; margin-bottom: 20px; }
+    .gate .gbtn-wrap { display: flex; justify-content: center; }
+    .gate .dev-login { display: flex; gap: 8px; max-width: 320px; margin: 0 auto; }
+    .gate .dev-login input { flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+    .gate .dev-login button {
+      padding: 10px 16px; border: none; border-radius: 8px;
+      background: #1d4ed8; color: #fff; font-weight: 700; cursor: pointer;
+    }
+    .err { color: #dc2626; font-size: 12px; margin-top: 12px; min-height: 16px; }
+
+    /* 物件カード */
+    .count { font-size: 12px; color: #64748b; margin: 4px 2px 12px; }
+    .pcard {
+      background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .pcard.trashed { opacity: 0.45; }
+    .pcard .photo { height: 180px; background: #eef2f7 center/cover no-repeat; }
+    .pcard .body { padding: 14px 16px; }
+    .pcard h3 { font-size: 16px; font-weight: 800; }
+    .pcard .rent { font-size: 20px; font-weight: 800; color: #1d4ed8; margin: 4px 0; }
+    .pcard .rent small { font-size: 11px; color: #64748b; font-weight: 600; }
+    .pcard .meta { font-size: 12.5px; color: #475569; line-height: 1.8; }
+    .pcard .date { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    .pcard .comment {
+      margin-top: 10px; padding: 10px 12px; background: #f8fafc;
+      border-radius: 8px; font-size: 12.5px; color: #334155;
+      white-space: pre-wrap; line-height: 1.7; display: none;
+    }
+    .pcard .comment.open { display: block; }
+    .pcard .more { font-size: 12px; color: #1d4ed8; font-weight: 700; cursor: pointer; margin-top: 8px; display: inline-block; }
+
+    .actions { display: flex; gap: 8px; padding: 0 16px 14px; flex-wrap: wrap; }
+    .act {
+      flex: 1; min-width: 70px; padding: 9px 4px; border-radius: 9px;
+      border: 1px solid #e2e8f0; background: #fff; cursor: pointer;
+      font-size: 11.5px; font-weight: 700; color: #475569;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      font-family: inherit;
+    }
+    .act svg { width: 18px; height: 18px; }
+    .act.on-fav { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .act.on-doc, .act.on-ca { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .act.on-trash { background: #f1f5f9; color: #0f172a; }
+    .act:disabled { opacity: 0.6; cursor: default; }
+
+    .empty { text-align: center; color: #94a3b8; font-size: 13px; padding: 50px 20px; }
+
+    /* チャット */
+    .chatbox { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-top: 6px; }
+    .chatbox h2 { font-size: 13px; font-weight: 800; color: #334155; margin-bottom: 10px; }
+    .thread { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; padding: 2px; }
+    .msg { max-width: 82%; padding: 8px 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+    .msg.me { align-self: flex-end; background: #1d4ed8; color: #fff; border-radius: 12px 12px 3px 12px; }
+    .msg.them { align-self: flex-start; background: #f1f5f9; color: #0f172a; border-radius: 12px 12px 12px 3px; }
+    .msg .who { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+    .chat-input { display: flex; gap: 8px; margin-top: 10px; }
+    .chat-input input { flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 9px; font-size: 14px; }
+    .chat-input button { padding: 10px 18px; border: none; border-radius: 9px; background: #1d4ed8; color: #fff; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 99;
+    }
+    .toast.show { opacity: 1; }
+    .footer { text-align: center; font-size: 11px; color: #94a3b8; padding: 20px; }
+  </style>
+  {% if google_client_id %}
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  {% endif %}
+</head>
+<body>
+  <div class="header">
+    <div class="brand">GT-WORKS 営業クラウド</div>
+    <h1>{{ customer_name }} 様</h1>
+    <div class="lead">ご提案中の物件一覧です。気になる物件にはリアクションをお願いします。</div>
+  </div>
+  <div class="preview-banner" id="preview-banner">
+    スタッフプレビュー表示中（顧客のリアクション・閲覧ログは記録されません）
+  </div>
+
+  <div class="wrap">
+    <!-- ログインゲート -->
+    <div class="gate" id="gate">
+      <div class="icon">🔒</div>
+      <h2>ご本人確認</h2>
+      <p>セキュリティのため、初回のみGoogleアカウントでのご確認をお願いしています。<br>確認後は再ログイン不要でご覧いただけます。</p>
+      {% if google_client_id %}
+      <div class="gbtn-wrap">
+        <div id="g_id_onload" data-client_id="{{ google_client_id }}"
+             data-callback="onGoogleCredential" data-auto_prompt="false"></div>
+        <div class="g_id_signin" data-type="standard" data-size="large"
+             data-text="continue_with" data-locale="ja"></div>
+      </div>
+      {% else %}
+      <div class="dev-login">
+        <input id="dev-email" type="email" placeholder="メールアドレス（開発モード）">
+        <button onclick="devLogin()">確認</button>
+      </div>
+      {% endif %}
+      <div class="err" id="gate-err"></div>
+    </div>
+
+    <!-- 物件一覧 -->
+    <div id="list-area" style="display:none;">
+      <div class="count" id="count"></div>
+      <div id="cards"></div>
+      <div class="empty" id="empty" style="display:none;">ご提案中の物件はまだありません。<br>新しいご提案があるとここに表示されます。</div>
+
+      <!-- チャット -->
+      <div class="chatbox">
+        <h2>担当者へのご相談・メッセージ</h2>
+        <div class="thread" id="chat-thread"></div>
+        <div class="chat-input">
+          <input id="chat-text" placeholder="内見希望、条件のご相談など…" onkeydown="if(event.key==='Enter') sendChat()">
+          <button onclick="sendChat()">送信</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Powered by 営業クラウド</div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = {{ token | tojson }};
+let ITEMS = [];
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function yen(v) { return v == null ? "賃料応相談" : Number(v).toLocaleString() + "円"; }
+
+async function loadItems() {
+  const res = await fetch(`/api/mypage/${TOKEN}/items`);
+  if (res.status === 401) {
+    document.getElementById("gate").style.display = "block";
+    return;
+  }
+  const data = await res.json();
+  ITEMS = data.items;
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("list-area").style.display = "block";
+  if (data.preview) document.getElementById("preview-banner").style.display = "block";
+  document.getElementById("count").textContent = `ご提案物件 ${ITEMS.length} 件`;
+  document.getElementById("empty").style.display = ITEMS.length ? "none" : "block";
+  render(data.preview);
+  loadChat();
+}
+
+const ACT_DEFS = [
+  ["fav", "お気に入り", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>', true],
+  ["doc_request", "資料請求", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>', false],
+  ["ca_request", "CA請求", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>', false],
+  ["trash", "検討外", '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>', true],
+];
+
+function render(preview) {
+  document.getElementById("cards").innerHTML = ITEMS.map((it, i) => {
+    const p = it.prop || {};
+    const img = (it.images || [])[0];
+    const st = (p.stations || [])[0];
+    const r = new Set(it.reactions || []);
+    const acts = ACT_DEFS.map(([key, label, icon, toggle]) => {
+      const on = r.has(key);
+      const lbl = on ? (key === "fav" ? "お気に入り済" : key === "trash" ? "検討外" : "請求済み") : label;
+      const disabled = preview || (!toggle && on);
+      return `<button class="act ${on ? "on-" + key.split("_")[0] : ""}"
+        ${disabled ? "disabled" : ""} onclick="react(${i}, '${key}', ${toggle})">${icon}${esc(lbl)}</button>`;
+    }).join("");
+    return `<div class="pcard ${r.has("trash") ? "trashed" : ""}" id="pc-${i}">
+      <div class="photo" style="${img ? `background-image:url('/extracted-images/${encodeURIComponent(img)}')` : ""}"></div>
+      <div class="body">
+        <h3>${esc(p.building_name || it.property_name || "ご紹介物件")} ${esc(p.room || "")}</h3>
+        <div class="rent">${yen(p.rent_yen)}<small> /月</small></div>
+        <div class="meta">
+          ${esc(p.address || "")}<br>
+          ${st ? esc(`${st.line || ""} ${String(st.station || "").replace(/駅$/, "")}駅 徒歩${st.walk_min ?? "?"}分`) : ""}
+          ${p.area_sqm ? `・${esc(p.area_sqm)}㎡` : ""}${p.layout ? `（${esc(p.layout)}）` : ""}<br>
+          ${p.current_status ? `現況: ${esc(p.current_status)}` : ""} ${p.availability ? `／ 入居: ${esc(p.availability)}` : ""}
+        </div>
+        <div class="date">ご提案日: ${esc((it.ts || "").slice(0, 10))}</div>
+        <span class="more" onclick="toggleComment(${i})">担当者からのご提案コメント ▾</span>
+        <div class="comment" id="cm-${i}">${esc(it.text || "")}</div>
+      </div>
+      <div class="actions">${acts}</div>
+    </div>`;
+  }).join("");
+}
+
+function toggleComment(i) {
+  const el = document.getElementById(`cm-${i}`);
+  el.classList.toggle("open");
+  if (el.classList.contains("open")) {
+    fetch(`/api/mypage/${TOKEN}/view`, { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property_key: ITEMS[i].property_key }) });
+  }
+}
+
+async function react(i, action, toggle) {
+  const it = ITEMS[i];
+  const has = (it.reactions || []).includes(action);
+  const send = toggle && has ? `un_${action}` : action;
+  const res = await fetch(`/api/mypage/${TOKEN}/react`, { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ property_key: it.property_key, action: send }) });
+  if (!res.ok) { toast("送信に失敗しました"); return; }
+  if (send.startsWith("un_")) {
+    it.reactions = it.reactions.filter(a => a !== action);
+  } else {
+    it.reactions = [...new Set([...(it.reactions || []), action])];
+    const msgs = { fav: "お気に入りに追加しました", doc_request: "資料請求を担当者に送信しました",
+                   ca_request: "CA請求を担当者に送信しました", trash: "検討外にしました" };
+    toast(msgs[action] || "送信しました");
+  }
+  render(false);
+}
+
+async function loadChat() {
+  const res = await fetch(`/api/mypage/${TOKEN}/chat`);
+  if (!res.ok) return;
+  const msgs = await res.json();
+  const box = document.getElementById("chat-thread");
+  box.innerHTML = msgs.map(m => {
+    const me = m.from === "customer";
+    return `<div class="msg ${me ? "me" : "them"}">${esc(m.text)}
+      <div class="who">${esc(me ? "あなた" : "担当: " + m.sender_name)}・${esc((m.ts || "").slice(5, 16))}</div></div>`;
+  }).join("") || '<div style="font-size:12px;color:#94a3b8;text-align:center;padding:14px;">お気軽にメッセージをお送りください</div>';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendChat() {
+  const input = document.getElementById("chat-text");
+  const text = input.value.trim();
+  if (!text) return;
+  const res = await fetch(`/api/mypage/${TOKEN}/chat`, { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }) });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    toast(d.error || "送信できませんでした");
+    return;
+  }
+  input.value = "";
+  loadChat();
+}
+
+async function postLogin(body) {
+  const res = await fetch(`/api/mypage/${TOKEN}/login`, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("gate-err").textContent = data.error || "確認に失敗しました";
+    return;
+  }
+  loadItems();
+}
+function onGoogleCredential(resp) { postLogin({ credential: resp.credential }); }
+function devLogin() { postLogin({ email: document.getElementById("dev-email").value }); }
+
+loadItems();
+</script>
+</body>
+</html>

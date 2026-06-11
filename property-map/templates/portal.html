@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+{% block title %}加盟店ポータル | 営業クラウド{% endblock %}
+{% block portal_tag %}加盟店ポータル{% endblock %}
+{% block pagetitle %}<span id="page-h1">物件</span>{% endblock %}
+
+{% block style %}
+.bk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.bk-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.bk-thumb { height: 130px; background: #eef2f7 center/cover no-repeat; position: relative; }
+.bk-thumb .vis { position: absolute; top: 8px; left: 8px; }
+.bk-body { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.bk-title { font-size: 14px; font-weight: 800; }
+.bk-meta { font-size: 12px; color: var(--sub); line-height: 1.6; }
+.bk-rent { font-size: 16px; font-weight: 800; color: var(--primary); }
+.bk-actions { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.toolbar .spacer { flex: 1; }
+.section-view { display: none; }
+.section-view.active { display: block; }
+{% endblock %}
+
+{% block sidenav %}
+<a href="#" data-view="bukken" class="navlink active" onclick="return showView('bukken')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1M9 13h1m4 0h1M9 17h1m4 0h1"/></svg>
+  物件</a>
+<a href="#" data-view="customers" class="navlink" onclick="return showView('customers')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3"/></svg>
+  顧客</a>
+<a href="#" data-view="proposals" class="navlink" onclick="return showView('proposals')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+  提案履歴</a>
+<div class="sep">ツール</div>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  図面PDF取込・提案</a>
+<a href="/">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3"/></svg>
+  物件マップ</a>
+{% if user.role in ('admin','ogn') %}
+<div class="sep">上位画面</div>
+<a href="/admin">管理ダッシュボード</a>
+{% endif %}
+{% if user.role == 'ogn' %}<a href="/ogn">オーガナイズ</a>{% endif %}
+{% endblock %}
+
+{% block bottomnav %}
+<a href="#" data-view="bukken" class="navlink active" onclick="return showView('bukken')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+  物件</a>
+<a href="#" data-view="customers" class="navlink" onclick="return showView('customers')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>
+  顧客</a>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  取込</a>
+<a href="#" data-view="proposals" class="navlink" onclick="return showView('proposals')">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+  提案</a>
+{% endblock %}
+
+{% block content %}
+<!-- ===== 物件 ===== -->
+<div class="section-view active" id="view-bukken">
+  <div class="tabs">
+    <button class="active" data-tab="my" onclick="switchTab('my')">マイデータ</button>
+    <button data-tab="shared" onclick="switchTab('shared')">共有データ</button>
+  </div>
+  <div class="toolbar">
+    <span class="sub" id="bk-count" style="font-size:12px;color:var(--sub);"></span>
+    <select id="bk-sort" onchange="loadBukken()" style="font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:7px; background:#fff;">
+      <option value="new">新着順</option>
+      <option value="proposals">提案数順</option>
+      <option value="views">閲覧数順</option>
+      <option value="favs">お気に入り順</option>
+    </select>
+    <span class="spacer"></span>
+    <a class="btn primary" href="/propose">＋ 図面PDFから物件登録</a>
+  </div>
+  <div class="bk-grid" id="bk-grid"></div>
+  <div class="empty" id="bk-empty" style="display:none;">
+    物件がまだありません。「図面PDFから物件登録」でPDFを取り込むと、AIが自動でデータ化します。
+  </div>
+</div>
+
+<!-- ===== 顧客 ===== -->
+<div class="section-view" id="view-customers">
+  <div class="toolbar">
+    <span style="font-size:12px;color:var(--sub);">希望条件を登録すると、物件取込時に自動でマッチングされます</span>
+    <span class="spacer"></span>
+    <button class="btn primary" onclick="openCustModal()">＋ 顧客を追加</button>
+  </div>
+  <div class="card" style="padding:0; overflow-x:auto;">
+    <table class="list" id="cust-table">
+      <thead><tr><th>顧客</th><th>業種・タグ</th><th>希望エリア</th><th>予算上限</th><th>マイページ</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 顧客ログモーダル -->
+<div class="modal-bg" id="log-modal">
+  <div class="modal">
+    <h3 id="log-title">顧客ログ</h3>
+    <div class="kpis" id="log-kpis" style="margin-bottom:12px;"></div>
+    <div id="log-mypage" style="font-size:12px; color:var(--sub); margin-bottom:12px;"></div>
+
+    <div class="tabs" style="margin-bottom:10px;">
+      <button class="active" data-ltab="chat" onclick="switchLogTab('chat')">チャット</button>
+      <button data-ltab="events" onclick="switchLogTab('events')">アクティビティ</button>
+      <button data-ltab="deals" onclick="switchLogTab('deals')">成約履歴</button>
+    </div>
+
+    <div id="ltab-chat">
+      <div id="chat-thread" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:4px 2px;"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input id="chat-input" placeholder="顧客へのメッセージ…" style="flex:1; padding:9px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:13px;"
+               onkeydown="if(event.key==='Enter') sendChat()">
+        <button class="btn primary" onclick="sendChat()">送信</button>
+      </div>
+    </div>
+
+    <div id="ltab-events" style="display:none; max-height:300px; overflow-y:auto;">
+      <table class="list"><tbody id="log-events"></tbody></table>
+    </div>
+
+    <div id="ltab-deals" style="display:none; max-height:300px; overflow-y:auto;">
+      <table class="list"><tbody id="log-deals"></tbody></table>
+    </div>
+
+    <div class="actions"><button class="btn" onclick="closeLogModal()">閉じる</button></div>
+  </div>
+</div>
+
+<!-- ===== 提案履歴・成約 ===== -->
+<div class="section-view" id="view-proposals">
+  <div class="tabs">
+    <button class="active" data-ptab="history" onclick="switchPropTab('history')">提案履歴</button>
+    <button data-ptab="deals" onclick="switchPropTab('deals')">成約</button>
+  </div>
+
+  <div id="ptab-history">
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table class="list" id="prop-table">
+        <thead><tr><th>日時</th><th>物件</th><th>顧客</th><th>担当</th><th></th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty" id="prop-empty" style="display:none;">提案履歴はまだありません。</div>
+  </div>
+
+  <div id="ptab-deals" style="display:none;">
+    <div class="toolbar">
+      <span style="font-size:12px;color:var(--sub);">成約済み案件の履歴。リピート顧客の把握と次の提案に活用できます</span>
+      <span class="spacer"></span>
+      <button class="btn primary" onclick="openDealModal()">＋ 成約を登録</button>
+    </div>
+    <div class="card" style="padding:0; overflow-x:auto;">
+      <table class="list" id="deal-table">
+        <thead><tr><th>成約日</th><th>物件</th><th>顧客</th><th>成約賃料/売価</th><th>仲介手数料</th><th>担当</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty" id="deal-empty" style="display:none;">成約はまだ登録されていません。</div>
+  </div>
+</div>
+
+<!-- 成約登録モーダル -->
+<div class="modal-bg" id="deal-modal">
+  <div class="modal">
+    <h3>成約を登録</h3>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="field" style="grid-column:1/-1;"><label>顧客 *</label><select id="dm-customer"></select></div>
+      <div class="field" style="grid-column:1/-1;"><label>物件名 *</label><input id="dm-property" placeholder="〇〇ビル 1F"></div>
+      <div class="field"><label>成約日</label><input id="dm-date" type="date"></div>
+      <div class="field"><label>成約賃料/売価（円）</label><input id="dm-price" type="number" placeholder="230000"></div>
+      <div class="field"><label>仲介手数料（円）</label><input id="dm-fee" type="number" placeholder="230000"></div>
+      <div class="field"><label>メモ</label><input id="dm-memo" placeholder="AD100%、居抜き"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeDealModal()">キャンセル</button>
+      <button class="btn primary" onclick="saveDeal()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 顧客追加モーダル -->
+<div class="modal-bg" id="cust-modal">
+  <div class="modal">
+    <h3>顧客を追加</h3>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="field"><label>顧客名 *</label><input id="cm-name" placeholder="株式会社〇〇"></div>
+      <div class="field"><label>担当者</label><input id="cm-contact" placeholder="〇〇 様"></div>
+      <div class="field"><label>メール</label><input id="cm-email" type="email"></div>
+      <div class="field"><label>業種（カンマ区切り）</label><input id="cm-biz" placeholder="美容室, エステ"></div>
+      <div class="field"><label>希望エリア（カンマ区切り）</label><input id="cm-areas" placeholder="中野区, 新宿区"></div>
+      <div class="field"><label>希望駅（カンマ区切り）</label><input id="cm-stations" placeholder="中野, 高円寺"></div>
+      <div class="field"><label>予算上限（円/月）</label><input id="cm-budget" type="number" placeholder="300000"></div>
+      <div class="field"><label>面積（㎡, 下限-上限）</label><input id="cm-area" placeholder="40-70"></div>
+      <div class="field" style="grid-column:1/-1;"><label>種目（カンマ区切り）</label><input id="cm-types" placeholder="貸店舗, 貸事務所"></div>
+      <div class="field" style="grid-column:1/-1;"><label>備考</label><textarea id="cm-note" rows="2"></textarea></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeCustModal()">キャンセル</button>
+      <button class="btn primary" onclick="saveCustomer()">追加する</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+let bkTab = "my";
+const VIEW_TITLES = { bukken: "物件", customers: "顧客", proposals: "提案履歴" };
+
+function showView(name) {
+  document.querySelectorAll(".section-view").forEach(v => v.classList.remove("active"));
+  document.getElementById(`view-${name}`).classList.add("active");
+  document.querySelectorAll(".navlink").forEach(a =>
+    a.classList.toggle("active", a.dataset.view === name));
+  document.getElementById("page-h1").textContent = VIEW_TITLES[name];
+  if (name === "customers") loadCustomers();
+  if (name === "proposals") loadProposals();
+  return false;
+}
+
+function switchTab(tab) {
+  bkTab = tab;
+  document.querySelectorAll(".tabs button").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === tab));
+  loadBukken();
+}
+
+// ===== 物件 =====
+async function loadBukken() {
+  const sort = document.getElementById("bk-sort")?.value || "new";
+  const items = await api(`/api/bukken?tab=${bkTab}&sort=${sort}`);
+  const grid = document.getElementById("bk-grid");
+  document.getElementById("bk-count").textContent =
+    `${bkTab === "my" ? "自店の物件" : "他店から共有された物件"} ${items.length}件`;
+  document.getElementById("bk-empty").style.display = items.length ? "none" : "block";
+  grid.innerHTML = items.map(b => {
+    const p = b.prop || {};
+    const img = (b.images || [])[0];
+    const mine = b.store_id === ME.store_id || ["admin","ogn"].includes(ME.role);
+    const visChip = b.visibility === "all"
+      ? '<span class="chip green vis">全社共有</span>'
+      : '<span class="chip vis">自店のみ</span>';
+    const st = (p.stations || [])[0];
+    return `<div class="bk-card">
+      <div class="bk-thumb" style="${img ? `background-image:url('/extracted-images/${encodeURIComponent(img)}')` : ""}">${visChip}</div>
+      <div class="bk-body">
+        <div class="bk-title">${esc(p.building_name || "（建物名不明）")} ${esc(p.room || "")}</div>
+        <div class="bk-rent">${yen(p.rent_yen)}<small style="font-size:11px;color:var(--sub);font-weight:600;"> /月</small></div>
+        <div class="bk-meta">
+          ${esc(p.address || "—")}<br>
+          ${st ? esc(`${st.line || ""} ${String(st.station||"").replace(/駅$/,"")}駅 徒歩${st.walk_min ?? "?"}分`) : "駅情報なし"}
+          ・${p.area_sqm ? esc(p.area_sqm) + "㎡" : "—"}
+        </div>
+        <div>${(b.tags || []).map(t => `<span class="chip blue">${esc(t)}</span>`).join(" ")}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <span class="chip">提案 ${b.stats?.proposals ?? 0}</span>
+          <span class="chip">閲覧 ${b.stats?.views ?? 0}</span>
+          <span class="chip ${b.stats?.favs ? "red" : ""}">♥ ${b.stats?.favs ?? 0}</span>
+          <span class="chip ${b.stats?.requests ? "blue" : ""}">請求 ${b.stats?.requests ?? 0}</span>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;">登録: ${esc(b.owner_name || b.owner_email || "")} / ${esc((b.created_at || "").slice(0, 10))}</div>
+      </div>
+      <div class="bk-actions">
+        <a class="btn sm primary" href="/propose?bukken_id=${b.id}">一斉提案</a>
+        ${mine ? `<button class="btn sm" onclick="toggleVis('${b.id}', '${b.visibility}')">
+          ${b.visibility === "all" ? "自店のみに戻す" : "全社共有する"}</button>
+        <button class="btn sm danger" onclick="delBukken('${b.id}')">削除</button>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function toggleVis(id, cur) {
+  await api(`/api/bukken/${id}`, { method: "PUT", json: { visibility: cur === "all" ? "store" : "all" } });
+  toast(cur === "all" ? "自店のみの公開に変更しました" : "全社に共有しました");
+  loadBukken();
+}
+
+async function delBukken(id) {
+  if (!confirm("この物件を削除しますか？")) return;
+  await api(`/api/bukken/${id}`, { method: "DELETE" });
+  toast("削除しました");
+  loadBukken();
+}
+
+// ===== 顧客 =====
+let customerCache = [];
+async function loadCustomers() {
+  customerCache = await api("/api/customers");
+  const tbody = document.querySelector("#cust-table tbody");
+  tbody.innerHTML = customerCache.map((c, i) => {
+    const cr = c.criteria || {};
+    return `<tr>
+      <td><b>${esc(c.name)}</b><br><span style="font-size:11px;color:var(--sub);">${esc(c.contact || "")}</span></td>
+      <td>${(c.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join(" ")}</td>
+      <td style="font-size:12px;">${(cr.areas || []).map(esc).join("、") || "—"}</td>
+      <td>${cr.budget_max ? yen(cr.budget_max) : "—"}</td>
+      <td><button class="btn sm primary" onclick="issueMypage(${i})">URL発行・コピー</button></td>
+      <td><button class="btn sm" onclick="openLogModal(${i})">顧客ログ</button></td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="6" class="empty">顧客がいません</td></tr>';
+}
+
+async function issueMypage(i) {
+  const c = customerCache[i];
+  try {
+    const res = await api("/api/mypage/issue", { json: { customer_id: c.id } });
+    const url = location.origin + res.url;
+    await navigator.clipboard.writeText(url);
+    toast(`${c.name} のマイページURLをコピーしました（メール等で送付してください）`);
+  } catch (e) { toast(`発行失敗: ${e.message}`); }
+}
+
+let logCustomerId = null;
+function switchLogTab(tab) {
+  document.querySelectorAll("[data-ltab]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ltab === tab));
+  for (const t of ["chat", "events", "deals"]) {
+    document.getElementById(`ltab-${t}`).style.display = t === tab ? "block" : "none";
+  }
+}
+
+async function loadChat() {
+  if (!logCustomerId) return;
+  const msgs = await api(`/api/chat/${logCustomerId}`);
+  const box = document.getElementById("chat-thread");
+  box.innerHTML = msgs.map(m => {
+    const mine = m.from === "staff";
+    return `<div style="align-self:${mine ? "flex-end" : "flex-start"}; max-width:80%;
+      background:${mine ? "var(--primary)" : "#f1f5f9"}; color:${mine ? "#fff" : "var(--ink)"};
+      padding:8px 12px; border-radius:${mine ? "12px 12px 3px 12px" : "12px 12px 12px 3px"};
+      font-size:13px; line-height:1.6; white-space:pre-wrap;">${esc(m.text)}
+      <div style="font-size:10px; opacity:0.7; margin-top:2px;">${esc(m.sender_name)}・${esc((m.ts || "").slice(5, 16))}</div></div>`;
+  }).join("") || '<div class="empty" style="padding:20px;">メッセージはまだありません</div>';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  const text = input.value.trim();
+  if (!text || !logCustomerId) return;
+  try {
+    await api(`/api/chat/${logCustomerId}`, { json: { text } });
+    input.value = "";
+    loadChat();
+  } catch (e) { toast(`送信失敗: ${e.message}`); }
+}
+
+async function openLogModal(i) {
+  const c = customerCache[i];
+  logCustomerId = c.id;
+  try {
+    const d = await api(`/api/customers/${c.id}/activity`);
+    document.getElementById("log-title").textContent = `${d.customer_name} の顧客ログ`;
+    document.getElementById("log-kpis").innerHTML = [
+      ["閲覧", d.summary.views], ["お気に入り", d.summary.favs],
+      ["資料請求", d.summary.doc_requests], ["CA請求", d.summary.ca_requests],
+    ].map(([l, v]) => `<div class="kpi" style="padding:10px;"><div class="label">${l}</div>
+      <div class="value" style="font-size:18px;">${v}</div></div>`).join("");
+    document.getElementById("log-mypage").innerHTML = d.mypage_url
+      ? `マイページ: 発行済み ${d.bound_email ? `／ 顧客確認済み（${esc(d.bound_email)}）` : "／ <b>顧客未アクセス</b>"}
+         　<a href="${esc(d.mypage_url)}" target="_blank">プレビューを開く</a>`
+      : "マイページ: 未発行（「URL発行・コピー」で発行できます）";
+    const TYPE_LABEL = { bind: "アカウント確認", login: "ログイン", view: "マイページ閲覧",
+                         view_property: "物件詳細を閲覧", react: "リアクション" };
+    const ACT_LABEL = { fav: "お気に入り", un_fav: "お気に入り解除", trash: "検討外",
+                        un_trash: "検討外を解除", doc_request: "資料請求", ca_request: "CA請求" };
+    document.getElementById("log-events").innerHTML = d.events.map(e => `<tr>
+      <td style="white-space:nowrap;font-size:11px;color:var(--sub);">${esc(e.ts || "")}</td>
+      <td style="font-size:12px;"><b>${esc(TYPE_LABEL[e.type] || e.type)}</b>
+        ${e.action ? `: ${esc(ACT_LABEL[e.action] || e.action)}` : ""}
+        ${e.property_key ? `<br><span style="color:var(--sub);">${esc(e.property_key)}</span>` : ""}</td>
+    </tr>`).join("") || '<tr><td class="empty">まだアクティビティがありません</td></tr>';
+    document.getElementById("log-deals").innerHTML = (d.deals || []).map(dl => `<tr>
+      <td style="white-space:nowrap;font-size:12px;">${esc(dl.deal_date || "")}</td>
+      <td style="font-size:12px;"><b>${esc(dl.property_name || "")}</b>
+        ${dl.price_yen ? `<br><span style="color:var(--sub);">${yen(dl.price_yen)}</span>` : ""}</td>
+    </tr>`).join("") || '<tr><td class="empty">成約履歴はありません</td></tr>';
+    switchLogTab("chat");
+    loadChat();
+    document.getElementById("log-modal").classList.add("show");
+  } catch (e) { toast(e.message); }
+}
+function closeLogModal() { document.getElementById("log-modal").classList.remove("show"); }
+
+function openCustModal() { document.getElementById("cust-modal").classList.add("show"); }
+function closeCustModal() { document.getElementById("cust-modal").classList.remove("show"); }
+
+async function saveCustomer() {
+  const v = id => document.getElementById(id).value.trim();
+  const list = id => v(id) ? v(id).split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+  if (!v("cm-name")) { toast("顧客名を入力してください"); return; }
+  const [amin, amax] = (v("cm-area") || "-").split("-").map(s => s ? Number(s) : null);
+  try {
+    await api("/api/customers", { json: {
+      name: v("cm-name"), contact: v("cm-contact"), email: v("cm-email"),
+      tags: list("cm-biz"), note: v("cm-note"),
+      criteria: {
+        property_types: list("cm-types"), areas: list("cm-areas"), stations: list("cm-stations"),
+        budget_max: v("cm-budget") ? Number(v("cm-budget")) : null,
+        area_sqm_min: amin, area_sqm_max: amax,
+        business_use: list("cm-biz"),
+      },
+    }});
+    toast("顧客を追加しました");
+    closeCustModal();
+    loadCustomers();
+  } catch (e) { toast(`追加失敗: ${e.message}`); }
+}
+
+// ===== 提案履歴 =====
+let proposalCache = [];
+async function loadProposals() {
+  proposalCache = await api("/api/proposals");
+  proposalCache.sort((a, b) => (b.ts || "").localeCompare(a.ts || ""));
+  const tbody = document.querySelector("#prop-table tbody");
+  document.getElementById("prop-empty").style.display = proposalCache.length ? "none" : "block";
+  tbody.innerHTML = proposalCache.map((p, i) => `<tr>
+    <td style="white-space:nowrap;font-size:12px;">${esc(p.ts || "")}</td>
+    <td><b>${esc(p.property_name || p.property_key || "")}</b></td>
+    <td>${esc(p.customer_name || "")}</td>
+    <td style="font-size:12px;">${esc(p.user_name || p.user_email || "—")}</td>
+    <td><button class="btn sm" onclick="copyProposal(${i})">文面コピー</button></td>
+    <td><button class="btn sm primary" onclick="openDealModal(${i})">成約登録</button></td>
+  </tr>`).join("");
+}
+
+async function copyProposal(i) {
+  const text = proposalCache[i]?.text || "";
+  await navigator.clipboard.writeText(text);
+  toast("提案文をコピーしました");
+}
+
+// ===== 成約 =====
+function switchPropTab(tab) {
+  document.querySelectorAll("[data-ptab]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ptab === tab));
+  document.getElementById("ptab-history").style.display = tab === "history" ? "block" : "none";
+  document.getElementById("ptab-deals").style.display = tab === "deals" ? "block" : "none";
+  if (tab === "deals") loadDeals();
+}
+
+async function loadDeals() {
+  const items = await api("/api/deals");
+  const tbody = document.querySelector("#deal-table tbody");
+  document.getElementById("deal-empty").style.display = items.length ? "none" : "block";
+  tbody.innerHTML = items.map(d => `<tr>
+    <td style="white-space:nowrap;font-size:12px;">${esc(d.deal_date || "")}</td>
+    <td><b>${esc(d.property_name || "")}</b>${d.memo ? `<br><span style="font-size:11px;color:var(--sub);">${esc(d.memo)}</span>` : ""}</td>
+    <td>${esc(d.customer_name || "")}</td>
+    <td>${d.price_yen ? yen(d.price_yen) : "—"}</td>
+    <td>${d.fee_yen ? yen(d.fee_yen) : "—"}</td>
+    <td style="font-size:12px;">${esc(d.user_name || "—")}</td>
+    <td><button class="btn sm danger" onclick="delDeal('${esc(d.id)}')">削除</button></td>
+  </tr>`).join("");
+}
+
+async function openDealModal(proposalIdx) {
+  if (!customerCache.length) {
+    try { customerCache = await api("/api/customers"); } catch {}
+  }
+  const sel = document.getElementById("dm-customer");
+  sel.innerHTML = customerCache.map(c =>
+    `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
+  const p = proposalIdx != null ? proposalCache[proposalIdx] : null;
+  if (p) {
+    sel.value = p.customer_id;
+    document.getElementById("dm-property").value = p.property_name || "";
+    document.getElementById("dm-property").dataset.key = p.property_key || "";
+    document.getElementById("dm-price").value = p.prop?.rent_yen ?? "";
+    document.getElementById("dm-fee").value = p.prop?.rent_yen ?? "";
+  } else {
+    document.getElementById("dm-property").value = "";
+    document.getElementById("dm-property").dataset.key = "";
+    document.getElementById("dm-price").value = "";
+    document.getElementById("dm-fee").value = "";
+  }
+  document.getElementById("dm-memo").value = "";
+  document.getElementById("dm-date").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("deal-modal").classList.add("show");
+}
+function closeDealModal() { document.getElementById("deal-modal").classList.remove("show"); }
+
+async function saveDeal() {
+  const v = id => document.getElementById(id).value.trim();
+  if (!v("dm-property")) { toast("物件名を入力してください"); return; }
+  try {
+    await api("/api/deals", { json: {
+      customer_id: document.getElementById("dm-customer").value,
+      property_name: v("dm-property"),
+      property_key: document.getElementById("dm-property").dataset.key || "",
+      deal_date: v("dm-date"),
+      price_yen: v("dm-price") ? Number(v("dm-price")) : null,
+      fee_yen: v("dm-fee") ? Number(v("dm-fee")) : null,
+      memo: v("dm-memo"),
+    }});
+    toast("成約を登録しました🎉");
+    closeDealModal();
+    switchPropTab("deals");
+  } catch (e) { toast(`登録失敗: ${e.message}`); }
+}
+
+async function delDeal(id) {
+  if (!confirm("この成約記録を削除しますか？")) return;
+  await api(`/api/deals/${id}`, { method: "DELETE" });
+  toast("削除しました");
+  loadDeals();
+}
+
+document.getElementById("cust-modal").addEventListener("click", e => {
+  if (e.target.id === "cust-modal") closeCustModal();
+});
+document.getElementById("log-modal").addEventListener("click", e => {
+  if (e.target.id === "log-modal") closeLogModal();
+});
+loadBukken();
+</script>
+{% endblock %}

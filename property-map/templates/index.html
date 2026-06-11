@@ -154,7 +154,7 @@
 
     /* Comparison panel */
     .compare-panel {
-      position: fixed; top: 12px; left: 220px; z-index: 1000;
+      position: fixed; top: 12px; left: 400px; z-index: 1000;
       background: #fff; border-radius: 8px; padding: 6px 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       display: flex; align-items: center; gap: 6px;
@@ -220,6 +220,14 @@
       <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       PDFインポート
     </button>
+    <a class="upload-btn" href="/compile" style="margin-left:8px; background:#16a34a; text-decoration:none;">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      マイソク結合PDF
+    </a>
+    <a class="upload-btn" href="/propose" style="margin-left:8px; background:#7c3aed; text-decoration:none;">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      提案アシスタント
+    </a>
     <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFileSelect(event)">
   </div>
 

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイソク結合PDF</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; background: #f1f5f9; color: #1e293b; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      background: #2563eb; color: #fff;
+      padding: 12px 24px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
+    .topbar .nav-link { color: #c7d2fe; font-size: 13px; }
+    .topbar .nav-link:hover { color: #fff; }
+
+    /* Layout */
+    .container { max-width: 1300px; margin: 0 auto; padding: 24px; }
+    .section { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .section h2 { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px; }
+
+    /* Upload area */
+    .uploader {
+      border: 2px dashed #cbd5e1; border-radius: 10px;
+      padding: 24px; text-align: center; cursor: pointer;
+      background: #f8fafc; transition: all 0.15s;
+    }
+    .uploader:hover { border-color: #2563eb; background: #eff6ff; }
+    .uploader.dragover { border-color: #2563eb; background: #dbeafe; }
+    .uploader p { font-size: 14px; color: #64748b; }
+    .uploader p.hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+    /* Template controls */
+    .template-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .template-row label { font-size: 12px; color: #64748b; }
+    .template-row select { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+    .template-row button { padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; }
+    .template-row button:hover { background: #f1f5f9; }
+    .template-row button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .template-row button.primary:hover { background: #1d4ed8; }
+    .template-row button.danger { color: #dc2626; }
+
+    /* File card */
+    .file-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; background: #fff; }
+    .file-card .header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .file-card .filename { flex: 1; font-size: 14px; font-weight: 600; color: #1e293b; word-break: break-all; }
+    .file-card .remove { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
+    .file-card .remove:hover { color: #dc2626; background: #fef2f2; }
+
+    .file-body { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+    @media (max-width: 800px) { .file-body { grid-template-columns: 1fr; } }
+
+    /* Preview canvas */
+    .preview-wrap {
+      background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 8px; user-select: none;
+    }
+    .preview-toolbar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px;
+    }
+    .preview-toolbar button {
+      padding: 4px 10px; border: 1px solid #d1d5db; background: #fff;
+      border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .preview-toolbar button:hover { background: #f1f5f9; }
+    .preview-toolbar .spacer { flex: 1; }
+    .preview-toolbar .info { color: #64748b; font-size: 11px; }
+
+    .preview-stage {
+      position: relative; display: block; background: #fff;
+      max-width: 100%; overflow: hidden; cursor: crosshair;
+    }
+    .preview-stage img { display: block; width: 100%; height: auto; pointer-events: none; }
+    .rect-overlay { position: absolute; inset: 0; }
+    .erase-rect {
+      position: absolute; background: rgba(220, 38, 38, 0.35);
+      border: 2px solid #dc2626;
+      box-sizing: border-box;
+    }
+    .erase-rect .rect-del {
+      position: absolute; top: -10px; right: -10px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #dc2626; color: #fff; border: 2px solid #fff;
+      font-size: 12px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .erase-rect .rect-del:hover { background: #991b1b; }
+
+    /* Metadata form */
+    .meta-form { display: flex; flex-direction: column; gap: 8px; }
+    .meta-form label { font-size: 11px; color: #64748b; font-weight: 600; }
+    .meta-form input {
+      padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 5px;
+      font-size: 13px; font-family: inherit;
+    }
+    .meta-form input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .meta-form .field { display: flex; flex-direction: column; gap: 2px; }
+    .meta-form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .meta-form .pages-info { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+    /* Generate bar */
+    .actionbar {
+      position: sticky; bottom: 0; background: #fff;
+      border-top: 1px solid #e2e8f0; padding: 14px 24px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.04); margin: 0 -24px -24px;
+    }
+    .actionbar .summary { flex: 1; font-size: 13px; color: #64748b; }
+    .actionbar button.generate {
+      padding: 10px 24px; background: #2563eb; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+    }
+    .actionbar button.generate:hover { background: #1d4ed8; }
+    .actionbar button.generate:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    .empty-state { text-align: center; padding: 32px; color: #94a3b8; font-size: 14px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      opacity: 0; transition: opacity 0.2s; z-index: 1000;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #b91c1c; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>マイソク結合PDFツール</h1>
+    <a href="/" class="nav-link">← 物件マップに戻る</a>
+  </div>
+
+  <div class="container">
+
+    <div class="section">
+      <h2>1. PDFをアップロード</h2>
+      <div class="uploader" id="uploader" onclick="document.getElementById('file-input').click()">
+        <p>クリック or PDFをドラッグ&ドロップ（複数可）</p>
+        <p class="hint">at-home などの物件マイソク PDF に対応</p>
+      </div>
+      <input type="file" id="file-input" accept=".pdf" multiple style="display:none" onchange="handleFiles(event.target.files); event.target.value=''">
+
+      <div class="template-row">
+        <label>消去領域テンプレート:</label>
+        <select id="template-select"></select>
+        <button onclick="applyTemplate()">全PDFに適用</button>
+        <button onclick="saveCurrentAsTemplate()">現在の領域を保存…</button>
+        <button class="danger" onclick="deleteTemplate()">削除</button>
+      </div>
+    </div>
+
+    <div id="files-area">
+      <div class="empty-state" id="empty-state">まだPDFが追加されていません</div>
+    </div>
+
+    <div class="actionbar">
+      <div class="summary" id="summary">0件のPDFが選択されています</div>
+      <button class="generate" id="generate-btn" onclick="generate()" disabled>結合PDFを生成</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================
+    // State
+    // =========================================================
+    /** @type {Array<{
+     *   token: string, filename: string,
+     *   pages: Array<{width_pt:number,height_pt:number}>,
+     *   currentPage: number,
+     *   imgWidth: number, imgHeight: number,  // rendered image px (intrinsic)
+     *   displayWidth: number, displayHeight: number,  // displayed px
+     *   rects: Array<{x:number,y:number,w:number,h:number}>,  // normalized 0-1 (page-relative)
+     *   meta: { name, address, rent, area, year, station, lat, lon },
+     * }>} */
+    let files = [];
+    let templates = {};
+    let drawing = null;  // {fileIdx, startX, startY, rectIdx}
+
+    // =========================================================
+    // Init
+    // =========================================================
+    loadTemplates();
+
+    // Drag and drop on body
+    let dragCounter = 0;
+    document.addEventListener("dragenter", e => {
+      e.preventDefault(); dragCounter++;
+      document.getElementById("uploader").classList.add("dragover");
+    });
+    document.addEventListener("dragleave", e => {
+      e.preventDefault(); dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        document.getElementById("uploader").classList.remove("dragover");
+      }
+    });
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => {
+      e.preventDefault();
+      dragCounter = 0;
+      document.getElementById("uploader").classList.remove("dragover");
+      handleFiles(e.dataTransfer.files);
+    });
+
+    // =========================================================
+    // File upload
+    // =========================================================
+    async function handleFiles(fileList) {
+      for (const f of fileList) {
+        if (!f.name.toLowerCase().endsWith(".pdf")) continue;
+        await uploadOne(f);
+      }
+    }
+
+    async function uploadOne(file) {
+      const fd = new FormData();
+      fd.append("pdf", file);
+      try {
+        toast("PDF解析中: " + file.name);
+        const res = await fetch("/api/compile/upload", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "アップロード失敗");
+
+        const entry = {
+          token: data.token,
+          filename: data.filename,
+          pages: data.pages,
+          currentPage: 0,
+          imgWidth: 0, imgHeight: 0,
+          displayWidth: 0, displayHeight: 0,
+          rects: [],
+          meta: {
+            name: data.extracted.name || "",
+            address: data.extracted.address || "",
+            rent: data.extracted.rent || "",
+            area: data.extracted.area || "",
+            year: data.extracted.year || "",
+            station: data.extracted.station || "",
+            deposit: data.extracted.deposit || "",
+            keymoney: data.extracted.keymoney || "",
+            facilities: data.extracted.facilities || "",
+            interior: data.extracted.interior || "",
+            available: data.extracted.available || "",
+            lat: null, lon: null,
+          },
+        };
+        files.push(entry);
+        renderFiles();
+        // Auto-apply current template if one is selected
+        const tplName = document.getElementById("template-select").value;
+        if (tplName && templates[tplName]) {
+          entry.rects = templates[tplName].rects.map(r => ({...r}));
+          renderRects(files.length - 1);
+        }
+      } catch (err) {
+        toast("エラー: " + err.message, true);
+      }
+    }
+
+    function removeFile(idx) {
+      const token = files[idx].token;
+      files.splice(idx, 1);
+      fetch("/api/compile/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokens: [token] }),
+      });
+      renderFiles();
+    }
+
+    // =========================================================
+    // Rendering
+    // =========================================================
+    function renderFiles() {
+      const area = document.getElementById("files-area");
+      const empty = document.getElementById("empty-state");
+      if (files.length === 0) {
+        area.innerHTML = '<div class="empty-state" id="empty-state">まだPDFが追加されていません</div>';
+        updateSummary();
+        return;
+      }
+      area.innerHTML = "";
+      files.forEach((f, idx) => area.appendChild(buildCard(f, idx)));
+      updateSummary();
+    }
+
+    function buildCard(f, idx) {
+      const card = document.createElement("div");
+      card.className = "file-card";
+      card.innerHTML = `
+        <div class="header">
+          <div class="filename">${esc(f.filename)}</div>
+          <button class="remove" title="削除" onclick="removeFile(${idx})">&times;</button>
+        </div>
+        <div class="file-body">
+          <div>
+            <div class="preview-toolbar">
+              <button onclick="changePage(${idx}, -1)">◀ 前</button>
+              <span class="info" id="page-info-${idx}">ページ ${f.currentPage + 1} / ${f.pages.length}</span>
+              <button onclick="changePage(${idx}, 1)">次 ▶</button>
+              <div class="spacer"></div>
+              <span class="info">赤い領域 = 白塗りで消去</span>
+              <button onclick="clearRects(${idx})">領域クリア</button>
+            </div>
+            <div class="preview-stage" id="stage-${idx}">
+              <img id="img-${idx}" alt="preview" draggable="false">
+              <div class="rect-overlay" id="overlay-${idx}"></div>
+            </div>
+          </div>
+          <div class="meta-form">
+            <div class="field">
+              <label>物件名</label>
+              <input data-field="name" value="${esc(f.meta.name)}">
+            </div>
+            <div class="field">
+              <label>住所</label>
+              <input data-field="address" value="${esc(f.meta.address)}">
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>賃料</label>
+                <input data-field="rent" value="${esc(f.meta.rent)}">
+              </div>
+              <div class="field">
+                <label>面積</label>
+                <input data-field="area" value="${esc(f.meta.area)}">
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>築年月</label>
+                <input data-field="year" value="${esc(f.meta.year)}">
+              </div>
+              <div class="field">
+                <label>最寄駅・徒歩</label>
+                <input data-field="station" value="${esc(f.meta.station)}">
+              </div>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>敷金（保証金）</label>
+                <input data-field="deposit" value="${esc(f.meta.deposit)}">
+              </div>
+              <div class="field">
+                <label>礼金</label>
+                <input data-field="keymoney" value="${esc(f.meta.keymoney)}">
+              </div>
+            </div>
+            <div class="field">
+              <label>トイレ・水回り・EV</label>
+              <input data-field="facilities" value="${esc(f.meta.facilities)}">
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>内装状況</label>
+                <input data-field="interior" value="${esc(f.meta.interior)}" placeholder="居抜き / スケルトン / 事務所使用可">
+              </div>
+              <div class="field">
+                <label>入居可能日</label>
+                <input data-field="available" value="${esc(f.meta.available)}">
+              </div>
+            </div>
+            <div class="pages-info">${f.pages.length}ページ／消去領域は全ページに適用</div>
+          </div>
+        </div>
+      `;
+
+      // Wire up meta field updates
+      card.querySelectorAll(".meta-form input").forEach(inp => {
+        inp.addEventListener("input", () => {
+          const field = inp.dataset.field;
+          f.meta[field] = inp.value;
+          if (field === "address") {
+            f.meta.lat = null;
+            f.meta.lon = null;
+          }
+        });
+      });
+
+      // Load page image
+      setTimeout(() => loadPagePreview(idx), 0);
+      return card;
+    }
+
+    async function loadPagePreview(idx) {
+      const f = files[idx];
+      const img = document.getElementById(`img-${idx}`);
+      const stage = document.getElementById(`stage-${idx}`);
+      if (!img || !stage) return;
+      const url = `/api/compile/preview?token=${f.token}&page=${f.currentPage}`;
+      // To capture intrinsic dims, use fetch+blob then onload
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("preview failed");
+        const blob = await res.blob();
+        const objUrl = URL.createObjectURL(blob);
+        img.onload = () => {
+          f.imgWidth = img.naturalWidth;
+          f.imgHeight = img.naturalHeight;
+          // displayed size = same as rendered after CSS scaling
+          f.displayWidth = img.clientWidth;
+          f.displayHeight = img.clientHeight;
+          attachDrawHandlers(idx);
+          renderRects(idx);
+        };
+        img.src = objUrl;
+      } catch (err) {
+        toast("プレビュー読み込み失敗: " + err.message, true);
+      }
+    }
+
+    function changePage(idx, delta) {
+      const f = files[idx];
+      const next = f.currentPage + delta;
+      if (next < 0 || next >= f.pages.length) return;
+      f.currentPage = next;
+      document.getElementById(`page-info-${idx}`).textContent = `ページ ${next + 1} / ${f.pages.length}`;
+      loadPagePreview(idx);
+    }
+
+    // =========================================================
+    // Rect drawing (page-normalized coords)
+    // =========================================================
+    function attachDrawHandlers(idx) {
+      const stage = document.getElementById(`stage-${idx}`);
+      if (!stage || stage.dataset.attached === "1") return;
+      stage.dataset.attached = "1";
+
+      stage.addEventListener("mousedown", e => {
+        // Don't start drawing if clicking on existing rect delete button
+        if (e.target.classList.contains("rect-del")) return;
+        if (e.target.classList.contains("erase-rect")) return;
+        const rect = stage.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        drawing = { fileIdx: idx, startX: sx, startY: sy, currentEl: null };
+        e.preventDefault();
+      });
+
+      stage.addEventListener("mousemove", e => {
+        if (!drawing || drawing.fileIdx !== idx) return;
+        const stRect = stage.getBoundingClientRect();
+        const cx = Math.max(0, Math.min(stRect.width, e.clientX - stRect.left));
+        const cy = Math.max(0, Math.min(stRect.height, e.clientY - stRect.top));
+        const x1 = Math.min(drawing.startX, cx);
+        const y1 = Math.min(drawing.startY, cy);
+        const w = Math.abs(cx - drawing.startX);
+        const h = Math.abs(cy - drawing.startY);
+        if (!drawing.currentEl) {
+          drawing.currentEl = document.createElement("div");
+          drawing.currentEl.className = "erase-rect";
+          document.getElementById(`overlay-${idx}`).appendChild(drawing.currentEl);
+        }
+        Object.assign(drawing.currentEl.style, {
+          left: x1 + "px", top: y1 + "px", width: w + "px", height: h + "px",
+        });
+      });
+
+      stage.addEventListener("mouseup", e => {
+        if (!drawing || drawing.fileIdx !== idx) return;
+        if (!drawing.currentEl) { drawing = null; return; }
+        const stRect = stage.getBoundingClientRect();
+        const left = parseFloat(drawing.currentEl.style.left);
+        const top = parseFloat(drawing.currentEl.style.top);
+        const w = parseFloat(drawing.currentEl.style.width);
+        const h = parseFloat(drawing.currentEl.style.height);
+        const tooSmall = w < 8 || h < 8;
+        drawing.currentEl.remove();
+        drawing = null;
+        if (tooSmall) return;
+        // Save as normalized coords
+        files[idx].rects.push({
+          x: left / stRect.width,
+          y: top / stRect.height,
+          w: w / stRect.width,
+          h: h / stRect.height,
+        });
+        renderRects(idx);
+      });
+    }
+
+    function renderRects(idx) {
+      const overlay = document.getElementById(`overlay-${idx}`);
+      const stage = document.getElementById(`stage-${idx}`);
+      if (!overlay || !stage) return;
+      const stRect = stage.getBoundingClientRect();
+      overlay.innerHTML = "";
+      files[idx].rects.forEach((r, ri) => {
+        const el = document.createElement("div");
+        el.className = "erase-rect";
+        Object.assign(el.style, {
+          left: (r.x * stRect.width) + "px",
+          top: (r.y * stRect.height) + "px",
+          width: (r.w * stRect.width) + "px",
+          height: (r.h * stRect.height) + "px",
+        });
+        const del = document.createElement("button");
+        del.className = "rect-del";
+        del.textContent = "×";
+        del.title = "領域を削除";
+        del.onclick = (e) => {
+          e.stopPropagation();
+          files[idx].rects.splice(ri, 1);
+          renderRects(idx);
+        };
+        el.appendChild(del);
+        overlay.appendChild(el);
+      });
+    }
+
+    function clearRects(idx) {
+      files[idx].rects = [];
+      renderRects(idx);
+    }
+
+    // Reflow rects on window resize
+    window.addEventListener("resize", () => {
+      files.forEach((_, i) => renderRects(i));
+    });
+
+    // =========================================================
+    // Templates
+    // =========================================================
+    async function loadTemplates() {
+      try {
+        const res = await fetch("/api/compile/templates");
+        templates = await res.json();
+        renderTemplateSelect();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderTemplateSelect() {
+      const sel = document.getElementById("template-select");
+      const prev = sel.value;
+      sel.innerHTML = "";
+      const names = Object.keys(templates);
+      if (names.length === 0) {
+        sel.innerHTML = '<option value="">（テンプレートなし）</option>';
+        return;
+      }
+      // Default to at-home if present
+      for (const name of names) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      }
+      sel.value = prev && templates[prev] ? prev : names[0];
+    }
+
+    function applyTemplate() {
+      const name = document.getElementById("template-select").value;
+      if (!name || !templates[name]) {
+        toast("テンプレートが選択されていません", true);
+        return;
+      }
+      const tpl = templates[name];
+      if (files.length === 0) {
+        toast("先にPDFを追加してください", true);
+        return;
+      }
+      files.forEach((f, idx) => {
+        f.rects = tpl.rects.map(r => ({...r}));
+        renderRects(idx);
+      });
+      toast(`${tpl.rects.length}個の領域を ${files.length} ファイルに適用しました`);
+    }
+
+    async function saveCurrentAsTemplate() {
+      if (files.length === 0) {
+        toast("PDFが必要です", true);
+        return;
+      }
+      // Use the first file's rects as the template
+      const rects = files[0].rects;
+      if (rects.length === 0) {
+        toast("先頭PDFに消去領域がありません", true);
+        return;
+      }
+      const name = prompt("テンプレート名を入力してください:", "");
+      if (!name) return;
+      try {
+        const res = await fetch("/api/compile/templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, rects }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "保存失敗");
+        toast(`テンプレート「${name}」を保存しました`);
+        await loadTemplates();
+        document.getElementById("template-select").value = name;
+      } catch (err) {
+        toast("エラー: " + err.message, true);
+      }
+    }
+
+    async function deleteTemplate() {
+      const name = document.getElementById("template-select").value;
+      if (!name) return;
+      if (!confirm(`「${name}」を削除しますか？`)) return;
+      try {
+        const res = await fetch(`/api/compile/templates/${encodeURIComponent(name)}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("削除失敗");
+        toast(`削除しました: ${name}`);
+        await loadTemplates();
+      } catch (err) {
+        toast("エラー: " + err.message, true);
+      }
+    }
+
+    // =========================================================
+    // Generate
+    // =========================================================
+    function updateSummary() {
+      const btn = document.getElementById("generate-btn");
+      const sum = document.getElementById("summary");
+      sum.textContent = `${files.length}件のPDFが選択されています`;
+      btn.disabled = files.length === 0;
+    }
+
+    async function generate() {
+      if (files.length === 0) return;
+      const btn = document.getElementById("generate-btn");
+      btn.disabled = true;
+      btn.textContent = "生成中…";
+      try {
+        const items = files.map(f => ({
+          token: f.token,
+          name: f.meta.name,
+          address: f.meta.address,
+          rent: f.meta.rent,
+          area: f.meta.area,
+          year: f.meta.year,
+          station: f.meta.station,
+          deposit: f.meta.deposit,
+          keymoney: f.meta.keymoney,
+          facilities: f.meta.facilities,
+          interior: f.meta.interior,
+          available: f.meta.available,
+          lat: f.meta.lat,
+          lon: f.meta.lon,
+          rects_normalized: f.rects,
+        }));
+        const res = await fetch("/api/compile/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "生成失敗");
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "compiled.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        toast("PDFを生成しました");
+      } catch (err) {
+        toast("エラー: " + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "結合PDFを生成";
+      }
+    }
+
+    // =========================================================
+    // Util
+    // =========================================================
+    const _div = document.createElement("div");
+    function esc(s) { _div.textContent = s ?? ""; return _div.innerHTML; }
+
+    let toastTimer = null;
+    function toast(msg, isError) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.toggle("error", !!isError);
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}管理ダッシュボード | 営業クラウド{% endblock %}
+{% block portal_tag %}管理画面{% endblock %}
+{% block pagetitle %}マネージャーダッシュボード{% endblock %}
+
+{% block style %}
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+.bar-row .nm { width: 160px; flex-shrink: 0; font-weight: 700; font-size: 12px;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 18px; background: #f1f5f9; border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #1d4ed8); border-radius: 5px;
+            min-width: 2px; }
+.bar-val { width: 48px; text-align: right; font-weight: 800; font-size: 13px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block sidenav %}
+<a class="active" href="/admin">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+  ダッシュボード</a>
+<a href="/portal">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+  物件・顧客（ポータル）</a>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  図面PDF取込・提案</a>
+{% if user.role == 'ogn' %}
+<div class="sep">上位画面</div>
+<a href="/ogn">オーガナイズ</a>
+{% endif %}
+{% endblock %}
+
+{% block bottomnav %}
+<a class="active" href="/admin">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"/></svg>
+  集計</a>
+<a href="/portal">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+  物件</a>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  取込</a>
+{% if user.role == 'ogn' %}
+<a href="/ogn">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+  設定</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="kpis" id="kpis"></div>
+
+<div class="two-col">
+  <div class="card">
+    <h2>店舗別の活動量</h2>
+    <div id="store-bars"></div>
+  </div>
+  <div class="card">
+    <h2>担当者別の提案数</h2>
+    <div id="user-bars"></div>
+  </div>
+</div>
+
+<div class="card" style="padding:0; overflow-x:auto;">
+  <h2 style="padding:14px 14px 0;">最近の提案</h2>
+  <table class="list" id="recent-table">
+    <thead><tr><th>日時</th><th>物件</th><th>顧客</th><th>担当</th><th>店舗</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div class="empty" id="recent-empty" style="display:none;">提案はまだありません</div>
+</div>
+
+<div class="card" style="padding:0; overflow-x:auto;">
+  <h2 style="padding:14px 14px 0;">店舗サマリー</h2>
+  <table class="list">
+    <thead><tr><th>店舗</th><th>ユーザー</th><th>物件</th><th>顧客</th><th>提案</th><th>成約</th></tr></thead>
+    <tbody id="store-table"></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+async function load() {
+  const d = await api("/api/admin/summary");
+  const storeNames = {};
+  d.by_store.forEach(s => storeNames[s.store_id] = s.store_name);
+
+  document.getElementById("kpis").innerHTML = [
+    ["加盟店", d.totals.stores, "店"],
+    ["ユーザー", d.totals.users, "名"],
+    ["登録物件", d.totals.bukken, "件"],
+    ["顧客", d.totals.customers, "件"],
+    ["提案", d.totals.proposals, "件"],
+    ["成約", d.totals.deals ?? 0, "件"],
+  ].map(([l, v, u]) => `<div class="kpi"><div class="label">${l}</div>
+    <div class="value">${v}<small> ${u}</small></div></div>`).join("");
+
+  const maxS = Math.max(1, ...d.by_store.map(s => s.proposals + s.bukken + s.customers));
+  document.getElementById("store-bars").innerHTML = d.by_store.map(s => {
+    const total = s.proposals + s.bukken + s.customers;
+    return `<div class="bar-row"><span class="nm">${esc(s.store_name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(total / maxS) * 100}%"></div></div>
+      <span class="bar-val">${total}</span></div>`;
+  }).join("") || '<div class="empty">データなし</div>';
+
+  const users = d.by_user.filter(u => u.role === "store" || u.proposals > 0 || u.bukken > 0);
+  const maxU = Math.max(1, ...users.map(u => u.proposals));
+  document.getElementById("user-bars").innerHTML = users.map(u =>
+    `<div class="bar-row"><span class="nm">${esc(u.name || u.email)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(u.proposals / maxU) * 100}%"></div></div>
+      <span class="bar-val">${u.proposals}</span></div>`).join("") || '<div class="empty">データなし</div>';
+
+  const tbody = document.querySelector("#recent-table tbody");
+  document.getElementById("recent-empty").style.display = d.recent_proposals.length ? "none" : "block";
+  tbody.innerHTML = d.recent_proposals.map(p => `<tr>
+    <td style="white-space:nowrap;font-size:12px;">${esc(p.ts || "")}</td>
+    <td><b>${esc(p.property_name || "")}</b></td>
+    <td>${esc(p.customer_name || "")}</td>
+    <td style="font-size:12px;">${esc(p.user_name || p.user_email || "—")}</td>
+    <td><span class="chip">${esc(storeNames[p.store_id] || p.store_id || "—")}</span></td>
+  </tr>`).join("");
+
+  document.getElementById("store-table").innerHTML = d.by_store.map(s => `<tr>
+    <td><b>${esc(s.store_name)}</b></td>
+    <td>${s.users}名</td><td>${s.bukken}件</td><td>${s.customers}件</td>
+    <td>${s.proposals}件</td><td><b>${s.deals ?? 0}件</b></td>
+  </tr>`).join("");
+}
+load();
+</script>
+{% endblock %}

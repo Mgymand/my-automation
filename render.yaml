@@ -1,0 +1,27 @@
+# Render.com デプロイ設計図（営業クラウド）
+# 使い方: Render → New → Blueprint → このリポジトリを選択 → Apply
+services:
+  - type: web
+    name: eigyo-cloud
+    runtime: python
+    rootDir: property-map
+    plan: starter            # 永続ディスクに必要（無料プランはディスク不可＝再起動でデータ消失）
+    region: singapore        # 日本から最寄り
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -t 120 -b 0.0.0.0:$PORT app:app
+    healthCheckPath: /login
+    disk:
+      name: eigyo-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PROPERTY_DATA_DIR
+        value: /var/data
+      - key: ADMIN_EMAIL          # 初回起動時にこのGoogleアカウントがオーガナイザーになる
+        value: gtiwamoto@gmail.com
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ANTHROPIC_API_KEY    # ダッシュボードで手入力（AI抽出・提案文生成）
+        sync: false
+      - key: GOOGLE_CLIENT_ID     # ダッシュボードで手入力（Googleログイン）
+        sync: false

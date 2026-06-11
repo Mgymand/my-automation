@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提案アシスタント</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; background: #f1f5f9; color: #1e293b; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      background: #7c3aed; color: #fff;
+      padding: 12px 24px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
+    .topbar .nav-link { color: #ddd6fe; font-size: 13px; }
+    .topbar .nav-link:hover { color: #fff; }
+    .topbar .mode-badge {
+      font-size: 11px; padding: 3px 10px; border-radius: 99px;
+      background: rgba(255,255,255,0.18); font-weight: 600;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .section { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .section h2 { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px; }
+
+    .uploader {
+      border: 2px dashed #cbd5e1; border-radius: 10px;
+      padding: 28px; text-align: center; cursor: pointer;
+      background: #f8fafc; transition: all 0.15s;
+    }
+    .uploader:hover { border-color: #7c3aed; background: #f5f3ff; }
+    .uploader.dragover { border-color: #7c3aed; background: #ede9fe; }
+    .uploader p { font-size: 14px; color: #64748b; }
+    .uploader p.hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .uploader .spinner {
+      display: none; margin: 0 auto 8px;
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 3px solid #ddd6fe; border-top-color: #7c3aed;
+      animation: spin 0.8s linear infinite;
+    }
+    .uploader.busy .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 物件カード */
+    .prop-card { border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 16px; background: #fff; overflow: hidden; }
+    .prop-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; background: #faf5ff; border-bottom: 1px solid #ede9fe;
+    }
+    .prop-head .title { flex: 1; font-size: 14px; font-weight: 700; }
+    .prop-head .src { font-size: 11px; color: #94a3b8; }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    }
+    .badge.llm { background: #ede9fe; color: #6d28d9; }
+    .badge.heuristic { background: #fef3c7; color: #b45309; }
+    .badge.geo-ok { background: #dcfce7; color: #15803d; }
+    .badge.geo-ng { background: #fee2e2; color: #b91c1c; }
+    .prop-head .remove { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 8px; border-radius: 4px; }
+    .prop-head .remove:hover { color: #dc2626; background: #fef2f2; }
+
+    .prop-body { padding: 16px; }
+    .fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 800px) { .fields { grid-template-columns: repeat(2, 1fr); } }
+    .field { display: flex; flex-direction: column; gap: 2px; }
+    .field.wide { grid-column: span 2; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 11px; color: #64748b; font-weight: 600; }
+    .field input, .field textarea {
+      padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 5px;
+      font-size: 13px; font-family: inherit;
+    }
+    .field textarea { resize: vertical; min-height: 40px; }
+    .field input:focus, .field textarea:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.15); }
+
+    .stations-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .chip {
+      font-size: 11px; padding: 3px 10px; border-radius: 99px;
+      background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+    }
+    .images-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .images-row img {
+      height: 72px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: zoom-in;
+      object-fit: cover;
+    }
+
+    .match-bar { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+    .btn {
+      padding: 8px 16px; border-radius: 7px; border: 1px solid #d1d5db;
+      background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    .btn:hover { background: #f1f5f9; }
+    .btn.primary { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .btn.primary:hover { background: #6d28d9; }
+    .btn.primary:disabled { background: #c4b5fd; border-color: #c4b5fd; cursor: not-allowed; }
+    .match-hint { font-size: 12px; color: #94a3b8; }
+
+    /* 候補リスト */
+    .cands { margin-top: 12px; border-top: 1px dashed #e2e8f0; padding-top: 12px; }
+    .cand {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px;
+    }
+    .cand.proposed-before { opacity: 0.6; background: #f8fafc; }
+    .cand input[type=checkbox] { margin-top: 4px; width: 16px; height: 16px; accent-color: #7c3aed; }
+    .cand .info { flex: 1; }
+    .cand .name { font-size: 13px; font-weight: 700; }
+    .cand .tags { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: 1px; }
+    .cand .tags .chip { font-size: 10px; padding: 1px 8px; }
+    .cand .reasons { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .cand .reasons .chip { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+    .scorebox { width: 110px; text-align: right; }
+    .scoreval { font-size: 16px; font-weight: 800; }
+    .scoretrack { height: 5px; background: #f1f5f9; border-radius: 99px; margin-top: 4px; overflow: hidden; }
+    .scorefill { height: 100%; border-radius: 99px; }
+    .badge.done { background: #e0e7ff; color: #4338ca; }
+
+    /* 提案結果 */
+    .results { margin-top: 12px; }
+    .result-item { border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    .result-head {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      background: #f8fafc; cursor: pointer; font-size: 13px;
+    }
+    .result-head .name { font-weight: 700; flex: 1; }
+    .badge.sent { background: #dcfce7; color: #15803d; }
+    .badge.skipped { background: #fef3c7; color: #b45309; }
+    .result-text {
+      display: none; padding: 12px; font-size: 13px; white-space: pre-wrap;
+      border-top: 1px solid #e2e8f0; background: #fff; line-height: 1.7;
+    }
+    .result-item.open .result-text { display: block; }
+    .copy-btn { font-size: 11px; padding: 3px 10px; }
+
+    /* 履歴 */
+    .history { margin-top: 12px; border-top: 1px dashed #e2e8f0; padding-top: 10px; }
+    .history h3 { font-size: 12px; color: #64748b; margin-bottom: 6px; }
+    .history .h-item { font-size: 12px; color: #475569; padding: 3px 0; }
+    .history .h-item .ts { color: #94a3b8; margin-right: 8px; }
+
+    .actionbar {
+      position: sticky; bottom: 0; z-index: 5;
+      background: #fff; border-top: 1px solid #e2e8f0;
+      padding: 12px 24px; display: none; align-items: center; gap: 12px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    }
+    .actionbar.visible { display: flex; }
+    .actionbar .summary { flex: 1; font-size: 13px; color: #64748b; }
+
+    .toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+
+    .lightbox {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 40; align-items: center; justify-content: center; cursor: zoom-out;
+    }
+    .lightbox.show { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>提案アシスタント <span style="font-weight:400; font-size:12px; opacity:0.8;">図面PDF → 抽出 → マッチング → 一斉提案</span></h1>
+    <span class="mode-badge" id="mode-badge">—</span>
+    <a class="nav-link" href="/portal">ポータル</a>
+    <a class="nav-link" href="/">物件マップ</a>
+    <a class="nav-link" href="/compile">マイソク結合PDF</a>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <h2>1. 図面PDFを取り込む</h2>
+      <div class="uploader" id="uploader">
+        <div class="spinner"></div>
+        <p id="uploader-msg">図面PDFをドロップ、またはクリックして選択</p>
+        <p class="hint">複数可。1つのPDFに複数物件が入っていても自動で分割されます</p>
+      </div>
+      <input type="file" id="file-input" accept=".pdf" multiple style="display:none">
+    </div>
+
+    <div id="cards"></div>
+  </div>
+
+  <div class="actionbar" id="actionbar">
+    <div class="summary" id="action-summary"></div>
+    <button class="btn primary" id="propose-btn">一斉提案する</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="lightbox" id="lightbox" onclick="this.classList.remove('show')"><img id="lightbox-img"></div>
+
+<script>
+const state = { props: [], nextId: 1, activeCard: null };
+
+const EDIT_FIELDS = [
+  ["building_name", "建物名"],
+  ["room", "部屋・区画"],
+  ["property_type", "種目"],
+  ["rent_yen", "賃料（円/月）", "number"],
+  ["address", "所在地", null, "wide"],
+  ["area_sqm", "面積（㎡）", "number"],
+  ["layout", "間取り"],
+  ["current_status", "現況"],
+  ["availability", "入居時期"],
+  ["allowed_business", "可能業種（カンマ区切り）", "list"],
+  ["restricted_business", "不可業種（カンマ区切り）", "list"],
+];
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+// ---- アップロード ----
+const uploader = document.getElementById("uploader");
+const fileInput = document.getElementById("file-input");
+uploader.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", e => { handleFiles([...e.target.files]); e.target.value = ""; });
+["dragover", "dragleave", "drop"].forEach(ev => uploader.addEventListener(ev, e => {
+  e.preventDefault();
+  uploader.classList.toggle("dragover", ev === "dragover");
+  if (ev === "drop") handleFiles([...e.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith(".pdf")));
+}));
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  uploader.classList.add("busy");
+  const msg = document.getElementById("uploader-msg");
+  for (let i = 0; i < files.length; i++) {
+    msg.textContent = `抽出中… (${i + 1}/${files.length}) ${files[i].name}`;
+    try {
+      const fd = new FormData();
+      fd.append("pdf", files[i]);
+      const res = await fetch("/api/extract", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      document.getElementById("mode-badge").textContent = data.mode === "LLM" ? "AI抽出: ON" : "AI抽出: OFF（簡易解析）";
+      for (const rec of data.properties) {
+        rec._id = state.nextId++;
+        rec._mode = data.mode;
+        rec._candidates = null;
+        state.props.push(rec);
+        renderCard(rec);
+      }
+    } catch (err) {
+      toast(`抽出失敗: ${files[i].name}（${err.message}）`);
+    }
+  }
+  uploader.classList.remove("busy");
+  msg.textContent = "図面PDFをドロップ、またはクリックして選択";
+}
+
+// ---- 物件カード ----
+function renderCard(rec) {
+  const card = document.createElement("div");
+  card.className = "prop-card";
+  card.id = `card-${rec._id}`;
+
+  const stations = (rec.stations || []).map(s =>
+    `<span class="chip">${esc(s.line || "")} ${esc((s.station || "").replace(/駅$/, ""))}駅 徒歩${esc(s.walk_min ?? "?")}分</span>`).join("") || '<span class="chip">駅情報なし</span>';
+  const images = (rec._images || []).map(f =>
+    `<img src="/extracted-images/${encodeURIComponent(f)}" loading="lazy" onclick="showLightbox(this.src)">`).join("");
+
+  const fieldsHtml = EDIT_FIELDS.map(([key, label, type, span]) => {
+    let val = rec[key];
+    if (type === "list") val = (val || []).join(", ");
+    return `<div class="field ${span || ""}">
+      <label>${label}</label>
+      <input data-key="${key}" data-type="${type || "text"}" value="${esc(val ?? "")}">
+    </div>`;
+  }).join("");
+
+  card.innerHTML = `
+    <div class="prop-head">
+      <span class="title">${esc(rec.building_name || "（建物名不明）")} ${esc(rec.room || "")}</span>
+      <span class="badge ${rec._mode === "LLM" ? "llm" : "heuristic"}">${rec._mode === "LLM" ? "AI抽出" : "簡易抽出"}</span>
+      <span class="badge ${rec.lat ? "geo-ok" : "geo-ng"}">${rec.lat ? "地図OK" : "住所未確定"}</span>
+      <span class="src">${esc(rec._source_file || "")}</span>
+      <button class="remove" title="このカードを閉じる">×</button>
+    </div>
+    <div class="prop-body">
+      <div class="fields">${fieldsHtml}
+        <div class="field full">
+          <label>備考</label>
+          <textarea data-key="remarks" data-type="text">${esc(rec.remarks ?? "")}</textarea>
+        </div>
+      </div>
+      <div class="stations-row">${stations}</div>
+      <div class="images-row">${images}</div>
+      <div class="match-bar">
+        <button class="btn primary match-btn">候補を探す</button>
+        <button class="btn save-btn">物件として保存</button>
+        <span class="match-hint">編集した内容でマッチング・保存されます</span>
+      </div>
+      <div class="cands" style="display:none"></div>
+      <div class="results"></div>
+      <div class="history" style="display:none"></div>
+    </div>`;
+
+  card.querySelector(".remove").addEventListener("click", () => {
+    state.props = state.props.filter(p => p._id !== rec._id);
+    card.remove();
+    updateActionbar();
+  });
+  card.querySelectorAll("[data-key]").forEach(input => {
+    input.addEventListener("change", () => {
+      const key = input.dataset.key, type = input.dataset.type;
+      let v = input.value.trim();
+      if (type === "number") v = v === "" ? null : Number(v.replace(/[,，]/g, ""));
+      else if (type === "list") v = v === "" ? [] : v.split(/[,，]/).map(s => s.trim()).filter(Boolean);
+      else v = v === "" ? null : v;
+      rec[key] = v;
+      if (key === "building_name" || key === "room") {
+        card.querySelector(".prop-head .title").textContent =
+          `${rec.building_name || "（建物名不明）"} ${rec.room || ""}`.trim();
+      }
+    });
+  });
+  card.querySelector(".match-btn").addEventListener("click", () => runMatch(rec, card));
+  card.querySelector(".save-btn").addEventListener("click", () => saveBukken(rec, card));
+  document.getElementById("cards").appendChild(card);
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveBukken(rec, card) {
+  const btn = card.querySelector(".save-btn");
+  btn.disabled = true; btn.textContent = "保存中…";
+  try {
+    if (rec._bukken_id) {
+      await api(`/api/bukken/${rec._bukken_id}`, { method: "PUT", json: { prop: cleanProp(rec) } });
+      toast("物件を更新しました");
+    } else {
+      const res = await api("/api/bukken", { json: {
+        prop: cleanProp(rec), lat: rec.lat, lon: rec.lon, images: rec._images || [],
+      }});
+      rec._bukken_id = res.bukken.id;
+      toast("マイデータに保存しました（ポータルの物件一覧に表示されます）");
+    }
+    btn.textContent = "保存済み（再保存可）";
+  } catch (e) {
+    toast(`保存失敗: ${e.message}`);
+    btn.textContent = "物件として保存";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function api(path, opts = {}) {
+  if (opts.json) {
+    opts.method = opts.method || "POST";
+    opts.headers = { "Content-Type": "application/json" };
+    opts.body = JSON.stringify(opts.json);
+    delete opts.json;
+  }
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+// ポータルから ?bukken_id= 付きで開かれた場合、保存済み物件を読み込んで提案フローへ
+(async function loadFromBukken() {
+  const bid = new URLSearchParams(location.search).get("bukken_id");
+  if (!bid) return;
+  try {
+    const b = await api(`/api/bukken/${bid}`);
+    const rec = { ...(b.prop || {}) };
+    rec._id = state.nextId++;
+    rec._mode = "LLM";
+    rec._bukken_id = b.id;
+    rec._images = b.images || [];
+    rec._source_file = "保存済み物件";
+    rec.lat = b.lat; rec.lon = b.lon;
+    state.props.push(rec);
+    renderCard(rec);
+    const card = document.getElementById(`card-${rec._id}`);
+    card.querySelector(".save-btn").textContent = "保存済み（再保存可）";
+    runMatch(rec, card);
+  } catch (e) {
+    toast(`物件の読み込みに失敗: ${e.message}`);
+  }
+})();
+
+function showLightbox(src) {
+  document.getElementById("lightbox-img").src = src;
+  document.getElementById("lightbox").classList.add("show");
+}
+
+// ---- マッチング ----
+function cleanProp(rec) {
+  const p = {};
+  for (const [k, v] of Object.entries(rec)) if (!k.startsWith("_")) p[k] = v;
+  return p;
+}
+
+async function runMatch(rec, card) {
+  const btn = card.querySelector(".match-btn");
+  btn.disabled = true; btn.textContent = "検索中…";
+  try {
+    const res = await fetch("/api/match", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property: cleanProp(rec), min_score: 30 }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    rec._candidates = data.candidates;
+    rec._property_key = data.property_key;
+    renderCandidates(rec, card);
+    loadHistory(rec, card);
+  } catch (err) {
+    toast(`マッチング失敗: ${err.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = "候補を探す";
+  }
+}
+
+function scoreColor(s) {
+  if (s >= 80) return "#16a34a";
+  if (s >= 60) return "#84cc16";
+  if (s >= 40) return "#f59e0b";
+  return "#94a3b8";
+}
+
+function renderCandidates(rec, card) {
+  const box = card.querySelector(".cands");
+  box.style.display = "block";
+  if (!rec._candidates.length) {
+    box.innerHTML = '<p style="font-size:13px;color:#94a3b8;">条件に合う顧客が見つかりませんでした（スコア30未満は非表示）</p>';
+    updateActionbar();
+    return;
+  }
+  box.innerHTML = rec._candidates.map((c, i) => `
+    <div class="cand ${c.already_proposed ? "proposed-before" : ""}">
+      <input type="checkbox" data-cid="${esc(c.customer_id)}"
+        ${c.already_proposed ? "disabled" : (c.score >= 70 ? "checked" : "")}>
+      <div class="info">
+        <span class="name">${esc(c.customer_name)}</span>
+        <span class="tags">${(c.tags || []).map(t => `<span class="chip">${esc(t)}</span>`).join("")}</span>
+        ${c.already_proposed ? '<span class="badge done" style="margin-left:8px;">提案済み</span>' : ""}
+        <div class="reasons">${(c.reasons || []).map(r => `<span class="chip">${esc(r)}</span>`).join("")}</div>
+      </div>
+      <div class="scorebox">
+        <div class="scoreval" style="color:${scoreColor(c.score)}">${c.score}</div>
+        <div class="scoretrack"><div class="scorefill" style="width:${c.score}%;background:${scoreColor(c.score)}"></div></div>
+      </div>
+    </div>`).join("");
+  box.querySelectorAll("input[type=checkbox]").forEach(cb =>
+    cb.addEventListener("change", updateActionbar));
+  state.activeCard = card;
+  updateActionbar();
+}
+
+// ---- 一斉提案 ----
+function checkedIds(card) {
+  return [...card.querySelectorAll(".cands input[type=checkbox]:checked:not(:disabled)")].map(cb => cb.dataset.cid);
+}
+
+function updateActionbar() {
+  const bar = document.getElementById("actionbar");
+  const card = state.activeCard;
+  if (!card || !document.body.contains(card)) { bar.classList.remove("visible"); return; }
+  const ids = checkedIds(card);
+  const rec = state.props.find(p => `card-${p._id}` === card.id);
+  if (!ids.length || !rec) { bar.classList.remove("visible"); return; }
+  document.getElementById("action-summary").textContent =
+    `${rec.building_name || "物件"} ${rec.room || ""} → 選択中 ${ids.length} 名に提案文を生成して記録します`;
+  bar.classList.add("visible");
+}
+
+document.getElementById("propose-btn").addEventListener("click", async () => {
+  const card = state.activeCard;
+  if (!card) return;
+  const rec = state.props.find(p => `card-${p._id}` === card.id);
+  const ids = checkedIds(card);
+  if (!rec || !ids.length) return;
+  const btn = document.getElementById("propose-btn");
+  btn.disabled = true; btn.textContent = "生成中…";
+  try {
+    const res = await fetch("/api/propose", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property: cleanProp(rec), customer_ids: ids,
+                             images: rec._images || [] }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    renderResults(rec, card, data.results);
+    toast(`${data.proposed} 名に提案を記録しました`);
+    runMatch(rec, card);  // 提案済みバッジを反映
+  } catch (err) {
+    toast(`提案失敗: ${err.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = "一斉提案する";
+  }
+});
+
+function renderResults(rec, card, results) {
+  const box = card.querySelector(".results");
+  box.innerHTML = "<h3 style='font-size:12px;color:#64748b;margin:12px 0 6px;'>提案結果</h3>" +
+    results.map((r, i) => {
+      const sent = r.status === "proposed";
+      return `<div class="result-item ${sent ? "" : ""}" id="res-${rec._id}-${i}">
+        <div class="result-head" onclick="this.parentElement.classList.toggle('open')">
+          <span class="name">${esc(r.customer_name || r.customer_id)}</span>
+          <span class="badge ${sent ? "sent" : "skipped"}">${sent ? "提案文生成済み" : "提案済みのためスキップ"}</span>
+          ${sent ? `<button class="btn copy-btn" onclick="event.stopPropagation(); copyText('res-${rec._id}-${i}')">文面をコピー</button>` : ""}
+        </div>
+        ${sent ? `<div class="result-text">${esc(r.text)}</div>` : ""}
+      </div>`;
+    }).join("");
+}
+
+async function copyText(id) {
+  const el = document.querySelector(`#${id} .result-text`);
+  if (!el) return;
+  await navigator.clipboard.writeText(el.textContent);
+  toast("提案文をコピーしました");
+}
+
+// ---- 履歴 ----
+async function loadHistory(rec, card) {
+  if (!rec._property_key) return;
+  const res = await fetch(`/api/proposals?property_key=${encodeURIComponent(rec._property_key)}`);
+  const items = await res.json();
+  const box = card.querySelector(".history");
+  if (!items.length) { box.style.display = "none"; return; }
+  box.style.display = "block";
+  box.innerHTML = "<h3>この物件の提案履歴</h3>" + items.map(p =>
+    `<div class="h-item"><span class="ts">${esc(p.ts)}</span>${esc(p.customer_name)}</div>`).join("");
+}
+</script>
+</body>
+</html>

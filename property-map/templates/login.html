@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン | 営業クラウド</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(160deg, #0f1d40 0%, #1d4ed8 130%);
+      padding: 20px;
+    }
+    .box {
+      background: #fff; border-radius: 18px; padding: 36px 30px;
+      width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .mark {
+      width: 46px; height: 46px; border-radius: 12px; margin: 0 auto 14px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 22px; font-weight: 900;
+    }
+    h1 { font-size: 18px; font-weight: 800; text-align: center; color: #0f172a; }
+    p.lead { font-size: 12px; color: #64748b; text-align: center; margin: 6px 0 24px; line-height: 1.6; }
+    .gbtn-wrap { display: flex; justify-content: center; min-height: 44px; }
+    .dev-note {
+      font-size: 11px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; line-height: 1.6;
+    }
+    .dev-user {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 12px 14px; margin-bottom: 8px;
+      border: 1px solid #e2e8f0; border-radius: 10px; background: #fff;
+      cursor: pointer; text-align: left; font-family: inherit;
+    }
+    .dev-user:hover { border-color: #1d4ed8; background: #eff6ff; }
+    .dev-user .avatar {
+      width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff;
+    }
+    .dev-user .info { flex: 1; min-width: 0; }
+    .dev-user .nm { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .dev-user .em { font-size: 11px; color: #94a3b8; word-break: break-all; }
+    .dev-user .role { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; flex-shrink: 0; }
+    .role.ogn { background: #ede9fe; color: #6d28d9; }
+    .role.admin { background: #dbeafe; color: #1d4ed8; }
+    .role.store { background: #dcfce7; color: #15803d; }
+    .err { color: #dc2626; font-size: 12px; text-align: center; margin-top: 12px; min-height: 16px; }
+  </style>
+  {% if google_client_id %}
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  {% endif %}
+</head>
+<body>
+  <div class="box">
+    <div class="mark">G</div>
+    <h1>営業クラウド</h1>
+    <p class="lead">オーガナイズ・管理・加盟店、それぞれの画面へ<br>登録済みのGoogleアカウントでログインします</p>
+
+    {% if google_client_id %}
+    <div class="gbtn-wrap">
+      <div id="g_id_onload"
+           data-client_id="{{ google_client_id }}"
+           data-callback="onGoogleCredential"
+           data-auto_prompt="false"></div>
+      <div class="g_id_signin" data-type="standard" data-size="large"
+           data-text="signin_with" data-locale="ja" data-width="300"></div>
+    </div>
+    {% else %}
+    <div class="dev-note">
+      開発モード：Google認証は未設定です（.envにGOOGLE_CLIENT_IDを設定すると本物のGoogleログインに切り替わります）。下のユーザーを選んでログインしてください。
+    </div>
+    {% for u in dev_users %}
+    <button class="dev-user" onclick="devLogin('{{ u.email }}')">
+      <span class="avatar" style="background: {{ {'ogn':'#7c3aed','admin':'#1d4ed8','store':'#16a34a'}[u.role] }}">
+        {{ u.name[0] if u.name else '?' }}</span>
+      <span class="info">
+        <span class="nm">{{ u.name }}</span><br>
+        <span class="em">{{ u.email }}</span>
+      </span>
+      <span class="role {{ u.role }}">{{ {'ogn':'オーガナイズ','admin':'管理','store':'加盟店'}[u.role] }}</span>
+    </button>
+    {% endfor %}
+    {% endif %}
+
+    <div class="err" id="err"></div>
+  </div>
+
+<script>
+async function postLogin(path, body) {
+  const res = await fetch(path, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("err").textContent = data.error || "ログインに失敗しました";
+    return;
+  }
+  const next = new URLSearchParams(location.search).get("next");
+  location.href = next || data.home;
+}
+function onGoogleCredential(resp) { postLogin("/api/login/google", { credential: resp.credential }); }
+function devLogin(email) { postLogin("/api/login/dev", { email }); }
+</script>
+</body>
+</html>

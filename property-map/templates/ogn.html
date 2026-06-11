@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}オーガナイズ | 営業クラウド{% endblock %}
+{% block portal_tag %}オーガナイズ（最上位）{% endblock %}
+{% block pagetitle %}オーガナイズ{% endblock %}
+
+{% block style %}
+.role-badge { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 99px; }
+.role-badge.ogn { background: #ede9fe; color: #6d28d9; }
+.role-badge.admin { background: #dbeafe; color: #1d4ed8; }
+.role-badge.store { background: #dcfce7; color: #15803d; }
+.inactive-row td { opacity: 0.45; }
+{% endblock %}
+
+{% block sidenav %}
+<a class="active" href="/ogn">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+  ユーザー・加盟店</a>
+<div class="sep">画面</div>
+<a href="/admin">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"/></svg>
+  管理ダッシュボード</a>
+<a href="/portal">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+  加盟店ポータル</a>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  図面PDF取込・提案</a>
+{% endblock %}
+
+{% block bottomnav %}
+<a class="active" href="/ogn">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51"/></svg>
+  設定</a>
+<a href="/admin">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"/></svg>
+  集計</a>
+<a href="/portal">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
+  物件</a>
+<a href="/propose">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  取込</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>ユーザー（招待制：ここに登録したGoogleアカウントだけがログインできます）</h2>
+  <div class="grid" style="grid-template-columns: 2fr 1.5fr 1fr 1.2fr auto; gap: 8px; align-items: end; margin-bottom: 14px;">
+    <div class="field"><label>メールアドレス（Googleアカウント）</label><input id="nu-email" type="email" placeholder="taro@gmail.com"></div>
+    <div class="field"><label>表示名</label><input id="nu-name" placeholder="山田 太郎"></div>
+    <div class="field"><label>権限</label>
+      <select id="nu-role">
+        <option value="store">加盟店</option>
+        <option value="admin">管理</option>
+        <option value="ogn">オーガナイズ</option>
+      </select></div>
+    <div class="field"><label>所属店舗</label><select id="nu-store"></select></div>
+    <button class="btn primary" onclick="addUser()">招待する</button>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="list">
+      <thead><tr><th>ユーザー</th><th>権限</th><th>所属店舗</th><th>状態</th><th></th></tr></thead>
+      <tbody id="user-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>加盟店</h2>
+  <div style="display:flex; gap:8px; align-items:flex-end; margin-bottom:14px; flex-wrap:wrap;">
+    <div class="field" style="flex:1; min-width:200px;"><label>店舗名</label><input id="ns-name" placeholder="〇〇店"></div>
+    <button class="btn primary" onclick="addStore()">追加する</button>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="list">
+      <thead><tr><th>店舗名</th><th>ID</th><th>ユーザー数</th><th>登録日</th></tr></thead>
+      <tbody id="store-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Googleログインの状態</h2>
+  <div id="google-status" style="font-size:13px; line-height:1.8;"></div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+let stores = [], users = [];
+const ROLE_LABEL = { ogn: "オーガナイズ", admin: "管理", store: "加盟店" };
+
+async function load() {
+  [stores, users] = await Promise.all([api("/api/ogn/stores"), api("/api/ogn/users")]);
+  const sname = {};
+  stores.forEach(s => sname[s.id] = s.name);
+
+  document.getElementById("nu-store").innerHTML =
+    stores.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("");
+
+  document.getElementById("user-table").innerHTML = users.map(u => `
+    <tr class="${u.active === false ? "inactive-row" : ""}">
+      <td><b>${esc(u.name || "")}</b><br><span style="font-size:11px;color:var(--sub);">${esc(u.email)}</span></td>
+      <td>
+        <select onchange="changeRole('${esc(u.email)}', this.value)" ${u.email === ME.email ? "disabled" : ""}
+                style="font-size:12px; padding:4px 6px; border:1px solid var(--line); border-radius:6px;">
+          ${["store","admin","ogn"].map(r =>
+            `<option value="${r}" ${u.role === r ? "selected" : ""}>${ROLE_LABEL[r]}</option>`).join("")}
+        </select>
+      </td>
+      <td>
+        <select onchange="changeStore('${esc(u.email)}', this.value)"
+                style="font-size:12px; padding:4px 6px; border:1px solid var(--line); border-radius:6px;">
+          ${stores.map(s =>
+            `<option value="${esc(s.id)}" ${u.store_id === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}
+        </select>
+      </td>
+      <td>${u.active === false
+        ? '<span class="chip red">無効</span>'
+        : '<span class="chip green">有効</span>'}</td>
+      <td>${u.email === ME.email ? '<span class="chip blue">自分</span>'
+        : u.active === false
+          ? `<button class="btn sm" onclick="reactivate('${esc(u.email)}')">再有効化</button>`
+          : `<button class="btn sm danger" onclick="deactivate('${esc(u.email)}')">無効化</button>`}</td>
+    </tr>`).join("");
+
+  document.getElementById("store-table").innerHTML = stores.map(s => `<tr>
+    <td><b>${esc(s.name)}</b></td>
+    <td style="font-size:12px;color:var(--sub);">${esc(s.id)}</td>
+    <td>${users.filter(u => u.store_id === s.id && u.active !== false).length}名</td>
+    <td style="font-size:12px;">${esc(s.created_at || "—")}</td>
+  </tr>`).join("");
+
+  const me = await api("/api/me");
+  document.getElementById("google-status").innerHTML = me.google_enabled
+    ? '<span class="chip green">有効</span> Googleアカウントでのログインが有効です。上の表のメールアドレスだけがログインできます。'
+    : '<span class="chip amber">未設定（開発モード）</span> 現在は開発用ログインで動作しています。' +
+      '本物のGoogleログインを有効にするには <b>docs/google-login-setup.md</b> の手順でClient IDを発行し、' +
+      '<b>property-map/.env</b> に <code>GOOGLE_CLIENT_ID=...</code> を追記してください（再起動後に自動で切替）。';
+}
+
+async function addUser() {
+  const v = id => document.getElementById(id).value.trim();
+  if (!v("nu-email")) { toast("メールアドレスを入力してください"); return; }
+  try {
+    await api("/api/ogn/users", { json: {
+      email: v("nu-email"), name: v("nu-name"),
+      role: document.getElementById("nu-role").value,
+      store_id: document.getElementById("nu-store").value,
+    }});
+    toast("ユーザーを招待しました");
+    document.getElementById("nu-email").value = "";
+    document.getElementById("nu-name").value = "";
+    load();
+  } catch (e) { toast(e.message); }
+}
+
+async function changeRole(email, role) {
+  try { await api(`/api/ogn/users/${encodeURIComponent(email)}`, { method: "PUT", json: { role } });
+    toast("権限を変更しました"); } catch (e) { toast(e.message); load(); }
+}
+async function changeStore(email, store_id) {
+  try { await api(`/api/ogn/users/${encodeURIComponent(email)}`, { method: "PUT", json: { store_id } });
+    toast("所属店舗を変更しました"); } catch (e) { toast(e.message); load(); }
+}
+async function deactivate(email) {
+  if (!confirm(`${email} を無効化しますか？（ログインできなくなります）`)) return;
+  try { await api(`/api/ogn/users/${encodeURIComponent(email)}`, { method: "DELETE" });
+    toast("無効化しました"); load(); } catch (e) { toast(e.message); }
+}
+async function reactivate(email) {
+  try { await api(`/api/ogn/users/${encodeURIComponent(email)}`, { method: "PUT", json: { active: true } });
+    toast("再有効化しました"); load(); } catch (e) { toast(e.message); }
+}
+async function addStore() {
+  const name = document.getElementById("ns-name").value.trim();
+  if (!name) { toast("店舗名を入力してください"); return; }
+  try { await api("/api/ogn/stores", { json: { name } });
+    toast("加盟店を追加しました");
+    document.getElementById("ns-name").value = "";
+    load(); } catch (e) { toast(e.message); }
+}
+
+load();
+</script>
+{% endblock %}
