@@ -1,0 +1,6 @@
+# 秘密情報・ローカルデータはイメージに含めない
+.env
+data/
+__pycache__/
+*.pyc
+.DS_Store
