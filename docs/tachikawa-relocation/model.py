@@ -27,7 +27,7 @@ GENJOU_SHIN =   800_000    # 新店舗 原状回復費（賃貸のみ・10年後
 RENT_BASE   = 240_000      # ユーザー指定上限
 KANRI_M     = 6            # 保証金 ヶ月
 REIKIN_M    = 1
-CHUKAI_M    = 1.1
+CHUKAI_M    = 0.0        # 自社仲介のため不要（ユーザー確認 2026-08-26）
 HOSHOU_M    = 1.0
 SHOUKYAKU   = 0.20         # 保証金償却率
 KASAI_CHIN  = 30_000       # 火災保険（年）借主
@@ -52,7 +52,7 @@ PROPS = {
    eki='JR中央線・青梅線・南武線「立川」駅 徒歩6分 / 多摩都市モノレール「立川南」駅 徒歩7分',
    jimusho='不可（図面明記）',
    pet='不可', genkyou='空室・即引渡可',
-   torihiki='売主 / 手数料3%(税込)表記',
+   torihiki='売主（図面は手数料3%表記だが自社仲介のため負担なし）',
    shuzen_total=42_637_673,
    tokki=['大規模修繕 平成31年 実施済','共用給排水管更新 平成28年3月','共用部LED化 平成27年2月',
           '増圧給水ポンプ更新 令和元年11月','オートロック・宅配BOX・防犯カメラ・内廊下・EV',
@@ -69,7 +69,7 @@ PROPS = {
    eki='JR中央線「立川」駅 徒歩7分',
    jimusho='記載なし（管理規約要確認）',
    pet='不可', genkyou='空室・即引渡可',
-   torihiki='売主 / 手数料3%(税込)表記・広告不可',
+   torihiki='売主・広告不可（図面は手数料3%表記だが自社仲介のため負担なし）',
    shuzen_total=None,
    tokki=['商業地域・防火地域／土地持分 330/10,000（敷地295.76㎡）',
           '管理: 東急コミュニティー／全部委託(巡回)',
@@ -78,6 +78,7 @@ PROPS = {
  ),
 }
 
+SELF_BROKER    = True      # 自社仲介のため売買・賃貸とも仲介手数料は発生しない（ユーザー確認 2026-08-26）
 TATEMONO_RITSU = 0.40      # 建物比率（要・契約書/評価額按分で確定）
 HYOUKA_RITSU   = 0.50      # 固定資産税評価額／価格（推計）
 KASAI_SHOYU    = 60_000    # 火災保険（年）所有者
@@ -90,7 +91,8 @@ def build(p):
     d = dict(p)
     price = p['price']
     # 購入諸費用
-    d['chukai']  = round((price*0.03 + 60_000)*1.1)
+    d['chukai']  = 0 if SELF_BROKER else round((price*0.03 + 60_000)*1.1)
+    d['chukai_ref'] = round((price*0.03 + 60_000)*1.1)   # 第三者仲介なら発生する額（参考）
     d['hyouka']  = round(price*HYOUKA_RITSU)
     d['touroku'] = round(d['hyouka']*0.017)          # 土地1.5%/非住宅建物2.0%のブレンド
     d['shutoku'] = round(d['hyouka']*0.025)          # 土地3%×宅地1/2 + 非住宅建物4% のブレンド
