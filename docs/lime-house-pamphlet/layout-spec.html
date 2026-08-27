@@ -150,11 +150,16 @@ section{padding-top:64px}
 }
 .b{
   border:1px solid var(--line-strong);border-radius:1px;background:var(--surface);
-  padding:1.5cqw;display:flex;flex-direction:column;gap:.5cqw;overflow:hidden;min-width:0;
+  padding:1.2cqw 1.3cqw;display:flex;flex-direction:column;gap:.35cqw;overflow:hidden;min-width:0;
 }
-.b .id{font-family:var(--mono);font-size:2.5cqw;line-height:1;color:var(--accent);letter-spacing:.06em}
-.b .nm{font-family:var(--sans);font-weight:700;font-size:3cqw;line-height:1.35;color:var(--ink)}
-.b .nt{font-size:2.5cqw;line-height:1.45;color:var(--ink-3)}
+.b .id{font-family:var(--mono);font-size:2.1cqw;line-height:1.15;color:var(--accent);letter-spacing:.06em}
+.b .nm{font-family:var(--sans);font-weight:700;font-size:2.65cqw;line-height:1.3;color:var(--ink);
+  overflow-wrap:anywhere;letter-spacing:-.01em}
+.b .nt{font-size:2.1cqw;line-height:1.4;color:var(--ink-3);overflow-wrap:anywhere}
+.b.hdr{flex-direction:row;align-items:baseline;gap:1.4cqw}
+.b.hdr .nt{margin-left:auto;text-align:right}
+.b.sm .nm{font-size:2.4cqw}
+.b.sm .nt{font-size:1.95cqw}
 .b.photo{
   border-style:dashed;color:var(--ink-3);
   background:
@@ -257,7 +262,7 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
     <div class="fact"><b>PAGES</b>4P（両面2つ折りなし・4面フラット）</div>
     <div class="fact"><b>MARGIN</b>天地左右 12mm（データ面は10mm可）</div>
     <div class="fact"><b>GRID</b>12カラム／段間 4mm</div>
-    <div class="fact"><b>OPEN</b>2026年10月1日 開設・定員11名</div>
+    <div class="fact"><b>OPEN</b>2026年10月1日 開設・定員9名</div>
   </div>
 </header>
 
@@ -292,12 +297,12 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
       </div>
       <div class="diff-row">
         <div class="n">05</div>
-        <div class="what">グループ内訪問介護＋訪問看護＋済生会加須病院</div>
+        <div class="what">グループ内の訪問介護＋訪問看護＋済生会加須病院</div>
         <div class="how">3者の関係を<strong>横一列の連携図</strong>にする。文章より図で1秒。</div>
       </div>
       <div class="diff-row">
         <div class="n">06</div>
-        <div class="what">3食手作り／11名の小規模／駅徒歩1分</div>
+        <div class="what">3食手作り／9名の小規模／駅徒歩1分</div>
         <div class="how">P2で写真主体。ここは情緒面の担当。文字は短く。</div>
       </div>
     </div>
@@ -319,7 +324,7 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
       <div class="pg">P1</div>
       <h4>表紙</h4>
       <p>ブランドと結論。金額・介護度・生活保護・開設日を表紙の時点で言い切る。</p>
-      <div class="mini" style="grid-template-rows:7fr 13fr 34fr 17fr 9fr 12fr">
+      <div class="mini" style="grid-template-rows:8fr 13fr 33fr 17fr 9fr 12fr">
         <span></span><span></span><span class="p"></span><span></span><span class="a"></span><span></span>
       </div>
     </div>
@@ -343,7 +348,7 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
       <div class="pg">P4</div>
       <h4>料金・概要・連絡先</h4>
       <p>月額内訳、施設概要、アクセス、入居までの流れ、問い合わせ。裏表紙。</p>
-      <div class="mini" style="grid-template-rows:5fr 30fr 22fr 21fr 22fr">
+      <div class="mini" style="grid-template-rows:6fr 30fr 22fr 21fr 21fr">
         <span></span><span class="a"></span><span></span><span></span><span></span>
       </div>
     </div>
@@ -360,34 +365,34 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
   <div class="page-block">
     <div class="sheet-holder">
       <div class="sheet-cap"><span>PAGE 1 — COVER</span><span>A4 / 210×297</span></div>
-      <div class="sheet" style="grid-template-rows:7fr 13fr 34fr 17fr 9fr 12fr">
-        <div class="b" style="grid-column:1/13">
-          <div class="id">A</div><div class="nm">ロゴ（左）／施設種別ラベル（右）</div>
-          <div class="nt">LIME HOUSE ロゴ 幅38mm｜右に「住宅型有料老人ホーム」白抜きラベル</div>
+      <div class="sheet" style="grid-template-rows:8fr 13fr 33fr 17fr 9fr 12fr">
+        <div class="b hdr" style="grid-column:1/13">
+          <div class="id">A</div><div class="nm">ロゴ</div>
+          <div class="nt">LIME HOUSE ロゴのみ・中央配置・幅40mm</div>
         </div>
         <div class="b wash" style="grid-column:1/13">
-          <div class="id">B</div><div class="nm">キャッチコピー（明朝・28〜32pt）</div>
-          <div class="nt">最期まで、この家で。／サブ：月々9万円、要支援1〜要介護5</div>
+          <div class="id">B</div><div class="nm">キャッチコピー（明朝）</div>
+          <div class="nt">最期まで、この家で。／月々9万円で暮らせる、9人の住宅型有料老人ホーム。</div>
         </div>
         <div class="b photo" style="grid-column:1/13">
           <div class="id">C</div><div class="nm">外観写真（大／裁ち落とし）</div>
-          <div class="nt">木造2階建ての全景。晴天・午前。左下に「新古河駅 徒歩1分」帯を重ねる</div>
+          <div class="nt">木造2階建ての全景。左下に「新古河駅 徒歩1分」の帯を重ねる</div>
         </div>
-        <div class="b" style="grid-column:1/5">
-          <div class="id">D1</div><div class="nm">約束①<br>価格</div>
+        <div class="b sm" style="grid-column:1/5">
+          <div class="id">D1</div><div class="nm">約束① 価格</div>
           <div class="nt">介護度が上がっても月額同じ</div>
         </div>
-        <div class="b" style="grid-column:5/9">
-          <div class="id">D2</div><div class="nm">約束②<br>食事</div>
+        <div class="b sm" style="grid-column:5/9">
+          <div class="id">D2</div><div class="nm">約束② 食事</div>
           <div class="nt">3食すべて手作り</div>
         </div>
-        <div class="b" style="grid-column:9/13">
-          <div class="id">D3</div><div class="nm">約束③<br>受け入れ</div>
+        <div class="b sm" style="grid-column:9/13">
+          <div class="id">D3</div><div class="nm">約束③ 受け入れ</div>
           <div class="nt">保証人不明でも相談可</div>
         </div>
         <div class="b fill" style="grid-column:1/13">
           <div class="id">E</div><div class="nm">基本スペック帯（白抜き・1行）</div>
-          <div class="nt">定員11名｜要支援1〜要介護5｜生活保護の方専門｜2026年10月1日 開設</div>
+          <div class="nt">定員9名｜要支援1〜要介護5｜生活保護の方専門｜2026年10月1日 開設</div>
         </div>
         <div class="b" style="grid-column:1/13">
           <div class="id">F</div><div class="nm">所在地・電話・運営</div>
@@ -403,9 +408,9 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
         <div class="row">
           <div class="rid">A</div>
           <div>
-            <h4>ヘッダー（ロゴ＋種別）</h4>
-            <p>ロゴは左上、天から12mm。右端に「住宅型有料老人ホーム」を濃緑地・白抜きの小さなラベルで。種別を表紙に出すのは、サ高住・グループホームと混同されないためです。</p>
-            <div class="meta">HEIGHT 20mm / LOGO W 38mm</div>
+            <h4>ヘッダー（ロゴのみ）</h4>
+            <p>LIME HOUSE のロゴだけを置きます。中央配置・ロゴ幅40mm・天から12mm。施設種別は E のスペック帯で伝わるため、ここには重ねません。</p>
+            <div class="meta">HEIGHT 20mm / LOGO W 40mm / 中央配置</div>
           </div>
         </div>
         <div class="row">
@@ -414,7 +419,7 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
             <h4>キャッチコピー</h4>
             <p>明朝体・28〜32pt。原稿の「誰にも看取られることなく最期を迎える方を、これ以上増やしたくない」から抽出した一文を主に。</p>
             <div class="copy"><span class="mincho">最期まで、この家で。</span>
-月々9万円で暮らせる、11人の住宅型有料老人ホーム。</div>
+月々9万円で暮らせる、9人の住宅型有料老人ホーム。</div>
             <div class="meta">MAIN 30pt Mincho / SUB 13pt Gothic</div>
           </div>
         </div>
@@ -447,7 +452,7 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
           <div>
             <h4>基本スペック帯</h4>
             <p>濃緑ベタ・白抜き・1行。区切りは細い縦罫。ここに開設日を入れることで「これから開く新しい施設」であることを先に伝え、空室の問い合わせを取りにいきます。</p>
-            <div class="copy">住宅型有料老人ホーム ｜ 定員11名 ｜ 要支援1〜要介護5 ｜ 生活保護受給中の方専門 ｜ 2026年10月1日 開設</div>
+            <div class="copy">住宅型有料老人ホーム ｜ 定員9名 ｜ 要支援1〜要介護5 ｜ 生活保護受給中の方専門 ｜ 2026年10月1日 開設</div>
             <div class="meta">H 16mm / TEXT 11pt WHITE</div>
           </div>
         </div>
@@ -475,33 +480,33 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
     <div class="sheet-holder">
       <div class="sheet-cap"><span>PAGE 2 — STORY &amp; LIFE</span><span>A4 / 210×297</span></div>
       <div class="sheet" style="grid-template-rows:6fr 26fr 26fr 26fr 16fr">
-        <div class="b" style="grid-column:1/13">
+        <div class="b hdr" style="grid-column:1/13">
           <div class="id">A</div><div class="nm">見出し「私たちがこの家を始めた理由」</div>
         </div>
         <div class="b" style="grid-column:1/9">
           <div class="id">B1</div><div class="nm">原点ストーリー（本文・明朝／全文掲載）</div>
-          <div class="nt">200字。行間広め。冒頭1行だけ大きく抜き出す</div>
+          <div class="nt">行間広め。冒頭1行だけ大きく抜き出す</div>
         </div>
-        <div class="b photo" style="grid-column:9/13">
+        <div class="b photo sm" style="grid-column:9/13">
           <div class="id">B2</div><div class="nm">スタッフとご入居者の写真（縦）</div>
         </div>
-        <div class="b" style="grid-column:1/5">
+        <div class="b sm" style="grid-column:1/5">
           <div class="id">C1</div><div class="nm">特徴①<br>利用しやすい価格設定</div>
         </div>
-        <div class="b" style="grid-column:5/9">
+        <div class="b sm" style="grid-column:5/9">
           <div class="id">C2</div><div class="nm">特徴②<br>介護・看護と医療の連携</div>
-          <div class="nt">下に3者連携の横並び図</div>
+          <div class="nt">下に3者連携の図</div>
         </div>
-        <div class="b" style="grid-column:9/13">
+        <div class="b sm" style="grid-column:9/13">
           <div class="id">C3</div><div class="nm">特徴③<br>手作りの食事</div>
         </div>
         <div class="b photo" style="grid-column:1/7">
           <div class="id">D1</div><div class="nm">食事写真 3カット（朝・昼・晩）</div>
         </div>
-        <div class="b photo" style="grid-column:7/10">
-          <div class="id">D2</div><div class="nm">居室写真<br>（ベッド・エアコン完備）</div>
+        <div class="b photo sm" style="grid-column:7/10">
+          <div class="id">D2</div><div class="nm">居室写真<br>（ベッド完備）</div>
         </div>
-        <div class="b photo" style="grid-column:10/13">
+        <div class="b photo sm" style="grid-column:10/13">
           <div class="id">D3</div><div class="nm">共用写真<br>（リビング・浴室）</div>
         </div>
         <div class="b" style="grid-column:1/8">
@@ -537,11 +542,11 @@ footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:v
 お元気な方も介護が必要な方も、介護度の低い方も高い方も、同じ月額利用料で生活していただけるよう設定しました。それは将来への安心のひとつでもあると考えております。
 
 ② 介護・看護と医療の連携
-日常の訪問診療のほか、介護スタッフが気兼ねなく相談できるよう、グループ会社である合同会社NSが管理する訪問介護、及び近隣の訪問看護、協力医療機関との連携を築いています。
+日常の訪問診療のほか、介護スタッフが気兼ねなく相談できるよう、グループ内で運営する訪問介護、及び近隣の訪問看護、協力医療機関との連携を築いています。
 
 ③ 手作りの食事
 朝・昼・晩の3食すべて、栄養を考えた手作りのご飯を提供します。</div>
-            <div class="meta">連携図：[LIME HOUSE] ←→ [合同会社NS 訪問介護] ／ [近隣 訪問看護] ／ [済生会加須病院]</div>
+            <div class="meta">連携図：[LIME HOUSE] ←→ [訪問介護] ／ [訪問看護] ／ [済生会加須病院]</div>
           </div>
         </div>
         <div class="row">
@@ -584,10 +589,10 @@ JR宇都宮線「古河駅」から車で8分。ご家族・ご担当者様が�
     <div class="sheet-holder">
       <div class="sheet-cap"><span>PAGE 3 — ADMISSION &amp; CARE</span><span>A4 / 210×297</span></div>
       <div class="sheet" style="grid-template-rows:6fr 24fr 36fr 16fr 18fr">
-        <div class="b" style="grid-column:1/13">
+        <div class="b hdr" style="grid-column:1/13">
           <div class="id">A</div><div class="nm">見出し「受け入れ体制」＋リード1行</div>
         </div>
-        <div class="b data" style="grid-column:1/6">
+        <div class="b data sm" style="grid-column:1/6">
           <div class="id">B</div><div class="nm">入居条件（表）</div>
           <div class="nt">年齢・要介護度・認知症・保証人・生活保護・地域</div>
         </div>
@@ -597,15 +602,15 @@ JR宇都宮線「古河駅」から車で8分。ご家族・ご担当者様が�
         </div>
         <div class="b wash" style="grid-column:1/13">
           <div class="id">D</div><div class="nm">医療的ケア・疾患別 受け入れ一覧【主役】</div>
-          <div class="nt">2段組・○／条件つき／要相談の3記号＋条件を必ず併記</div>
+          <div class="nt">2段組・可否記号＋条件を必ず併記</div>
         </div>
         <div class="b stop" style="grid-column:1/8">
           <div class="id">E</div><div class="nm">受け入れが難しい状態</div>
-          <div class="nt">統合失調症・双極性障害・前頭側頭型認知症・感染症</div>
+          <div class="nt">統合失調症・双極性障害・前頭側頭型認知症・感染症など</div>
         </div>
-        <div class="b" style="grid-column:8/13">
+        <div class="b sm" style="grid-column:8/13">
           <div class="id">F</div><div class="nm">職員体制・夜間体制</div>
-          <div class="nt">18:00–9:00／夜間の補完手段を明記</div>
+          <div class="nt">18:00–9:00／補完手段を明記</div>
         </div>
         <div class="b" style="grid-column:1/13">
           <div class="id">G</div><div class="nm">協力医療機関（済生会加須病院）</div>
@@ -735,32 +740,32 @@ JR宇都宮線「古河駅」から車で8分。ご家族・ご担当者様が�
   <div class="page-block">
     <div class="sheet-holder">
       <div class="sheet-cap"><span>PAGE 4 — FEE &amp; FACILITY</span><span>A4 / 210×297</span></div>
-      <div class="sheet" style="grid-template-rows:5fr 30fr 22fr 21fr 22fr">
-        <div class="b" style="grid-column:1/13">
+      <div class="sheet" style="grid-template-rows:6fr 30fr 22fr 21fr 21fr">
+        <div class="b hdr" style="grid-column:1/13">
           <div class="id">A</div><div class="nm">見出し「料金プラン」</div>
         </div>
         <div class="b wash" style="grid-column:1/8">
           <div class="id">B</div><div class="nm">月額費用の内訳表【主役】</div>
-          <div class="nt">0円が3行並ぶ。合計 60,000〜90,000円を大きく</div>
+          <div class="nt">0円が3行並ぶ／合計 60,000〜90,000円を大きく</div>
         </div>
-        <div class="b" style="grid-column:8/13">
-          <div class="id">C</div><div class="nm">入居時費用／契約に関する事項</div>
+        <div class="b sm" style="grid-column:8/13">
+          <div class="id">C</div><div class="nm">入居時費用／契約事項</div>
           <div class="nt">敷金＝賃料1ヶ月分・居室移動なし</div>
         </div>
         <div class="b data" style="grid-column:1/8">
           <div class="id">D</div><div class="nm">施設概要（スペック表）</div>
         </div>
-        <div class="b" style="grid-column:8/13">
+        <div class="b sm" style="grid-column:8/13">
           <div class="id">E</div><div class="nm">居室・共用設備／居室タイプ</div>
         </div>
-        <div class="b photo" style="grid-column:1/6">
+        <div class="b photo sm" style="grid-column:1/6">
           <div class="id">F</div><div class="nm">アクセス地図＋交通</div>
         </div>
-        <div class="b" style="grid-column:6/13">
+        <div class="b sm" style="grid-column:6/13">
           <div class="id">G</div><div class="nm">入居までの流れ（4ステップ）</div>
         </div>
         <div class="b fill" style="grid-column:1/13">
-          <div class="id">H</div><div class="nm">お問い合わせ（ロゴ・TEL・FAX・住所・運営会社・QR）</div>
+          <div class="id">H</div><div class="nm">お問い合わせ（ロゴ／TEL・FAX／住所／運営会社／QR）</div>
         </div>
       </div>
     </div>
@@ -814,13 +819,14 @@ JR宇都宮線「古河駅」から車で8分。ご家族・ご担当者様が�
                 <tr><th>施設種別</th><td>住宅型有料老人ホーム</td></tr>
                 <tr><th>所在地</th><td>埼玉県加須市向古河670-4</td></tr>
                 <tr><th>開設年月日</th><td>2026年10月1日</td></tr>
-                <tr><th>定員／居室総数</th><td>11名／11居室</td></tr>
+                <tr><th>定員／居室総数</th><td>9名／9居室</td></tr>
                 <tr><th>土地面積</th><td class="num">159.15 ㎡</td></tr>
                 <tr><th>延床面積</th><td class="num">138.14 ㎡</td></tr>
                 <tr><th>建築年月日</th><td>平成3年4月12日</td></tr>
                 <tr><th>建物階数・構造</th><td>地上2階建て／木造</td></tr>
                 <tr><th>居住契約の権利形態</th><td>建物賃貸借方式</td></tr>
-                <tr><th>土地の権利形態</th><td>自社所有</td></tr>
+                <tr><th>建物の権利形態</th><td>所有権（自社所有）</td></tr>
+                <tr><th>土地の権利形態</th><td>借地権</td></tr>
               </table>
             </div>
           </div>
@@ -991,11 +997,12 @@ JR宇都宮線「古河駅」より車で8分
       <h4>情報が足りていないもの</h4>
       <ul class="clean">
         <li>電話番号・FAX番号・メールアドレス・ホームページURL（P1・P4に必須）</li>
-        <li>運営会社の正式名称・所在地・代表者名（合同会社NSは「グループ会社」との記載のみ）</li>
+        <li>運営会社の正式名称・所在地・代表者名（P1・P4のフッターに記載します）</li>
         <li>職員数、看護師・機能訓練指導員の配置、勤務形態（P3-F が空欄のままになります）</li>
         <li>調理場所（原稿は「-」。手作りを打ち出す以上、館内調理か外部かは書きたい項目です）</li>
         <li>1日の流れ（P2-E1 の骨子は仮置きです）</li>
         <li>ご利用者・スタッフの写真使用可否（掲載許諾）</li>
+        <li>土地の借地権の内容（地代・契約期間）。パンフレットには権利形態のみ記載し、詳細は重要事項説明書に載せます</li>
       </ul>
     </div>
     <div class="note warn">
