@@ -1,0 +1,1080 @@
+<title>LIME HOUSE パンフレット指示図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Zen+Old+Mincho:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F2F5F1;
+  --surface:#FFFFFF;
+  --surface-2:#E9EEE7;
+  --ink:#1C2220;
+  --ink-2:#4E5854;
+  --ink-3:#7C8783;
+  --line:#D6DED4;
+  --line-strong:#B4C0B1;
+  --accent:#4F8E6C;
+  --accent-soft:#8FC9A9;
+  --accent-wash:#E4F0E8;
+  --warn:#A9612F;
+  --warn-wash:#F6EAE0;
+  --stop:#9E3B3B;
+  --stop-wash:#F6E5E5;
+  --shadow:0 1px 2px rgba(28,34,32,.05), 0 8px 24px -16px rgba(28,34,32,.28);
+  --sans:"Zen Kaku Gothic New","Noto Sans JP","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  --body:"Noto Sans JP","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  --mincho:"Zen Old Mincho","Hiragino Mincho ProN",serif;
+  --mono:"Roboto Mono",ui-monospace,SFMono-Regular,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#141917;
+    --surface:#1C2320;
+    --surface-2:#232B27;
+    --ink:#E7EDE9;
+    --ink-2:#AEBAB4;
+    --ink-3:#7F8C87;
+    --line:#2C3531;
+    --line-strong:#3D4944;
+    --accent:#8FC9A9;
+    --accent-soft:#5E9C7A;
+    --accent-wash:#1E2C25;
+    --warn:#D9A272;
+    --warn-wash:#2C231A;
+    --stop:#DE8B8B;
+    --stop-wash:#2C1D1D;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141917;
+  --surface:#1C2320;
+  --surface-2:#232B27;
+  --ink:#E7EDE9;
+  --ink-2:#AEBAB4;
+  --ink-3:#7F8C87;
+  --line:#2C3531;
+  --line-strong:#3D4944;
+  --accent:#8FC9A9;
+  --accent-soft:#5E9C7A;
+  --accent-wash:#1E2C25;
+  --warn:#D9A272;
+  --warn-wash:#2C231A;
+  --stop:#DE8B8B;
+  --stop-wash:#2C1D1D;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+h1,h2,h3,h4{font-family:var(--sans);text-wrap:balance;margin:0}
+p{margin:0}
+a{color:var(--accent)}
+
+/* ---------- masthead ---------- */
+.masthead{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+.eyebrow{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:18px;
+}
+.masthead h1{font-size:clamp(30px,5.2vw,46px);font-weight:900;line-height:1.28;letter-spacing:.01em}
+.masthead .lede{margin-top:20px;max-width:62ch;color:var(--ink-2);font-size:15.5px}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.fact{
+  background:var(--surface);border:1px solid var(--line);border-radius:2px;
+  padding:8px 13px;font-size:12.5px;line-height:1.5;color:var(--ink-2);
+}
+.fact b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-3);font-weight:500}
+
+/* ---------- sections ---------- */
+section{padding-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em;padding-top:4px}
+.sec-head h2{font-size:clamp(21px,3vw,27px);font-weight:700;letter-spacing:.01em}
+.sec-head .sub{color:var(--ink-3);font-size:13px}
+
+/* ---------- strategy cards ---------- */
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:20px 20px 22px;box-shadow:var(--shadow)}
+.card h3{font-size:15.5px;font-weight:700;margin-bottom:8px;line-height:1.6}
+.card p{font-size:13.5px;color:var(--ink-2);line-height:1.8}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--accent);border:1px solid var(--accent-soft);background:var(--accent-wash);
+  padding:2px 8px;border-radius:2px;margin-bottom:12px;
+}
+
+.diff{display:grid;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface)}
+.diff-row{display:grid;grid-template-columns:44px 1fr 1.15fr;gap:0;border-top:1px solid var(--line)}
+.diff-row:first-child{border-top:none}
+.diff-row.head{background:var(--surface-2);font-family:var(--sans);font-weight:700;font-size:12px;color:var(--ink-2)}
+.diff-row > div{padding:13px 14px;font-size:13.5px;line-height:1.75}
+.diff-row .n{font-family:var(--mono);color:var(--accent);font-size:12.5px;padding-top:15px}
+.diff-row .what{font-weight:700;font-family:var(--sans);font-size:14px}
+.diff-row .how{color:var(--ink-2);font-size:13px}
+@media (max-width:620px){
+  .diff-row{grid-template-columns:1fr}
+  .diff-row.head{display:none}
+  .diff-row .n{padding-bottom:0}
+  .diff-row .what{padding-bottom:4px}
+}
+
+/* ---------- page spec layout ---------- */
+.page-block{
+  display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:36px;align-items:start;
+  padding-top:34px;
+}
+@media (max-width:860px){.page-block{grid-template-columns:1fr;gap:24px}}
+.sheet-holder{position:sticky;top:24px}
+@media (max-width:860px){.sheet-holder{position:static}}
+.sheet-cap{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-3);
+  display:flex;justify-content:space-between;margin-bottom:8px;
+}
+
+/* the A4 wireframe */
+.sheet{
+  aspect-ratio:210/297;width:100%;background:var(--surface);
+  border:1px solid var(--line-strong);box-shadow:var(--shadow);
+  container-type:inline-size;
+  display:grid;grid-template-columns:repeat(12,1fr);gap:1.1cqw;padding:2.4cqw;
+}
+.b{
+  border:1px solid var(--line-strong);border-radius:1px;background:var(--surface);
+  padding:1.2cqw 1.3cqw;display:flex;flex-direction:column;gap:.35cqw;overflow:hidden;min-width:0;
+}
+.b .id{font-family:var(--mono);font-size:2.1cqw;line-height:1.15;color:var(--accent);letter-spacing:.06em}
+.b .nm{font-family:var(--sans);font-weight:700;font-size:2.65cqw;line-height:1.3;color:var(--ink);
+  overflow-wrap:anywhere;letter-spacing:-.01em}
+.b .nt{font-size:2.1cqw;line-height:1.4;color:var(--ink-3);overflow-wrap:anywhere}
+.b.hdr{flex-direction:row;align-items:baseline;gap:1.4cqw}
+.b.hdr .nt{margin-left:auto;text-align:right}
+.b.sm .nm{font-size:2.4cqw}
+.b.sm .nt{font-size:1.95cqw}
+.b.photo{
+  border-style:dashed;color:var(--ink-3);
+  background:
+    repeating-linear-gradient(135deg,transparent 0 6px,var(--surface-2) 6px 7px);
+}
+.b.photo .nm{font-weight:500}
+.b.fill{background:var(--accent);border-color:var(--accent)}
+.b.fill .id{color:rgba(255,255,255,.72)}
+.b.fill .nm,.b.fill .nt{color:#fff}
+:root[data-theme="dark"] .b.fill .nm,:root[data-theme="dark"] .b.fill .nt{color:#0F1513}
+:root[data-theme="dark"] .b.fill .id{color:rgba(15,21,19,.6)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .b.fill .nm,
+  :root:not([data-theme="light"]) .b.fill .nt{color:#0F1513}
+  :root:not([data-theme="light"]) .b.fill .id{color:rgba(15,21,19,.6)}
+}
+.b.wash{background:var(--accent-wash);border-color:var(--accent-soft)}
+.b.data{background:var(--surface)}
+.b.data::after{
+  content:"";flex:1;min-height:0;
+  background:repeating-linear-gradient(var(--line) 0 1px,transparent 1px 5.5px);
+  opacity:.85;
+}
+.b.stop{background:var(--stop-wash);border-color:var(--stop)}
+.b.stop .id{color:var(--stop)}
+
+/* spec list next to the sheet */
+.spec h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.spec .role{color:var(--ink-2);font-size:13.5px;margin-bottom:20px;max-width:60ch}
+.rows{display:grid;gap:0;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:38px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.row .rid{font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:3px}
+.row h4{font-size:14px;font-weight:700;margin-bottom:5px}
+.row p{font-size:13.5px;color:var(--ink-2);line-height:1.8}
+.row .copy{
+  margin-top:9px;background:var(--surface);border-left:2px solid var(--accent-soft);
+  padding:11px 14px;font-size:13px;line-height:1.85;color:var(--ink);
+  white-space:pre-wrap;border-radius:0 2px 2px 0;
+}
+.row .copy .mincho{font-family:var(--mincho);font-size:15px}
+.row .meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.06em;margin-top:7px}
+
+/* ---------- tables ---------- */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.7}
+th{background:var(--surface-2);font-family:var(--sans);font-weight:700;font-size:12px;color:var(--ink-2);white-space:nowrap}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tfoot td{background:var(--accent-wash);font-weight:700;color:var(--ink)}
+.mark{font-family:var(--mono);font-weight:500}
+.ok{color:var(--accent)}
+.cond{color:var(--warn)}
+.no{color:var(--ink-2)}
+.no.hard{color:var(--stop)}
+
+/* ---------- callouts ---------- */
+.note{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);padding:16px 18px;border-radius:0 3px 3px 0;font-size:13.5px;line-height:1.85;color:var(--ink-2)}
+.note.warn{border-left-color:var(--warn);background:var(--warn-wash)}
+.note h4{font-size:14px;margin-bottom:6px;color:var(--ink)}
+.stack{display:grid;gap:12px}
+ul.clean{margin:0;padding-left:1.15em}
+ul.clean li{font-size:13.5px;color:var(--ink-2);line-height:1.85;margin-bottom:3px}
+
+/* ---------- thumbnails map ---------- */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.thumb{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:14px;box-shadow:var(--shadow)}
+.thumb .pg{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em}
+.thumb h4{font-size:14.5px;font-weight:700;margin:6px 0 6px}
+.thumb p{font-size:12.5px;color:var(--ink-2);line-height:1.75}
+.mini{aspect-ratio:210/297;border:1px solid var(--line-strong);margin-top:12px;display:grid;gap:2px;padding:4px;container-type:inline-size}
+.mini span{background:var(--surface-2);border-radius:1px}
+.mini span.a{background:var(--accent-soft)}
+.mini span.p{background:repeating-linear-gradient(135deg,transparent 0 4px,var(--line-strong) 4px 5px)}
+
+/* ---------- swatches ---------- */
+.sw{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:12px}
+.sw div{border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--surface)}
+.sw .chip{height:56px}
+.sw .lb{padding:9px 11px;font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.6}
+.sw .lb b{display:block;font-family:var(--sans);font-size:12px;color:var(--ink);font-weight:700}
+
+.typesample{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:22px 24px}
+.typesample .a{font-family:var(--mincho);font-size:clamp(21px,3.4vw,30px);font-weight:600;line-height:1.55;letter-spacing:.02em}
+.typesample .b2{font-family:var(--sans);font-weight:900;font-size:clamp(17px,2.6vw,22px);margin-top:18px;letter-spacing:.01em}
+.typesample .c{font-family:var(--body);font-size:13.5px;color:var(--ink-2);margin-top:12px;max-width:62ch}
+.typesample .d{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:14px;letter-spacing:.05em}
+
+footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;line-height:1.9}
+
+/* ---------- print / PDF ---------- */
+@media print{
+  :root{
+    --paper:#FFFFFF;--surface:#FFFFFF;--surface-2:#EFF3EE;--ink:#1C2220;--ink-2:#454F4B;--ink-3:#6C7772;
+    --line:#CFD8CD;--line-strong:#A9B6A6;--accent:#3F7A5B;--accent-soft:#8FC9A9;--accent-wash:#E9F2EC;
+    --warn:#8F4E22;--warn-wash:#F7EEE6;--stop:#8C3232;--stop-wash:#F7E9E9;--shadow:none;
+  }
+  body{background:#fff;font-size:10.5pt;line-height:1.7}
+  .wrap{max-width:none;padding:0 8mm 8mm}
+  .masthead{padding:0 0 18px}
+  section{padding-top:22px}
+  .sec-head{break-after:avoid}
+  .sheet-holder{position:static}
+  .page-block{grid-template-columns:minmax(0,72mm) 1fr;gap:8mm;padding-top:14px}
+  .sheet{break-inside:avoid}
+  .row,.card,.note,.thumb,.diff-row,.typesample,.sw div{break-inside:avoid}
+  .tbl-scroll{overflow:visible}
+  table{min-width:0;font-size:9pt}
+  .copy{font-size:9.5pt}
+  footer{margin-top:30px}
+  a{color:var(--ink);text-decoration:none}
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Layout Direction / 4P Brochure</div>
+  <h1>LIME HOUSE<br>パンフレット 4ページ 構成・配置指示</h1>
+  <p class="lede">A4縦・4ページ（表紙／想い・暮らし／受け入れ体制／料金・概要）の割り付け指示です。配布先の中心は<strong>生活保護担当ケースワーカー・病院の医療相談員（MSW）・地域包括／居宅ケアマネジャー</strong>。「読み物」ではなく「照会先が可否を10秒で判断できる資料」として組みます。</p>
+  <div class="facts">
+    <div class="fact"><b>SIZE</b>A4 縦 210×297mm／塗り足し3mm</div>
+    <div class="fact"><b>PAGES</b>4P（両面2つ折りなし・4面フラット）</div>
+    <div class="fact"><b>MARGIN</b>天地左右 12mm（データ面は10mm可）</div>
+    <div class="fact"><b>GRID</b>12カラム／段間 4mm</div>
+    <div class="fact"><b>OPEN</b>2026年10月1日 開設・定員9名</div>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2>まず、何で差をつけるか</h2>
+    <span class="sub">紙面の面積配分は、この順番で決めています</span>
+  </div>
+  <div class="stack">
+    <div class="diff">
+      <div class="diff-row head"><div class="n">#</div><div class="what">打ち出す差別化</div><div class="how">紙面での見せ方</div></div>
+      <div class="diff-row">
+        <div class="n">01</div>
+        <div class="what">一般的な老人ホームにある制限が、ここにはない</div>
+        <div class="how">外出・面会・食事・起きる時間を、こちらで決めない。施設に移ると自由がなくなる——という前提そのものを覆す一点で、他施設との差が最も出る。P1の約束①とP2で正面から打ち出す。</div>
+      </div>
+      <div class="diff-row">
+        <div class="n">02</div>
+        <div class="what">月々9万円以内・入居時費用0円・追加費用0円</div>
+        <div class="how">表紙に金額を大きく。P4で内訳（賃料3万＋管理費3万＋食費0〜3万）を出し、<strong>6万〜9万円という幅</strong>と、入居時費用0円／上乗せ介護費0円／生活支援サービス費0円が<strong>縦に並ぶ表</strong>で根拠を示す。介護度が上がっても月額は変わらない。</div>
+      </div>
+      <div class="diff-row">
+        <div class="n">03</div>
+        <div class="what">身元保証人・身元引受人が不明でも相談可／全国から</div>
+        <div class="how">照会側が最も詰まる条件。P1の3つの約束の1枠を使い、P3の入居条件表でも太字。<strong>「こだわり3つ目」はここを推奨。</strong></div>
+      </div>
+      <div class="diff-row">
+        <div class="n">04</div>
+        <div class="what">医療の受け入れ範囲を、条件つきで具体的に開示</div>
+        <div class="how">他施設が「応相談」で濁す部分を、ヤールⅢまで・褥瘡ステージⅡまで等の<strong>線引きまで書く</strong>。P3を丸ごと使う最大の武器。</div>
+      </div>
+      <div class="diff-row">
+        <div class="n">05</div>
+        <div class="what">グループ内の訪問介護＋済生会加須病院の訪問診療</div>
+        <div class="how">2者の関係を<strong>横並びの連携図</strong>にする。文章より図で1秒。</div>
+      </div>
+      <div class="diff-row">
+        <div class="n">06</div>
+        <div class="what">3食手作り／9名の小規模／駅徒歩1分</div>
+        <div class="how">P2で写真主体。ここは情緒面の担当。文字は短く。</div>
+      </div>
+    </div>
+    <div class="note">
+      <h4>「こだわりのブランド特集」3つ目（空欄）の提案</h4>
+      ①月々9万円 ②3食手作り に続く3つ目は、<strong>「身元保証人がいなくても、全国どこからでも」</strong>を推します。価格と食事は他施設も言えますが、保証人不在の受け入れは照会が集中する条件で、かつ御社が実際に「不明でも可」と答えられる項目だからです。<br>
+      なお表紙の「3つの約束」は<strong>①自由 ②食事 ③受け入れ</strong>で構成します。価格はキャッチコピーとスペック帯で伝わるため、約束の枠は他施設が真似しにくい3つに使います。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <h2>4ページの役割分担</h2>
+    <span class="sub">P1で掴み、P2で信頼、P3で可否判断、P4で意思決定</span>
+  </div>
+  <div class="map">
+    <div class="thumb">
+      <div class="pg">P1</div>
+      <h4>表紙</h4>
+      <p>ブランドと結論。金額・介護度・生活保護・開設日を表紙の時点で言い切る。</p>
+      <div class="mini" style="grid-template-rows:8fr 13fr 33fr 17fr 9fr 12fr">
+        <span></span><span></span><span class="p"></span><span></span><span class="a"></span><span></span>
+      </div>
+    </div>
+    <div class="thumb">
+      <div class="pg">P2</div>
+      <h4>私たちの想い／暮らし</h4>
+      <p>創業の原点と3つの約束、食事・居室・共用の写真。唯一の情緒ページ。</p>
+      <div class="mini" style="grid-template-rows:6fr 26fr 26fr 26fr 16fr">
+        <span></span><span></span><span></span><span class="p"></span><span></span>
+      </div>
+    </div>
+    <div class="thumb">
+      <div class="pg">P3</div>
+      <h4>受け入れ体制</h4>
+      <p>入居条件・医療対応可否一覧・職員体制・協力医療機関。専門職が最初に開く面。</p>
+      <div class="mini" style="grid-template-rows:6fr 24fr 36fr 16fr 18fr">
+        <span></span><span></span><span class="a"></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="thumb">
+      <div class="pg">P4</div>
+      <h4>料金・概要・連絡先</h4>
+      <p>月額内訳、施設概要、アクセス、入居までの流れ、問い合わせ。裏表紙。</p>
+      <div class="mini" style="grid-template-rows:6fr 26fr 24fr 22fr 22fr">
+        <span></span><span class="a"></span><span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAGE 1 ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">P1</span>
+    <h2>表紙</h2>
+    <span class="sub">3秒で「誰を・いくらで・いつから」受け入れる施設か分かる面</span>
+  </div>
+  <div class="page-block">
+    <div class="sheet-holder">
+      <div class="sheet-cap"><span>PAGE 1 — COVER</span><span>A4 / 210×297</span></div>
+      <div class="sheet" style="grid-template-rows:8fr 13fr 33fr 17fr 9fr 12fr">
+        <div class="b hdr" style="grid-column:1/13">
+          <div class="id">A</div><div class="nm">ロゴ</div>
+          <div class="nt">LIME HOUSE ロゴのみ・中央配置・幅40mm</div>
+        </div>
+        <div class="b wash" style="grid-column:1/13">
+          <div class="id">B</div><div class="nm">キャッチコピー（明朝）</div>
+          <div class="nt">最期まで、この家で。／月々9万円で暮らせる、9人の住宅型有料老人ホーム。</div>
+        </div>
+        <div class="b photo" style="grid-column:1/13">
+          <div class="id">C</div><div class="nm">外観写真（大／裁ち落とし）</div>
+          <div class="nt">木造2階建ての全景。左下に「新古河駅 徒歩1分」の帯を重ねる</div>
+        </div>
+        <div class="b sm" style="grid-column:1/5">
+          <div class="id">D1</div><div class="nm">約束① 自由</div>
+          <div class="nt">外出も食事も、これまで通り</div>
+        </div>
+        <div class="b sm" style="grid-column:5/9">
+          <div class="id">D2</div><div class="nm">約束② 食事</div>
+          <div class="nt">3食すべて手作り</div>
+        </div>
+        <div class="b sm" style="grid-column:9/13">
+          <div class="id">D3</div><div class="nm">約束③ 受け入れ</div>
+          <div class="nt">保証人不明でも相談可</div>
+        </div>
+        <div class="b fill" style="grid-column:1/13">
+          <div class="id">E</div><div class="nm">基本スペック帯（白抜き・1行）</div>
+          <div class="nt">定員9名｜要支援1〜要介護5｜生活保護の方専門｜2026年10月1日 開設</div>
+        </div>
+        <div class="b" style="grid-column:1/13">
+          <div class="id">F</div><div class="nm">所在地・電話・運営会社</div>
+          <div class="nt">埼玉県加須市向古河670-4｜TEL 070-4036-1761｜株式会社Lime</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <h3>P1 ブロック指示</h3>
+      <p class="role">表紙で情緒を作りすぎないこと。この紙は施設探しをしている専門職の机に他社と並べて置かれます。写真は1枚だけ大きく、あとは「言い切る文字」で構成します。</p>
+      <div class="rows">
+        <div class="row">
+          <div class="rid">A</div>
+          <div>
+            <h4>ヘッダー（ロゴのみ）</h4>
+            <p>LIME HOUSE のロゴだけを置きます。中央配置・ロゴ幅40mm・天から12mm。施設種別は E のスペック帯で伝わるため、ここには重ねません。</p>
+            <div class="meta">HEIGHT 20mm / LOGO W 40mm / 中央配置</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">B</div>
+          <div>
+            <h4>キャッチコピー</h4>
+            <p>明朝体・28〜32pt。原稿の「誰にも看取られることなく最期を迎える方を、これ以上増やしたくない」から抽出した一文を主に。</p>
+            <div class="copy"><span class="mincho">最期まで、この家で。</span>
+月々9万円で暮らせる、9人の住宅型有料老人ホーム。</div>
+            <div class="meta">MAIN 30pt Mincho / SUB 13pt Gothic</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">C</div>
+          <div>
+            <h4>外観写真（このページ唯一の大判）</h4>
+            <p>左右は裁ち落とし。人物を入れるならスタッフ1名がさりげなく玄関に立つ程度に。写真の左下に半透明の濃緑帯を重ね、<strong>「東武日光線 新古河駅 徒歩1分／JR古河駅から車8分」</strong>を白抜きで。</p>
+            <div class="meta">SIZE W210 × H95mm / BLEED L・R</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">D1–D3</div>
+          <div>
+            <h4>3つの約束（アイコン＋見出し＋1行）</h4>
+            <p>幅3等分。各枠にピクトグラム（開いた扉／お椀／握手）＋見出し1行＋補足1行。ここが「こだわりのブランド特集」の表紙版です。</p>
+            <div class="copy">① 暮らし方を、決めつけない。
+　外出も面会も食事も、一般的な施設にある制限を設けていません。
+
+② 朝・昼・晩、3食すべて手作り。
+　栄養を考えた食事を、毎日この家の台所から。
+
+③ 保証人がいなくても、全国どこからでも。
+　身元保証人・身元引受人が不明の方もご相談ください。</div>
+            <div class="meta">EACH W 62mm / ICON 14mm</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">E</div>
+          <div>
+            <h4>基本スペック帯</h4>
+            <p>濃緑ベタ・白抜き・1行。区切りは細い縦罫。ここに開設日を入れることで「これから開く新しい施設」であることを先に伝え、空室の問い合わせを取りにいきます。</p>
+            <div class="copy">住宅型有料老人ホーム ｜ 定員9名 ｜ 要支援1〜要介護5 ｜ 生活保護受給中の方専門 ｜ 2026年10月1日 開設</div>
+            <div class="meta">H 16mm / TEXT 11pt WHITE</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">F</div>
+          <div>
+            <h4>フッター（所在地・連絡先）</h4>
+            <p>表紙と裏表紙の両方に連絡先を置きます（この面だけコピーして回覧されるため）。表紙は1行に収め、詳細はP4の問い合わせ帯へ。</p>
+            <div class="copy">LIME HOUSE ／ 埼玉県加須市向古河670-4
+TEL 070-4036-1761 ／ lime@lime-fit.com ／ https://lime-fit.com/
+運営：株式会社Lime</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAGE 2 ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">P2</span>
+    <h2>私たちの想い／暮らし</h2>
+    <span class="sub">唯一、写真と文章で読ませる面</span>
+  </div>
+  <div class="page-block">
+    <div class="sheet-holder">
+      <div class="sheet-cap"><span>PAGE 2 — STORY &amp; LIFE</span><span>A4 / 210×297</span></div>
+      <div class="sheet" style="grid-template-rows:6fr 26fr 26fr 26fr 16fr">
+        <div class="b hdr" style="grid-column:1/13">
+          <div class="id">A</div><div class="nm">見出し「私たちがこの家を始めた理由」</div>
+        </div>
+        <div class="b" style="grid-column:1/9">
+          <div class="id">B1</div><div class="nm">原点ストーリー（本文・明朝／全文掲載）</div>
+          <div class="nt">行間広め。冒頭1行だけ大きく抜き出す</div>
+        </div>
+        <div class="b photo sm" style="grid-column:9/13">
+          <div class="id">B2</div><div class="nm">スタッフとご入居者の写真（縦）</div>
+        </div>
+        <div class="b sm" style="grid-column:1/5">
+          <div class="id">C1</div><div class="nm">特徴①<br>利用しやすい価格設定</div>
+        </div>
+        <div class="b sm" style="grid-column:5/9">
+          <div class="id">C2</div><div class="nm">特徴②<br>介護・看護と医療の連携</div>
+          <div class="nt">下に3者連携の図</div>
+        </div>
+        <div class="b sm" style="grid-column:9/13">
+          <div class="id">C3</div><div class="nm">特徴③<br>手作りの食事</div>
+        </div>
+        <div class="b photo" style="grid-column:1/7">
+          <div class="id">D1</div><div class="nm">食事写真 3カット（朝・昼・晩）</div>
+        </div>
+        <div class="b photo sm" style="grid-column:7/10">
+          <div class="id">D2</div><div class="nm">居室写真<br>（ベッド完備）</div>
+        </div>
+        <div class="b photo sm" style="grid-column:10/13">
+          <div class="id">D3</div><div class="nm">共用写真<br>（リビング・浴室）</div>
+        </div>
+        <div class="b" style="grid-column:1/8">
+          <div class="id">E1</div><div class="nm">1日の流れ（横タイムライン）</div>
+        </div>
+        <div class="b wash" style="grid-column:8/13">
+          <div class="id">E2</div><div class="nm">この家での自由（制限を設けない暮らし）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <h3>P2 ブロック指示</h3>
+      <p class="role">B1の文章は原稿をほぼそのまま使います。ここだけ明朝体・行間190%にして、他ページ（ゴシック・データ）と質感を変えてください。ページをめくった瞬間に「密度が落ちる」設計です。</p>
+      <div class="rows">
+        <div class="row">
+          <div class="rid">B1</div>
+          <div>
+            <h4>原点ストーリー</h4>
+            <p>冒頭の一文だけ18ptで抜き出し、残りを11ptで流します。文末に代表者名・肩書・署名（手書き風でも可）を入れると信頼度が上がります。</p>
+            <div class="copy"><span class="mincho">誰にも看取られることなく最期を迎える方を、これ以上増やしたくない。</span>
+
+私たちがLIME HOUSEを始めた原点は、その想いです。ご事情から行き場を見つけにくい方にも、住み慣れた地域で、顔なじみのスタッフに囲まれて過ごしていただきたい。協力医療機関と連携しながら、ご入居者様お一人おひとりの生活のペースを尊重し、最期のその時までこの家で暮らせる支援を続けてまいります。</div>
+            <div class="meta">W 118mm / 明朝 11pt / 行間 190%</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">C1–C3</div>
+          <div>
+            <h4>3つの特徴（原稿の1・2・3をそのまま展開）</h4>
+            <p>番号は大きく（36pt・薄い緑）。見出しゴシック太、本文10.5pt。C2の下には連携図を必ず入れてください——文章で読ませると伝わりません。</p>
+            <div class="copy">① 利用しやすい価格設定
+お元気な方も介護が必要な方も、介護度の低い方も高い方も、同じ月額利用料で生活していただけるよう設定しました。それは将来への安心のひとつでもあると考えております。
+
+② 介護・看護と医療の連携
+日常の訪問診療のほか、介護スタッフが気兼ねなく相談できるよう、グループ内で運営する訪問介護と、協力医療機関との連携を築いています。
+
+③ 手作りの食事
+朝・昼・晩の3食すべて、栄養を考えた手作りのご飯を提供します。調理はホームの台所で行う館内調理です。</div>
+            <div class="meta">連携図：[LIME HOUSE] ←→ [グループ内 訪問介護] ／ [済生会加須病院 訪問診療]</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">D1–D3</div>
+          <div>
+            <h4>暮らしの写真帯</h4>
+            <p>食事は必ず3カット（朝・昼・晩）で「毎日」を示す。居室は生活感のある状態（ベッド・カーテン・テレビが入った状態）で。キャプションは各10字以内。</p>
+            <div class="meta">CAPTION 8pt / 白地に濃緑</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">E1</div>
+          <div>
+            <h4>1日の流れ</h4>
+            <p>横一列のタイムライン。時刻は等幅数字で左揃え。食事・服薬・入浴が1日の柱であることが見えるよう、この3つだけ濃緑のドットで強調します。<strong>末尾に「※時間はあくまで目安です。過ごし方はご自身のペースで決めていただけます」を8ptで添え、隣のE2（自由）と矛盾しないようにします。</strong></p>
+            <div class="copy">8:00　起床
+8:30　朝食
+9:30　服薬・口腔ケア・入浴
+10:30　療法・趣味活動
+11:30　昼食
+12:30　服薬・口腔ケア
+14:00　療法・趣味活動
+17:00　夕食
+18:00　服薬・口腔ケア・入浴
+20:00　就寝</div>
+            <div class="meta">TIMELINE W 130mm / 時刻 8pt tabular / 項目 9pt</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">E2</div>
+          <div>
+            <h4>この家での自由</h4>
+            <p>薄緑地の枠。一般的な老人ホームとの違いが最も出る箇所です。<strong>禁止していないことを「できること」として並べる</strong>のがコツで、「〜は自由です」と書くより「時間を決めていません」と書くほうが、施設慣れした読み手には強く届きます。1日の流れ（E1）のすぐ隣に置き、時間割と自由が矛盾しないことを見せます。</p>
+            <div class="copy">この家に、細かな決まりごとはありません。
+
+・外出や外泊の時間を決めていません（体調に応じてご相談ください）
+・面会の時間を決めていません
+・召し上がるものを制限していません（治療上の必要がある場合はご相談ください）
+・起きる時間も、休む時間も、ご自身のペースで
+
+安全に関わることだけは一緒に考えさせてください。それ以外は、これまでの暮らしをそのまま続けていただけます。</div>
+            <div class="meta">立地（駅徒歩1分・古河駅から車8分）は P1 の写真帯と P4 のアクセスで扱うため、この枠では繰り返しません</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAGE 3 ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">P3</span>
+    <h2>受け入れ体制</h2>
+    <span class="sub">この面が、他施設のパンフレットとの決定的な差になります</span>
+  </div>
+  <div class="page-block">
+    <div class="sheet-holder">
+      <div class="sheet-cap"><span>PAGE 3 — ADMISSION &amp; CARE</span><span>A4 / 210×297</span></div>
+      <div class="sheet" style="grid-template-rows:6fr 24fr 36fr 16fr 18fr">
+        <div class="b hdr" style="grid-column:1/13">
+          <div class="id">A</div><div class="nm">見出し「受け入れ体制」＋リード1行</div>
+        </div>
+        <div class="b data sm" style="grid-column:1/6">
+          <div class="id">B</div><div class="nm">入居条件（表）</div>
+          <div class="nt">年齢・要介護度・認知症・保証人・生活保護・地域</div>
+        </div>
+        <div class="b" style="grid-column:6/13">
+          <div class="id">C</div><div class="nm">サービス内容（4区分）</div>
+          <div class="nt">訪問診療／訪問介護／見守り・生活相談／歯科・口腔ケア</div>
+        </div>
+        <div class="b wash" style="grid-column:1/13">
+          <div class="id">D</div><div class="nm">医療的ケア・疾患別 受け入れ一覧【主役】</div>
+          <div class="nt">2段組・可否記号＋条件を必ず併記</div>
+        </div>
+        <div class="b stop" style="grid-column:1/8">
+          <div class="id">E</div><div class="nm">受け入れが難しい状態</div>
+          <div class="nt">統合失調症・双極性障害・前頭側頭型認知症・感染症など</div>
+        </div>
+        <div class="b sm" style="grid-column:8/13">
+          <div class="id">F</div><div class="nm">夜間の見守り体制</div>
+          <div class="nt">18:00–9:00／見守りの3手段</div>
+        </div>
+        <div class="b" style="grid-column:1/13">
+          <div class="id">G</div><div class="nm">協力医療機関（済生会加須病院）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <h3>P3 ブロック指示</h3>
+      <p class="role">ページの約4割をDに使います。多くの施設が「応相談」で濁す欄に、御社は<strong>線引きを書ける</strong>。それを表で見せることが最大の差別化です。記号だけにせず、条件を必ず添えてください。</p>
+      <div class="rows">
+        <div class="row">
+          <div class="rid">B</div>
+          <div>
+            <h4>入居条件</h4>
+            <p>2列の表。「制限なし」「可能」を濃緑で強調。保証人の2行が最も見られます。</p>
+            <div class="tbl-scroll" style="margin-top:10px">
+              <table>
+                <tr><th>年齢</th><td>制限なし</td></tr>
+                <tr><th>要介護度</th><td>要支援1 〜 要介護5</td></tr>
+                <tr><th>認知症</th><td>受け入れ相談可能</td></tr>
+                <tr><th>身元引受人</th><td><strong>不明でも可</strong></td></tr>
+                <tr><th>身元保証人</th><td><strong>不明でも可</strong></td></tr>
+                <tr><th>生活保護</th><td>受給中の方を専門にお受けしています</td></tr>
+                <tr><th>お住まいの地域</th><td>全国から受け入れ可能</td></tr>
+                <tr><th>その他</th><td>介護が必要な方</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">C</div>
+          <div>
+            <h4>サービス内容</h4>
+            <p>4区分をアイコン付きで。「個別リハビリなし」「介護保険外サービスなし」も正直に書き、誤解による入居後トラブルを防ぎます。</p>
+            <div class="copy">医療：協力医療機関による訪問診療
+定期的な訪問診療で日々の健康管理を行います。点滴管理、褥瘡のケア、酸素管理、終末期の緩和ケアなど専門的な処置は、協力医療機関と相談のうえ対応します。
+
+介護：訪問介護
+グループ内の介護スタッフが、排泄・清潔保持・食事などの身体介護から日常生活の支援まで対応します。
+
+見守り・生活相談
+日常の見守りや生活相談はもちろん、暮らし全体をスタッフが丁寧にサポートします。
+
+歯科・口腔ケア：対応あり（訪問歯科／ご希望の方は別途契約が必要です）
+個別リハビリ：なし ／ 介護保険外サービス：なし
+看取り：対応いたします</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">D</div>
+          <div>
+            <h4>医療的ケア・疾患別 受け入れ一覧【このページの主役】</h4>
+            <p>記号は3種類だけ：<span class="mark ok">●</span> 対応可／<span class="mark cond">▲</span> 条件つきで対応可／<span class="mark no">◇</span> 要相談。条件欄を省略しないこと。ここを読んで電話をかけてくるのが照会元です。</p>
+            <div class="tbl-scroll" style="margin-top:10px">
+              <table>
+                <thead><tr><th>項目</th><th style="width:52px">可否</th><th>条件・備考</th></tr></thead>
+                <tbody>
+                  <tr><td>インスリン投与</td><td class="mark cond">▲</td><td>自己注射ができる方のみ（注射は医行為のため介護職では行えません）。その他の方は協力医療機関とご相談のうえ判断します</td></tr>
+                  <tr><td>人工透析</td><td class="mark ok">●</td><td>通院を継続できる方</td></tr>
+                  <tr><td>パーキンソン病</td><td class="mark cond">▲</td><td>ヤールⅢまで。服薬時間の厳守（ウェアリングオフ）を訪問介護で組めるかで判断</td></tr>
+                  <tr><td>がん・末期がん</td><td class="mark cond">▲</td><td>急変時の方針（ACP）を入居前に文書で合意</td></tr>
+                  <tr><td>レビー小体型認知症</td><td class="mark no">◇</td><td>相談可能</td></tr>
+                  <tr><td>狭心症</td><td class="mark cond">▲</td><td>安定狭心症のみ。ニトロは自己管理</td></tr>
+                  <tr><td>うつ病</td><td class="mark cond">▲</td><td>希死念慮がないこと</td></tr>
+                  <tr><td>褥瘡</td><td class="mark cond">▲</td><td>ステージⅡまで。処置は協力医療機関と連携。夜間の体位交換ができないため深いものは不可</td></tr>
+                  <tr><td>誤嚥性肺炎</td><td class="mark no">◇</td><td>相談可能</td></tr>
+                  <tr><td>たん吸引</td><td class="mark no">◇</td><td>相談可能</td></tr>
+                  <tr><td>胃ろう</td><td class="mark no">◇</td><td>相談可能</td></tr>
+                  <tr><td>経鼻経管栄養</td><td class="mark ok">●</td><td>協力医療機関と連携して対応</td></tr>
+                  <tr><td>尿バルーン・カテーテル</td><td class="mark ok">●</td><td>協力医療機関と連携して対応</td></tr>
+                  <tr><td>関節リウマチ／変形性関節症</td><td class="mark ok">●</td><td>—</td></tr>
+                  <tr><td>喘息・気管支炎</td><td class="mark ok">●</td><td>—</td></tr>
+                  <tr><td>筋萎縮性側索硬化症（ALS）</td><td class="mark cond">▲</td><td>状態により協力医療機関と個別に調整</td></tr>
+                  <tr><td>骨粗鬆症</td><td class="mark ok">●</td><td>—</td></tr>
+                  <tr><td>くも膜下出血／脳出血／脳梗塞（後遺症）</td><td class="mark ok">●</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="meta">2段組（左9項目／右9項目）／表罫は0.25pt・横罫のみ</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">E</div>
+          <div>
+            <h4>受け入れが難しい状態</h4>
+            <p>薄い赤系の枠。「不可」の断定は角が立つため、見出しは<strong>「現在の体制では受け入れが難しい状態」</strong>とし、理由（夜間職員がいないこと）を1行添えます。</p>
+            <div class="copy">現在の体制では受け入れが難しい状態
+統合失調症／双極性障害／前頭側頭型認知症・ピック病／感染症は原則としてお受けできません。
+常時の見守りや専門的な対応が必要な状態の方について、現在の体制では安全を確保することが難しいためです。判断に迷う場合も、まずはご相談ください。</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">F</div>
+          <div>
+            <h4>夜間の見守り体制</h4>
+            <p>夜間に何があるかを、3つの手段として並べます。アイコン付きの3項目リストにすると、読み手が体制を1つずつ確認できます。</p>
+            <div class="copy">夜間の見守り体制（18:00〜09:00）
+・全居室にナースコール
+・モニターカメラによる見守り
+・緊急時は協力医療機関が24時間対応</div>
+            <div class="meta">3項目リスト／アイコン 8mm角</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">G</div>
+          <div>
+            <h4>協力医療機関</h4>
+            <p>横長の帯。病院名は大きく（済生会の知名度が信頼の担保になります）。診療科目は小さく1行に流す。</p>
+            <div class="copy">埼玉県済生会加須病院（埼玉県加須市上高柳1680）
+消化器内科・呼吸器内科・耳鼻科・感染症内科・泌尿器科・精神科・放射線科・血管外科・皮膚科・整形外科
+医師による訪問診療を定期的に実施し、健康管理・診療を行います。緊急時は24時間対応可能な体制を整え、必要に応じて往診・医療機関への連携を行います。入院・転院が必要な場合は他医療機関への紹介・調整も対応します。
+※医療費その他の費用は入居者様のご負担となります。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PAGE 4 ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">P4</span>
+    <h2>料金・施設概要・お問い合わせ</h2>
+    <span class="sub">裏表紙。ここだけコピーして回覧されることを前提に組む</span>
+  </div>
+  <div class="page-block">
+    <div class="sheet-holder">
+      <div class="sheet-cap"><span>PAGE 4 — FEE &amp; FACILITY</span><span>A4 / 210×297</span></div>
+      <div class="sheet" style="grid-template-rows:6fr 26fr 24fr 22fr 22fr">
+        <div class="b hdr" style="grid-column:1/13">
+          <div class="id">A</div><div class="nm">見出し「料金プラン」</div>
+        </div>
+        <div class="b wash" style="grid-column:1/13">
+          <div class="id">B</div><div class="nm">月額費用の内訳表【主役】</div>
+          <div class="nt">0円が4行並ぶ／合計 60,000〜90,000円と入居時費用0円を大きく</div>
+        </div>
+        <div class="b data" style="grid-column:1/8">
+          <div class="id">D</div><div class="nm">施設概要（スペック表）</div>
+        </div>
+        <div class="b sm" style="grid-column:8/13">
+          <div class="id">E</div><div class="nm">居室・共用設備／居室タイプ</div>
+        </div>
+        <div class="b photo sm" style="grid-column:1/6">
+          <div class="id">F</div><div class="nm">アクセス地図＋交通</div>
+        </div>
+        <div class="b sm" style="grid-column:6/13">
+          <div class="id">G</div><div class="nm">入居までの流れ（4ステップ）</div>
+        </div>
+        <div class="b fill" style="grid-column:1/13">
+          <div class="id">H</div><div class="nm">お問い合わせ（ロゴ／TEL／メール・HP／運営会社）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <h3>P4 ブロック指示</h3>
+      <p class="role">Bの表は「0円」が縦に並ぶことが最大のメッセージです。入居時費用・上乗せ介護費・生活支援サービス費・その他がすべて0円。金額は等幅数字（tabular）で桁を揃え、合計欄と入居時費用の行だけ地色を敷いて24ptで見せます。</p>
+      <div class="rows">
+        <div class="row">
+          <div class="rid">B</div>
+          <div>
+            <h4>月額費用の内訳</h4>
+            <p>「9万円」の根拠を見せる表。幅がある項目は「〜」で正直に。ページ幅いっぱいに組み、<strong>合計欄と入居時費用0円の2行を地色付きで最下部に</strong>置きます。生活保護受給の方の転居では初期費用の有無が可否を分けるため、入居時費用0円は合計と同じ大きさで。</p>
+            <div class="tbl-scroll" style="margin-top:10px">
+              <table>
+                <thead><tr><th>項目</th><th style="width:170px">月額</th><th>備考</th></tr></thead>
+                <tbody>
+                  <tr><td>賃料</td><td class="num">30,000円 程度</td><td>住宅扶助額の上限の範囲</td></tr>
+                  <tr><td>管理費</td><td class="num">30,000円</td><td>水道光熱費込み</td></tr>
+                  <tr><td>食費</td><td class="num">0 〜 30,000円</td><td>朝・昼・晩の3食／多少の変動あり</td></tr>
+                  <tr><td>上乗せ介護費</td><td class="num">0円</td><td>介護度が上がっても加算はありません</td></tr>
+                  <tr><td>生活支援サービス費</td><td class="num">0円</td><td>—</td></tr>
+                  <tr><td>その他</td><td class="num">0円</td><td>—</td></tr>
+                  <tr><td>在宅介護サービス費の負担限度額</td><td class="num">0円</td><td>生活保護受給のため</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr><td>月額合計</td><td class="num">60,000 〜 90,000円</td><td>いずれの介護度でも同額です</td></tr>
+                  <tr><td>入居時費用</td><td class="num">0円</td><td>敷金・礼金・保証金はいただきません</td></tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="meta">合計欄・入居時費用 24pt / 数字は tabular-nums / ※表記「9万円」は上限として使う</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">D</div>
+          <div>
+            <h4>施設概要</h4>
+            <p>物件資料の数値をそのまま使用。2列の罫線表、8.5pt。</p>
+            <div class="tbl-scroll" style="margin-top:10px">
+              <table>
+                <tr><th>施設名称</th><td>LIME HOUSE</td></tr>
+                <tr><th>施設種別</th><td>住宅型有料老人ホーム</td></tr>
+                <tr><th>運営</th><td>株式会社Lime（東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階／代表者 斉藤隼生）</td></tr>
+                <tr><th>所在地</th><td>埼玉県加須市向古河670-4</td></tr>
+                <tr><th>開設年月日</th><td>2026年10月1日</td></tr>
+                <tr><th>定員／居室総数</th><td>9名／9居室</td></tr>
+                <tr><th>土地面積</th><td class="num">159.15 ㎡</td></tr>
+                <tr><th>延床面積</th><td class="num">138.14 ㎡</td></tr>
+                <tr><th>建築年月日</th><td>平成3年4月12日</td></tr>
+                <tr><th>建物階数・構造</th><td>地上2階建て／木造</td></tr>
+                <tr><th>居住契約の権利形態</th><td>建物賃貸借方式</td></tr>
+                <tr><th>建物の権利形態</th><td>所有権（自社所有）</td></tr>
+                <tr><th>土地の権利形態</th><td>借地権</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">E</div>
+          <div>
+            <h4>居室・共用設備</h4>
+            <p>設備は「持ち込み不要」であることが伝わる書き方に。生活保護受給の方の転居では初期費用の少なさが決め手になります。</p>
+            <div class="copy">居室タイプ：個室（7.29㎡ 〜 10.9㎡）
+居室設備：ベッド・エアコン・照明器具・カーテン・テレビ・ナースコール・フローリング・フラットフロア・空調換気設備・モニターカメラ見守り
+　→ 家具の持ち込みなしで、そのままご入居いただけます。
+共用設備：リビングルーム・浴室・共用トイレ・メールボックス・喫煙所
+食事場所：各居室 ／ 調理場所：館内（ホームの台所で調理） ／ 治療食・制限食：相談可能</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">F</div>
+          <div>
+            <h4>アクセス</h4>
+            <p>地図は新古河駅とホームの2点だけを強調した簡略図に。駐車場の有無は面会の可否に直結するため必ず明記。</p>
+            <div class="copy">東武日光線「新古河駅」より徒歩1分
+JR宇都宮線「古河駅」より車で8分
+駐車場：敷地内になし（駅前の外部駐車場をご利用ください）</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">G</div>
+          <div>
+            <h4>入居までの流れ</h4>
+            <p>横4ステップ。矢印でつなぐ。所要日数の目安を入れられると照会元は動きやすくなります。</p>
+            <div class="copy">① お問い合わせ・ご相談（お電話・メール／担当者様からのご照会）
+② 見学・面談（ご本人・ご家族・ご担当者様）
+③ 入居判定・ACP等の確認（医療的な受け入れ可否のご相談）
+④ ご契約・ご入居</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="rid">H</div>
+          <div>
+            <h4>お問い合わせ帯</h4>
+            <p>濃緑ベタ・白抜き。左にロゴ、右にTEL（特大）とメール・HPを左揃えで積みます。運営会社は最下段に小さく1行。QRコードは使わず、URLは文字で読める大きさ（11pt）に。</p>
+            <div class="copy">LIME HOUSE（住宅型有料老人ホーム）
+埼玉県加須市向古河670-4
+TEL 070-4036-1761
+Mail lime@lime-fit.com
+Web https://lime-fit.com/
+
+運営：株式会社Lime　東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階　代表者 斉藤隼生</div>
+<div class="meta">TEL 24pt / MAIL・WEB 11pt / 運営 8pt / H 40mm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DESIGN SPEC ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2>デザイン指定</h2>
+    <span class="sub">Canvaでそのまま設定できる値</span>
+  </div>
+  <div class="stack">
+    <div class="sw">
+      <div><div class="chip" style="background:#2F4F3E"></div><div class="lb"><b>ディープグリーン</b>#2F4F3E<br>帯・見出し</div></div>
+      <div><div class="chip" style="background:#8FC9A9"></div><div class="lb"><b>ライムグリーン</b>#8FC9A9<br>ロゴ由来・アクセント</div></div>
+      <div><div class="chip" style="background:#E4F0E8"></div><div class="lb"><b>ペールグリーン</b>#E4F0E8<br>表の地・囲み</div></div>
+      <div><div class="chip" style="background:#333333"></div><div class="lb"><b>チャコール</b>#333333<br>本文（黒は使わない）</div></div>
+      <div><div class="chip" style="background:#F7F6F2"></div><div class="lb"><b>オフホワイト</b>#F7F6F2<br>紙面の地</div></div>
+      <div><div class="chip" style="background:#A9612F"></div><div class="lb"><b>テラコッタ</b>#A9612F<br>条件つき表記のみ</div></div>
+    </div>
+
+    <div class="typesample">
+      <div class="a">最期まで、この家で。</div>
+      <div class="b2">受け入れ体制／料金プラン</div>
+      <div class="c">見出しと本文の質感を変えることで、情緒のページ（P2）とデータのページ（P3・P4）が同じ冊子の中で役割分担できます。データ面のフォントサイズは8.5〜9ptまで落として構いません。専門職は小さい字を読み慣れています。</div>
+      <div class="d">見出し・情緒：游明朝 / Zen Old Mincho　｜　見出し・データ：游ゴシック Bold / Zen Kaku Gothic New　｜　本文：游ゴシック 9–10.5pt　｜　数字：等幅</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <span class="tag">RULE 01</span>
+        <h3>1ページ1メッセージ</h3>
+        <p>P1＝価格と受け入れ範囲、P2＝想い、P3＝医療対応、P4＝料金と連絡先。ページをまたいで同じ情報を繰り返すのは、連絡先だけにします。</p>
+      </div>
+      <div class="card">
+        <span class="tag">RULE 02</span>
+        <h3>写真は情緒面に集約</h3>
+        <p>P2に写真の7割を置き、P3・P4は表と図だけ。全ページに写真を散らすと、密度の高いデータ面が読みにくくなります。</p>
+      </div>
+      <div class="card">
+        <span class="tag">RULE 03</span>
+        <h3>「応相談」を減らす</h3>
+        <p>条件が書ける項目は必ず条件まで書く。これが他施設のパンフレットとの一番の違いになります。</p>
+      </div>
+      <div class="card">
+        <span class="tag">RULE 04</span>
+        <h3>数字は等幅で桁を揃える</h3>
+        <p>料金表・面積・定員。桁が揃うだけで資料の信頼感が変わります。</p>
+      </div>
+      <div class="card">
+        <span class="tag">RULE 05</span>
+        <h3>罫線は0.25pt・横罫のみ</h3>
+        <p>表を囲む縦罫は使わない。情報量が多いページほど、罫線を減らすほど読めます。</p>
+      </div>
+      <div class="card">
+        <span class="tag">RULE 06</span>
+        <h3>白抜き帯は1ページ1本まで</h3>
+        <p>P1のスペック帯とP4の問い合わせ帯。ここぞという1本だけに使うから効きます。</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <h4>用意する画像（AI生成イメージ／優先順）</h4>
+      <ul class="clean">
+        <li>① 外観全景（P1の主役・横位置）</li>
+        <li>② 食事 3カット（朝・昼・晩／斜め45度）</li>
+        <li>③ 居室（介護ベッド・カーテン・テレビが入った状態／広角で2カット）</li>
+        <li>④ リビング（食卓と椅子が見える引き）／⑤ 浴室・共用トイレ</li>
+        <li>⑥ スタッフとご入居者（P2の縦位置／表情が硬くならない距離で）</li>
+        <li>⑦ 新古河駅からホームまでの道（「徒歩1分」が伝わる引き）</li>
+        <li>⑧ ナースコール・モニターカメラ（夜間の見守り体制の裏付けに小さく）</li>
+      </ul>
+      <p style="font-size:13.5px;color:var(--ink-2);margin-top:12px">
+        画像はAI生成のイメージを使用します。トーンは、ご提供いただいた居室イメージ（木目の建具・障子・介護ベッド）に全カットを揃えてください。
+        AI生成／実物と異なる画像を使う場合は、<strong>各ページの写真の近くに「※写真はイメージです」を8ptで必ず入れます</strong>。
+        有料老人ホームの広告は実際の設備と異なる印象を与える表示が問題になりやすく、注記の有無が後の説明責任を分けます。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COVERAGE ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2>原稿の掲載先チェック</h2>
+    <span class="sub">いただいた情報がどのページに入るか（抜け漏れ確認用）</span>
+  </div>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>原稿の項目</th><th style="width:64px">掲載面</th><th>扱い</th></tr></thead>
+      <tbody>
+        <tr><td>ブランド名・住所</td><td>P1 / P4</td><td>表紙ヘッダーと裏表紙の問い合わせ帯に重複掲載</td></tr>
+        <tr><td>要介護度レベル（要支援1〜要介護5）</td><td>P1 / P3</td><td>表紙のスペック帯＋入居条件表</td></tr>
+        <tr><td>夜間体制</td><td>P3-F</td><td>ナースコール・モニターカメラ・協力医療機関24時間対応の3点で記載</td></tr>
+        <tr><td>こだわり（月々9万円／3食手作り／＋1つ）</td><td>P1-D</td><td>3つ目は「保証人不明でも可」を提案</td></tr>
+        <tr><td>原点ストーリー</td><td>P2-B1</td><td>ほぼ全文掲載</td></tr>
+        <tr><td>特徴 1・2・3（価格／連携／食事）</td><td>P2-C</td><td>全文＋連携図</td></tr>
+        <tr><td>立地（駅徒歩／古河駅 車8分）</td><td>P1-C / P4-F</td><td>徒歩表記は「1分」に統一</td></tr>
+        <tr><td>料金プラン（月額・入居費用）</td><td>P4-B</td><td>合計欄と「入居時費用0円」を新設して見せる</td></tr>
+        <tr><td>居室タイプ・広さ・備考</td><td>P4-E</td><td>「持ち込み不要」の一文を追加</td></tr>
+        <tr><td>入居条件（年齢〜その他条件）</td><td>P3-B</td><td>全項目掲載</td></tr>
+        <tr><td>契約に関する事項</td><td>—</td><td>掲載しない（重要事項説明書に記載）</td></tr>
+        <tr><td>介護・医療体制（可能範囲 全項目）</td><td>P3-D</td><td>可否記号＋条件を全件掲載</td></tr>
+        <tr><td>受け入れ不可</td><td>P3-E</td><td>理由を添えて掲載</td></tr>
+        <tr><td>サービスの特徴（医療／介護／見守り／歯科／リハビリ／看取り）</td><td>P3-C</td><td>医療は協力医療機関の訪問診療として記載。「なし」の項目も正直に掲載</td></tr>
+        <tr><td>職員体制（職員数・勤務形態・夜間）</td><td>P3-F</td><td>未記入項目あり → 要支給</td></tr>
+        <tr><td>協力医療機関・費用負担</td><td>P3-G</td><td>全文掲載</td></tr>
+        <tr><td>生活（食事場所・調理場所・治療食）</td><td>P4-E</td><td>館内調理であることを明記</td></tr>
+        <tr><td>1日の流れ</td><td>P2-E1</td><td>8:00起床〜20:00就寝の横タイムライン</td></tr>
+        <tr><td>連絡先・運営会社</td><td>P1-F / P4-H</td><td>TEL・メール・HP・運営会社を両面に掲載</td></tr>
+        <tr><td>交通アクセス・駐車場</td><td>P4-F</td><td>駐車場なしを明記</td></tr>
+        <tr><td>施設概要（全項目）</td><td>P4-D</td><td>物件資料の数値と一致を確認済み</td></tr>
+        <tr><td>居室設備・共用設備</td><td>P4-E</td><td>全項目掲載</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= OPEN ITEMS ================= -->
+<section>
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2>掲載情報と表現の確認</h2>
+    <span class="sub">情報は出揃っています。あとは表現の統一だけです</span>
+  </div>
+  <div class="stack">
+    <div class="note">
+      <h4>確定した情報（紙面に反映済み）</h4>
+      <ul class="clean">
+        <li>連絡先：TEL 070-4036-1761 ／ lime@lime-fit.com ／ https://lime-fit.com/（P1-F・P4-H）</li>
+        <li>入居時費用：0円（敷金・礼金・保証金なし）— P4-B</li>
+        <li>入居時費用・契約に関する事項の独立ブロック（旧P4-C）は掲載しない</li>
+        <li>訪問看護は記載しない。医療は協力医療機関による訪問診療として全ページで統一</li>
+        <li>運営：株式会社Lime（東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階／代表者 斉藤隼生）— P1-F・P4-H・施設概要</li>
+        <li>調理場所：館内（ホームの台所で調理）— P2-C3・P4-E</li>
+        <li>1日の流れ：8:00起床〜20:00就寝（P2-E1）</li>
+        <li>画像：AI生成イメージを使用（※写真はイメージです の注記とセットで掲載）</li>
+        <li>職員数・看護師・機能訓練指導員・勤務形態：記載しない。P3-F は「夜間の見守り体制」に置き換え済み</li>
+        <li>土地の借地権の詳細：パンフレットには権利形態のみ記載</li>
+      </ul>
+    </div>
+    <div class="note warn">
+      <h4>表現を調整したほうがよいもの</h4>
+      <ul class="clean">
+        <li><strong>「駅から徒歩10秒」</strong> → 物件資料は「新古河駅 徒歩1分」。徒歩表記は80m＝1分換算が基準のため、「徒歩1分（駅の目の前）」に統一を推奨します。</li>
+        <li><strong>「基本的に生活保護の方のみ受け入れ」</strong> → 「生活保護を受給されている方の受け入れを専門としています」と、専門性として肯定的に書く。</li>
+        <li><strong>夜間の体制</strong> → 「夜間職員0人」という書き方はせず、<strong>ナースコール・モニターカメラ・協力医療機関の24時間対応</strong>の3点を「夜間の見守り体制」として掲載（P3-F）。</li>
+        <li><strong>看取り</strong> → 「看取り：対応いたします」とだけ記載し、実績の有無には触れない。</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h4>Canvaデータについて</h4>
+      いただいたCanvaの編集リンクはログインが必要で、こちらからは開けませんでした。この指示図はいただいた原稿と物件資料をもとに新規に組んだものです。既存データを活かす場合は、閲覧用リンク（共有 → リンクを知っている全員が閲覧可）または書き出したPDFをいただければ、既存デザインに合わせた指示に組み替えます。
+    </div>
+  </div>
+</section>
+
+<footer>
+  LIME HOUSE ／ 住宅型有料老人ホーム パンフレット構成指示（A4縦・4ページ）<br>
+  掲載数値は 2026年8月時点のご提供原稿および物件資料に基づきます。金額・体制は確定時に必ず最新の内容へ差し替えてください。
+</footer>
+
+</div>
