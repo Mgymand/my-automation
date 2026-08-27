@@ -6,3 +6,4 @@ __pycache__/
 property-map/data/*.json
 property-map/data/extracted_images/
 property-map/data/compile/
+docs/lime-house-pamphlet/*.pdf

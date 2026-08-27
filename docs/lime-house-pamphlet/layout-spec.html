@@ -249,6 +249,29 @@ ul.clean li{font-size:13.5px;color:var(--ink-2);line-height:1.85;margin-bottom:3
 .typesample .d{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:14px;letter-spacing:.05em}
 
 footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;line-height:1.9}
+
+/* ---------- print / PDF ---------- */
+@media print{
+  :root{
+    --paper:#FFFFFF;--surface:#FFFFFF;--surface-2:#EFF3EE;--ink:#1C2220;--ink-2:#454F4B;--ink-3:#6C7772;
+    --line:#CFD8CD;--line-strong:#A9B6A6;--accent:#3F7A5B;--accent-soft:#8FC9A9;--accent-wash:#E9F2EC;
+    --warn:#8F4E22;--warn-wash:#F7EEE6;--stop:#8C3232;--stop-wash:#F7E9E9;--shadow:none;
+  }
+  body{background:#fff;font-size:10.5pt;line-height:1.7}
+  .wrap{max-width:none;padding:0 8mm 8mm}
+  .masthead{padding:0 0 18px}
+  section{padding-top:22px}
+  .sec-head{break-after:avoid}
+  .sheet-holder{position:static}
+  .page-block{grid-template-columns:minmax(0,72mm) 1fr;gap:8mm;padding-top:14px}
+  .sheet{break-inside:avoid}
+  .row,.card,.note,.thumb,.diff-row,.typesample,.sw div{break-inside:avoid}
+  .tbl-scroll{overflow:visible}
+  table{min-width:0;font-size:9pt}
+  .copy{font-size:9.5pt}
+  footer{margin-top:30px}
+  a{color:var(--ink);text-decoration:none}
+}
 </style>
 
 <div class="wrap">
