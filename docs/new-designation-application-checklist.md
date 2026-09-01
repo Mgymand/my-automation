@@ -22,6 +22,26 @@
 - **16. 介護給付費算定に係る体制等に関する届出書**(別紙3-2、Excel: 23.0KB)
 - **17. 介護給付費算定に係る体制等状況一覧表**(別紙1-1、Excel: 763.5KB)
 
+## 様式ファイル対応表
+
+入手済みの様式ファイル(元ファイル名)と提出書類番号の対応:
+
+| No. | 提出書類 | 元ファイル名 |
+| --- | --- | --- |
+| 1 | 指定申請書(別紙様式第二号(一)) | `20240401kaigo-shiteiyoushiki2-1.xlsx` |
+| 2 | 指定に係る記載事項(付表第二号(十一)) | `20240401kaigo-fuhyou2-11.xlsx` |
+| 4 | 誓約書(標準様式6) | `20240401kaigo-chiikihyoujyun6.xlsx` |
+| 4 | 誓約書2 | `kaigo-seiyakusyo2.docx` |
+| 5 | 勤務体制及び勤務形態一覧表(標準様式1) | `20240401kaigo-chiikihyoujyun1_kyotakukaigoshien.xlsx` |
+| 7 | 平面図(標準様式3) | `20240401kaigo-chiikihyoujyun3.xlsx` |
+| 8 | 備品等一覧表(標準様式4) | `20240401kaigo-chiikihyoujyun4.xlsx` |
+| 11 | 介護支援専門員一覧(標準様式7) | `20240401kaigo-chiikihyoujyun7.xlsx` |
+| 14 | 苦情処理措置の概要(標準様式5) | `20240401kaigo-chiikihyoujyun5.xlsx` |
+| 16 | 介護給付費算定に係る体制等に関する届出書(別紙3-2) | `20240401bessi3-2kaigokyuuhuhisanntenikakarutaiseitounikannsurtodokedesyo.xlsx` |
+| 17 | 介護給付費算定に係る体制等状況一覧表(別紙1-1) | `20260601bessi1-1taiseijyoukyoitirann.xls` |
+
+様式ファイルのない書類(自前で準備するもの): 3(登記事項証明書)、6(主任介護支援専門員研修修了証の写し)、9(雇用契約書等の写し)、10(資格証明書等の写し)、12(運営規程)、13(契約書・重要事項説明書)、15(連携内容・任意様式)
+
 ## 提出期限
 
 - 指定は毎月1回、**月の初日(1日付け)** に行われる
