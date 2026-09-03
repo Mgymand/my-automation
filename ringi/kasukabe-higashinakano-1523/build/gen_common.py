@@ -9,8 +9,9 @@ def img64(path):
 def esc(s): return html.escape(str(s), quote=False)
 
 CSS = r"""
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-<style>
+<link rel="stylesheet" data-doc="1" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style id="doc-style" data-doc="1">
+:root{color-scheme:light} img{max-width:100%} [hidden]{display:none!important}
 :root{
   --paper:#fcfcfa; --ink:#1b1b1f; --ink-2:#4a4d57; --ink-3:#7a7e8a;
   --ai:#1f2d4d;      /* 藍: 見出し帯 */
