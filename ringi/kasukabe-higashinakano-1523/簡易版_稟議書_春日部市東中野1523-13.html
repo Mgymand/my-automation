@@ -1,0 +1,127 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>稟議書（簡易版） 春日部東中野</title>
+<link rel="stylesheet" data-doc="1" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style id="doc-style" data-doc="1">
+:root{color-scheme:light} img{max-width:100%} [hidden]{display:none!important}
+:root{
+  --paper:#fcfcfa; --ink:#1b1b1f; --ink-2:#4a4d57; --ink-3:#7a7e8a;
+  --ai:#1f2d4d;      /* 藍: 見出し帯 */
+  --ai-2:#3a4a70;
+  --shu:#a63a2e;     /* 朱: 判定・決裁 */
+  --kin:#9c8146;     /* 金: 表紙罫 */
+  --line:#c9ccd4; --line-2:#e3e5ea; --wash:#f3f4f6; --wash-ai:#eef1f7; --wash-shu:#f8efed;
+}
+*{box-sizing:border-box}
+html{background:#d9dbe0}
+body{margin:0;background:#d9dbe0;color:var(--ink);font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;font-size:10.5pt;line-height:1.72;font-feature-settings:"palt" 0;}
+.sheet{background:var(--paper);width:210mm;margin:12mm auto;padding:18mm 17mm 20mm 17mm;box-shadow:0 2px 18px rgba(20,30,60,.18);position:relative}
+@page{size:A4;margin:17mm 16mm 19mm 16mm;
+  @top-left{content:"稟議書（簡易版）　整理番号 2　春日部市東中野 1523-13";font-family:'Noto Serif JP',serif;font-size:7.5pt;color:#7a7e8a}
+  @top-right{content:"社外秘 / CONFIDENTIAL";font-family:'Noto Sans JP',sans-serif;font-size:7.5pt;letter-spacing:.08em;color:#a63a2e}
+  @bottom-center{content:"— " counter(page) " / " counter(pages) " —";font-family:'Noto Serif JP',serif;font-size:8.5pt;color:#4a4d57}
+}
+@media print{
+  html,body{background:#fff}
+  .sheet{width:auto;margin:0;padding:0;box-shadow:none}
+  .pb{page-break-before:always}
+  .avoid{page-break-inside:avoid}
+  h2{page-break-after:avoid} h3{page-break-after:avoid}
+  tr{page-break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+}
+@media screen{ .pb{margin-top:18mm;border-top:1px dashed var(--line);padding-top:10mm} }
+h1,h2,h3,h4{font-weight:600;text-wrap:balance;margin:0}
+h2{font-size:15.5pt;color:var(--paper);background:var(--ai);padding:5px 12px;margin:18px 0 10px;letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+h2 .n{font-family:'Noto Sans JP',sans-serif;font-weight:500;font-size:10pt;opacity:.85;letter-spacing:.12em}
+h3{font-size:12.5pt;color:var(--ai);border-left:4px solid var(--ai);padding-left:9px;margin:16px 0 7px}
+h4{font-size:11pt;margin:10px 0 4px;color:var(--ink)}
+p{margin:4px 0 8px;max-width:100%}
+.lead{font-size:11pt}
+small,.small{font-size:8.5pt;color:var(--ink-2)}
+.muted{color:var(--ink-3)}
+.sans{font-family:'Noto Sans JP',sans-serif}
+.num,.tbl td.num,.tbl th.num{font-family:'Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+.tbl{width:100%;border-collapse:collapse;font-family:'Noto Sans JP',sans-serif;font-size:8.6pt;line-height:1.45;margin:4px 0 8px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.tbl th{background:var(--ai);color:#fff;font-weight:500;text-align:left;letter-spacing:.03em}
+.tbl th.sub{background:var(--wash-ai);color:var(--ai);font-weight:600}
+.tbl td.lab{background:var(--wash);width:24%;font-weight:500}
+.tbl td.k{background:var(--wash-ai);font-weight:500}
+.tbl tr.total td{background:var(--wash);font-weight:600}
+.tbl tr.hl td{background:#fbf6ea}
+.tbl .c{text-align:center}
+.tbl caption{caption-side:top;text-align:left;font-family:'Noto Serif JP',serif;font-size:9.5pt;font-weight:600;color:var(--ai);padding:2px 0 4px}
+.wide{overflow-x:auto}
+.intent{border-left:3px solid var(--shu);background:var(--wash-shu);padding:6px 10px 6px 12px;margin:6px 0 12px;font-size:9pt;line-height:1.6;color:var(--ink-2)}
+.intent b{color:var(--shu);font-weight:600;margin-right:6px;letter-spacing:.06em}
+.note{border:1px solid var(--line);background:var(--wash);padding:6px 10px;margin:6px 0 10px;font-size:9pt;line-height:1.6}
+.note b.t{color:var(--ai)}
+.warn{border:1px solid #d9b8b3;background:#fbf3f1;padding:7px 11px;margin:6px 0 10px;font-size:9.2pt;line-height:1.6}
+.warn b.t{color:var(--shu)}
+.badge{display:inline-block;font-family:'Noto Sans JP',sans-serif;font-weight:700;border:1.5px solid currentColor;border-radius:50%;width:19px;height:19px;line-height:16px;text-align:center;font-size:10pt}
+.ok{color:#1f6f3f}.ng{color:var(--shu)}.md{color:#8a6d1a}
+.stamp{display:inline-block;border:2px solid var(--shu);color:var(--shu);border-radius:3px;padding:1px 8px;font-weight:600;letter-spacing:.15em;font-size:10pt}
+.cover{padding-top:6mm}
+.cover .kanri{display:flex;justify-content:space-between;font-family:'Noto Sans JP',sans-serif;font-size:8.5pt;color:var(--ink-2);letter-spacing:.08em}
+.cover .rule{border:0;border-top:2px solid var(--kin);margin:6mm 0 4mm;position:relative}
+.cover .rule:after{content:"";display:block;border-top:1px solid var(--kin);margin-top:2px}
+.cover h1{font-size:27pt;letter-spacing:.22em;text-align:center;margin:8mm 0 2mm;font-weight:600}
+.cover .sub{text-align:center;font-size:12pt;letter-spacing:.1em;color:var(--ink-2)}
+.cover .obj{text-align:center;margin:8mm 0 4mm;font-size:13pt;letter-spacing:.06em}
+.approve{width:100%;border-collapse:collapse;font-family:'Noto Sans JP',sans-serif;font-size:8.5pt;margin-top:6mm}
+.approve th{border:1px solid var(--ink);background:var(--wash-ai);font-weight:500;padding:3px;color:var(--ai)}
+.approve td{border:1px solid var(--ink);height:22mm;text-align:center;vertical-align:bottom;padding:3px;color:var(--ink-3)}
+.kv{width:100%;border-collapse:collapse;font-size:9.4pt;margin:4px 0 8px}
+.kv th{width:22%;text-align:left;background:var(--wash-ai);color:var(--ai);border:1px solid var(--line);padding:4px 7px;font-weight:600;font-family:'Noto Sans JP',sans-serif;font-size:8.8pt}
+.kv td{border:1px solid var(--line);padding:4px 7px;font-family:'Noto Sans JP',sans-serif;font-size:9pt}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tile{border:1px solid var(--line);padding:7px 10px;background:#fff}
+.tile .l{font-family:'Noto Sans JP',sans-serif;font-size:8pt;color:var(--ink-3);letter-spacing:.1em}
+.tile .v{font-family:'Noto Sans JP',sans-serif;font-size:14.5pt;font-weight:700;color:var(--ai);font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .v.shu{color:var(--shu)}
+.tile .s{font-size:8.3pt;color:var(--ink-2)}
+figure{margin:8px 0 10px;text-align:center}
+figure img{max-width:100%;border:1px solid var(--line-2)}
+figcaption{font-size:8.5pt;color:var(--ink-2);margin-top:3px;font-family:'Noto Sans JP',sans-serif}
+ol,ul{margin:4px 0 8px;padding-left:1.6em} li{margin:2px 0}
+.toc{columns:2;column-gap:24px;font-size:9.4pt;font-family:'Noto Sans JP',sans-serif} .toc div{padding:1px 0;border-bottom:1px dotted var(--line-2)}
+.src{font-size:8pt;color:var(--ink-3);font-family:'Noto Sans JP',sans-serif;word-break:break-all}
+.chart{width:100%;height:auto;font-family:'Noto Sans JP',sans-serif}
+.legend{font-size:8.5pt;font-family:'Noto Sans JP',sans-serif;color:var(--ink-2)}
+.flow{display:flex;gap:6px;align-items:stretch;font-family:'Noto Sans JP',sans-serif;font-size:8.6pt;margin:6px 0 10px}
+.flow .st{flex:1;border:1px solid var(--ai);padding:6px 7px;background:#fff;position:relative}
+.flow .st b{display:block;color:var(--ai);font-size:9.2pt}
+.flow .st:after{content:"▶";position:absolute;right:-9px;top:40%;color:var(--ai);font-size:8pt}
+.flow .st:last-child:after{content:""}
+.part{margin:4mm 0 6mm;border-top:2px solid var(--kin);border-bottom:1px solid var(--kin);padding:8px 4px}
+.part .pn{font-family:'Noto Sans JP',sans-serif;font-size:9pt;letter-spacing:.2em;color:var(--kin)}
+.part .pt{font-size:19pt;font-weight:600;letter-spacing:.06em;color:var(--ai)}
+.chk{list-style:none;padding-left:0} .chk li{padding-left:1.6em;position:relative} .chk li:before{content:"□";position:absolute;left:0;color:var(--ai)}
+.sig{font-size:8.5pt;color:var(--ink-3);text-align:right;margin-top:4px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:9.2pt}
+.dl dt{font-weight:600;color:var(--ai);font-family:'Noto Sans JP',sans-serif}
+.dl dd{margin:0}
+</style>
+</head><body><div class="sheet"><div class="cover"><div class="kanri"><span>文書番号　R-2026-002-S（簡易版）</span><span>機密区分　社外秘</span><span>原案 2026年8月18日 ／ 改訂 2026年9月4日</span></div><hr class="rule"><h1>稟議書（簡易版）</h1><div class="sub">不動産取得（仕入）稟議 兼 事業計画稟議 — 要約</div><div class="obj">埼玉県春日部市東中野1523番地13　木造2階建（6DK）<br><span class="small">東武アーバンパークライン「南桜井」駅 徒歩22分　／　土地164㎡・延床118.92㎡　／　売出価格 930万円</span></div><table class="kv"><tr><th>件名</th><td>生活保護・要介護高齢者向け 住宅型有料老人ホーム（9室）用 戸建の取得、及び同事業計画の承認について</td></tr><tr><th>申請事項</th><td>① 買付証明の提出（<b>指値 740万円</b>、妥協上限 <b>880万円</b>、撤退ライン 同上限超）<br>② 72時間以内の現地調査と専門家調査（建築士・消防設備士・土地家屋調査士。上限15万円）<br>③ 事業計画の条件付承認（条件: 消防・県高齢者福祉課・福祉事務所との事前協議で「実現可否の分岐」を契約前に確定）</td></tr><tr><th>総合判定（案）</th><td><span class="stamp">A</span>　現地調査へ（条件付）。ハードフィルタ①〜④・⑥は○、⑤工期は×（「×でも可」項目。開業枠は2027年3月）</td></tr><tr><th>取引態様</th><td>専任媒介（元付: 春日部ハウス、埼玉県知事免許(11)第10992号）・手数料分かれ・諸条件相談可・情報公開 2026年8月20日。<b>売主本人の属性（個人／法人／宅建業者）は未確認</b></td></tr><tr><th>評価者</th><td>岩本　／　流入元: レインズ　／　現況: 空家</td></tr></table>
+<table class="approve"><tr><th>評価者</th><th>確認者</th><th>責任者</th><th>確認日</th><th>現地調査日</th><th>決裁結果</th></tr><tr><td>岩本</td><td></td><td></td><td></td><td></td><td style="text-align:left;vertical-align:middle">□ 承認　□ 条件付承認<br>□ 差戻し　□ 否決</td></tr></table><p class="sig">※本書は稟議書（詳細版・48頁）の要約。数値の根拠・出典・記載意図は詳細版の該当節を参照。</p></div><h2><span class="n">1</span>決裁のポイント</h2>
+<div class="avoid"><div class="grid3"><div class="tile"><div class="l">売出価格</div><div class="v">930万円</div><div class="s">2026.8.20 公開・専任媒介・空家</div></div><div class="tile"><div class="l">指値（初回提示）</div><div class="v shu">740万円</div><div class="s">売出比 ▲20%　土地値相当</div></div><div class="tile"><div class="l">妥協上限</div><div class="v shu">880万円</div><div class="s">売出比 ▲5%　これ超は撤退</div></div><div class="tile"><div class="l">総投資額（上限価格・9室・SP除く）</div><div class="v">1,992万円</div><div class="s">指値なら 1,850万円。基準2,000万円以下</div></div><div class="tile"><div class="l">連結営業CF（標準・満室・県指針準拠）</div><div class="v">102.1万円/月</div><div class="s">保守 45.1万円／元計画準拠なら 167.1万円</div></div><div class="tile"><div class="l">損益分岐</div><div class="v">6人</div><div class="s">施設職員と常勤3人体制を固定費とした場合</div></div></div>
+</div><p class="lead">物件としては<b>「土地値＋α」で取得できる木造・新耐震・再建築可の戸建</b>。成否は物件ではなく<b>①消防の用途判定（SP要否）②住宅扶助の床面積減額 ③県指針の施設職員配置</b>の3点で決まるため、指値で買付を入れつつ契約前に3点を潰す「条件付A判定」を申請する。</p><div class="wide"><table class="tbl"><colgroup><col style="width:4%"><col style="width:16%"><col style="width:56%"><col style="width:24%"></colgroup><thead><tr><th>#</th><th>論点</th><th>見解</th><th>決裁者への依頼</th></tr></thead><tbody><tr><td>1</td><td>価格は妥当か</td><td>比準 880万円・更地−解体 541万円・積算 888万円。930万円は割高ではないが、地目山林・私道・駅22分・残置物・免責受入れを材料に740万円から交渉</td><td>指値 740万円・上限 880万円 の承認</td></tr><tr><td>2</td><td>総投資額2,000万円以内か</td><td>SP不要（6項ハ）なら 1,992万円。SP必要（6項ロ）なら＋約300万円で基準超過 → 上限価格は 590万円 に自動引下げ</td><td>消防判定「ロ」時の上限引下げの承認</td></tr><tr><td>3</td><td>9室は成立するか</td><td>物理的に可（分割3箇所）。県指針13.2㎡は特例6(1)で届出可。住宅扶助の床面積減額（最大▲9.5万円/月）は許容範囲。7室を下限</td><td>9室基本・7室下限の設計発注の承認</td></tr><tr><td>4</td><td>入居者・人材は取れるか</td><td>要介護認定者 14,154人（令和7年12月末）・訪問介護事業所 59所。損益分岐6人。福祉事務所・MSW・地域包括を客付け窓口に</td><td>入居見込み5件・サ責内定・夜間職員確保を着工条件とする承認</td></tr><tr><td>5</td><td>ダメだった時の逃げ道</td><td>有老→シェアハウス転換・入居付き一棟売り→GH一棟貸し→通常転売/賃貸。比準価格以下で買う限り通常転売でも損しない</td><td>段階的撤退の組み込みの承認</td></tr></tbody></table></div>
+<h2><span class="n">2</span>物件の要点と調査結果</h2>
+<table class="kv"><tr><th>所在・交通</th><td>春日部市東中野字駿河1523番13。南桜井駅 徒歩22分（約1,750m）。国道16号・江戸川至近</td></tr><tr><th>土地・建物</th><td>土地164㎡（49.61坪）所有権＋私道139㎡の持分1/4（位置指定道路）。地目「山林」（現況宅地）。木造瓦葺2階建・延床118.92㎡・6DK・昭和56年11月築（建築確認 昭和56年7月30日＝新耐震）</td></tr><tr><th>法令・接道</th><td>市街化区域・第一種低層住居専用地域（建ぺい50／容積80）・22条区域。位置指定道路（幅員4.0m）に4.2m接道＝再建築可。老人ホーム・寄宿舎は建築可（別表第二(い)項）</td></tr><tr><th>設備・現況</th><td>公営水道・本下水・LPG・駐車1台。空家・建物現況渡し・引渡時期相談。埋蔵文化財なし</td></tr></table>
+<div class="wide"><table class="tbl"><colgroup><col style="width:10%"><col style="width:26%"><col style="width:6%"><col style="width:58%"></colgroup><thead><tr><th>項目</th><th>現状</th><th>評価</th><th>価格・工程への影響と対応</th></tr></thead><tbody><tr><td>権利</td><td>私道持分1/4（共有者3名）</td><td><span class="badge ok">○</span></td><td>掘削・通行承諾書が給水増径の可否に直結。売主の取得協力を特約</td></tr><tr><td>地目</td><td>登記「山林」</td><td><span class="badge md">△</span></td><td>取得後1か月以内に地目変更（約5万円）。交渉材料</td></tr><tr><td>用途地域</td><td>一低専</td><td><span class="badge ok">○</span></td><td>老人ホーム可。用途変更の確認申請は不要（200㎡以下）だが実体規定は適合させる</td></tr><tr><td>耐震・劣化</td><td>新耐震・築45年・空家</td><td><span class="badge md">△</span></td><td>雨漏り・シロアリ・給排水は未確認。建物状況調査を契約前に実施。予備費10%</td></tr><tr><td>水害</td><td>想定最大 浸水深0.5〜3.0m（推定）</td><td><span class="badge md">△</span></td><td>避難確保計画の作成義務。2階配置で対応</td></tr><tr><td>消防</td><td>(6)項ロ／ハは入居者構成で決まる</td><td><span class="badge md">△</span></td><td>ロならSP約300万円＋給水増径。契約前に予防課と協議</td></tr><tr><td>売主属性</td><td>専任媒介の元付経由・未確認</td><td><span class="badge md">△</span></td><td>個人なら免責慣行（減額材料）。宅建業者なら2年法定・8種制限に切替</td></tr></tbody></table></div>
+<h2><span class="n">3</span>価格の根拠と指値</h2>
+<div class="wide"><table class="tbl"><colgroup><col style="width:24%"><col style="width:14%"><col style="width:62%"></colgroup><thead><tr><th>手法</th><th>価格</th><th>根拠</th></tr></thead><tbody><tr><td>原価法（積算）</td><td>888万円</td><td>土地 45,000円/㎡×164㎡＋建物150万円（基準地50,000円/㎡から駅距離・私道で減価）</td></tr><tr><td>取引事例比較法</td><td>880万円</td><td>東中野の成約（築42.5年 約900万円）・西金野井の売出830〜900万円を築年・駅距離・私道で補正</td></tr><tr><td>収益還元法（戸建賃貸）</td><td>864万円前後</td><td>賃料7.2万円/月を利回り10%で還元</td></tr><tr><td>更地価値−解体費</td><td>541万円</td><td>土地738万円−解体197万円。売主の代替案＝指値の下限</td></tr></tbody></table></div>
+<div class="wide"><table class="tbl"><colgroup><col style="width:60%"><col style="width:40%"></colgroup><thead><tr><th>交渉材料</th><th>減額の目安</th></tr></thead><tbody><tr><td>登記地目「山林」</td><td>▲5〜10万円</td></tr><tr><td>私道承諾書が未取得</td><td>▲10〜20万円</td></tr><tr><td>残置物・現況渡し</td><td>▲25万円（売主負担なら0）</td></tr><tr><td>契約不適合責任の免責受入れ（個人売主）</td><td>▲30〜50万円</td></tr><tr><td>設備の老朽（給湯器・屋根・浴室）</td><td>▲30〜50万円</td></tr><tr><td>駅22分・6DKの市場性（成約100日超）</td><td>▲30〜50万円</td></tr><tr class="total"><td>合計</td><td>▲130〜205万円 → 売出930万円から 725〜800万円</td></tr></tbody></table></div>
+<div class="wide"><table class="tbl"><colgroup><col style="width:20%"><col style="width:14%"><col style="width:10%"><col style="width:56%"></colgroup><thead><tr><th>区分</th><th>価格</th><th>売出比</th><th>根拠</th></tr></thead><tbody><tr class="hl"><td><b>指値（初回提示）</b></td><td><b>740万円</b></td><td>▲20.4%</td><td>土地値相当（建物ゼロ評価）。交渉材料の合計とも一致</td></tr><tr class="hl"><td><b>妥協上限</b></td><td><b>880万円</b></td><td>▲5.4%</td><td>比準価格。「事業抜きの市場価値」を超えて買わない</td></tr><tr><td>SP必要時の上限</td><td>590万円</td><td>▲36.6%</td><td>総投資額2,000万円基準を維持するための自動引下げ</td></tr><tr><td>撤退</td><td>880万円超</td><td>—</td><td>重大瑕疵・停止条件不成立・改修見積1,200万円超も撤退</td></tr></tbody></table></div>
+<div class="avoid"><svg class="chart" viewBox="0 0 680 235" role="img" aria-label="価格の位置関係（万円）"><text x="30" y="16" font-size="11" font-weight="600" fill="#1f2d4d">価格の位置関係（万円）</text><line x1="30" x2="650" y1="128" y2="128" stroke="#4a4d57" stroke-width="1.2" fill="none"/><line x1="30.0" x2="30.0" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="30.0" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">500万</text><line x1="133.3" x2="133.3" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="133.3" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">600万</text><line x1="236.7" x2="236.7" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="236.7" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">700万</text><line x1="340.0" x2="340.0" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="340.0" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">800万</text><line x1="443.3" x2="443.3" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="443.3" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">900万</text><line x1="546.7" x2="546.7" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="546.7" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">1,000万</text><line x1="650.0" x2="650.0" y1="124" y2="132" stroke="#4a4d57" stroke-width="1" fill="none"/><text x="650.0" y="146" font-size="9" text-anchor="middle" fill="#7a7e8a">1,100万</text><circle cx="72.5" cy="128" r="3.5" fill="#7a7e8a" stroke="#fcfcfa" stroke-width="1.5"><title>更地−解体: 541万円</title></circle><line x1="72.5" x2="72.5" y1="122" y2="101" stroke="#7a7e8a" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="72.5" y="98.0" font-size="8.5" text-anchor="middle" fill="#7a7e8a" font-weight="400">更地−解体 541万</text><circle cx="123.0" cy="128" r="3.5" fill="#9c8146" stroke="#fcfcfa" stroke-width="1.5"><title>SP時上限: 590万円</title></circle><line x1="123.0" x2="123.0" y1="134" y2="155" stroke="#9c8146" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="123.0" y="164.0" font-size="8.5" text-anchor="middle" fill="#9c8146" font-weight="600">SP時上限 590万</text><circle cx="278.0" cy="128" r="5" fill="#a63a2e" stroke="#fcfcfa" stroke-width="1.5"><title>指値: 740万円</title></circle><line x1="278.0" x2="278.0" y1="122" y2="101" stroke="#a63a2e" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="278.0" y="98.0" font-size="8.5" text-anchor="middle" fill="#a63a2e" font-weight="600">指値 740万</text><circle cx="422.7" cy="128" r="3.5" fill="#7a7e8a" stroke="#fcfcfa" stroke-width="1.5"><title>比準: 880万円</title></circle><line x1="422.7" x2="422.7" y1="134" y2="155" stroke="#7a7e8a" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="422.7" y="164.0" font-size="8.5" text-anchor="middle" fill="#7a7e8a" font-weight="400">比準 880万</text><circle cx="422.7" cy="128" r="5" fill="#a63a2e" stroke="#fcfcfa" stroke-width="1.5"><title>上限: 880万円</title></circle><line x1="422.7" x2="422.7" y1="122" y2="101" stroke="#a63a2e" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="422.7" y="98.0" font-size="8.5" text-anchor="middle" fill="#a63a2e" font-weight="600">上限 880万</text><circle cx="430.9" cy="128" r="3.5" fill="#7a7e8a" stroke="#fcfcfa" stroke-width="1.5"><title>積算: 888万円</title></circle><line x1="430.9" x2="430.9" y1="134" y2="170" stroke="#7a7e8a" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="430.9" y="179.0" font-size="8.5" text-anchor="middle" fill="#7a7e8a" font-weight="400">積算 888万</text><circle cx="474.3" cy="128" r="5" fill="#1f2d4d" stroke="#fcfcfa" stroke-width="1.5"><title>売出: 930万円</title></circle><line x1="474.3" x2="474.3" y1="122" y2="86" stroke="#1f2d4d" stroke-width="0.8" stroke-dasharray="2 2" fill="none"/><text x="474.3" y="83.0" font-size="8.5" text-anchor="middle" fill="#1f2d4d" font-weight="600">売出 930万</text></svg></div><div class="note"><b class="t">交渉の進め方</b>　買付は理由書・資金証明を添えて元付へ書面提出（元付は売主へ遅滞なく報告する義務）。専任媒介の元付は期限内の確実な成約を優先しやすく、報酬は価格にほぼ非感応（約31〜37万円）。初回740万円→R2 800万円→最終880万円。妥結しなければ深追いせず代替物件（西金野井830〜900万円）へ。</div>
+<h2><span class="n">4</span>事業の要点（第Ⅱ部の要約）</h2>
+<div class="flow"><div class="st"><b>① 取得</b>土地値＋αで戸建取得</div><div class="st"><b>② 協議・届出</b>県事前相談→事前協議→設置届／消防・建築・福祉事務所</div><div class="st"><b>③ 内装</b>9室個室化・消防設備（約10週）</div><div class="st"><b>④ 入居</b>福祉事務所・病院・地域包括経由で生活保護×要介護</div><div class="st"><b>⑤ 介護</b>自社訪問介護（ケアプランは外部）</div><div class="st"><b>⑥ 収益</b>家賃扶助＋共益費＋介護報酬＋食費</div></div><div class="wide"><table class="tbl"><colgroup><col style="width:34%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:27%"></colgroup><thead><tr><th>項目</th><th class=num>保守</th><th class=num>標準</th><th class=num>上限寄り</th><th>備考</th></tr></thead><tbody><tr class="hl"><td><b>連結営業CF（月）— 県指針準拠（施設職員65万円/月）</b></td><td class=num><b>450,885</b></td><td class=num><b>1,020,685</b></td><td class=num><b>1,322,796</b></td><td>本稟議の基準値</td></tr><tr><td>　うち住宅事業</td><td class=num>-294,780</td><td class=num>-294,780</td><td class=num>-294,780</td><td>施設職員費で単体は赤字</td></tr><tr><td>　うち訪問介護事業</td><td class=num>745,665</td><td class=num>1,315,465</td><td class=num>1,617,576</td><td>常勤3人＋パート</td></tr><tr><td>（参考）元計画準拠（施設職員なし）</td><td class=num>1,100,885</td><td class=num>1,670,685</td><td class=num>1,972,796</td><td>県が常時配置を求めない場合</td></tr><tr><td>連結営業CF（年換算・指針準拠）</td><td class=num>5,410,622</td><td class=num>12,248,216</td><td class=num>15,873,546</td><td>税引前・償却前</td></tr></tbody></table></div>
+<div class="avoid"><div class="grid3"><div class="tile"><div class="l">物件投資（上限価格・9室）</div><div class="v">1,992万円</div><div class="s">物件＋諸費用＋改修。SP等の分岐は含まず</div></div><div class="tile"><div class="l">事業投資・運転資金</div><div class="v">1,051万円</div><div class="s">備品・申請・車両・開業前人件費・運転資金</div></div><div class="tile"><div class="l">総投下資本</div><div class="v shu">3,043万円</div><div class="s">回収 約30か月（標準・満室）</div></div><div class="tile"><div class="l">表面利回り（社内定義）</div><div class="v">34.2%</div><div class="s">（扶助4.3万＋2万）×9室×12÷総投資額</div></div><div class="tile"><div class="l">入居者1人あたり月額収入（標準）</div><div class="v">約37.2万円/人</div><div class="s">家賃扶助4.3万＋共益費2万＋介護報酬約27.9万＋食費3万</div></div><div class="tile"><div class="l">出口</div><div class="v">保有／パッケージ売却／GH貸し／転売</div><div class="s">介護施設投資家は利回り10〜12%で評価</div></div></div>
+</div><div class="wide"><table class="tbl"><colgroup><col style="width:16%"><col style="width:36%"><col style="width:24%"><col style="width:24%"></colgroup><thead><tr><th>分岐</th><th>内容</th><th>影響</th><th>契約前に確定させる方法</th></tr></thead><tbody><tr><td>① 消防の用途判定</td><td>入居者の過半が要介護3以上なら(6)項ロ＝SP等が必要</td><td>改修費＋約380万円。上限価格を590万円へ</td><td>春日部市消防本部予防課と設計前協議</td></tr><tr><td>② 住宅扶助の床面積判定</td><td>単身は居室15㎡以下で減額（11〜15㎡▲10%・7〜10㎡▲20%）。共用部按分の可否</td><td>9室案で最大▲9.5万円/月</td><td>春日部市生活支援課へ事前照会</td></tr><tr><td>③ 施設職員の配置</td><td>県指針は要介護者向け有老に夜間含む常時1名の直接処遇職員を要求</td><td>月65万円（夜勤なら100万円）。連結CFが約4割変わる</td><td>埼玉県高齢者福祉課の事前相談で定員9人への運用を確認</td></tr></tbody></table></div>
+<h2><span class="n">5</span>主なリスクと撤退段階</h2>
+<div class="wide"><table class="tbl"><colgroup><col style="width:28%"><col style="width:72%"></colgroup><thead><tr><th>リスク</th><th>備え</th></tr></thead><tbody><tr><td>入居者が集まらない</td><td>福祉事務所・病院相談員・地域包括への開業前営業。見込み5件を着工条件に</td></tr><tr><td>介護人材が採れない</td><td>契約前に求人。サ責・夜間職員の内定を条件に。採れなければ食事提供をやめシェアハウス運用へ</td></tr><tr><td>制度改定（登録制・報酬改定・扶助見直し）</td><td>保守シナリオでも黒字。登録基準（2027年県条例見込み）に適合できない場合の転換・売却を保持</td></tr><tr><td>行政指導（無届・囲い込み）</td><td>必ず有老届出。ケアプランは外部。住まいと介護の会計分離</td></tr><tr><td>建物の隠れ瑕疵・改修上振れ</td><td>建物状況調査。雨漏り・傾き・シロアリは撤退事由。相見積3社、1,200万円超なら上限約690万円へ</td></tr></tbody></table></div>
+<div class="flow"><div class="st"><b>第0段階</b>有老＋訪問介護（連結CF約100万円/月）</div><div class="st"><b>第1段階</b>食事提供をやめシェアハウスへ転換／入居付き売却</div><div class="st"><b>第2段階</b>障がい者GH事業者へ一棟貸し（重度対応型）</div><div class="st"><b>第3段階</b>通常転売／戸建賃貸</div></div><h2><span class="n">6</span>決裁事項と実行期限</h2>
+<div class="wide"><table class="tbl"><colgroup><col style="width:4%"><col style="width:66%"><col style="width:30%"></colgroup><thead><tr><th>□</th><th>決裁事項</th><th>期限・担当</th></tr></thead><tbody><tr><td>□</td><td>買付 740万円・上限 880万円・SP判定時の上限 590万円</td><td>決裁後2営業日以内に元付へ買付提出（岩本）</td></tr><tr><td>□</td><td>現地調査・建物状況調査・専門家調査（上限15万円）</td><td>72時間以内に着手</td></tr><tr><td>□</td><td>消防・県・福祉事務所・市建築課との事前協議を契約前に完了（停止条件は県事前相談の結果に限定・期限付き）</td><td>2〜3週間</td></tr><tr><td>□</td><td>9室基本・7室下限の設計発注、相見積3社</td><td>契約後</td></tr><tr><td>□</td><td>入居見込み5件・サ責内定・夜間職員確保を工事着手条件とする</td><td>着工前</td></tr><tr><td>□</td><td>開業枠を2027年3月（B枠）に変更</td><td>本決裁</td></tr><tr><td>□</td><td>段階的撤退（シェアハウス転換→GH一棟貸し→転売）の組み込み</td><td>本決裁</td></tr></tbody></table></div>
+<div class="wide"><table class="tbl"><colgroup><col style="width:20%"><col style="width:80%"></colgroup><thead><tr><th>時期</th><th>工程</th></tr></thead><tbody><tr><td>9月上旬</td><td>買付提出・現地調査・元付ヒアリング（売主属性・売却理由）・行政協議</td></tr><tr><td>9月下旬〜10月</td><td>価格妥結→重要事項説明→売買契約（手付5%）→決済（契約後30日目標）→地目変更登記</td></tr><tr><td>10〜11月</td><td>設計・相見積・県事前協議書類・訪問介護指定申請・求人</td></tr><tr><td>12月〜2027年2月</td><td>設置届受理後に着工（約10週）→消防検査</td></tr><tr><td>2027年3月</td><td>開業。5月末に満室・介護報酬の初回入金</td></tr></tbody></table></div>
+<div class="note"><b class="t">詳細版との対応</b>　価格査定 Ⅰ-5〜Ⅰ-7／取得コスト Ⅰ-8／法規制マトリクス Ⅱ-3／居室計画 Ⅱ-4／収支パターン Ⅱ-6・Ⅱ-7／リスク Ⅱ-8／総合判定 Ⅲ／出典 別紙A／条文 別紙B／現地チェックリスト 別紙D。</div>
+</div></body></html>

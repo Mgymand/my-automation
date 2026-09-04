@@ -1,0 +1,108 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>確認事項書 社内控え 春日部東中野</title>
+<link rel="stylesheet" data-doc="1" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style id="doc-style" data-doc="1">
+:root{color-scheme:light} img{max-width:100%} [hidden]{display:none!important}
+:root{
+  --paper:#fcfcfa; --ink:#1b1b1f; --ink-2:#4a4d57; --ink-3:#7a7e8a;
+  --ai:#1f2d4d;      /* 藍: 見出し帯 */
+  --ai-2:#3a4a70;
+  --shu:#a63a2e;     /* 朱: 判定・決裁 */
+  --kin:#9c8146;     /* 金: 表紙罫 */
+  --line:#c9ccd4; --line-2:#e3e5ea; --wash:#f3f4f6; --wash-ai:#eef1f7; --wash-shu:#f8efed;
+}
+*{box-sizing:border-box}
+html{background:#d9dbe0}
+body{margin:0;background:#d9dbe0;color:var(--ink);font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;font-size:10.5pt;line-height:1.72;font-feature-settings:"palt" 0;}
+.sheet{background:var(--paper);width:210mm;margin:12mm auto;padding:18mm 17mm 20mm 17mm;box-shadow:0 2px 18px rgba(20,30,60,.18);position:relative}
+@page{size:A4;margin:17mm 16mm 19mm 16mm;
+  @top-left{content:"社内控え　確認事項書の意図　春日部市東中野 1523-13";font-family:'Noto Serif JP',serif;font-size:7.5pt;color:#7a7e8a}
+  @top-right{content:"社外秘 / INTERNAL";font-family:'Noto Sans JP',sans-serif;font-size:7.5pt;letter-spacing:.08em;color:#a63a2e}
+  @bottom-center{content:"— " counter(page) " / " counter(pages) " —";font-family:'Noto Serif JP',serif;font-size:8.5pt;color:#4a4d57}
+}
+@media print{
+  html,body{background:#fff}
+  .sheet{width:auto;margin:0;padding:0;box-shadow:none}
+  .pb{page-break-before:always}
+  .avoid{page-break-inside:avoid}
+  h2{page-break-after:avoid} h3{page-break-after:avoid}
+  tr{page-break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+}
+@media screen{ .pb{margin-top:18mm;border-top:1px dashed var(--line);padding-top:10mm} }
+h1,h2,h3,h4{font-weight:600;text-wrap:balance;margin:0}
+h2{font-size:15.5pt;color:var(--paper);background:var(--ai);padding:5px 12px;margin:18px 0 10px;letter-spacing:.04em;display:flex;align-items:baseline;gap:12px}
+h2 .n{font-family:'Noto Sans JP',sans-serif;font-weight:500;font-size:10pt;opacity:.85;letter-spacing:.12em}
+h3{font-size:12.5pt;color:var(--ai);border-left:4px solid var(--ai);padding-left:9px;margin:16px 0 7px}
+h4{font-size:11pt;margin:10px 0 4px;color:var(--ink)}
+p{margin:4px 0 8px;max-width:100%}
+.lead{font-size:11pt}
+small,.small{font-size:8.5pt;color:var(--ink-2)}
+.muted{color:var(--ink-3)}
+.sans{font-family:'Noto Sans JP',sans-serif}
+.num,.tbl td.num,.tbl th.num{font-family:'Noto Sans JP',sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+.tbl{width:100%;border-collapse:collapse;font-family:'Noto Sans JP',sans-serif;font-size:8.6pt;line-height:1.45;margin:4px 0 8px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:4px 6px;vertical-align:top}
+.tbl th{background:var(--ai);color:#fff;font-weight:500;text-align:left;letter-spacing:.03em}
+.tbl th.sub{background:var(--wash-ai);color:var(--ai);font-weight:600}
+.tbl td.lab{background:var(--wash);width:24%;font-weight:500}
+.tbl td.k{background:var(--wash-ai);font-weight:500}
+.tbl tr.total td{background:var(--wash);font-weight:600}
+.tbl tr.hl td{background:#fbf6ea}
+.tbl .c{text-align:center}
+.tbl caption{caption-side:top;text-align:left;font-family:'Noto Serif JP',serif;font-size:9.5pt;font-weight:600;color:var(--ai);padding:2px 0 4px}
+.wide{overflow-x:auto}
+.intent{border-left:3px solid var(--shu);background:var(--wash-shu);padding:6px 10px 6px 12px;margin:6px 0 12px;font-size:9pt;line-height:1.6;color:var(--ink-2)}
+.intent b{color:var(--shu);font-weight:600;margin-right:6px;letter-spacing:.06em}
+.note{border:1px solid var(--line);background:var(--wash);padding:6px 10px;margin:6px 0 10px;font-size:9pt;line-height:1.6}
+.note b.t{color:var(--ai)}
+.warn{border:1px solid #d9b8b3;background:#fbf3f1;padding:7px 11px;margin:6px 0 10px;font-size:9.2pt;line-height:1.6}
+.warn b.t{color:var(--shu)}
+.badge{display:inline-block;font-family:'Noto Sans JP',sans-serif;font-weight:700;border:1.5px solid currentColor;border-radius:50%;width:19px;height:19px;line-height:16px;text-align:center;font-size:10pt}
+.ok{color:#1f6f3f}.ng{color:var(--shu)}.md{color:#8a6d1a}
+.stamp{display:inline-block;border:2px solid var(--shu);color:var(--shu);border-radius:3px;padding:1px 8px;font-weight:600;letter-spacing:.15em;font-size:10pt}
+.cover{padding-top:6mm}
+.cover .kanri{display:flex;justify-content:space-between;font-family:'Noto Sans JP',sans-serif;font-size:8.5pt;color:var(--ink-2);letter-spacing:.08em}
+.cover .rule{border:0;border-top:2px solid var(--kin);margin:6mm 0 4mm;position:relative}
+.cover .rule:after{content:"";display:block;border-top:1px solid var(--kin);margin-top:2px}
+.cover h1{font-size:27pt;letter-spacing:.22em;text-align:center;margin:8mm 0 2mm;font-weight:600}
+.cover .sub{text-align:center;font-size:12pt;letter-spacing:.1em;color:var(--ink-2)}
+.cover .obj{text-align:center;margin:8mm 0 4mm;font-size:13pt;letter-spacing:.06em}
+.approve{width:100%;border-collapse:collapse;font-family:'Noto Sans JP',sans-serif;font-size:8.5pt;margin-top:6mm}
+.approve th{border:1px solid var(--ink);background:var(--wash-ai);font-weight:500;padding:3px;color:var(--ai)}
+.approve td{border:1px solid var(--ink);height:22mm;text-align:center;vertical-align:bottom;padding:3px;color:var(--ink-3)}
+.kv{width:100%;border-collapse:collapse;font-size:9.4pt;margin:4px 0 8px}
+.kv th{width:22%;text-align:left;background:var(--wash-ai);color:var(--ai);border:1px solid var(--line);padding:4px 7px;font-weight:600;font-family:'Noto Sans JP',sans-serif;font-size:8.8pt}
+.kv td{border:1px solid var(--line);padding:4px 7px;font-family:'Noto Sans JP',sans-serif;font-size:9pt}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.tile{border:1px solid var(--line);padding:7px 10px;background:#fff}
+.tile .l{font-family:'Noto Sans JP',sans-serif;font-size:8pt;color:var(--ink-3);letter-spacing:.1em}
+.tile .v{font-family:'Noto Sans JP',sans-serif;font-size:14.5pt;font-weight:700;color:var(--ai);font-variant-numeric:tabular-nums;line-height:1.25}
+.tile .v.shu{color:var(--shu)}
+.tile .s{font-size:8.3pt;color:var(--ink-2)}
+figure{margin:8px 0 10px;text-align:center}
+figure img{max-width:100%;border:1px solid var(--line-2)}
+figcaption{font-size:8.5pt;color:var(--ink-2);margin-top:3px;font-family:'Noto Sans JP',sans-serif}
+ol,ul{margin:4px 0 8px;padding-left:1.6em} li{margin:2px 0}
+.toc{columns:2;column-gap:24px;font-size:9.4pt;font-family:'Noto Sans JP',sans-serif} .toc div{padding:1px 0;border-bottom:1px dotted var(--line-2)}
+.src{font-size:8pt;color:var(--ink-3);font-family:'Noto Sans JP',sans-serif;word-break:break-all}
+.chart{width:100%;height:auto;font-family:'Noto Sans JP',sans-serif}
+.legend{font-size:8.5pt;font-family:'Noto Sans JP',sans-serif;color:var(--ink-2)}
+.flow{display:flex;gap:6px;align-items:stretch;font-family:'Noto Sans JP',sans-serif;font-size:8.6pt;margin:6px 0 10px}
+.flow .st{flex:1;border:1px solid var(--ai);padding:6px 7px;background:#fff;position:relative}
+.flow .st b{display:block;color:var(--ai);font-size:9.2pt}
+.flow .st:after{content:"▶";position:absolute;right:-9px;top:40%;color:var(--ai);font-size:8pt}
+.flow .st:last-child:after{content:""}
+.part{margin:4mm 0 6mm;border-top:2px solid var(--kin);border-bottom:1px solid var(--kin);padding:8px 4px}
+.part .pn{font-family:'Noto Sans JP',sans-serif;font-size:9pt;letter-spacing:.2em;color:var(--kin)}
+.part .pt{font-size:19pt;font-weight:600;letter-spacing:.06em;color:var(--ai)}
+.chk{list-style:none;padding-left:0} .chk li{padding-left:1.6em;position:relative} .chk li:before{content:"□";position:absolute;left:0;color:var(--ai)}
+.sig{font-size:8.5pt;color:var(--ink-3);text-align:right;margin-top:4px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:9.2pt}
+.dl dt{font-weight:600;color:var(--ai);font-family:'Noto Sans JP',sans-serif}
+.dl dd{margin:0}
+</style>
+</head><body><div class="sheet"><div class="cover" style="padding-top:2mm"><div class="kanri"><span>社内控え　Q-2026-002-内</span><span>取扱　社外秘（送付しない）</span><span>2026年9月4日　／　岩本</span></div><hr class="rule"><h1 style="font-size:22pt;letter-spacing:.16em;margin:5mm 0 2mm">確認事項書 社内控え</h1><div class="sub">各質問の意図と、回答を価格・条件・工程にどう反映するか</div></div><div class="note"><b class="t">原則</b>　<b>聞かないこと・言わないこと</b>: 指値と上限、買主の名称、事業収支、弊社が運営に関与する可能性。<b>必ず書面で</b>: 口頭回答は弊社で記録し写しを送って確定させる。<b>回答期限を切る</b>: 専任媒介の期限（3か月）と売主の意向を早く掴むため。</div>
+<div class="wide"><table class="tbl"><colgroup><col style="width:5%"><col style="width:19%"><col style="width:32%"><col style="width:44%"></colgroup><thead><tr><th>#</th><th>質問（要旨）</th><th>意図</th><th>回答の使い方</th></tr></thead><tbody><tr><td>1-1</td><td>専任媒介の契約日・レインズ状況</td><td>交渉のタイムリミットと囲い込みの有無を知る</td><td>期限前1か月が妥結の山。「申込あり」表示なら他社の買付が先行</td></tr><tr><td>1-2</td><td>売主の属性</td><td>8種制限の適用有無と免責慣行の判断</td><td>個人→免責受入れを減額材料に。宅建業者→2年法定・8種制限に切替、免責材料は0</td></tr><tr><td>1-3</td><td>相続登記・遺産分割</td><td>決済可能時期と売主の手取り感覚</td><td>未了なら決済が延びる＝協議期間が取れる。相続案件は「早く現金化したい」動機が強い</td></tr><tr><td>1-4</td><td>売却理由・引渡時期</td><td>価格以外で売主に価値を出せる条件を探す</td><td>「時期相談」は決済を後ろに置いて停止条件を不要にできる余地</td></tr><tr><td>1-5</td><td>内見・申込・価格改定</td><td>競合と値下げ圧力の有無</td><td>内見少・申込なし→指値を通しやすい。改定予定あり→待つ選択肢</td></tr><tr><td>1-8</td><td>分かれの確認</td><td>報酬構造の確定</td><td>弊社報酬は買主からのみ。媒介契約書に明記</td></tr><tr><td>2-1</td><td>地目変更の予定</td><td>減額材料の確定</td><td>売主側で変更なし→▲5〜10万円。変更する→材料から外す</td></tr><tr><td>2-2</td><td>私道承諾書</td><td>給水増径（SP水道直結）の可否と工期</td><td>なし→▲10〜20万円＋売主の取得協力を特約。共有者と疎遠なら工程リスク</td></tr><tr><td>2-3</td><td>引込管口径</td><td>SP直結・9室給水の分岐①′</td><td>13mm→増径80万円を見込む。20mm以上→分岐を消せる</td></tr><tr><td>2-5</td><td>確認通知書・検査済証</td><td>有老届出・用途変更の実体規定適合の基礎資料</td><td>なし→台帳記載事項証明で代替。検査済なし→県への説明に手間</td></tr><tr><td>2-8</td><td>告知事項</td><td>心理的瑕疵の有無</td><td>あり→撤退または大幅減額。なし→告知書で確定</td></tr><tr><td>2-9</td><td>浸水履歴</td><td>避難確保計画と保険料</td><td>履歴あり→1階居室の配置・保険料を収支へ</td></tr><tr><td>3-2</td><td>不具合・修繕履歴</td><td>建物状況調査の重点箇所</td><td>雨漏り・傾き・シロアリの申告→撤退事由。設備不具合→▲30〜50万円</td></tr><tr><td>3-6</td><td>残置物</td><td>撤去費の負担</td><td>売主撤去→0。現状→▲25万円</td></tr><tr><td>4-2</td><td>免責の希望</td><td>減額根拠の確定</td><td>免責→▲30〜50万円を理由書に。3か月→材料を半分に</td></tr><tr><td>4-3</td><td>手付・違約金</td><td>契約条件の下書き</td><td>手付5%・違約金10%で提案。売主希望が高ければ現金決済の確実性で相殺</td></tr><tr><td>4-5</td><td>停止条件の可否</td><td>契約の組み方の分岐</td><td>可→期限付き停止条件。不可→協議完了後に契約（決済を後ろに）</td></tr><tr><td>4-8</td><td>消費税</td><td>価格内訳と税務</td><td>個人→非課税。課税事業者→建物に消費税、内訳を契約書へ</td></tr><tr><td>5-3</td><td>行政協議への承諾</td><td>契約前協議の実行可否</td><td>不可なら協議は図面ベースで進め、現地確認は契約後に</td></tr><tr><td>5-5</td><td>建設業許可の見積参加</td><td>価格協力を引き出す材料</td><td>参加可→相見積3社の1社に。売買条件とは連動させない</td></tr></tbody></table></div>
+<div class="wide"><table class="tbl"><colgroup><col style="width:36%"><col style="width:64%"></colgroup><thead><tr><th>回答の組合せ</th><th>価格・条件への反映</th></tr></thead><tbody><tr><td>個人売主・相続・空家長期・申込なし</td><td>指値740万円を理由書付きで提示。決済確度（資金証明・現金）を前面に</td></tr><tr><td>宅建業者売主</td><td>免責材料を外し、2年法定・8種制限へ切替。指値は据置き（在庫回転を訴求）</td></tr><tr><td>申込あり・内見多数</td><td>R2を飛ばし880万円近辺で早期決着か、撤退</td></tr><tr><td>停止条件不可・引渡時期に幅あり</td><td>協議完了後の契約＋決済後ろ倒し。手付は5%のまま</td></tr><tr><td>承諾書なし・引込13mm</td><td>SP水道直結が困難→(6)項ハ運用を前提にし、ロ判定なら撤退</td></tr></tbody></table></div>
+</div></body></html>
