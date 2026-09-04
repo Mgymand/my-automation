@@ -164,6 +164,7 @@ EDITOR_JS = r"""
 
 FILENAME = '稟議書_春日部市東中野1523-13_編集版.html'
 
-def editor_parts():
-    js = EDITOR_JS.replace('__BAR__', json.dumps(TOOLBAR, ensure_ascii=False)).replace('__FILENAME__', json.dumps(FILENAME, ensure_ascii=False))
-    return EDITOR_CSS, TOOLBAR, js
+def editor_parts(filename=FILENAME, title='稟議書 編集版'):
+    bar = TOOLBAR.replace('稟議書 編集版', title)
+    js = EDITOR_JS.replace('__BAR__', json.dumps(bar, ensure_ascii=False)).replace('__FILENAME__', json.dumps(filename, ensure_ascii=False))
+    return EDITOR_CSS, bar, js
