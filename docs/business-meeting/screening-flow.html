@@ -1,0 +1,102 @@
+<meta charset="utf-8"><title>物件 一次判定フロー</title>
+<style>__CSS__
+  .flow{margin-top:1.5mm}
+  .step{display:flex;gap:2.5mm;margin-bottom:1.2mm;align-items:stretch;line-height:1.3}
+  .sn{flex:0 0 7mm;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;
+      font-size:10pt;font-weight:bold;font-family:"IPAGothic"}
+  .sq{flex:1 1 auto;border:1.2pt solid var(--navy);padding:1.3mm 2.4mm;display:flex;flex-direction:column;justify-content:center}
+  .sq .q{font-size:9.2pt;font-weight:bold}
+  .sq .r{font-size:7.6pt;color:var(--ink2);margin-top:.5mm}
+  .sx{flex:0 0 60mm;background:#fdf1f1;border:1.2pt solid var(--bad);padding:1.3mm 2.4mm;
+      display:flex;flex-direction:column;justify-content:center}
+  .sx .code{font-size:7.6pt;color:var(--bad);font-weight:bold;letter-spacing:.08em}
+  .sx .t{font-size:7.9pt;margin-top:.3mm;line-height:1.32}
+  .pass{background:#eef7f1;border:1.2pt solid var(--good);padding:2.4mm 3mm;margin-top:2.5mm;line-height:1.38}
+  .pass h3{font-size:10pt;color:var(--good);margin-bottom:1mm}
+  .head{margin-bottom:3.5mm}
+</style>
+<div class="head">
+  <div><h1>物件 一次判定フロー</h1>
+    <div class="sub">上から順に降りる。1つでも「いいえ」が出たら、その場で否決し理由コードを記録する。</div></div>
+  <div class="tag">SCREENING FLOW v1.1</div>
+</div>
+
+<div style="display:flex;gap:3mm;font-size:8.2pt;margin-bottom:3mm;line-height:1.4">
+  <div style="flex:1;background:var(--panel);padding:1.8mm 2.6mm"><b>必要な資料</b>　マイソク ＋ 登記事項証明書（土地・建物）。この2点があれば判定できる。</div>
+  <div style="flex:1;background:var(--panel);padding:1.8mm 2.6mm"><b>所要時間</b>　1件あたり約30分（初期調査の自動取得を併用する場合）</div>
+</div>
+
+<div class="flow">
+  <div class="step"><div class="sn">0</div>
+    <div class="sq"><div class="q">市街化区域か（市街化調整区域ではないか）</div>
+      <div class="r">マイソクの「都市計画」欄。用途地域が「定めなし」なら調整区域を疑う</div></div>
+    <div class="sx"><div class="code">NG-00　調整区域</div><div class="t">用途変更に都市計画法の許可が必要。原則通らない</div></div></div>
+
+  <div class="step"><div class="sn">1</div>
+    <div class="sq"><div class="q">検査済証はあるか</div>
+      <div class="r">無い場合は即否決ではなく「要調査」。台帳記載事項証明で確認する</div></div>
+    <div class="sx"><div class="code">保留-01　検査済証なし</div><div class="t">用途変更・融資・保険に影響。役所で台帳を確認してから判断</div></div></div>
+
+  <div class="step"><div class="sn">2</div>
+    <div class="sq"><div class="q">建築確認が昭和56年6月1日以降か（新耐震）</div>
+      <div class="r">築年月ではなく<b>建築確認の日付</b>で見る</div></div>
+    <div class="sx"><div class="code">NG-02　旧耐震</div><div class="t">耐震補強のコストに加え、融資・保険・行政の目線すべてで不利</div></div></div>
+
+  <div class="step"><div class="sn">3</div>
+    <div class="sq"><div class="q">延べ面積は 200㎡以下か（275㎡以下かも記録）</div>
+      <div class="r">200㎡以下＝用途変更の確認申請が不要（法87条）／275㎡＝消防の分岐</div></div>
+    <div class="sx"><div class="code">保留-03　面積超過</div><div class="t">200㎡超は確認申請が必要。工期と費用を見積り直す</div></div></div>
+
+  <div class="step"><div class="sn">4</div>
+    <div class="sq"><div class="q">階数は3階以下か</div>
+      <div class="r">避難規定と、戸建転用の特例（指導指針6⑶）の前提</div></div>
+    <div class="sx"><div class="code">NG-04　4階以上</div><div class="t">避難規定が跳ね上がる</div></div></div>
+
+  <div class="step"><div class="sn">5</div>
+    <div class="sq"><div class="q">用途地域は工業専用地域以外か</div>
+      <div class="r">老人ホームは第一種低層住居専用地域でも建てられる用途</div></div>
+    <div class="sx"><div class="code">NG-05　工業専用</div><div class="t">用途として建てられない</div></div></div>
+
+  <div class="step"><div class="sn">6</div>
+    <div class="sq"><div class="q">2階の居室面積の合計は 50㎡以下か（準耐火なら100㎡）</div>
+      <div class="r">超えると2つ目の直通階段が必要（令121条1項6号イ）。<b>工事費が跳ねる最大の分岐</b></div></div>
+    <div class="sx"><div class="code">保留-06　階段追加</div><div class="t">2階を居室にしない設計、または階段増設費を見込んで再計算</div></div></div>
+
+  <div class="step"><div class="sn">7</div>
+    <div class="sq"><div class="q">各居室に窓があり、採光1/7を満たせるか</div>
+      <div class="r">満たせない部屋は居室にできない＝<b>部屋数が減る</b>。図面で当たりを付け、現地で確定</div></div>
+    <div class="sx"><div class="code">保留-07　無窓居室あり</div><div class="t">居室数を引いて事業性を再計算。割り方の再設計も検討</div></div></div>
+
+  <div class="step"><div class="sn">8</div>
+    <div class="sq"><div class="q">階段の幅・蹴上・踏面は改修で成立するか</div>
+      <div class="r">現地実測。高齢者の動線として成立するか</div></div>
+    <div class="sx"><div class="code">保留-08　階段不適</div><div class="t">改修費を見積り、事業性を再計算</div></div></div>
+
+  <div class="step"><div class="sn">9</div>
+    <div class="sq"><div class="q">想定居室数は 9室以下に収まるか</div>
+      <div class="r">「定員9人以下」なら指導指針6⑴の特例が使える。<b>10室にすると閉じる</b></div></div>
+    <div class="sx"><div class="code">要検討-09　10室以上</div><div class="t">既存転用でも特例は使えるが、9室で止める設計を優先検討</div></div></div>
+</div>
+
+<div class="pass">
+  <h3>すべて「はい」＝ 卓上通過。次工程へ</h3>
+  <div style="display:flex;gap:4mm;font-size:8.2pt;margin-top:1.5mm">
+    <div style="flex:1"><b>現地</b><br>採光（窓の有無）／階段の実測／劣化と設備の状態</div>
+    <div style="flex:1"><b>役所（建築指導課）</b><br>令114条2項の間仕切壁に告示860号の緩和が使えるか／令126条の4の非常用照明の要否</div>
+    <div style="flex:1"><b>消防本部</b><br>(6)項ロと(6)項ハのどちらの判定になるか</div>
+    <div style="flex:1"><b>都道府県</b><br>指導指針6⑴の特例（13㎡未満）の適用可否</div>
+  </div>
+</div>
+
+<div style="margin-top:2.5mm;display:flex;gap:4mm">
+  <div style="flex:1;border:1pt solid var(--rule);padding:2mm 3mm;line-height:1.4">
+    <b style="font-size:9pt">判定記録</b>
+    <div style="font-size:8.6pt;margin-top:1.5mm">物件名 <span class="fill" style="min-width:42mm"></span>　判定日 <span class="fill" style="min-width:22mm"></span>　判定者 <span class="fill" style="min-width:24mm"></span></div>
+    <div style="font-size:8.6pt;margin-top:2mm">結果　<span class="cb">卓上通過</span>　<span class="cb">否決</span>　<span class="cb">保留</span>　理由コード <span class="fill" style="min-width:24mm"></span>　次アクション <span class="fill" style="min-width:46mm"></span></div>
+  </div>
+</div>
+
+<div class="note" style="margin-top:2.5mm">※ 一次否決（NGコード）は稟議に上げず、その場で落とす。保留コードは追加調査の結果を待って再判定する。<br>
+※ v1.1 で「0. 市街化区域か」を追加。仕入れ候補7件を実際に判定した際、用途地域が「定めなし」の市街化調整区域が2件混ざっていたため。</div>
+
+<div class="foot"><span>老人シェアハウス事業 ／ 物件 一次判定フロー v1.1</span><span>2026年9月7日</span></div>
