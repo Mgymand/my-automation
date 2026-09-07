@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# 老人シェアハウス（住宅型有料老人ホーム）物件ヒアリングシートの HTML を A4 1枚の PDF に出力する。
+# 老人シェアハウス（住宅型有料老人ホーム）物件ヒアリングシートの HTML を PDF に出力する。
+#   elderly-sharehouse-hearing-sheet.html     → A4 1枚版
+#   elderly-sharehouse-hearing-sheet-2p.html  → A4 2枚版（記入スペースに余裕を持たせた版）
 # 必要なもの: Chromium（headless）と日本語フォント（IPAGothic 等）
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC="$DIR/elderly-sharehouse-hearing-sheet.html"
-OUT="${1:-$DIR/elderly-sharehouse-hearing-sheet.pdf}"
 
 CHROME="${CHROME_BIN:-}"
 if [ -z "$CHROME" ]; then
@@ -15,6 +15,11 @@ if [ -z "$CHROME" ]; then
 fi
 [ -n "$CHROME" ] || { echo "Chromium が見つかりません。CHROME_BIN を指定してください。" >&2; exit 1; }
 
-"$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
-  --print-to-pdf="$OUT" "file://$SRC"
-echo "出力: $OUT"
+for name in elderly-sharehouse-hearing-sheet elderly-sharehouse-hearing-sheet-2p; do
+  src="$DIR/$name.html"
+  [ -f "$src" ] || continue
+  out="$DIR/$name.pdf"
+  "$CHROME" --headless --disable-gpu --no-sandbox --no-pdf-header-footer \
+    --print-to-pdf="$out" "file://$src"
+  echo "出力: $out"
+done
