@@ -4,61 +4,61 @@
 <meta charset="utf-8">
 <title>老人シェアハウス（住宅型有料老人ホーム）物件ヒアリングシート</title>
 <style>
-  @page { size: A4 portrait; margin: 8mm 9mm 6mm 9mm; }
+  @page { size: A4 portrait; margin: 7mm 8mm 5mm 8mm; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
     font-family: "IPAGothic", "IPAPGothic", sans-serif;
     color: #000;
-    font-size: 8.2pt;
-    line-height: 1.33;
+    font-size: 7.7pt;
+    line-height: 1.26;
     -webkit-print-color-adjust: exact;
   }
   h1 {
-    font-size: 13.5pt;
+    font-size: 13pt;
     text-align: center;
     letter-spacing: 0.05em;
-    margin: 0 0 1.4mm;
+    margin: 0 0 1.1mm;
     font-weight: bold;
   }
-  .hdr { display: flex; align-items: flex-end; gap: 4mm; margin-bottom: 1.3mm; }
+  .hdr { display: flex; align-items: flex-end; gap: 4mm; margin-bottom: 1mm; }
   .hdr .area { flex: 1 1 auto; font-size: 9.4pt; font-weight: bold; }
   .hdr .area .fill { min-width: 62mm; }
   .hdr .area .ex { font-weight: normal; }
   .hdr .meta { flex: 0 0 auto; }
-  .sec { font-size: 9pt; font-weight: bold; margin: 1.5mm 0 0.8mm; }
+  .sec { font-size: 8.7pt; font-weight: bold; margin: 1.1mm 0 0.6mm; }
   .sec .note { font-size: 7.1pt; font-weight: normal; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  td, th { border: 0.5pt solid #000; padding: 1mm 1.4mm; vertical-align: middle; }
+  td, th { border: 0.5pt solid #000; padding: 0.7mm 1.3mm; vertical-align: middle; }
   th {
     background: #f0f0f0; font-weight: normal; text-align: center;
     letter-spacing: 0.25em; text-indent: 0.25em; white-space: nowrap;
   }
-  td.in { height: 6.2mm; }
+  td.in { height: 5.3mm; }
   .fill { border-bottom: 0.5pt solid #000; display: inline-block; min-width: 18mm; }
   .cb { white-space: nowrap; }
   .cb::before { content: "□ "; }
   ul.eq { list-style: none; margin: 0; padding: 0; }
-  ul.eq > li { display: flex; margin-bottom: 0.5mm; }
-  ul.eq > li > .lbl { flex: 0 0 21mm; white-space: nowrap; }
+  ul.eq > li { display: flex; margin-bottom: 0.3mm; }
+  ul.eq > li > .lbl { flex: 0 0 20mm; white-space: nowrap; }
   ul.eq > li > .items { flex: 1 1 auto; }
   ul.eq > li > .items .cb { margin-right: 2.3mm; display: inline-block; }
-  .memo { padding-left: 21mm; font-size: 7.1pt; }
-  .box { border: 0.5pt solid #000; padding: 1.3mm 1.7mm; }
-  .writein { border: 0.5pt solid #000; height: 7.6mm; }
+  .memo { padding-left: 20mm; font-size: 7.1pt; }
+  .box { border: 0.5pt solid #000; padding: 1mm 1.6mm; }
+  .writein { border: 0.5pt solid #000; height: 6.6mm; }
   .cols { display: flex; gap: 3.2mm; }
   .col { flex: 1 1 0; min-width: 0; }
   .actionhead {
     font-size: 9pt; font-weight: bold; background: #000; color: #fff;
-    padding: 0.8mm 1.7mm; margin: 1.8mm 0 1.1mm;
+    padding: 0.7mm 1.6mm; margin: 1.4mm 0 0.9mm;
   }
   .dia { font-weight: bold; margin: 0 0 0.7mm; font-size: 8.5pt; }
   ol.chk { list-style: none; margin: 0; padding: 0; }
-  ol.chk > li { display: flex; margin-bottom: 0.6mm; }
+  ol.chk > li { display: flex; margin-bottom: 0.45mm; }
   ol.chk > li > .n { flex: 0 0 4.5mm; }
   ol.chk > li > .t { flex: 1 1 auto; }
   .arrow { display: block; padding-left: 2.5mm; font-size: 7.3pt; }
-  .q { margin-bottom: 0.8mm; }
+  .q { margin-bottom: 0.6mm; }
   .small { font-size: 7.3pt; }
   .ex { font-size: 7.1pt; }
   .tight { margin: 0; }
@@ -106,7 +106,11 @@
   </tr>
   <tr>
     <th>想定部屋数</th><td class="in"><span class="fill" style="min-width:18mm"></span> 室</td>
-    <th>土地面積</th><td class="in"><span class="fill" style="min-width:20mm"></span> ㎡　（私道 <span class="fill" style="min-width:14mm"></span> ㎡）</td>
+    <th>土地面積</th><td class="in"><span class="fill" style="min-width:18mm"></span> ㎡（別途 私道 <span class="fill" style="min-width:12mm"></span> ㎡ 持分 <span class="fill" style="min-width:9mm"></span>）</td>
+  </tr>
+  <tr>
+    <th>接 道</th><td class="in">幅員 <span class="fill" style="min-width:11mm"></span> m ／ 間口 <span class="fill" style="min-width:11mm"></span> m</td>
+    <th>道路種別</th><td class="in"><span class="cb">市道</span> <span class="cb">県道</span> <span class="cb">位置指定道路</span> <span class="cb">私道</span> <span class="cb">2項道路</span></td>
   </tr>
 </table>
 
@@ -132,6 +136,21 @@
     <span class="cb">自動火災報知設備</span><span class="cb">スプリンクラー</span><span class="cb">消火器</span><span class="cb">誘導灯</span><span class="cb">住警器</span><span class="cb">非常用照明</span><span class="cb">防火戸</span></span></li>
 </ul>
 
+<div class="sec">■告知事項・瑕疵の確認（✓）<span class="note">※該当するものにチェック。1つでも付いたら詳細を確認する</span></div>
+<ul class="eq">
+  <li><span class="lbl">【心理的瑕疵】</span><span class="items">
+    <span class="cb">なし</span><span class="cb">あり</span>→（<span class="cb">自殺</span><span class="cb">他殺</span><span class="cb">孤独死</span><span class="cb">事故死</span><span class="cb">火災</span>）　発生日 <span class="fill" style="min-width:16mm"></span>　場所 <span class="fill" style="min-width:20mm"></span></span></li>
+  <li><span class="lbl">【物理的瑕疵】</span><span class="items">
+    <span class="cb">雨漏り</span><span class="cb">シロアリ</span><span class="cb">傾き・沈下</span><span class="cb">給排水管の不具合</span><span class="cb">アスベスト</span><span class="cb">擁壁の劣化</span><span class="cb">火災・浸水履歴</span></span></li>
+  <li><span class="lbl">【土地・環境】</span><span class="items">
+    <span class="cb">土壌汚染</span><span class="cb">埋蔵文化財</span><span class="cb">地中埋設物</span><span class="cb">高低差・擁壁</span><span class="cb">浸水想定区域</span><span class="cb">嫌悪施設</span><span class="cb">騒音・臭気</span></span></li>
+  <li><span class="lbl">【法 令 上 】</span><span class="items">
+    <span class="cb">再建築不可</span><span class="cb">既存不適格</span><span class="cb">違法建築・未登記増築</span><span class="cb">借地</span><span class="cb">建築協定・地区計画</span><span class="cb">セットバック要</span></span></li>
+  <li><span class="lbl">【権利・近隣】</span><span class="items">
+    <span class="cb">越境（<span style="white-space:nowrap">□塀 □屋根 □樹木 □配管</span>）</span><span class="cb">私道の通行・掘削承諾</span><span class="cb">共有持分</span><span class="cb">抵当権・差押</span><span class="cb">近隣トラブル</span></span></li>
+  <li><span class="lbl"></span><span class="items ex">※心理的瑕疵は国交省「宅地建物取引業者による人の死の告知に関するガイドライン」に基づき確認する。売主の告知書（物件状況等報告書）の写しを必ず入手すること</span></li>
+</ul>
+
 <div class="sec">■取得・確認資料チェックリスト（✓）<span class="note">※売買の交渉・判断材料。取得したものにチェック</span></div>
 <ul class="eq">
   <li><span class="lbl">【地 図 】</span><span class="items">
@@ -141,8 +160,10 @@
   <li><span class="lbl">【インフラ確認】</span><span class="items">
     <span class="cb">水道（給水管）※水道管管理図面を取得</span><span class="cb">下水道（本下水／浄化槽）※下水道台帳</span><span class="cb">ガス（都市ガス／プロパン）</span></span></li>
   <li><span class="lbl">【接 道 】</span><span class="items">
-    <span class="cb">道路種別（<span style="white-space:nowrap">□市道 □県道 □位置指定道路 □私道</span>）</span><span class="cb">市道路台帳を取得</span><span class="cb">指定道路の内容を確認</span></span></li>
-  <li><span class="lbl"></span><span class="items small">間口 <span class="fill" style="min-width:12mm"></span> m ／ 幅員 <span class="fill" style="min-width:12mm"></span> m　　※指定道路＝特定行政庁が位置を指定した道路（法42条1項5号の位置指定道路ほか）。指定道路図・指定道路調書で確認する</span></li>
+    <span class="cb">市の道路台帳を取得</span><span class="cb">指定道路図・指定道路調書</span><span class="cb">私道の通行・掘削承諾書</span></span></li>
+  <li><span class="lbl">【売 主 】</span><span class="items">
+    <span class="cb">告知書（物件状況等報告書）</span><span class="cb">付帯設備表</span><span class="cb">検査済証・建築確認済証</span><span class="cb">固定資産税評価証明</span></span></li>
+  <li><span class="lbl"></span><span class="items ex">※指定道路＝特定行政庁が位置を指定した道路（法42条1項5号の位置指定道路ほか）。指定道路図・指定道路調書で種別と幅員を確認する</span></li>
 </ul>
 
 <div class="cols" style="margin-top:1.3mm">
@@ -158,7 +179,7 @@
   </div>
 </div>
 <div class="sec tight">■緊急連絡先</div>
-<div class="box">担当：<span class="fill" style="min-width:34mm"></span>　TEL：<span class="fill" style="min-width:38mm"></span>　仲介会社：<span class="fill" style="min-width:44mm"></span></div>
+<div class="box">担当：<span class="fill" style="min-width:32mm"></span>　TEL：<span class="fill" style="min-width:36mm"></span>　元付／売主：<span class="fill" style="min-width:44mm"></span></div>
 
 <div class="actionhead">■ 週次アクション</div>
 
