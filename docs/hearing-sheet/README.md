@@ -11,7 +11,9 @@
 | `elderly-sharehouse-hearing-sheet.pdf` | 1枚版の印刷用 PDF（A4 1ページ） |
 | `elderly-sharehouse-hearing-sheet-2p.html` | 2枚版の原本 |
 | `elderly-sharehouse-hearing-sheet-2p.pdf` | 2枚版の印刷用 PDF（A4 2ページ） |
-| `build.sh` | HTML → PDF 変換スクリプト（両方まとめて出力） |
+| `elderly-sharehouse-hearing-sheet-sample.html` | 1枚版の記入例の原本 |
+| `elderly-sharehouse-hearing-sheet-sample.pdf` | 1枚版の記入例（A4 1ページ） |
+| `build.sh` | HTML → PDF 変換スクリプト（すべてまとめて出力） |
 
 ## 更新のしかた
 
@@ -84,4 +86,12 @@ Chromium のパスは `CHROME_BIN` 環境変数で指定できる。
 - 2ページ目にも見出しと物件名欄を入れ、ページが離れても対応が分かるようにした
 - 図面貼付欄は flex で残り高さいっぱいに広がるので、上の項目を足し引きしても
   ページからはみ出さない
+
+## 記入例について
+
+`elderly-sharehouse-hearing-sheet-sample` は、実際のマイソク（春日部市東中野の中古住宅・
+930万円・6DK）を1枚版に落とし込んだ記入例。マイソクから確定できる項目には ☑ と値が入り、
+確定できない項目は「要確認」と書いてある。新しい物件を見るときの記入の目安に使う。
+
+テンプレート側の項目を変えたときは、記入例も追随させるか、古くなった旨を書き添えること。
 
