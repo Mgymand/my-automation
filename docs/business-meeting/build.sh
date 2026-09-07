@@ -30,6 +30,6 @@ print(f'$name: {d.page_count} ページ  {d[0].rect.width:.0f}x{d[0].rect.height
 
 names=("$@")
 if [ ${#names[@]} -eq 0 ]; then
-  names=(kickoff-deck screening-flow acceptance-criteria call-script)
+  names=(kickoff-deck screening-flow acceptance-criteria sales-pack)
 fi
 for n in "${names[@]}"; do render_handout "$n"; done
