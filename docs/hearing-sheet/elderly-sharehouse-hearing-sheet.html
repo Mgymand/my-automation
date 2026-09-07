@@ -21,21 +21,19 @@
     margin: 0 0 1.1mm;
     font-weight: bold;
   }
-  .hdr { display: flex; align-items: flex-end; gap: 4mm; margin-bottom: 1mm; }
-  .hdr .area { flex: 1 1 auto; font-size: 9.4pt; font-weight: bold; }
-  .hdr .area .fill { min-width: 62mm; }
-  .hdr .area .ex { font-weight: normal; }
-  .hdr .meta { flex: 0 0 auto; }
+  .areatbl { margin-bottom: 1.2mm; }
+  .areatbl th.areath { font-size: 9.6pt; font-weight: bold; }
+  .areatbl td.areatd { height: 11.5mm; font-size: 11.5pt; }
   .sec { font-size: 8.7pt; font-weight: bold; margin: 1.1mm 0 0.6mm; }
   .sec .note { font-size: 7.1pt; font-weight: normal; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  td, th { border: 0.5pt solid #000; padding: 0.7mm 1.3mm; vertical-align: middle; }
+  td, th { border: 0.75pt solid #000; padding: 0.7mm 1.3mm; vertical-align: middle; }
   th {
     background: #f0f0f0; font-weight: normal; text-align: center;
     letter-spacing: 0.25em; text-indent: 0.25em; white-space: nowrap;
   }
   td.in { height: 5.3mm; }
-  .fill { border-bottom: 0.5pt solid #000; display: inline-block; min-width: 18mm; }
+  .fill { border-bottom: 0.6pt solid #000; display: inline-block; min-width: 18mm; }
   .cb { white-space: nowrap; }
   .cb::before { content: "□ "; }
   ul.eq { list-style: none; margin: 0; padding: 0; }
@@ -44,8 +42,8 @@
   ul.eq > li > .items { flex: 1 1 auto; }
   ul.eq > li > .items .cb { margin-right: 2.3mm; display: inline-block; }
   .memo { padding-left: 20mm; font-size: 7.1pt; }
-  .box { border: 0.5pt solid #000; padding: 1mm 1.6mm; }
-  .writein { border: 0.5pt solid #000; height: 6.6mm; }
+  .box { border: 0.75pt solid #000; padding: 1mm 1.6mm; }
+  .writein { border: 0.75pt solid #000; height: 6.6mm; }
   .cols { display: flex; gap: 3.2mm; }
   .col { flex: 1 1 0; min-width: 0; }
   .actionhead {
@@ -68,10 +66,14 @@
 
 <h1>老人シェアハウス（住宅型有料老人ホーム）物件ヒアリングシート</h1>
 
-<div class="hdr">
-  <div class="area">エリア：<span class="fill" style="min-width:78mm"></span></div>
-  <div class="meta">記入日：<span class="fill" style="min-width:22mm"></span>　記入者：<span class="fill" style="min-width:26mm"></span></div>
-</div>
+<table class="areatbl">
+  <colgroup><col style="width:22mm"><col style="width:74mm"><col style="width:18mm"><col style="width:26mm"><col style="width:18mm"><col style="width:34mm"></colgroup>
+  <tr>
+    <th class="areath">エ リ ア</th><td class="areatd"></td>
+    <th>記 入 日</th><td></td>
+    <th>記 入 者</th><td></td>
+  </tr>
+</table>
 
 <div class="sec">【基本情報】</div>
 <table>
@@ -184,7 +186,7 @@
   <div style="margin-top:0.6mm">MAIL：<span class="fill" style="min-width:120mm"></span></div>
 </div>
 
-<div class="actionhead">■ 法規制確認・開所準備チェック</div>
+<div class="actionhead">■ 法規制確認</div>
 
 <div class="cols">
   <div class="col">
