@@ -16,6 +16,8 @@
 | `elderly-sharehouse-hearing-sheet-2p-sample.html` | 2枚版の記入例の原本 |
 | `elderly-sharehouse-hearing-sheet-2p-sample.pdf` | 2枚版の記入例（A4 2ページ） |
 | `build.sh` | HTML → PDF 変換スクリプト（すべてまとめて出力） |
+| `research/fetch-opendata.sh` | 住所から無料のオープンデータをまとめて取得するスクリプト |
+| `research/kasukabe-higashinakano-1523-13.md` | 春日部の物件のオープンデータ調査結果 |
 
 ## 更新のしかた
 
@@ -112,4 +114,24 @@ Chromium のパスは `CHROME_BIN` 環境変数で指定できる。
 
 
 テンプレート側の項目を変えたときは、記入例も追随させるか、古くなった旨を書き添えること。
+
+## オープンデータの自動取得
+
+`research/fetch-opendata.sh` に住所を渡すと、無料・登録不要の公開APIから次をまとめて取得する。
+チェックリストの【ネット取得】の欄はこれで埋まる。
+
+```bash
+./docs/hearing-sheet/research/fetch-opendata.sh "埼玉県春日部市東中野1523-13"
+```
+
+| 取得するもの | 出典 |
+| --- | --- |
+| 座標 | 国土地理院 アドレス検索API |
+| 標高 | 国土地理院 標高API |
+| 微地形区分・AVS30・表層地盤増幅率 | 防災科研 J-SHIS |
+| 洪水浸水想定・浸水継続時間・家屋倒壊等氾濫想定・土砂災害・津波・高潮 | 重ねるハザードマップのタイルを座標で色判定 |
+| 用途地域・建ぺい率・容積率 | 国土数値情報 A29 |
+| 最寄りの地価公示 標準地 | 国土数値情報 L01 |
+
+住所以外は何も要らない。他の物件でもそのまま使える。
 
