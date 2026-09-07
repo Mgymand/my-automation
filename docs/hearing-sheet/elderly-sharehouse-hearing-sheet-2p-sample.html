@@ -2,78 +2,92 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>老人シェアハウス物件ヒアリングシート（記入例）</title>
+<title>老人シェアハウス物件ヒアリングシート（記入例・2枚版）</title>
 <style>
-  @page { size: A4 portrait; margin: 6mm 8mm 4mm 8mm; }
+  @page { size: A4 portrait; margin: 10mm 11mm 9mm 11mm; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
     font-family: "IPAGothic", "IPAPGothic", sans-serif;
     color: #000;
-    font-size: 7.1pt;
-    line-height: 1.22;
+    font-size: 8.3pt;
+    line-height: 1.4;
     -webkit-print-color-adjust: exact;
   }
   h1 {
-    font-size: 13pt;
+    font-size: 13.2pt;
     text-align: center;
     letter-spacing: 0.05em;
-    margin: 0 0 1.1mm;
+    margin: 0 0 3mm;
     font-weight: bold;
   }
-  .areatbl { margin-bottom: 1.2mm; }
-  .areatbl th.areath { font-size: 9.6pt; font-weight: bold; }
-  .areatbl td.areatd { height: 11.5mm; font-size: 11.5pt; }
-  .sec { font-size: 8.5pt; font-weight: bold; margin: 0.9mm 0 0.5mm; }
-  .sec .note { font-size: 7.1pt; font-weight: normal; }
+  .pageno { text-align: right; font-size: 8.5pt; margin: -2mm 0 2mm; }
+  .p2head {
+    display: flex; align-items: baseline; gap: 5mm;
+    border-bottom: 1.5pt solid #000; padding-bottom: 1.5mm; margin-bottom: 4mm;
+  }
+  .p2head .t { font-size: 11.5pt; font-weight: bold; flex: 0 0 auto; }
+  .p2head .n { flex: 1 1 auto; font-size: 9.3pt; }
+  .p2head .pg { flex: 0 0 auto; font-size: 8.5pt; }
+  .areatbl { margin-bottom: 3.5mm; }
+  .areatbl th.areath { font-size: 11pt; font-weight: bold; }
+  .areatbl td.areatd { height: 13mm; font-size: 12.5pt; }
+  .sec { font-size: 9.3pt; font-weight: bold; margin: 1.3mm 0 0.6mm; }
+  .sec .note { font-size: 8pt; font-weight: normal; }
   table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  td, th { border: 1.5pt solid #000; padding: 0.7mm 1.3mm; vertical-align: middle; }
+  td, th { border: 1.5pt solid #000; padding: 1.2mm 1.8mm; vertical-align: middle; }
   th {
     background: #f0f0f0; font-weight: normal; text-align: center;
     letter-spacing: 0.25em; text-indent: 0.25em; white-space: nowrap;
   }
-  td.in { height: 5.3mm; }
+  td.in { height: 7.4mm; }
   .fill { border-bottom: 0.9pt solid #000; display: inline-block; min-width: 18mm; }
   .cb { white-space: nowrap; }
   .cb::before { content: "□ "; }
   ul.eq { list-style: none; margin: 0; padding: 0; }
-  ul.eq > li { display: flex; margin-bottom: 0.3mm; }
-  ul.eq > li > .lbl { flex: 0 0 20mm; white-space: nowrap; }
+  ul.eq > li { display: flex; margin-bottom: 0.5mm; }
+  ul.eq > li > .lbl { flex: 0 0 24mm; white-space: nowrap; }
   ul.eq > li > .items { flex: 1 1 auto; }
-  ul.eq > li > .items .cb { margin-right: 2.3mm; display: inline-block; }
-  .memo { padding-left: 20mm; font-size: 7.1pt; }
-  .box { border: 1.5pt solid #000; padding: 1mm 1.6mm; }
-  .writein { border: 1.5pt solid #000; min-height: 6.6mm; height: auto; }
-  .cols { display: flex; gap: 3.2mm; }
+  ul.eq > li > .items .cb { margin-right: 3mm; display: inline-block; }
+  .box { border: 1.5pt solid #000; padding: 2mm 2.4mm; }
+  .writein { border: 1.5pt solid #000; min-height: 13mm; height: auto; }
+  .writein.sm { height: 15mm; }
+  .writein.lg { height: 24mm; }
+  .cols { display: flex; gap: 5mm; }
   .col { flex: 1 1 0; min-width: 0; }
   .actionhead {
-    font-size: 9pt; font-weight: bold; background: #000; color: #fff;
-    padding: 0.7mm 1.6mm; margin: 1.4mm 0 0.9mm;
+    font-size: 10.5pt; font-weight: bold; background: #000; color: #fff;
+    padding: 1mm 1.9mm; margin: 2mm 0 1.2mm;
   }
-  .dia { font-weight: bold; margin: 0 0 0.7mm; font-size: 8.5pt; }
+  .dia { font-weight: bold; margin: 0 0 0.9mm; font-size: 9.3pt; }
   ol.chk { list-style: none; margin: 0; padding: 0; }
-  ol.chk > li { display: flex; margin-bottom: 0.25mm; }
-  ol.chk > li > .n { flex: 0 0 4.5mm; }
+  ol.chk > li { display: flex; margin-bottom: 0.75mm; }
+  ol.chk > li > .n { flex: 0 0 5.5mm; }
   ol.chk > li > .t { flex: 1 1 auto; }
-  .arrow { display: block; padding-left: 2.5mm; font-size: 7pt; }
-  .q { margin-bottom: 0.6mm; }
-  .small { font-size: 7.3pt; }
-  .ex { font-size: 7.1pt; }
+  .arrow { display: block; padding-left: 3mm; font-size: 8pt; }
+  .q { margin-bottom: 1mm; }
+  .small { font-size: 8pt; }
+  .ex { font-size: 8.2pt; }
   .tight { margin: 0; }
+  .pagebreak { page-break-before: always; break-before: page; }
   .cb.on::before { content: "\2611 "; }
   .v { font-weight: bold; }
-  td.v { padding-left: 2mm; }
-  .tbd { font-size: 7pt; }
-  .legend { font-size: 7.2pt; text-align: right; margin: -0.6mm 0 0.8mm; }
+  .tbd { font-size: 7.6pt; }
+  .legend { font-size: 8pt; text-align: right; margin: -1mm 0 1.5mm; }
+  .plan .note { font-size: 8.6pt; padding: 2mm 2.4mm; }
+  .page1 { height: 278mm; display: flex; flex-direction: column; }
+  .plan { border: 1.5pt solid #000; flex: 1 1 auto; min-height: 90mm; }
 </style>
 </head>
 <body>
 
+<div class="page1">
 <h1>老人シェアハウス（住宅型有料老人ホーム）物件ヒアリングシート　＜記入例＞</h1>
-<div class="legend">☑＝マイソクから確定　／　要確認＝現地・役所・売主に確認が必要</div>
+<div class="pageno">1 / 2</div>
+<div class="legend">☑＝資料から確定　／　要確認＝現地・役所・売主・管理会社に確認が必要</div>
 
 <table class="areatbl">
-  <colgroup><col style="width:22mm"><col style="width:74mm"><col style="width:18mm"><col style="width:26mm"><col style="width:18mm"><col style="width:34mm"></colgroup>
+  <colgroup><col style="width:30mm"><col style="width:58mm"><col style="width:24mm"><col style="width:22mm"><col style="width:24mm"><col style="width:30mm"></colgroup>
   <tr>
     <th class="areath">エ リ ア</th><td class="areatd v">埼玉県春日部市</td>
     <th>記 入 日</th><td class="v">2026/9/7</td>
@@ -81,14 +95,18 @@
   </tr>
 </table>
 
-<div class="sec">【基本情報】</div>
+<div class="sec">【基本情報・連絡先】</div>
 <table>
-  <colgroup><col style="width:24mm"><col style="width:60mm"><col style="width:20mm"><col style="width:88mm"></colgroup>
-  <tr><th>物 件 名</th><td class="in v" colspan="3">春日部市東中野　中古住宅（南桜井）</td></tr>
-  <tr><th>所 在 地</th><td class="in v" colspan="3">埼玉県春日部市東中野1523番地13（地番：東中野字駿河1523番13）</td></tr>
-  <tr><th>建 物 名</th><td class="in v" colspan="3">―（戸建のため無し）</td></tr>
-  <tr><th>最 寄 駅</th><td class="in" colspan="3" style="text-align:center">
-      <span class="fill v" style="min-width:34mm">東武アーバンパークライン</span> 線　<span class="fill v" style="min-width:34mm">南桜井</span> 駅　徒歩 <span class="fill v" style="min-width:11mm">22</span> 分（約1,750m）</td></tr>
+  <colgroup><col style="width:24mm"><col style="width:56mm"><col style="width:20mm"><col style="width:88mm"></colgroup>
+  <tr>
+    <th>物 件 名</th><td class="in v">春日部市東中野 中古住宅</td>
+    <th>所 在 地</th><td class="in v">春日部市東中野1523番地13（地番：字駿河1523番13）</td>
+  </tr>
+  <tr>
+    <th>価 格</th><td class="in"><span class="fill v" style="min-width:32mm">930</span> 万円（税込）</td>
+    <th>最 寄 駅</th>
+    <td class="in"><span class="fill v" style="min-width:24mm">東武アーバンパークライン</span> 線　<span class="fill v" style="min-width:24mm">南桜井</span> 駅　徒歩 <span class="fill v" style="min-width:10mm">22</span> 分</td>
+  </tr>
   <tr>
     <th>築 年 数</th><td class="in v">昭和56年11月4日築（築44年）</td>
     <th>構 造</th>
@@ -96,11 +114,15 @@
   </tr>
   <tr>
     <th>階 数</th><td class="in v">2階建（木造瓦葺）</td>
-    <th>扶 助 額</th><td class="in"><span class="fill v" style="min-width:24mm">43,000</span> 円／人・月 <span class="tbd">春日部市＝2級地-1・単身</span></td>
+    <th>扶 助 額</th><td class="in"><span class="fill v" style="min-width:30mm">43,000</span> 円／人・月 <span class="tbd">春日部市＝2級地-1・単身</span></td>
   </tr>
   <tr>
-    <th>価 格</th>
-    <td class="in" colspan="3"><span class="fill v" style="min-width:46mm">930</span> 万円（税込）</td>
+    <th>元付／売主</th><td class="in v">春日部ハウス（専任媒介）／清水 富子</td>
+    <th>担 当</th><td class="in tbd">要確認</td>
+  </tr>
+  <tr>
+    <th>TEL／FAX</th><td class="in"><span class="fill v" style="min-width:22mm">048-812-7274</span> ／ <span class="fill v" style="min-width:22mm">048-812-7994</span></td>
+    <th>M A I L</th><td class="in tbd">要確認</td>
   </tr>
 </table>
 
@@ -114,7 +136,7 @@
   </tr>
   <tr>
     <th>想定部屋数</th><td class="in"><span class="fill v" style="min-width:18mm">9</span> 室（1F5・2F4／DKは共用）</td>
-    <th>土地面積</th><td class="in"><span class="fill v" style="min-width:18mm">登記148</span> ㎡<span class="tbd">（マイソク164・要確認）</span>（別途 私道 <span class="fill v" style="min-width:12mm">139</span> ㎡ 持分 <span class="fill v" style="min-width:9mm">1/4</span>）</td>
+    <th>土地面積</th><td class="in"><span class="fill v" style="min-width:18mm">登記148</span> ㎡<span class="tbd">（マイソク164）</span>（別途 私道 <span class="fill v" style="min-width:12mm">139</span> ㎡ 持分 <span class="fill v" style="min-width:9mm">1/4</span>）</td>
   </tr>
   <tr>
     <th>接 道</th><td class="in">幅員 <span class="fill v" style="min-width:11mm">4.2</span> m ／ 間口 <span class="fill v" style="min-width:11mm">4.2</span> m</td>
@@ -142,10 +164,22 @@
     <span class="cb">自動火災報知設備</span><span class="cb">スプリンクラー</span><span class="cb">消火器</span><span class="cb">誘導灯</span><span class="cb">住警器</span><span class="cb">非常用照明</span><span class="cb">防火戸</span></span></li>
 </ul>
 
+
+
+<div class="sec tight" style="margin-top:3mm">■内装図面・間取図（貼付）<span class="note">※マイソクの間取図・配置図をここに貼る</span></div>
+<div class="plan"><div class="note">※ここに内装資料（9室割りの間取図）とマイソクの配置図を貼付。<br>　1F：①②＝洋8帖を南北に2分割／③④＝洋8帖を東西に2分割／⑤＝洋6帖<br>　2F：⑥＝洋6帖／⑦⑧＝洋6帖を2分割（⑦に納戸）／⑨＝和6帖</div></div>
+</div>
+<div class="pagebreak"></div>
+<div class="p2head">
+  <span class="t">老人シェアハウス物件ヒアリングシート</span>
+  <span class="n">物件名：<span class="fill" style="min-width:60mm"></span></span>
+  <span class="pg">2 / 2</span>
+</div>
+
 <div class="sec">■告知事項・瑕疵の確認（✓）<span class="note">※該当するものにチェック。1つでも付いたら詳細を確認する</span></div>
 <ul class="eq">
   <li><span class="lbl">【心理的瑕疵】</span><span class="items">
-    <span class="cb">なし</span><span class="cb">あり</span><span class="tbd">※告知書未入手のため未判定</span>→（<span class="cb">自殺</span><span class="cb">他殺</span><span class="cb">孤独死</span><span class="cb">事故死</span><span class="cb">火災</span>）　発生日 <span class="fill" style="min-width:16mm"></span>　場所 <span class="fill" style="min-width:20mm"></span></span></li>
+    <span class="cb">なし</span><span class="cb">あり</span><span class="tbd">※告知書未入手</span>→（<span class="cb">自殺</span><span class="cb">他殺</span><span class="cb">孤独死</span><span class="cb">事故死</span><span class="cb">火災</span>）<span class="ex">※発生日・場所は下部の特記事項欄へ</span></span></li>
   <li><span class="lbl">【物理的瑕疵】</span><span class="items">
     <span class="cb">雨漏り</span><span class="cb">シロアリ</span><span class="cb">傾き・沈下</span><span class="cb">給排水管の不具合</span><span class="cb">アスベスト</span><span class="cb">擁壁の劣化</span><span class="cb">火災・浸水履歴</span></span></li>
   <li><span class="lbl">【土地・環境】</span><span class="items">
@@ -154,13 +188,14 @@
     <span class="cb">再建築不可</span><span class="cb">既存不適格</span><span class="cb">違法建築・未登記増築</span><span class="cb">借地</span><span class="cb">建築協定・地区計画</span><span class="cb">セットバック要</span></span></li>
   <li><span class="lbl">【権利・近隣】</span><span class="items">
     <span class="cb">越境（<span style="white-space:nowrap">□塀 □屋根 □樹木 □配管</span>）</span><span class="cb on v">私道の通行・掘削承諾</span><span class="cb on v">共有持分（私道1/4）</span><span class="cb">抵当権・差押<span class="tbd">（乙区なし＝担保なし）</span></span><span class="cb">近隣トラブル</span></span></li>
-  <li><span class="lbl"></span><span class="items ex">※心理的瑕疵は国交省「宅地建物取引業者による人の死の告知に関するガイドライン」に基づき確認する。売主の告知書（物件状況等報告書）の写しを必ず入手すること</span></li>
+  <li><span class="lbl"></span><span class="items ex">※心理的瑕疵は国交省「人の死の告知に関するガイドライン」に基づき確認。売主の告知書（物件状況等報告書）の写しを必ず入手すること</span></li>
 </ul>
+
 
 <div class="sec">■取得・確認資料チェックリスト（✓）<span class="note">※売買の交渉・判断材料。取得したものにチェック</span></div>
 <ul class="eq">
   <li><span class="lbl">【地 図 】</span><span class="items">
-    <span class="cb on v">ゼンリン住宅地図（図面コード：78P-H-1）</span><span class="cb on v">現地案内図</span><span class="cb on v">公図</span></span></li>
+    <span class="cb on v">ゼンリン住宅地図（78P-H-1）</span><span class="cb on v">現地案内図</span><span class="cb on v">公図</span></span></li>
   <li><span class="lbl">【法 務 局 】</span><span class="items">
     <span class="cb on v">登記事項証明書（謄本）土地</span><span class="cb on v">同 建物</span><span class="cb on v">公図</span><span class="cb on v">地積測量図</span><span class="cb on v">建物図面・各階平面図</span></span></li>
   <li><span class="lbl">【インフラ確認】</span><span class="items">
@@ -169,25 +204,20 @@
     <span class="cb">市の道路台帳を取得</span><span class="cb">指定道路図・指定道路調書</span><span class="cb">私道の通行・掘削承諾書</span></span></li>
   <li><span class="lbl">【売 主 】</span><span class="items">
     <span class="cb">告知書（物件状況等報告書）</span><span class="cb">付帯設備表</span><span class="cb">検査済証・建築確認済証<span class="tbd">（確認 第1563号 昭56.7.30）</span></span><span class="cb">固定資産税評価証明</span></span></li>
-  <li><span class="lbl"></span><span class="items ex">※指定道路＝特定行政庁が位置を指定した道路（法42条1項5号の位置指定道路ほか）。指定道路図・指定道路調書で種別と幅員を確認する</span></li>
+  <li><span class="lbl"></span><span class="items ex">※指定道路＝特定行政庁が位置を指定した道路（法42条1項5号ほか）。指定道路図・調書で種別と幅員を確認</span></li>
 </ul>
 
 <div class="cols" style="margin-top:1.3mm">
   <div class="col">
     <div class="sec tight" style="margin-top:0">■アピールポイント、周辺環境</div>
-    <div class="writein" style="padding:1mm 1.4mm">空家のため即着工可。延べ118.92㎡・2階建で<b>用途変更の確認申請は不要</b>（法87条・200㎡以下）、<b>耐火/準耐火化も不要</b>（指導指針6⑶）。乙区なし＝担保なし。相続登記済（令7.12.5）で売主単独。</div>
+    <div class="writein" style="padding:1.4mm 1.8mm">空家で即着工可。延べ118.92㎡・2階建なので<b>用途変更の確認申請は不要</b>（法87条）、<b>耐火／準耐火化も不要</b>（指導指針6⑶）。乙区なし＝担保なし、相続登記済で売主単独。</div>
     <div class="ex" style="text-align:right">（例：病院・スーパーが近い／バス停徒歩3分）</div>
   </div>
   <div class="col">
     <div class="sec tight" style="margin-top:0">■注意事項</div>
-    <div class="writein" style="padding:1mm 1.4mm">9室は全室13㎡未満→<b>指導指針6⑴の特例</b>（既存転用・定員9人以下）で適用除外を狙う。全室個室＋重説記載＋代替措置が条件。<b>埼玉県に要確認</b>。土地は登記148㎡でマイソク164㎡と16㎡差。</div>
+    <div class="writein" style="padding:1.4mm 1.8mm">9室は全室13㎡未満→<b>指導指針6⑴の特例</b>（既存転用・定員9人以下）で適用除外を狙う。全室個室＋重説記載＋代替措置が条件、<b>埼玉県に要確認</b>。土地は登記148㎡でマイソク164㎡と16㎡差。</div>
     <div class="ex" style="text-align:right">（例：近隣が施設反対・住所掲載NG など）</div>
   </div>
-</div>
-<div class="sec tight">■緊急連絡先</div>
-<div class="box">
-  <div>元付／売主：<span class="fill v" style="min-width:58mm">春日部ハウス（専任媒介）</span>　担当：<span class="fill tbd" style="min-width:29mm">要確認</span></div>
-  <div style="margin-top:0.8mm">TEL／FAX：<span class="fill v" style="min-width:30mm">048-812-7274</span> ／ <span class="fill v" style="min-width:30mm">048-812-7994</span>　MAIL：<span class="fill tbd" style="min-width:29mm">要確認</span></div>
 </div>
 
 <div class="actionhead">■ 法規制確認</div>
@@ -217,7 +247,7 @@
   <div class="col">
     <div class="dia">◆ 役所（建築指導課）で確認する</div>
     <div class="box" style="margin-bottom:1.3mm">
-      <div class="q small">→ 令114条2項の間仕切壁は、平成26年告示860号の緩和を適用できるか<br>
+      <div class="q" style="font-size:7.4pt">→ 令114条2項の間仕切壁は、平成26年告示860号の緩和を適用できるか<br>
         <span class="arrow"><span class="cb">適用可</span> <span class="cb">適用不可</span>　回答：<span class="fill" style="min-width:34mm"></span></span></div>
       <div class="q">→ 令126条の4の非常用照明は必要か<br>
         <span class="arrow"><span class="cb">必要</span> <span class="cb">不要</span>　回答：<span class="fill" style="min-width:38mm"></span></span></div>
@@ -239,6 +269,29 @@
       <div class="small" style="margin-top:0.7mm">業者名：<span class="fill" style="min-width:26mm"></span>　見積：<span class="fill" style="min-width:20mm"></span> 円</div>
     </div>
   </div>
+</div>
+
+
+<div class="sec">◆ 管理会社（運営・入居者管理の委託先）に確認する</div>
+<ul class="eq">
+  <li><span class="lbl">【委 託 範 囲】</span><span class="items">
+    <span class="cb">入居者募集</span><span class="cb">入居契約</span><span class="cb">家賃集金・請求</span><span class="cb">夜間・緊急対応</span><span class="cb">清掃</span><span class="cb">小修繕</span><span class="cb">退去精算</span></span></li>
+  <li><span class="lbl">【費　　　用】</span><span class="items">
+    管理料 <span class="fill" style="min-width:14mm"></span> ％／円　募集手数料 <span class="fill" style="min-width:16mm"></span>　契約形態 <span class="cb">管理受託</span> <span class="cb">サブリース</span>（賃料改定 <span class="fill" style="min-width:10mm"></span> 年ごと）</span></li>
+  <li><span class="lbl">【入 居 付 け】</span><span class="items">
+    同エリアの稼働率 <span class="fill" style="min-width:12mm"></span> ％　平均入居期間 <span class="fill" style="min-width:12mm"></span> 年　生活保護 <span class="cb">可</span> <span class="cb">不可</span>　住宅扶助の代理納付 <span class="cb">可</span> <span class="cb">不可</span></span></li>
+  <li><span class="lbl">【介 護 連 携】</span><span class="items">
+    提携の訪問介護 <span class="fill" style="min-width:26mm"></span>　居宅介護支援 <span class="fill" style="min-width:26mm"></span>　夜間オンコール <span class="cb">有</span> <span class="cb">無</span></span></li>
+  <li><span class="lbl">【契約・責任】</span><span class="items">
+    契約期間 <span class="fill" style="min-width:10mm"></span> 年　解約予告 <span class="fill" style="min-width:10mm"></span> ヶ月　中途解約 <span class="cb">可</span> <span class="cb">不可</span>　事故・死亡時の対応と費用負担 <span class="fill" style="min-width:24mm"></span></span></li>
+</ul>
+
+<div class="sec">■特記事項・総合所見<span class="note">※告知事項の詳細（内容・時期・出典）、判定のまとめ、指値の根拠、次アクション</span></div>
+<div class="writein" style="padding:1.4mm 1.8mm">現地の宿題は①検査済証、⑦②・⑧の開口（採光1/7）、⑧階段の実測。役所＝令114条2項の間仕切壁（告示860号）と令126条の4の非常用照明、消防＝(6)項ロ／ハとSPの免除要件、埼玉県＝指導指針6⑴の特例。土地の16㎡差は1523-1（残積16㎡）が売買に含まれるか元付に確認。</div>
+<div class="box" style="margin-top:1.4mm; padding:1.3mm 1.8mm">
+  判定：<span class="cb on v">進める</span> <span class="cb">保留</span> <span class="cb">見送り</span>　
+  次アクション期限：<span class="fill tbd" style="min-width:26mm">現地・役所は今週中</span>　
+  担当：<span class="fill tbd" style="min-width:30mm">―</span>
 </div>
 
 </body>
