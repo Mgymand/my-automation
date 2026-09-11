@@ -6,3 +6,8 @@ __pycache__/
 property-map/data/*.json
 property-map/data/extracted_images/
 property-map/data/compile/
+# 孫LOVE の実データ（市区町村マスタのみコミット）
+mago-love/data/*.json
+!mago-love/data/kanto_municipalities.json
+mago-love/data/uploads/
+mago-love/data/.secret_key
