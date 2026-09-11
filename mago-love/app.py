@@ -546,7 +546,7 @@ def character_generate(cid):
     for key in want:
         e = next(x for x in domain.EXPRESSIONS if x["key"] == key)
         try:
-            png = imagegen.generate_expression(base_bytes, c, e["prompt"])
+            png = imagegen.generate_expression(base_bytes, c, e["prompt"], pose=bool(e.get("pose")))
             png2, _ext = remove_white_background(png)
             png = png2 or png
             for f in os.listdir(CHAR_IMG_DIR):

@@ -163,6 +163,7 @@ async function showView(v) {
   const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : '') + (v === 'dashboard' ? ' view-hub' : ''); el.innerHTML = '';
   applyScene(v);
   if (v !== 'map' && S.map) { S.map.remove(); S.map = null; }
+  if (v !== 'dashboard') stopWander();
   try { await VIEWS[v][1](el); } catch (e) { err(e); }
   if (S.boot && S.boot.my_character) { renderPartner(); if (v === 'dashboard') setTimeout(partnerGreet, 300); }
 }
@@ -208,27 +209,79 @@ async function renderHub(el) {
   const me_ = S.boot.me, pr = S.boot.progress, c = myChar(), a = S.boot.assets || {};
   const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
   const todays = [...d.overdue, ...d.upcoming].slice(0, 4); const cnt = sceneCounts();
-  el.innerHTML = `<div class="hub" id="hub">
-    <div class="hub-bg ${a.hall ? '' : 'css'}" style="${a.hall ? `background-image:url('${a.hall}')` : ''}"></div>
+  const photo = !!a.hall; // 実写風のホール画像があれば「写真の中を歩く」モード
+  const hall = sceneOf('dashboard'); const home = (hall && hall.stand) || [43, 78, 30];
+  const hotspots = S.boot.scenes.filter(sc => sc.id !== 'hall').map((sc, i) => { const cn = cnt[sc.id]; const pos = photo && sc.photo ? sc.photo : { x: sc.x, y: sc.y }; return `<div class="hotspot" style="left:${pos.x}%;top:${pos.y}%;--depth:${8 + (i % 4) * 5}" data-view="${sc.view}" data-scene="${sc.id}"><div class="obj">${sc.icon}${cn && cn.n ? `<span class="cnt ${cn.warn ? 'warn' : ''}">${cn.n}</span>` : ''}</div><div class="lbl">${esc(sc.label)}</div><div class="tag">${esc(sc.tagline)}</div></div>`; }).join('');
+  // 他の仲間は自分の持ち場（NPC）に立つ。クリックで話しかけ、その場所へ案内してもらえる
+  const npcs = photo ? S.boot.characters.filter(x => x.id !== c.id && x.post).map(x => { const sc = S.boot.scenes.find(y => y.id === x.post); if (!sc || !sc.stand) return ''; const [sx, sy, sh] = sc.npc || sc.stand; const img = charImage(x, 'normal'); return `<div class="hub-npc" data-npc="${x.id}" style="--x:${sx}%;--y:${sy}%;--h:${sh}%" title="${esc(x.name)}（クリックで話す）">${img ? `<img src="${esc(img)}" alt="${esc(x.name)}">` : `<div class="emoji">${x.emoji}</div>`}<span class="npc-name">${esc(x.name)}</span></div>`; }).join('') : '';
+  const heroImg = c.image ? `<img id="hero-char" src="${esc(charImage(c, hall && hall.pose) || charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" id="hero-char">${c.emoji}</div>`;
+  el.innerHTML = `<div class="hub ${photo ? 'photo' : ''}" id="hub">
+    ${photo ? `<div class="hub-bg blur" style="background-image:url('${a.hall}')"></div>
+    <div class="stage" id="stage" style="background-image:url('${a.hall}')">${npcs}<div class="hub-actor ${hall && hall.pose && charImage(c, hall.pose) ? 'sitting' : ''}" id="actor" style="--x:${home[0]}%;--y:${home[1]}%;--h:${home[2]}%">${heroImg}</div></div>
+    <div class="hub-layer" id="hub-layer">${hotspots}</div>` : `<div class="hub-bg css"></div>
     <div class="hub-rays"></div><div class="hub-vignette"></div>
-    <div class="hub-layer">${S.boot.scenes.filter(sc => sc.id !== 'hall').map((sc, i) => { const cn = cnt[sc.id]; return `<div class="hotspot" style="left:${sc.x}%;top:${sc.y}%;--depth:${8 + (i % 4) * 5}" data-view="${sc.view}"><div class="obj">${sc.icon}${cn && cn.n ? `<span class="cnt ${cn.warn ? 'warn' : ''}">${cn.n}</span>` : ''}</div><div class="lbl">${esc(sc.label)}</div><div class="tag">${esc(sc.tagline)}</div></div>`; }).join('')}</div>
-    <div class="hub-char"><div class="halo"></div>${c.image ? `<img id="hero-char" src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" id="hero-char">${c.emoji}</div>`}</div>
+    <div class="hub-layer" id="hub-layer">${hotspots}</div>
+    <div class="hub-char"><div class="halo"></div>${heroImg}</div>`}
     <div class="hub-hud">
       <div class="hub-kicker">Guild Hall ・ 出店クエスト本部</div>
       <div class="hub-title">${greet}、<b>${esc(me_.name)}</b> さん。</div>
-      <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ 行き先をクリックして移動</div>
+      <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ ${photo ? '部屋の中の物や仲間をクリック' : '行き先をクリックして移動'}</div>
       <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div><button class="btn btn-xs" id="btn-char">パートナー</button></div>
       <div class="hub-quests">${todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('')}</div>
     </div>
-    <div class="hub-dialog"><div class="rpg-box"><span class="nameplate">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions"><button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button></div></div></div>
-    <div class="hub-hint">CLICK A PLACE TO TRAVEL</div>
+    <div class="hub-dialog"><div class="rpg-box"><span class="nameplate" id="hero-name">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions" id="hero-actions"><button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button></div></div></div>
+    <div class="hub-hint">${photo ? 'CLICK AN OBJECT OR A FRIEND' : 'CLICK A PLACE TO TRAVEL'}</div>
   </div>`;
-  $$('.hotspot', el).forEach(h => h.onclick = () => location.hash = '#/' + h.dataset.view);
+  $$('.hotspot', el).forEach(h => h.onclick = () => { const sc = S.boot.scenes.find(x => x.id === h.dataset.scene); const go = () => location.hash = '#/' + h.dataset.view; if (photo && sc && sc.stand) { partnerSay(`${sc.label}へ行こう！`, { expr: pickExpr('idle') }); actorGoto(sc, go); } else go(); });
+  $$('.hub-npc', el).forEach(n => n.onclick = () => npcTalk(n.dataset.npc));
   $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $('#btn-char').onclick = () => chooseCharacter(false);
-  $('#hero-next').onclick = () => partnerNext();
+  $('#hero-next').onclick = () => { const np = $('#hero-name'); if (np) np.textContent = myChar().name; partnerNext(); };
   bindParallax($('#hub', el));
+  if (photo) { fitStage(); window.addEventListener('resize', fitStage); startWander(); }
+}
+// ---- 写真の中のステージ（16:9 を保ってピンとキャラの位置がずれないようにする）
+function fitStage() {
+  const hub = $('#hub'), st = $('#stage'), layer = $('#hub-layer'); if (!hub || !st || !layer) return;
+  const geo = (x, v) => { x.style.left = v.left; x.style.top = v.top; x.style.width = v.width; x.style.height = v.height; };
+  if (window.matchMedia('(max-width: 860px)').matches) { [st, layer].forEach(x => geo(x, { left: '', top: '', width: '', height: '' })); return; }
+  const W = hub.clientWidth, H = hub.clientHeight; let w = W, h = W * 9 / 16; if (h > H) { h = H; w = H * 16 / 9; }
+  const v = { left: (W - w) / 2 + 'px', top: (H - h) / 2 + 'px', width: w + 'px', height: h + 'px' };
+  [st, layer].forEach(x => geo(x, v));
+}
+// ---- キャラをホールの中で歩かせる（stand = [x%, y%, 身長%]）
+let _wander = null, _moving = false;
+function actorGoto(sc, then) {
+  const actor = $('#actor'), img = $('#hero-char'); if (!actor || !sc.stand) { then && then(); return; }
+  const c = myChar(); const [x, y, h] = sc.stand; const cx = parseFloat(actor.style.getPropertyValue('--x')) || 50, cy = parseFloat(actor.style.getPropertyValue('--y')) || 70;
+  const dist = Math.hypot(x - cx, y - cy); if (dist < 1) { then && then(); return; }
+  const dur = Math.min(2.4, Math.max(.8, dist / 30)); _moving = true;
+  const walk = charImage(c, 'walk'); if (img.tagName === 'IMG' && walk) img.src = walk;
+  actor.classList.remove('sitting'); actor.classList.add('walking'); actor.classList.toggle('flip', x > cx); actor.style.zIndex = Math.round(y);
+  actor.style.transition = `left ${dur}s ease-in-out, top ${dur}s ease-in-out, height ${dur}s ease-in-out`;
+  actor.style.setProperty('--x', x + '%'); actor.style.setProperty('--y', y + '%'); actor.style.setProperty('--h', h + '%');
+  setTimeout(() => { actor.classList.remove('walking', 'flip'); const pose = sc.pose && charImage(c, sc.pose); actor.classList.toggle('sitting', !!pose); if (img.tagName === 'IMG') img.src = pose || charImage(c, 'normal') || c.image; _moving = false; then && then(); }, dur * 1000);
+}
+const WANDER_LINES = { map: '地図の机に来たよ。次はどのエリアを攻める？', board: '掲示板をチェック中。止まってる案件はない？', list: '図鑑を整理してるよ。物件の記録は全部ここにあるんだ。', schedule: '暦を見てるよ。期限が近い予定、忘れてない？', import: '倉庫に新しい資料は届いてる？マイソクはここから搬入だよ。', pois: '街の様子を見てるよ。病院や役所、ケアマネ事業所の場所は大事だね。', stats: '観測所から街を眺めてる。人口の多い街は入居者も集まりやすいよ。', journal: '日誌を読み返してるよ。最近の動きを振り返ろう。', settings: '受付で連絡事項を確認中。Slack通知はもう設定した？' };
+function startWander() {
+  clearInterval(_wander);
+  _wander = setInterval(() => {
+    if (S.view !== 'dashboard' || document.hidden || _moving || !$('#actor')) return;
+    if (Math.random() < .35) { const hall = sceneOf('dashboard'); actorGoto(hall, () => partnerSay(pick(myChar().lines.idle), { expr: pickExpr('idle') })); return; }
+    const sc = pick(S.boot.scenes.filter(x => x.id !== 'hall' && x.stand));
+    actorGoto(sc, () => { const np = $('#hero-name'); if (np) np.textContent = myChar().name; partnerSay(WANDER_LINES[sc.id] || sc.tagline, { expr: pickExpr('idle') }); });
+  }, 22000);
+}
+function stopWander() { clearInterval(_wander); _wander = null; window.removeEventListener('resize', fitStage); }
+// ---- 仲間（NPC）に話しかける → その人の持ち場へ案内してもらえる
+function npcTalk(cid) {
+  const npc = S.boot.characters.find(x => x.id === cid); if (!npc) return;
+  const sc = S.boot.scenes.find(x => x.id === npc.post); const el = $(`.hub-npc[data-npc="${cid}"]`); if (el) { el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); }
+  const np = $('#hero-name'); if (np) np.textContent = npc.name;
+  const line = pick(npc.lines.greet) + (sc ? ` ${sc.label}のことなら任せて。` : '');
+  partnerSay(line, {});
+  const act = $('#hero-actions'); if (act && sc) { act.innerHTML = `<button id="npc-go">➜ ${esc(npc.name)}と${esc(sc.label)}へ</button><button id="hero-next">次のセリフ</button>`; $('#npc-go').onclick = () => { const me = myChar(); const np2 = $('#hero-name'); if (np2) np2.textContent = me.name; partnerSay(`${sc.label}へ行こう！`, { expr: pickExpr('idle') }); actorGoto(sc, () => location.hash = '#/' + sc.view); }; $('#hero-next').onclick = () => { const np2 = $('#hero-name'); if (np2) np2.textContent = myChar().name; act.innerHTML = `<button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button>`; $('#hero-next').onclick = () => partnerNext(); $$('[data-go]', act).forEach(x => x.onclick = () => location.hash = x.dataset.go); partnerNext(); }; }
 }
 
 // ================================================================ ギルド日誌（進捗・最近の動き）
@@ -1016,7 +1069,7 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function setExpression(expr) {
   const c = myChar(); const src = charImage(c, expr) || c.image; if (!src) return;
   const swap = (img) => { if (!img || img.getAttribute('src') === src) return; img.style.opacity = '0'; setTimeout(() => { img.src = src; img.style.opacity = '1'; }, 180); };
-  swap($('#partner-img')); const hero = $('#hero-char'); if (hero && hero.tagName === 'IMG') { swap(hero); hero.classList.remove('talk'); void hero.offsetWidth; hero.classList.add('talk'); }
+  swap($('#partner-img')); const hero = $('#hero-char'); if (hero && hero.tagName === 'IMG') { if (!hero.closest('.hub-actor.sitting, .hub-actor.walking')) swap(hero); hero.classList.remove('talk'); void hero.offsetWidth; hero.classList.add('talk'); }
 }
 function partnerSay(text, opts = {}) {
   const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text'), heroText = $('#hero-text');

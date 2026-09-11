@@ -86,13 +86,18 @@ def _call(body: dict) -> dict:
         raise RuntimeError(f"HTTP {e.code}: {detail}")
 
 
-def generate_expression(base_image: bytes, character: dict, expression_prompt: str) -> bytes:
-    """元画像と同一キャラの別表情を生成して PNG/JPEG バイト列を返す。"""
+def generate_expression(base_image: bytes, character: dict, expression_prompt: str, pose: bool = False) -> bytes:
+    """元画像と同一キャラの別表情（または別ポーズ）を生成して PNG/JPEG バイト列を返す。"""
+    if pose:
+        change = ("Keep the full-body framing and plain pure-white background. "
+                  f"Change the pose to: {expression_prompt}. Keep a calm friendly expression. ")
+    else:
+        change = ("Keep the full-body framing, standing pose, and plain pure-white background. "
+                  f"Change only the expression and gesture to: {expression_prompt}. ")
     prompt = (
         "This is a character illustration for a Japanese business app. Generate the SAME character: "
         "identical face, hairstyle, animal ears, tail, outfit, accessories, name tag, art style, proportions and colors. "
-        "Keep the full-body framing, standing pose, and plain pure-white background. "
-        f"Change only the expression and gesture to: {expression_prompt}. "
+        + change +
         f"The character is {character.get('name', '')}, a {character.get('species', '')}-eared {character.get('role', '')}. "
         "No text, no watermark, no speech bubbles, single character, centered, high quality anime illustration."
     )

@@ -84,12 +84,31 @@ A fantasy RPG UI button, rounded rectangle, rose-pink to crimson gradient with g
 A guild emblem for a caring senior-home company named 孫LOVE: a warm heart with a small house and a sprout, gold and rose-pink metallic, fantasy RPG crest style, centered, transparent background, no text
 ```
 
+## ギルドホールの写真の中を歩かせる
+「ギルドホール」スロットに 16:9 の背景画像（例: 上のプロンプトで作ったホール）を入れると、拠点画面が **写真の中を歩くモード** になります。
+
+- 部屋の中の物（地図の机・掲示板・本棚・暖炉・地球儀・扉・木箱・階段・ランタン）の上に光るピンが出て、クリックすると自分のキャラがそこまで歩いてから画面が切り替わります
+- 自分以外の仲間は持ち場（ルカ=地図の机、ハルト施設長=掲示板、コタロウ=暖炉、モモ=扉）に立ちます。クリックすると話しかけられ、「➜ ○○と△△へ」で案内してもらえます
+- 何もしないでいると、キャラが部屋の中をときどき移動して独り言を言います
+- 「座る」「歩く」のポーズ画像を生成しておくと、机の椅子に座ったり、歩く姿で移動したりします（未生成でも立ち絵で動きます）
+
+ピンとキャラの位置は、このプロンプト集のホール（左に地図の机、右に掲示板、中央奥に扉と窓）を前提にしています。構図の違う画像を使う場合は `domain.py` の `SCENES` にある `photo` / `stand` / `npc` の数値（%）で調整できます。
+
 ## キャラクター（元画像は白背景・全身。アプリが自動で透過します）
 既存の4キャラの表情は、アプリの「表情を生成」で元画像から作るのが最も一致します。ChatGPT で作る場合は、元画像を添付して次のように指示してください。
 ```
 Generate the SAME character: identical face, hairstyle, animal ears, outfit, accessories, art style and proportions. Keep the full-body standing pose and a plain pure-white background. Change only the expression and gesture to: {表情}. Single character, centered, no text.
 ```
 表情の例: `big happy smile, waving one hand` / `excited cheering pose with both fists raised` / `surprised, wide eyes, mouth open` / `thoughtful, one hand on chin` / `worried, eyebrows raised, hands clasped` / `sleepy, yawning`
+
+### ポーズ（ギルドホールで座る・歩く用。横向き・左向きで）
+```
+Generate the SAME character (identical face, hair, animal ears, outfit, art style). Full body, plain pure-white background, single character, no text. Pose: sitting on a simple wooden chair seen from the side, body facing left, relaxed, hands on lap, gentle smile, include the chair.
+```
+```
+Generate the SAME character (identical face, hair, animal ears, outfit, art style). Full body, plain pure-white background, single character, no text. Pose: walking mid-stride seen from the side, body facing left, one arm swinging naturally, light smile.
+```
+アプリの「表情を生成」でも「座る」「歩く」が一緒に作られます。
 
 ## 新しいキャラを追加したい場合（例）
 ```
