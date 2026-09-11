@@ -69,6 +69,20 @@ else
   info "データ保存用バケットは作成済み: gs://$BUCKET"
 fi
 
+# ---- 3b. ビルド/実行用サービスアカウントに権限を付与 ------------------------------
+# 新しいプロジェクトでは標準サービスアカウントに権限が自動付与されないため、
+# ソースからのビルド（Cloud Build）とデータ用バケットへのアクセスに必要な役割を明示的に付ける。
+say "【3/5】ビルド用サービスアカウントの権限を設定しています"
+PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")"
+SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud services enable compute.googleapis.com iam.googleapis.com --project "$PROJECT_ID" >/dev/null 2>&1 || true
+for ROLE in roles/cloudbuild.builds.builder roles/artifactregistry.writer roles/logging.logWriter roles/storage.objectAdmin; do
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$SA" --role "$ROLE" \
+    --condition=None --quiet >/dev/null 2>&1 || warn "権限付与に失敗: $ROLE（プロジェクトのオーナー権限が必要です）"
+done
+info "サービスアカウント $SA に権限を付与しました（反映まで少し待ちます）"
+sleep 25
+
 # ---- 4. 最新コードを取得してデプロイ ------------------------------------------
 say "【4/5】最新のアプリをデプロイしています（初回は3〜5分かかります）"
 rm -rf "$WORK_DIR" && git clone -q --depth 1 "$REPO_URL" "$WORK_DIR"
