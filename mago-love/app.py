@@ -324,6 +324,7 @@ def bootstrap():
         "scenes": domain.SCENES,
         "ui_assets": domain.UI_ASSETS,
         "assets": assets_public(),
+        "stills": stills_public(),
         "my_character": _my_user().get("character", ""),
         "progress": user_progress(me().get("name", "")),
     })
@@ -546,7 +547,7 @@ def character_generate(cid):
     for key in want:
         e = next(x for x in domain.EXPRESSIONS if x["key"] == key)
         try:
-            png = imagegen.generate_expression(base_bytes, c, e["prompt"], pose=bool(e.get("pose")))
+            png = imagegen.generate_expression(base_bytes, c, e["prompt"])
             png2, _ext = remove_white_background(png)
             png = png2 or png
             for f in os.listdir(CHAR_IMG_DIR):
@@ -653,6 +654,118 @@ def asset_generate(key):
     with open(os.path.join(ASSET_DIR, key + ".png"), "wb") as out:
         out.write(png)
     return jsonify(assets_public())
+
+
+# ---------------------------------------------------------------------------
+# ホールの場面画像（キャラ入りの静止画）: stills/{cid}__{scene}.png
+# ---------------------------------------------------------------------------
+
+STILL_DIR = os.path.join(store.DATA_DIR, "stills")
+os.makedirs(STILL_DIR, exist_ok=True)
+
+
+def stills_public() -> dict:
+    """{character_id: {scene_id: url}}"""
+    out: dict = {}
+    try:
+        names = os.listdir(STILL_DIR)
+    except OSError:
+        names = []
+    for f in names:
+        base, ext = os.path.splitext(f)
+        if "__" not in base or ext.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+            continue
+        cid, scene = base.split("__", 1)
+        if cid not in domain.CHARACTER_IDS or scene not in domain.SCENE_IDS:
+            continue
+        try:
+            v = int(os.path.getmtime(os.path.join(STILL_DIR, f)))
+        except OSError:
+            v = 0
+        out.setdefault(cid, {})[scene] = f"/still-images/{f}?v={v}"
+    return out
+
+
+def _remove_still(cid: str, scene: str) -> None:
+    for f in os.listdir(STILL_DIR):
+        if os.path.splitext(f)[0] == f"{cid}__{scene}":
+            os.remove(os.path.join(STILL_DIR, f))
+
+
+@app.route("/still-images/<path:filename>")
+def still_image(filename):
+    return send_from_directory(STILL_DIR, filename)
+
+
+@app.route("/api/stills/<cid>/<scene>/image", methods=["POST", "DELETE"])
+@auth.require_role("admin")
+def still_upload(cid, scene):
+    if cid not in domain.CHARACTER_IDS or scene not in domain.SCENE_IDS:
+        return _bad("unknown still", 404)
+    _remove_still(cid, scene)
+    if request.method == "DELETE":
+        return jsonify(stills_public())
+    f = request.files.get("file")
+    if not f:
+        return _bad("画像ファイルを選択してください")
+    raw = f.read()
+    if len(raw) > 15 * 1024 * 1024:
+        return _bad("画像は15MB以下にしてください")
+    try:
+        import fitz
+        fitz.Pixmap(raw)
+    except Exception:  # noqa: BLE001
+        return _bad("画像として読み込めませんでした（PNG / JPG / WebP）")
+    ext = ".jpg" if raw[:3] == b"\xff\xd8\xff" else ".webp" if raw[:4] == b"RIFF" else ".png"
+    with open(os.path.join(STILL_DIR, f"{cid}__{scene}{ext}"), "wb") as out:
+        out.write(raw)
+    return jsonify(stills_public())
+
+
+@app.route("/api/stills/<cid>/prompt/<scene>")
+@auth.require_role("admin")
+def still_prompt_api(cid, scene):
+    import imagegen
+    c = next((x for x in domain.CHARACTERS if x["id"] == cid), None)
+    sc = next((x for x in domain.SCENES if x["id"] == scene), None)
+    if not c or not sc:
+        return _bad("unknown still", 404)
+    return jsonify({"prompt": imagegen.still_prompt(c, sc["place"])})
+
+
+@app.route("/api/stills/<cid>/generate", methods=["POST"])
+@auth.require_role("admin")
+def still_generate(cid):
+    """ホール背景 + キャラ元画像から、各場所にキャラがいる場面画像を生成する。body: {scenes: [...]}"""
+    import imagegen
+    if cid not in domain.CHARACTER_IDS:
+        return _bad("unknown character", 404)
+    hall = next((f for f in os.listdir(ASSET_DIR) if os.path.splitext(f)[0] == "hall"), None)
+    if not hall:
+        return _bad("先に「シーン背景・UI素材」でギルドホールの背景画像を入れてください")
+    files = _char_files(cid)
+    if not files.get("base"):
+        return _bad("先にキャラの元画像をアップロードしてください")
+    want = (request.json or {}).get("scenes") or domain.SCENE_IDS
+    want = [w for w in want if w in domain.SCENE_IDS]
+    c = next(x for x in domain.CHARACTERS if x["id"] == cid)
+    with open(os.path.join(ASSET_DIR, hall), "rb") as fh:
+        bg = fh.read()
+    with open(os.path.join(CHAR_IMG_DIR, files["base"]), "rb") as fh:
+        char_img = fh.read()
+    done, errors = [], []
+    for scene in want:
+        sc = next(x for x in domain.SCENES if x["id"] == scene)
+        try:
+            png = imagegen.generate_still(bg, char_img, c, sc["place"])
+            _remove_still(cid, scene)
+            with open(os.path.join(STILL_DIR, f"{cid}__{scene}.png"), "wb") as out:
+                out.write(png)
+            done.append(scene)
+        except Exception as ex:  # noqa: BLE001
+            errors.append(f"{sc['label']}: {ex}")
+            print(f"[imagegen] still {cid}/{scene}: {ex}")
+    return jsonify({"generated": done, "errors": errors, "stills": stills_public()})
 
 
 def reprocess_character_images() -> int:
