@@ -298,3 +298,49 @@ EXPRESSIONS = [
     {"key": "sleepy",    "label": "眠い",     "prompt": "sleepy expression, yawning, rubbing one eye, relaxed posture"},
 ]
 EXPRESSION_KEYS = [e["key"] for e in EXPRESSIONS]
+
+# --- ギルドの部屋（ハブ画面）から移動できる場所。x/y は背景上の配置（%） ---
+SCENES = [
+    {"id": "hall",     "view": "dashboard", "label": "ギルドホール",  "icon": "🏰", "x": 50, "y": 50,
+     "tagline": "出店クエストの本部", "mood": "warm",
+     "prompt": "A grand fantasy guild hall interior at golden hour, wide angle, empty (no people), warm candlelight and sunbeams through tall windows, wooden beams, a large map table in the center-left, a quest notice board on the right wall, bookshelves, a brass clock, crates near the door, soft depth of field, painterly anime background art style (like a high-quality JRPG cutscene), 16:9, no text"},
+    {"id": "map",      "view": "map",       "label": "ワールドマップ", "icon": "🗺️", "x": 18, "y": 70,
+     "tagline": "地図の机 ・ 物件と街を見渡す", "mood": "cool",
+     "prompt": "A cartographer's room in a fantasy guild, an enormous parchment map spread on an oak table with compasses, magnifying glass and brass instruments, moonlight and blue-teal magical glow, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "board",    "view": "board",     "label": "クエスト掲示板", "icon": "📜", "x": 38, "y": 44,
+     "tagline": "掲示板 ・ 案件の進み具合", "mood": "amber",
+     "prompt": "A wooden quest notice board in a fantasy guild hall covered with parchment scrolls, wax seals and pinned notes, warm amber lantern light, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "list",     "view": "list",      "label": "物件図鑑",       "icon": "📖", "x": 10, "y": 52,
+     "tagline": "書庫 ・ すべての物件の記録", "mood": "green",
+     "prompt": "A cozy fantasy library alcove with tall bookshelves, leather-bound tomes, an open illustrated encyclopedia on a lectern, green-gold lamplight, dust motes, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "schedule", "view": "schedule",  "label": "冒険の暦",       "icon": "🕰️", "x": 64, "y": 18,
+     "tagline": "大時計 ・ 予定と期限", "mood": "violet",
+     "prompt": "A fantasy clock tower interior with a giant brass astronomical clock, gears, hanging calendars and star charts, night sky through the window, violet and indigo tones, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "import",   "view": "import",    "label": "素材の搬入",     "icon": "📦", "x": 68, "y": 68,
+     "tagline": "倉庫 ・ 資料を持ち込む", "mood": "brown",
+     "prompt": "A fantasy guild storeroom with wooden crates, rolled blueprints, scrolls and a delivery cart, warm brown tones, lantern light, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "pois",     "view": "pois",      "label": "街の施設",       "icon": "🏥", "x": 38, "y": 70,
+     "tagline": "街へ出る ・ 病院・役所・事業所", "mood": "sunset",
+     "prompt": "A charming fantasy town street at sunset seen from the guild entrance, a clinic with a red cross sign, a town hall with a clock, small shops, warm orange light, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "stats",    "view": "stats",     "label": "領地の統計",     "icon": "📈", "x": 46, "y": 18,
+     "tagline": "観測所 ・ 街の人口と需要", "mood": "indigo",
+     "prompt": "A fantasy observatory room with a brass telescope, glowing star charts, floating holographic graphs and population maps, deep indigo and cyan light, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "journal",  "view": "journal",   "label": "ギルド日誌",     "icon": "📯", "x": 56, "y": 70,
+     "tagline": "受付の台帳 ・ 進捗と最近の動き", "mood": "warm",
+     "prompt": "A fantasy guild receptionist's desk with an open ledger, quill, candle, wax seals and stacked letters, warm golden light, empty (no people), painterly anime background art, 16:9, no text"},
+    {"id": "settings", "view": "settings",  "label": "ギルド設定",     "icon": "⚙️", "x": 64, "y": 44,
+     "tagline": "受付 ・ 仲間と連携の設定", "mood": "stone",
+     "prompt": "A fantasy guild reception desk with a brass bell, ledgers, a key rack and a stone wall with hanging crests, neutral gray-gold tones, empty (no people), painterly anime background art, 16:9, no text"},
+]
+SCENE_IDS = [s["id"] for s in SCENES]
+
+# UI 素材スロット（管理者がアップロード or 生成）
+UI_ASSETS = [
+    {"id": "dialog_frame", "label": "セリフ枠（会話ボックス）", "size": "1024×512 / PNG 透過推奨",
+     "prompt": "A fantasy RPG dialogue box frame, ornate gold filigree border with rounded corners on a dark navy semi-transparent panel, empty inside, symmetrical, clean edges, game UI asset, transparent background, 2:1, no text"},
+    {"id": "button", "label": "ボタン素材", "size": "512×160 / PNG 透過推奨",
+     "prompt": "A fantasy RPG UI button, rounded rectangle, rose-pink to crimson gradient with gold trim and a subtle inner glow, empty (no text), game UI asset, transparent background, 3:1"},
+    {"id": "logo", "label": "ロゴ・紋章", "size": "1024×1024 / PNG 透過",
+     "prompt": "A guild emblem for a caring senior-home company named 孫LOVE: a warm heart with a small house and a sprout, gold and rose-pink metallic, fantasy RPG crest style, centered, transparent background, no text"},
+]
+UI_ASSET_IDS = [a["id"] for a in UI_ASSETS]

@@ -111,3 +111,19 @@ def generate_expression(base_image: bytes, character: dict, expression_prompt: s
                 return base64.b64decode(data["data"])
     reason = (res.get("candidates") or [{}])[0].get("finishReason") or res.get("promptFeedback", {}).get("blockReason")
     raise RuntimeError(f"画像が返されませんでした（{reason or '理由不明'}）")
+
+
+def generate_image(prompt: str, aspect: str = "16:9") -> bytes:
+    """テキスト指示だけから画像を生成（背景・UI素材用）。"""
+    body = {
+        "contents": [{"role": "user", "parts": [{"text": prompt + f" Aspect ratio {aspect}."}]}],
+        "generationConfig": {"responseModalities": ["TEXT", "IMAGE"], "temperature": 0.8},
+    }
+    res = _call(body)
+    for cand in res.get("candidates", []):
+        for part in (cand.get("content") or {}).get("parts", []):
+            data = (part.get("inlineData") or part.get("inline_data") or {})
+            if data.get("data") and str(data.get("mimeType", data.get("mime_type", ""))).startswith("image/"):
+                return base64.b64decode(data["data"])
+    reason = (res.get("candidates") or [{}])[0].get("finishReason") or res.get("promptFeedback", {}).get("blockReason")
+    raise RuntimeError(f"画像が返されませんでした（{reason or '理由不明'}）")

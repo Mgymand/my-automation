@@ -144,7 +144,7 @@ function bindStatusChips(root, onChange) {
 
 // ---------------------------------------------------------------- router
 const VIEWS = {
-  dashboard: ['ギルドホール', renderDashboard], map: ['ワールドマップ', renderMap], board: ['クエスト掲示板', renderBoard],
+  dashboard: ['ギルドホール', renderHub], journal: ['ギルド日誌', renderDashboard], map: ['ワールドマップ', renderMap], board: ['クエスト掲示板', renderBoard],
   list: ['物件図鑑', renderList], schedule: ['冒険の暦', renderSchedule], import: ['素材の搬入（PDF / テキスト / CSV）', renderImport],
   pois: ['街の施設（役所・病院・介護施設）', renderPois], stats: ['領地の統計', renderStats], settings: ['ギルド設定・連携', renderSettings],
 };
@@ -160,7 +160,8 @@ async function showView(v) {
   S.view = v; $('#view-title').textContent = VIEWS[v][0];
   $$('.nav a, .bottom-nav a').forEach(a => a.classList.toggle('active', a.dataset.view === v));
   $('#sidebar').classList.remove('open');
-  const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : ''); el.innerHTML = '';
+  const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : '') + (v === 'dashboard' ? ' view-hub' : ''); el.innerHTML = '';
+  applyScene(v);
   if (v !== 'map' && S.map) { S.map.remove(); S.map = null; }
   try { await VIEWS[v][1](el); } catch (e) { err(e); }
   if (S.boot && S.boot.my_character) { renderPartner(); if (v === 'dashboard') setTimeout(partnerGreet, 300); }
@@ -172,33 +173,72 @@ async function refreshProps() { S.props = await api('GET', '/api/properties'); }
 async function refreshPois() { S.pois = await api('GET', '/api/pois'); }
 async function refreshStats() { S.stats = await api('GET', '/api/stats'); }
 
-// ================================================================ ダッシュボード
+// ================================================================ ギルドの部屋（ハブ）
+const sceneOf = (view) => (S.boot.scenes || []).find(x => x.view === view) || (S.boot.scenes || [])[0];
+function applyScene(view) {
+  const sc = sceneOf(view); document.body.dataset.scene = sc ? sc.id : 'hall';
+  const bg = $('#scene-bg'); const url = sc && S.boot.assets && S.boot.assets[sc.id];
+  bg.style.backgroundImage = url ? `url('${url}')` : ''; bg.classList.toggle('has', !!url && view !== 'dashboard');
+}
+function applyAssets() {
+  const a = S.boot.assets || {}; let css = '';
+  if (a.dialog_frame) css += `.rpg-box, .bubble { border: 34px solid transparent; border-image: url('${a.dialog_frame}') 128 fill / 34px / 0 stretch; background: none; box-shadow: 0 16px 40px rgba(0,0,0,.55); padding: 4px 30px 6px 8px; } .rpg-box .nameplate { top: -22px; } .bubble::before, .bubble::after { display: none; }`;
+  if (a.button) css += `.btn-primary { background: url('${a.button}') center / 100% 100% no-repeat; border: 0; box-shadow: 0 6px 18px rgba(0,0,0,.45); text-shadow: 0 1px 3px rgba(0,0,0,.6); } .btn-primary::after { display: none; }`;
+  let st = $('#asset-style'); if (!st) { st = document.createElement('style'); st.id = 'asset-style'; document.head.appendChild(st); } st.textContent = css;
+  const mark = $('#brand-mark'); if (mark) mark.innerHTML = a.logo ? `<img src="${esc(a.logo)}" alt="">` : '孫';
+}
+function sceneCounts() {
+  const active = S.props.filter(p => !['dropped', 'opened'].includes(p.status)).length;
+  const overdue = S.props.reduce((n, p) => n + taskStats(p).overdue, 0);
+  return { board: { n: active }, list: { n: S.props.length }, schedule: { n: overdue, warn: true }, pois: { n: (S.pois || []).length } };
+}
+function openTravel() {
+  const cnt = sceneCounts(); const a = S.boot.assets || {};
+  $('#travel-grid').innerHTML = S.boot.scenes.filter(sc => sc.id !== 'hall').map(sc => { const c = cnt[sc.id]; return `<div class="tile ${S.view === sc.view ? 'cur' : ''}" data-view="${sc.view}"><div class="bg" style="${a[sc.id] ? `background-image:url('${a[sc.id]}')` : ''}"></div><span class="ico">${sc.icon}</span>${c && c.n ? `<span class="cnt score-badge ${c.warn ? 's-mid' : 's-hi'}">${c.n}</span>` : ''}<div class="t"><b>${esc(sc.label)}</b><small>${esc(sc.tagline)}</small></div></div>`; }).join('');
+  $('#travel').hidden = false;
+  $$('.tile', $('#travel')).forEach(t => t.onclick = () => { $('#travel').hidden = true; location.hash = '#/' + t.dataset.view; });
+}
+function bindParallax(root) {
+  const onMove = (e) => { const r = root.getBoundingClientRect(); const px = ((e.clientX - r.left) / r.width - .5) * 2, py = ((e.clientY - r.top) / r.height - .5) * 2; root.style.setProperty('--px', px.toFixed(3)); root.style.setProperty('--py', py.toFixed(3)); };
+  root.addEventListener('mousemove', onMove); root.addEventListener('mouseleave', () => { root.style.setProperty('--px', 0); root.style.setProperty('--py', 0); });
+}
+async function renderHub(el) {
+  const d = await api('GET', '/api/dashboard');
+  await refreshProps(); if (!S.pois.length) { try { await refreshPois(); } catch {} }
+  const me_ = S.boot.me, pr = S.boot.progress, c = myChar(), a = S.boot.assets || {};
+  const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
+  const todays = [...d.overdue, ...d.upcoming].slice(0, 4); const cnt = sceneCounts();
+  el.innerHTML = `<div class="hub" id="hub">
+    <div class="hub-bg ${a.hall ? '' : 'css'}" style="${a.hall ? `background-image:url('${a.hall}')` : ''}"></div>
+    <div class="hub-rays"></div><div class="hub-vignette"></div>
+    <div class="hub-layer">${S.boot.scenes.filter(sc => sc.id !== 'hall').map((sc, i) => { const cn = cnt[sc.id]; return `<div class="hotspot" style="left:${sc.x}%;top:${sc.y}%;--depth:${8 + (i % 4) * 5}" data-view="${sc.view}"><div class="obj">${sc.icon}${cn && cn.n ? `<span class="cnt ${cn.warn ? 'warn' : ''}">${cn.n}</span>` : ''}</div><div class="lbl">${esc(sc.label)}</div><div class="tag">${esc(sc.tagline)}</div></div>`; }).join('')}</div>
+    <div class="hub-char"><div class="halo"></div>${c.image ? `<img id="hero-char" src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" id="hero-char">${c.emoji}</div>`}</div>
+    <div class="hub-hud">
+      <div class="hub-kicker">Guild Hall ・ 出店クエスト本部</div>
+      <div class="hub-title">${greet}、<b>${esc(me_.name)}</b> さん。</div>
+      <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ 行き先をクリックして移動</div>
+      <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div><button class="btn btn-xs" id="btn-char">パートナー</button></div>
+      <div class="hub-quests">${todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('')}</div>
+    </div>
+    <div class="hub-dialog"><div class="rpg-box"><span class="nameplate">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions"><button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button></div></div></div>
+    <div class="hub-hint">CLICK A PLACE TO TRAVEL</div>
+  </div>`;
+  $$('.hotspot', el).forEach(h => h.onclick = () => location.hash = '#/' + h.dataset.view);
+  $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
+  $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
+  $('#btn-char').onclick = () => chooseCharacter(false);
+  $('#hero-next').onclick = () => partnerNext();
+  bindParallax($('#hub', el));
+}
+
+// ================================================================ ギルド日誌（進捗・最近の動き）
 async function renderDashboard(el) {
   const d = await api('GET', '/api/dashboard');
   await refreshProps();
   const st = S.boot.statuses;
   const total = d.total || 0;
   const maxCnt = Math.max(1, ...Object.values(d.by_status));
-  const me_ = S.boot.me, pr = S.boot.progress, c = myChar();
-  const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
-  const todays = [...d.overdue, ...d.upcoming].slice(0, 4);
   el.innerHTML = `
-    <section class="hero">
-      <div class="hero-left">
-        <div class="hero-kicker">Guild Hall ・ 出店クエスト本部</div>
-        <div class="hero-title">${greet}、<b>${esc(me_.name)}</b> さん。<br>今日も一緒に、街に新しい「家」をつくろう。</div>
-        <div class="hero-sub">進行中の物件 ${S.props.filter(p => !['dropped', 'opened'].includes(p.status)).length} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過タスク ${d.overdue.length} 件</div>
-        <div class="hero-hud">
-          <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div></div>
-          <button class="btn btn-gold btn-sm" id="btn-char">パートナー変更</button>
-        </div>
-        <div class="hero-quests">${todays.length ? todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('') : '<span class="q">🌿 本日の期限タスクはありません</span>'}</div>
-      </div>
-      <div class="hero-right"><div class="hero-stage">
-        <div class="hero-bubble"><div class="rpg-box"><span class="nameplate">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions"><button id="hero-next">次のセリフ</button></div></div></div>
-        <div class="char-wrap"><div class="halo"></div><div class="ring"></div>${c.image ? `<img class="hero-char" id="hero-char" src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="hero-char emoji" id="hero-char">${c.emoji}</div>`}</div>
-      </div></div>
-    </section>
     <div class="kpis">
       <div class="kpi" style="--kpi-color:#e9c46a" data-go="#/list"><div class="label">物件総数</div><div class="value">${total}</div><div class="sub">関東 全域</div></div>
       ${st.filter(s => s.key !== 'dropped').map(s => `<div class="kpi" style="--kpi-color:${s.color}" data-status-go="${s.key}"><div class="label">${s.label}</div><div class="value">${d.by_status[s.key] || 0}</div><div class="sub">件</div></div>`).join('')}
@@ -223,8 +263,6 @@ async function renderDashboard(el) {
       </div>
     </div>`;
   $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
-  $('#btn-char').onclick = () => chooseCharacter(false);
-  $('#hero-next').onclick = () => partnerNext();
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $$('[data-status-go]', el).forEach(x => x.onclick = () => { S.filter.status = [x.dataset.statusGo]; location.hash = '#/list'; });
   $$('[data-pref-go]', el).forEach(x => x.onclick = () => { S.filter = { pref: x.dataset.prefGo === '未設定' ? '' : x.dataset.prefGo, city: '', ward: '', status: [] }; location.hash = '#/map'; });
@@ -921,6 +959,11 @@ async function renderSettings(el) {
         </div>`).join('')}
         <div class="flex mt12"><button class="btn btn-primary btn-sm" id="c-names">名前を保存</button><button class="btn btn-sm" id="c-choose">自分のパートナーを変更</button></div>
       </div></div>
+      <div class="card"><div class="card-head"><div class="card-title">🏞 シーン背景・UI素材</div><span class="muted small">場面ごとの雰囲気を画像で差し替え</span></div><div class="card-body">
+        <p class="small muted">各場所の背景（16:9・JPG/PNG）、セリフ枠・ボタン・紋章（PNG透過）を、ドロップでアップロードするか「✨生成」で画像生成AIに作らせます。「📋プロンプト」で ChatGPT / Midjourney 用の指示文をコピーできます（<a href="/static/asset-prompts.md" target="_blank">プロンプト集</a>）。</p>
+        <div class="asset-grid mt12">${[...S.boot.scenes, ...S.boot.ui_assets].map(x => { const url = (S.boot.assets || {})[x.id]; const isScene = !!x.view; return `<div class="asset" data-asset="${x.id}"><div class="thumb ${url ? 'has' : ''}" data-adrop="${x.id}" style="${url ? `background-image:url('${url}')` : ''}">${url ? '' : (isScene ? x.icon + ' 背景をドロップ / クリック' : '素材をドロップ / クリック')}</div><input type="file" accept="image/*" data-afile="${x.id}" hidden><div class="info"><b>${isScene ? x.icon + ' ' + esc(x.label) : esc(x.label)}</b><small>${isScene ? esc(x.tagline) : esc(x.size)}</small><div class="btns"><button data-agen="${x.id}">✨ 生成</button><button data-aprompt="${x.id}">📋 プロンプト</button>${url ? `<button data-adel="${x.id}">✕ 削除</button>` : ''}</div></div></div>`; }).join('')}</div>
+        <div class="flex mt12"><button class="btn btn-sm" id="c-reprocess">🪄 キャラ画像の背景を透過し直す</button><span class="small muted">白背景のまま表示される場合に実行</span></div>
+      </div></div>
       <div class="card"><div class="card-head"><div class="card-title">ℹ️ 環境</div></div><div class="card-body"><dl class="kv"><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '<span class="badge badge-ok">有効</span>' : '<span class="badge badge-warn">開発モード</span>'}</dd><dt>AI構造化</dt><dd>${S.boot.settings.llm_enabled ? '<span class="badge badge-ok">有効</span>' : '<span class="badge">無効（正規表現抽出）</span>'}</dd><dt>市区町村マスタ</dt><dd>${S.boot.municipalities.length} 件（関東1都6県）</dd></dl></div></div>
     </div></div>`;
   const save = async () => { const d = formData(el); const out = {}; ['slack_webhook_url', 'app_url', 'notify_on_create', 'notify_on_status', 'notify_on_report', 'notify_on_schedule', 'digest_days_ahead', 'cron_token', 'zenrin_tile_url', 'google_api_key', 'drive_root_url', 'ics_token', 'default_zoom'].forEach(k => out[k] = d[k]); const c = (d.default_center_text || '').split(',').map(Number); if (c.length === 2 && !c.some(isNaN)) out.default_center = c; try { await api('PUT', '/api/settings', out); toast('設定を保存しました', 'ok'); S.boot = await api('GET', '/api/bootstrap'); } catch (e) { err(e); } };
@@ -950,6 +993,14 @@ async function renderSettings(el) {
     try { const r = await api('POST', `/api/characters/${cid}/generate`, { expressions: exprs }); S.boot.characters = r.characters; toast(`${r.generated.length} 枚の表情を生成しました${r.errors.length ? '（失敗 ' + r.errors.length + '）' : ''}`, r.errors.length && !r.generated.length ? 'err' : 'ok'); if (r.errors.length) modal('生成できなかった表情', `<ul class="small">${r.errors.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`); renderPartner(); renderSettings(el); } catch (e) { err(e); renderSettings(el); }
   };
   $$('[data-gen]', el).forEach(b => b.onclick = () => gen(b.dataset.gen, null));
+  const uploadAsset = async (key, file) => { if (!file) return; const fd = new FormData(); fd.append('file', file); try { toast('アップロード中…'); S.boot.assets = await api('POST', `/api/assets/${key}/image`, fd, true); toast('素材を設定しました', 'ok'); applyAssets(); applyScene(S.view); renderSettings(el); } catch (e) { err(e); } };
+  $$('[data-afile]', el).forEach(inp => inp.onchange = () => uploadAsset(inp.dataset.afile, inp.files[0]));
+  $$('[data-adrop]', el).forEach(z => { const k = z.dataset.adrop; z.onclick = () => $(`[data-afile="${k}"]`, el).click(); z.ondragover = (e) => { e.preventDefault(); z.classList.add('over'); }; z.ondragleave = () => z.classList.remove('over'); z.ondrop = (e) => { e.preventDefault(); z.classList.remove('over'); uploadAsset(k, e.dataTransfer.files[0]); }; });
+  $$('[data-adel]', el).forEach(b => b.onclick = async () => { try { S.boot.assets = await api('DELETE', `/api/assets/${b.dataset.adel}/image`); applyAssets(); applyScene(S.view); renderSettings(el); } catch (e) { err(e); } });
+  const specOf = (k) => S.boot.scenes.find(x => x.id === k) || S.boot.ui_assets.find(x => x.id === k);
+  $$('[data-aprompt]', el).forEach(b => b.onclick = () => { const sp = specOf(b.dataset.aprompt); modal(`プロンプト: ${sp.label}`, `<p class="small muted">ChatGPT（画像生成）や Midjourney に貼り付けて使えます。生成した画像はこの枠にドロップしてください。</p><div class="field mt8"><textarea rows="7" id="pr-text">${esc(sp.prompt)}</textarea></div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">閉じる</button><button class="btn btn-primary" id="pr-copy">コピー</button></div>`, (m) => { $('#pr-copy', m).onclick = () => { navigator.clipboard.writeText($('#pr-text', m).value).then(() => toast('コピーしました', 'ok')); }; }); });
+  $$('[data-agen]', el).forEach(b => b.onclick = () => { const sp = specOf(b.dataset.agen); modal(`✨ 生成: ${sp.label}`, `<p class="small muted">画像生成AI（Vertex AI）で作成します。指示文は編集できます。1枚あたり数円が課金されます。</p><div class="field mt8"><textarea rows="7" id="gen-text">${esc(sp.prompt)}</textarea></div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-gold" id="gen-go">✨ 生成する（10〜30秒）</button></div>`, (m) => { $('#gen-go', m).onclick = async () => { const btn = $('#gen-go', m); btn.disabled = true; btn.textContent = '生成中…'; try { S.boot.assets = await api('POST', `/api/assets/${sp.id}/generate`, { prompt: $('#gen-text', m).value }); closeModal(); toast('生成しました', 'ok'); applyAssets(); applyScene(S.view); renderSettings(el); } catch (e) { err(e); btn.disabled = false; btn.textContent = '✨ 生成する'; } }; }); });
+  $('#c-reprocess').onclick = async () => { try { const r = await api('POST', '/api/characters/reprocess'); S.boot.characters = r.characters; toast(`${r.processed} 枚を処理しました`, 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); } };
   $$('[data-egen]', el).forEach(b => b.onclick = () => { const [cid, expr] = b.dataset.egen.split('|'); gen(cid, [expr]); });
   api('GET', '/api/imagegen/status').then(st => { const box = $('#imagegen-status', el); if (!box) return; box.innerHTML = st.available ? `<span class="badge badge-ok">画像生成AI 利用可能</span> <span class="muted">${st.vertex ? 'Vertex AI（' + esc(st.project) + '）' : 'Gemini API'} ・ モデル ${esc(st.model)} ・ 1枚あたり数円がプロジェクトに課金されます</span>` : `<span class="badge badge-warn">画像生成AI 未設定</span> <span class="muted">Cloud Run では setup-cloudshell.sh を再実行すると Vertex AI が有効になります。ローカルは環境変数 GEMINI_API_KEY を設定してください。</span>`; }).catch(() => {});
   $('#c-names').onclick = async () => { const names = {}; $$('[data-cname]', el).forEach(i => names[i.dataset.cname] = i.value.trim() || undefined); try { S.boot.characters = await api('PUT', '/api/characters/names', names); toast('名前を保存しました', 'ok'); renderPartner(); } catch (e) { err(e); } };
@@ -1004,6 +1055,7 @@ function renderLevel() {
   $('#lv-num').textContent = `Lv.${pr.level}`; $('#lv-title').textContent = pr.title;
   $('#xp-bar').style.width = `${Math.round(pr.xp_in_level / pr.xp_next * 100)}%`;
   $('#lv-xp').textContent = `${pr.xp_in_level} / ${pr.xp_next} XP（累計 ${pr.xp}）`;
+  const mini = $('#lv-mini'); if (mini) mini.textContent = `Lv.${pr.level} ${pr.title}`;
 }
 async function refreshProgress(praise = true) {
   const before = S.boot.progress?.level || 1;
@@ -1036,16 +1088,17 @@ function bindPartner() {
 // ================================================================ 起動
 async function init() {
   S.boot = await api('GET', '/api/bootstrap');
-  $('#user-role').textContent = { admin: '管理者', member: 'メンバー', viewer: '閲覧' }[S.boot.me.role] || S.boot.me.role;
+  const roleEl = $('#user-role'); if (roleEl) roleEl.textContent = { admin: '管理者', member: 'メンバー', viewer: '閲覧' }[S.boot.me.role] || S.boot.me.role;
   $('#btn-new-property').onclick = () => newProperty();
-  $('#menu-btn').onclick = () => $('#sidebar').classList.toggle('open');
+  $('#btn-travel').onclick = openTravel; $('#travel-close').onclick = () => $('#travel').hidden = true;
+  $('#travel').addEventListener('click', (e) => { if (e.target === $('#travel')) $('#travel').hidden = true; });
+  applyAssets();
   $('#modal-close').onclick = closeModal;
   $('#modal').addEventListener('click', (e) => { if (e.target === $('#modal')) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else if (!$('#drawer').hidden) closeDrawer(); } if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); $('#global-search').focus(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('#travel').hidden) $('#travel').hidden = true; else if (!$('#modal').hidden) closeModal(); else if (!$('#drawer').hidden) closeDrawer(); } if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); $('#global-search').focus(); } });
   let t; $('#global-search').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value; if (S.view === 'map') { drawMapMarkers(); drawMapList(); } else showView(S.view); }, 250); });
   if (!canEdit()) $('#btn-new-property').hidden = true;
-  $('#bn-more').onclick = (e) => { e.preventDefault(); $('#sidebar').classList.toggle('open'); };
-  document.addEventListener('click', (e) => { const sb = $('#sidebar'); if (sb.classList.contains('open') && !sb.contains(e.target) && !e.target.closest('#menu-btn,#bn-more')) sb.classList.remove('open'); });
+  $('#bn-more').onclick = (e) => { e.preventDefault(); openTravel(); };
   bindPartner(); renderLevel();
   await route();
   if (!S.boot.my_character) chooseCharacter(true); else if (S.view !== 'dashboard') { renderPartner(); setTimeout(partnerGreet, 400); }

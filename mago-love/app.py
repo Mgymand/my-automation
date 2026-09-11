@@ -321,6 +321,9 @@ def bootstrap():
         "drive_folders": domain.DRIVE_FOLDERS,
         "template_task_count": sum(len(v) for v in domain.TASK_TEMPLATE.values()),
         "expressions": domain.EXPRESSIONS,
+        "scenes": domain.SCENES,
+        "ui_assets": domain.UI_ASSETS,
+        "assets": assets_public(),
         "my_character": _my_user().get("character", ""),
         "progress": user_progress(me().get("name", "")),
     })
@@ -563,6 +566,132 @@ def character_generate(cid):
 def imagegen_status():
     import imagegen
     return jsonify(imagegen.status())
+
+
+# ---------------------------------------------------------------------------
+# シーン背景・UI素材（アップロード / 生成）とキャラ画像の再処理
+# ---------------------------------------------------------------------------
+
+ASSET_DIR = os.path.join(store.DATA_DIR, "assets")
+os.makedirs(ASSET_DIR, exist_ok=True)
+_ASSET_KEYS = domain.SCENE_IDS + domain.UI_ASSET_IDS
+
+
+def assets_public() -> dict:
+    out = {}
+    try:
+        names = os.listdir(ASSET_DIR)
+    except OSError:
+        names = []
+    for f in names:
+        base, ext = os.path.splitext(f)
+        if base in _ASSET_KEYS and ext.lower() in (".png", ".jpg", ".jpeg", ".webp"):
+            try:
+                v = int(os.path.getmtime(os.path.join(ASSET_DIR, f)))
+            except OSError:
+                v = 0
+            out[base] = f"/asset-images/{f}?v={v}"
+    return out
+
+
+@app.route("/asset-images/<path:filename>")
+def asset_image(filename):
+    return send_from_directory(ASSET_DIR, filename)
+
+
+@app.route("/api/assets/<key>/image", methods=["POST", "DELETE"])
+@auth.require_role("admin")
+def asset_upload(key):
+    if key not in _ASSET_KEYS:
+        return _bad("unknown asset", 404)
+    for f in os.listdir(ASSET_DIR):
+        if os.path.splitext(f)[0] == key:
+            os.remove(os.path.join(ASSET_DIR, f))
+    if request.method == "DELETE":
+        return jsonify(assets_public())
+    f = request.files.get("file")
+    if not f:
+        return _bad("画像ファイルを選択してください")
+    raw = f.read()
+    if len(raw) > 15 * 1024 * 1024:
+        return _bad("画像は15MB以下にしてください")
+    try:
+        import fitz
+        fitz.Pixmap(raw)
+    except Exception:  # noqa: BLE001
+        return _bad("画像として読み込めませんでした（PNG / JPG / WebP）")
+    ext = ".jpg" if raw[:3] == b"\xff\xd8\xff" else ".webp" if raw[:4] == b"RIFF" else ".png"
+    if key in domain.UI_ASSET_IDS:  # UI素材は白背景を透過
+        raw2, ext2 = remove_white_background(raw)
+        if raw2:
+            raw, ext = raw2, ext2
+    with open(os.path.join(ASSET_DIR, key + ext), "wb") as out:
+        out.write(raw)
+    return jsonify(assets_public())
+
+
+@app.route("/api/assets/<key>/generate", methods=["POST"])
+@auth.require_role("admin")
+def asset_generate(key):
+    """シーン背景 / UI素材を画像生成AIで作る（プロンプトは既定 or 指定）。"""
+    import imagegen
+    if key not in _ASSET_KEYS:
+        return _bad("unknown asset", 404)
+    spec = next((x for x in domain.SCENES if x["id"] == key), None) or next(x for x in domain.UI_ASSETS if x["id"] == key)
+    prompt = (request.json or {}).get("prompt") or spec["prompt"]
+    aspect = "16:9" if key in domain.SCENE_IDS else {"dialog_frame": "2:1", "button": "3:1", "logo": "1:1"}[key]
+    try:
+        png = imagegen.generate_image(prompt, aspect)
+    except Exception as e:  # noqa: BLE001
+        return _bad(str(e), 502)
+    if key in domain.UI_ASSET_IDS:
+        png2, _ = remove_white_background(png)
+        png = png2 or png
+    for f in os.listdir(ASSET_DIR):
+        if os.path.splitext(f)[0] == key:
+            os.remove(os.path.join(ASSET_DIR, f))
+    with open(os.path.join(ASSET_DIR, key + ".png"), "wb") as out:
+        out.write(png)
+    return jsonify(assets_public())
+
+
+def reprocess_character_images() -> int:
+    """既存のキャラ画像（元画像・表情）の白背景を透過し直す。処理件数を返す。"""
+    n = 0
+    for f in sorted(os.listdir(CHAR_IMG_DIR)):
+        path = os.path.join(CHAR_IMG_DIR, f)
+        base, ext = os.path.splitext(f)
+        if ext.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+            continue
+        with open(path, "rb") as fh:
+            raw = fh.read()
+        raw2, ext2 = remove_white_background(raw)
+        if raw2 and (raw2 != raw):
+            os.remove(path)
+            with open(os.path.join(CHAR_IMG_DIR, base + ext2), "wb") as out:
+                out.write(raw2)
+            n += 1
+    return n
+
+
+@app.route("/api/characters/reprocess", methods=["POST"])
+@auth.require_role("admin")
+def characters_reprocess():
+    n = reprocess_character_images()
+    return jsonify({"processed": n, "characters": characters_public()})
+
+
+def _migrate_transparency_once():
+    flag = os.path.join(store.DATA_DIR, ".char_bg_migrated")
+    if os.path.exists(flag):
+        return
+    try:
+        n = reprocess_character_images()
+        print(f"[characters] transparency migration: {n} files")
+        with open(flag, "w") as f:
+            f.write(store.now_iso())
+    except Exception as e:  # noqa: BLE001
+        print(f"[characters] migration skipped: {e}")
 
 
 @app.route("/api/characters/names", methods=["PUT"])
@@ -1553,6 +1682,9 @@ def api_geocode():
 @app.route("/healthz")
 def healthz():
     return "ok"
+
+
+_migrate_transparency_once()
 
 
 if __name__ == "__main__":
