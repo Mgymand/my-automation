@@ -84,15 +84,31 @@ A fantasy RPG UI button, rounded rectangle, rose-pink to crimson gradient with g
 A guild emblem for a caring senior-home company named 孫LOVE: a warm heart with a small house and a sprout, gold and rose-pink metallic, fantasy RPG crest style, centered, transparent background, no text
 ```
 
-## ギルドホールの写真の中を歩かせる
-「ギルドホール」スロットに 16:9 の背景画像（例: 上のプロンプトで作ったホール）を入れると、拠点画面が **写真の中を歩くモード** になります。
+## ギルドホールの「場面画像」（キャラがその場所にいる絵）
+「ギルドホール」スロットに 16:9 の背景を入れると、拠点画面は **場面画像モード** になります。キャラを動かすのではなく、
+「地図の机に座っている」「掲示板の前に立っている」など **場所ごとの完成画像** をあらかじめ用意し、クリックした場所の絵へゆっくりクロスフェードします。
 
-- 部屋の中の物（地図の机・掲示板・本棚・暖炉・地球儀・扉・木箱・階段・ランタン）の上に光るピンが出て、クリックすると自分のキャラがそこまで歩いてから画面が切り替わります
-- 自分以外の仲間は持ち場（ルカ=地図の机、ハルト施設長=掲示板、コタロウ=暖炉、モモ=扉）に立ちます。クリックすると話しかけられ、「➜ ○○と△△へ」で案内してもらえます
-- 何もしないでいると、キャラが部屋の中をときどき移動して独り言を言います
-- 「座る」「歩く」のポーズ画像を生成しておくと、机の椅子に座ったり、歩く姿で移動したりします（未生成でも立ち絵で動きます）
+- 生成はアプリ内で: ギルド設定 → 「🎞 ホールの場面画像」 → 人物を選び「この人物の全場面を生成」（10枚）。ホール背景＋キャラ元画像を渡して合成します
+- ChatGPT で作る場合: ホール背景とキャラの元画像の **2枚を添付** して、「📋 プロンプト」でコピーした指示文を貼り付けます。できた画像をその場面の枠にドロップ
+- 場面画像がない場所は、ホール背景のまま画面が切り替わります（エラーにはなりません）
+- 仲間は持ち場（ルカ=地図の机、ハルト施設長=掲示板、コタロウ=暖炉、モモ=扉）に顔チップで立ち、クリックすると話しかけられ、その人の場面画像があればそれに切り替わって案内してくれます
+- セリフ枠の左に話し手の顔が出て、表情画像がここで切り替わります
 
-ピンとキャラの位置は、このプロンプト集のホール（左に地図の机、右に掲示板、中央奥に扉と窓）を前提にしています。構図の違う画像を使う場合は `domain.py` の `SCENES` にある `photo` / `stand` / `npc` の数値（%）で調整できます。
+### ChatGPT 用の合成プロンプト（2枚添付: 1枚目=ホール背景、2枚目=キャラ）
+```
+Image 1 is a background painting of a fantasy guild hall. Image 2 is a character illustration on a white background. Create ONE new image: the exact same guild hall from image 1 (same composition, camera angle, furniture, lighting and colors, nothing added or removed), with the character from image 2 placed naturally inside it, {場所の指示}. Keep the character's identity exactly: same face, hairstyle, animal ears, outfit and colors. Match the character's scale to the perspective of the room, match the warm lighting and cast a soft shadow on the floor so the character looks like they belong there. Single character only, no other people, no text, no speech bubbles, no watermark. Painterly anime style consistent with the background. Aspect ratio 16:9.
+```
+場所の指示の例（アプリの各場面と同じ）:
+- ギルドホール（拠点）: `sitting relaxed on a chair at the large map table in the left foreground, one hand resting on the map, looking toward the viewer with a welcoming smile`
+- ワールドマップ: `standing at the large map table in the left foreground, leaning over the map and pointing at a spot on it`
+- クエスト掲示板: `standing in front of the quest notice board on the right wall, looking up at the pinned notices`
+- 物件図鑑: `standing at the tall bookshelf on the left, pulling out a book`
+- 冒険の暦: `standing near the lantern below the balcony in the center-right, looking up at it`
+- 素材の搬入: `standing beside the wooden crates on the right, checking a rolled scroll`
+- 街の施設: `standing in the open doorway in the center, looking out at the town`
+- 領地の統計: `standing beside the globe in the left foreground, one hand on the globe`
+- ギルド日誌: `sitting in the armchair by the fireplace on the left, reading a ledger`
+- ギルド設定: `standing at the foot of the staircase in the center, one hand on the railing`
 
 ## キャラクター（元画像は白背景・全身。アプリが自動で透過します）
 既存の4キャラの表情は、アプリの「表情を生成」で元画像から作るのが最も一致します。ChatGPT で作る場合は、元画像を添付して次のように指示してください。
@@ -100,15 +116,6 @@ A guild emblem for a caring senior-home company named 孫LOVE: a warm heart with
 Generate the SAME character: identical face, hairstyle, animal ears, outfit, accessories, art style and proportions. Keep the full-body standing pose and a plain pure-white background. Change only the expression and gesture to: {表情}. Single character, centered, no text.
 ```
 表情の例: `big happy smile, waving one hand` / `excited cheering pose with both fists raised` / `surprised, wide eyes, mouth open` / `thoughtful, one hand on chin` / `worried, eyebrows raised, hands clasped` / `sleepy, yawning`
-
-### ポーズ（ギルドホールで座る・歩く用。横向き・左向きで）
-```
-Generate the SAME character (identical face, hair, animal ears, outfit, art style). Full body, plain pure-white background, single character, no text. Pose: sitting on a simple wooden chair seen from the side, body facing left, relaxed, hands on lap, gentle smile, include the chair.
-```
-```
-Generate the SAME character (identical face, hair, animal ears, outfit, art style). Full body, plain pure-white background, single character, no text. Pose: walking mid-stride seen from the side, body facing left, one arm swinging naturally, light smile.
-```
-アプリの「表情を生成」でも「座る」「歩く」が一緒に作られます。
 
 ## 新しいキャラを追加したい場合（例）
 ```

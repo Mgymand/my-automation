@@ -86,18 +86,13 @@ def _call(body: dict) -> dict:
         raise RuntimeError(f"HTTP {e.code}: {detail}")
 
 
-def generate_expression(base_image: bytes, character: dict, expression_prompt: str, pose: bool = False) -> bytes:
-    """元画像と同一キャラの別表情（または別ポーズ）を生成して PNG/JPEG バイト列を返す。"""
-    if pose:
-        change = ("Keep the full-body framing and plain pure-white background. "
-                  f"Change the pose to: {expression_prompt}. Keep a calm friendly expression. ")
-    else:
-        change = ("Keep the full-body framing, standing pose, and plain pure-white background. "
-                  f"Change only the expression and gesture to: {expression_prompt}. ")
+def generate_expression(base_image: bytes, character: dict, expression_prompt: str) -> bytes:
+    """元画像と同一キャラの別表情を生成して PNG/JPEG バイト列を返す。"""
     prompt = (
         "This is a character illustration for a Japanese business app. Generate the SAME character: "
         "identical face, hairstyle, animal ears, tail, outfit, accessories, name tag, art style, proportions and colors. "
-        + change +
+        "Keep the full-body framing, standing pose, and plain pure-white background. "
+        f"Change only the expression and gesture to: {expression_prompt}. "
         f"The character is {character.get('name', '')}, a {character.get('species', '')}-eared {character.get('role', '')}. "
         "No text, no watermark, no speech bubbles, single character, centered, high quality anime illustration."
     )
@@ -116,6 +111,42 @@ def generate_expression(base_image: bytes, character: dict, expression_prompt: s
                 return base64.b64decode(data["data"])
     reason = (res.get("candidates") or [{}])[0].get("finishReason") or res.get("promptFeedback", {}).get("blockReason")
     raise RuntimeError(f"画像が返されませんでした（{reason or '理由不明'}）")
+
+
+def _first_image(res: dict) -> bytes:
+    for cand in res.get("candidates", []):
+        for part in (cand.get("content") or {}).get("parts", []):
+            data = (part.get("inlineData") or part.get("inline_data") or {})
+            if data.get("data") and str(data.get("mimeType", data.get("mime_type", ""))).startswith("image/"):
+                return base64.b64decode(data["data"])
+    reason = (res.get("candidates") or [{}])[0].get("finishReason") or res.get("promptFeedback", {}).get("blockReason")
+    raise RuntimeError(f"画像が返されませんでした（{reason or '理由不明'}）")
+
+
+def still_prompt(character: dict, place: str) -> str:
+    """ホール背景にキャラを合成する指示文（アプリ内生成と ChatGPT 用コピーの両方で使う）。"""
+    return (
+        "Image 1 is a background painting of a fantasy guild hall. Image 2 is a character illustration on a white background. "
+        "Create ONE new image: the exact same guild hall from image 1 (same composition, camera angle, furniture, lighting and colors, nothing added or removed), "
+        f"with the character from image 2 placed naturally inside it, {place}. "
+        "Keep the character's identity exactly: same face, hairstyle, animal ears, outfit and colors. "
+        "Match the character's scale to the perspective of the room, match the warm lighting and cast a soft shadow on the floor so the character looks like they belong there. "
+        f"The character is {character.get('name', '')}, a {character.get('species', '')}-eared {character.get('role', '')}. "
+        "Single character only, no other people, no text, no speech bubbles, no watermark. Painterly anime style consistent with the background. Aspect ratio 16:9."
+    )
+
+
+def generate_still(background: bytes, character_image: bytes, character: dict, place: str) -> bytes:
+    """背景画像（ホール）に、キャラクターを指定の場所へ違和感なく合成した 16:9 の場面画像を生成する。"""
+    body = {
+        "contents": [{"role": "user", "parts": [
+            {"inlineData": {"mimeType": _mime(background), "data": base64.b64encode(background).decode()}},
+            {"inlineData": {"mimeType": _mime(character_image), "data": base64.b64encode(character_image).decode()}},
+            {"text": still_prompt(character, place)},
+        ]}],
+        "generationConfig": {"responseModalities": ["TEXT", "IMAGE"], "temperature": 0.5},
+    }
+    return _first_image(_call(body))
 
 
 def generate_image(prompt: str, aspect: str = "16:9") -> bytes:

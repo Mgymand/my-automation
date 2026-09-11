@@ -772,26 +772,26 @@ body[data-scene="settings"] .world-bg { background: radial-gradient(1000px 600px
 .hub.photo .hotspot .lbl { font-size: 11.5px; padding: 3px 10px; background: rgba(20,12,6,.72); border-color: rgba(255,225,160,.45); opacity: .92; }
 .hub.photo .hotspot:hover .obj { transform: scale(1.18); animation: none; box-shadow: 0 0 0 10px rgba(255,200,110,.16), 0 0 34px rgba(255,220,150,.9), 0 10px 22px rgba(0,0,0,.5); }
 @keyframes pinPulse { 50% { box-shadow: 0 0 0 12px rgba(255,200,110,.05), 0 0 26px rgba(255,200,110,.7), 0 8px 18px rgba(0,0,0,.5); } }
-/* 部屋の中に立つキャラ（足元 --x/--y、身長 --h）。暖色の光に馴染ませ、床に接地影を落とす */
-.hub-actor, .hub-npc { position: absolute; left: var(--x); top: var(--y); height: var(--h); transform: translate(-50%, -100%); display: flex; align-items: flex-end; justify-content: center; }
-.hub-actor::before, .hub-npc::before { content: ""; position: absolute; left: 50%; bottom: -3%; width: 110%; height: 14%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, rgba(40,18,0,.55), rgba(40,18,0,.25) 50%, transparent 72%); filter: blur(3px); }
-.hub-actor img, .hub-npc img { position: relative; height: 100%; width: auto; object-fit: contain; object-position: bottom; filter: sepia(.2) saturate(1.12) brightness(.96) contrast(1.04) drop-shadow(0 4px 6px rgba(50,25,0,.45)) drop-shadow(0 0 14px rgba(255,190,110,.22)); transform-origin: bottom center; animation: breathe 4.8s ease-in-out infinite; transition: opacity .25s; }
-.hub-actor .emoji, .hub-npc .emoji { font-size: calc(var(--h) * .6); line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
-@keyframes breathe { 50% { transform: scaleY(1.012) scaleX(.995); } }
-.hub-actor { z-index: 7; }
-.hub-actor.flip img { transform: scaleX(-1); animation: none; }
-.hub-actor.walking img { animation: walkBob .42s ease-in-out infinite; }
-.hub-actor.walking.flip img { animation: walkBobFlip .42s ease-in-out infinite; }
-@keyframes walkBob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-2.5%) rotate(1.5deg); } }
-@keyframes walkBobFlip { 0%, 100% { transform: scaleX(-1) translateY(0) rotate(1.5deg); } 50% { transform: scaleX(-1) translateY(-2.5%) rotate(-1.5deg); } }
-.hub-actor.sitting img { animation: breathe 5.5s ease-in-out infinite; }
-.hub-actor img.talk { animation: talkBob .35s ease-in-out 3, breathe 4.8s ease-in-out infinite 1.1s; }
-/* 仲間（NPC） */
-.hub-npc { z-index: 5; cursor: pointer; filter: brightness(.92); transition: filter .2s; }
-.hub-npc:hover, .hub-npc.talk { filter: brightness(1.08) drop-shadow(0 0 12px rgba(255,220,150,.55)); }
-.hub-npc.talk img { animation: talkBob .35s ease-in-out 3; }
-.hub-npc .npc-name { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: rgba(20,12,6,.7); border: 1px solid rgba(255,225,160,.4); color: #ffe9bf; white-space: nowrap; opacity: 0; transition: opacity .2s; font-family: var(--font-display); }
-.hub-npc:hover .npc-name { opacity: 1; }
+/* 場面画像（キャラ入りの静止画）を2枚重ねてクロスフェード */
+.hub.photo .stage .still { position: absolute; inset: 0; background-size: 100% 100%; background-position: center; opacity: 0; transition: opacity 1.1s ease-in-out; }
+.hub.photo .stage .still.on { opacity: 1; }
+.hub.photo .hub-bg.blur { transition: background-image .8s; animation: slowBreath 24s ease-in-out infinite alternate; }
+@keyframes slowBreath { to { transform: scale(1.05); } }
+.hub.leaving { transition: opacity .4s ease-in, filter .4s ease-in; opacity: 0; filter: blur(6px); }
+/* 仲間の顔チップ（持ち場に立つ。クリックで話しかける） */
+.npc-chip { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; cursor: pointer; padding: 0; }
+.npc-chip img, .npc-chip > span { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: 50% 0; display: flex; align-items: center; justify-content: center; font-size: 26px; background: rgba(20,12,6,.75); border: 2px solid var(--c, var(--gold)); box-shadow: 0 0 0 4px rgba(255,220,150,.14), 0 0 18px rgba(255,200,110,.5), 0 8px 18px rgba(0,0,0,.55); transition: transform .2s, box-shadow .2s; animation: pinPulse 3.2s ease-in-out infinite; }
+.npc-chip img { transform: none; }
+.npc-chip b { font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: rgba(20,12,6,.72); border: 1px solid rgba(255,225,160,.4); color: #ffe9bf; white-space: nowrap; font-family: var(--font-display); backdrop-filter: blur(4px); }
+.npc-chip:hover img, .npc-chip:hover > span { transform: scale(1.12); animation: none; box-shadow: 0 0 0 6px rgba(255,220,150,.2), 0 0 30px rgba(255,220,150,.9), 0 10px 22px rgba(0,0,0,.5); }
+.npc-chip:hover b { border-color: var(--gold); color: var(--gold-2); }
+/* セリフ枠の顔（表情がここで切り替わる） */
+.rpg-box.with-portrait { display: flex; gap: 16px; align-items: flex-start; padding-left: 14px; }
+.rpg-box .rpg-body { flex: 1; min-width: 0; position: static; }
+.hub-portrait { flex-shrink: 0; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.12), rgba(0,0,0,.35)); border: 2px solid var(--c, var(--gold)); box-shadow: 0 0 0 4px rgba(10,13,30,.9), 0 0 18px rgba(255,200,110,.35); margin: -6px 0 -4px; display: flex; align-items: center; justify-content: center; }
+.hub-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transform: scale(1.55); transform-origin: 50% 0; transition: opacity .25s; }
+.hub-portrait img.talk { animation: talkBob .35s ease-in-out 3; }
+.hub-portrait .emoji { font-size: 44px; }
 .hub.photo .hub-hud { z-index: 8; padding: 14px 18px 12px; margin: -14px -18px; border-radius: 18px; background: linear-gradient(180deg, rgba(10,6,2,.55), rgba(10,6,2,.25) 80%, transparent); }
 .hub.photo .hub-dialog { z-index: 9; }
 .hub.photo .hub-hint { z-index: 8; color: rgba(255,225,160,.6); }
@@ -816,6 +816,11 @@ body[data-scene="settings"] .world-bg { background: radial-gradient(1000px 600px
 .tile.cur { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* 素材設定 */
+.still-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.still-tabs button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--ink-2); font-weight: 700; font-size: 12.5px; }
+.still-tabs button.on { border-color: var(--gold); color: var(--gold-2); box-shadow: var(--glow-gold); }
+.still-tabs button img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: 50% 0; }
+.asset .thumb.wide { height: 132px; }
 .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .asset { border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.03); }
 .asset .thumb { height: 120px; background: rgba(0,0,0,.3) center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; cursor: pointer; border: 2px dashed rgba(233,196,106,.25); border-bottom: 0; border-radius: 14px 14px 0 0; transition: all .15s; }
@@ -848,7 +853,11 @@ body[data-scene="settings"] .world-bg { background: radial-gradient(1000px 600px
   .hub.photo .hub-layer { position: relative; transform: none; }
   .hub.photo .hub-hud { margin: -6px -4px 0; padding: 8px 4px; background: none; }
   .hub.photo .hotspot { transform: none; }
-  .hub-npc .npc-name { opacity: 1; }
+  .npc-chip { position: static; transform: none; }
+  .npc-chip img, .npc-chip > span { width: 52px; height: 52px; font-size: 24px; animation: none; }
+  .npc-chip b { font-size: 10px; }
+  .rpg-box.with-portrait { gap: 10px; }
+  .hub-portrait { width: 60px; height: 60px; }
   .topbar-title, .home-text small { display: none; }
   .topbar-actions .user-chip { display: none; }
   .bottom-nav a[data-view="dashboard"] { display: flex; }
