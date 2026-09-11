@@ -286,3 +286,15 @@ def level_for_xp(xp: int) -> dict:
         if level >= lv:
             title = t
     return {"level": level, "xp": xp, "xp_in_level": xp - acc, "xp_next": need, "title": title}
+
+# --- キャラクターの表情バリエーション（元画像1枚から画像生成AIで作る） ---
+EXPRESSIONS = [
+    {"key": "normal",    "label": "通常",     "prompt": "neutral friendly expression, standing naturally"},
+    {"key": "happy",     "label": "笑顔",     "prompt": "big happy smile, eyes closed with joy, one hand raised in a cheerful wave"},
+    {"key": "cheer",     "label": "応援",     "prompt": "excited cheering pose with both fists raised, sparkling eyes, very energetic"},
+    {"key": "surprised", "label": "驚き",     "prompt": "surprised expression, wide eyes, mouth open, hands slightly raised"},
+    {"key": "thinking",  "label": "考え中",   "prompt": "thoughtful expression, one hand on chin, looking slightly upward"},
+    {"key": "worried",   "label": "心配",     "prompt": "worried and apologetic expression, eyebrows raised, hands clasped in front"},
+    {"key": "sleepy",    "label": "眠い",     "prompt": "sleepy expression, yawning, rubbing one eye, relaxed posture"},
+]
+EXPRESSION_KEYS = [e["key"] for e in EXPRESSIONS]

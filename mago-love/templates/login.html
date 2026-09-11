@@ -4,40 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ログイン | {{ app_name }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27%23ff6b9a%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-size=%2734%27 font-weight=%27900%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27serif%27%3E孫%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/app.css?v=3">
   {% if google_client_id %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}
+  <style>
+    .title-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative; z-index: 1; }
+    .title-card { width: min(520px, 100%); text-align: center; padding: 44px 36px 36px; border-radius: 26px; background: rgba(12,16,36,.78); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg), 0 0 80px rgba(255,107,154,.15); backdrop-filter: blur(16px); position: relative; overflow: hidden; }
+    .title-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(500px 240px at 50% 0%, rgba(255,107,154,.22), transparent 70%); pointer-events: none; }
+    .title-card::after { content: ""; position: absolute; inset: 10px; border-radius: 20px; border: 1px solid rgba(233,196,106,.25); pointer-events: none; }
+    .title-kicker { font-family: var(--font-latin); letter-spacing: .4em; font-size: 11px; color: var(--gold); text-transform: uppercase; }
+    .title-logo { font-family: var(--font-display); font-size: 58px; font-weight: 800; color: #fff; line-height: 1.1; margin: 10px 0 4px; text-shadow: 0 0 30px rgba(255,107,154,.55), 0 0 60px rgba(233,196,106,.25); letter-spacing: .04em; position: relative; }
+    .title-logo b { background: linear-gradient(180deg, #fff, var(--gold-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .title-sub { color: var(--ink-2); font-size: 13.5px; margin: 6px 0 26px; }
+    .title-orn { display: flex; align-items: center; gap: 12px; color: var(--gold); margin: 18px 0; font-size: 11px; letter-spacing: .3em; font-family: var(--font-latin); }
+    .title-orn::before, .title-orn::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .g-wrap { display: flex; justify-content: center; }
+    .login-dev { display: flex; flex-direction: column; gap: 8px; text-align: left; position: relative; }
+    .login-dev-title { font-size: 12px; font-weight: 700; color: var(--warn); }
+    .login-error { margin-top: 12px; color: var(--danger); font-size: 13px; position: relative; }
+    .title-foot { margin-top: 22px; font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+    .press { animation: blink 1.6s infinite; }
+  </style>
 </head>
-<body class="login-body">
-  <div class="login-card">
-    <div class="login-brand">
-      <div class="brand-mark">孫</div>
-      <div>
-        <div class="login-title">孫LOVE</div>
-        <div class="login-sub">老人ホーム出店専用アプリ</div>
-      </div>
+<body>
+  <div class="world-bg"><canvas id="stars"></canvas></div>
+  <div class="title-screen">
+    <div class="title-card">
+      <div class="title-kicker">Senior Home Launch Quest</div>
+      <div class="title-logo"><b>孫LOVE</b></div>
+      <div class="title-sub">老人ホーム出店専用アプリ<br>物件仕入れから開業まで、仲間と一緒にクエストを進めよう。</div>
+      <div class="title-orn">SIGN IN</div>
+      {% if google_client_id %}
+        <div class="g-wrap">
+          <div id="g_id_onload" data-client_id="{{ google_client_id }}" data-callback="onGoogle" data-auto_prompt="false"></div>
+          <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="signin_with" data-shape="pill" data-width="320"></div>
+        </div>
+        <p class="title-foot press">招待されたGoogleアカウントでログイン</p>
+      {% else %}
+        <div class="login-dev">
+          <div class="login-dev-title">開発用ログイン（GOOGLE_CLIENT_ID 未設定）</div>
+          {% if dev_users %}
+            {% for u in dev_users %}
+              <button class="btn btn-block" onclick="devLogin('{{ u.email }}')">{{ u.name }} <span class="muted">({{ u.email }} / {{ u.role }})</span></button>
+            {% endfor %}
+          {% else %}
+            <p class="muted">ユーザーが未登録です。環境変数 <code>ADMIN_EMAIL</code> を設定して起動してください。</p>
+          {% endif %}
+        </div>
+      {% endif %}
+      <p id="login-error" class="login-error" hidden></p>
     </div>
-    <p class="login-lead">出店候補の物件仕入れから開業まで、すべてのエリア・すべての物件を同じフォーマットで一元管理します。</p>
-
-    {% if google_client_id %}
-      <div id="g_id_onload" data-client_id="{{ google_client_id }}" data-callback="onGoogle" data-auto_prompt="false"></div>
-      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="signin_with" data-shape="pill" data-width="320"></div>
-      <p class="login-note">招待されたGoogleアカウントでログインしてください。</p>
-    {% else %}
-      <div class="login-dev">
-        <div class="login-dev-title">開発用ログイン（GOOGLE_CLIENT_ID 未設定）</div>
-        {% if dev_users %}
-          {% for u in dev_users %}
-            <button class="btn btn-block" onclick="devLogin('{{ u.email }}')">{{ u.name }} <span class="muted">({{ u.email }} / {{ u.role }})</span></button>
-          {% endfor %}
-        {% else %}
-          <p class="muted">ユーザーが未登録です。環境変数 <code>ADMIN_EMAIL</code> を設定して起動してください。</p>
-        {% endif %}
-      </div>
-    {% endif %}
-    <p id="login-error" class="login-error" hidden></p>
   </div>
+  <script src="/static/stars.js?v=3"></script>
   <script>
     const NEXT = {{ next | tojson }};
     function showErr(m){ const e=document.getElementById('login-error'); e.textContent=m; e.hidden=false; }

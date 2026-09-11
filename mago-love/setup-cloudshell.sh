@@ -59,7 +59,7 @@ ask ADMIN_EMAIL "管理者メール（Googleログインに使うアドレス）
 # ---- 3. 必要なAPIとバケット --------------------------------------------------
 say "【3/5】必要な機能を有効化しています（1〜2分かかります）"
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  storage.googleapis.com --project "$PROJECT_ID" >/dev/null
+  storage.googleapis.com aiplatform.googleapis.com --project "$PROJECT_ID" >/dev/null
 BUCKET="${PROJECT_ID}-mago-love-data"
 if ! gcloud storage buckets describe "gs://$BUCKET" --project "$PROJECT_ID" >/dev/null 2>&1; then
   gcloud storage buckets create "gs://$BUCKET" --project "$PROJECT_ID" --location "$REGION" \
@@ -76,7 +76,7 @@ say "【3/5】ビルド用サービスアカウントの権限を設定してい
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")"
 SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 gcloud services enable compute.googleapis.com iam.googleapis.com --project "$PROJECT_ID" >/dev/null 2>&1 || true
-for ROLE in roles/cloudbuild.builds.builder roles/artifactregistry.writer roles/logging.logWriter roles/storage.objectAdmin; do
+for ROLE in roles/cloudbuild.builds.builder roles/artifactregistry.writer roles/logging.logWriter roles/storage.objectAdmin roles/aiplatform.user; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$SA" --role "$ROLE" \
     --condition=None --quiet >/dev/null 2>&1 || warn "権限付与に失敗: $ROLE（プロジェクトのオーナー権限が必要です）"
 done
@@ -163,7 +163,8 @@ cat <<EOS
   ログイン: $ADMIN_EMAIL の Google アカウント
 
   次にやること（アプリ内の「設定・連携」画面）:
-   1. パートナーキャラの画像4枚をアップロード
+   1. パートナーキャラの画像4枚をアップロード → 「表情を生成」で笑顔・驚きなどのバリエーションを自動生成
+      （Vertex AI の画像モデルを使用。1枚あたり数円がプロジェクトに課金されます）
    2. Slack の Webhook URL を貼り付けて「テスト送信」
    3. Google ドライブのルートフォルダURLを登録
    4. 「ユーザー」で同僚のメールを招待

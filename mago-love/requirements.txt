@@ -1,5 +1,6 @@
 Flask>=3.0
 PyMuPDF>=1.24
 gunicorn>=21.0
+Pillow>=10.0
 # 任意: AIによるPDF構造化（ANTHROPIC_API_KEY 設定時のみ使用）
 anthropic>=0.40

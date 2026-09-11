@@ -29,7 +29,11 @@ const canEdit = () => ['admin', 'member'].includes(S.boot.me.role);
 const PREFS = ['茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県'];
 const charOf = (id) => S.boot.characters.find(c => c.id === id) || S.boot.characters[0];
 const myChar = () => charOf(S.boot.my_character || S.boot.characters[0].id);
-const charAvatarHtml = (c, cls = 'av') => c.image ? `<span class="${cls}" style="background-image:url('${esc(c.image)}')"></span>` : `<span class="${cls}">${c.emoji}</span>`;
+const charImage = (c, expr) => (c.expressions && c.expressions[expr]) || c.image || '';
+const charAvatarHtml = (c, cls = 'av', expr = '') => { const src = charImage(c, expr); return src ? `<span class="${cls}"><img src="${esc(src)}" alt="${esc(c.name)}"></span>` : `<span class="${cls}">${c.emoji}</span>`; };
+const faceHtml = (c, size = 40, expr = '') => { const src = charImage(c, expr); return `<span class="face" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .55)}px;border-color:${c.color}">${src ? `<img src="${esc(src)}" alt="">` : c.emoji}</span>`; };
+const EXPR_FOR = { greet: ['happy', 'normal'], praise: ['cheer', 'happy'], warn: ['worried', 'surprised'], idle: ['normal', 'thinking', 'happy'], levelup: ['cheer'], think: ['thinking'] };
+function pickExpr(kind) { const c = myChar(); const cands = (EXPR_FOR[kind] || ['normal']).filter(k => k === 'normal' ? true : c.expressions && c.expressions[k]); return cands[0] || 'normal'; }
 const charForPhase = (phase) => S.boot.characters.find(c => c.phases.includes(phase)) || S.boot.characters[0];
 function scoreBadge(sc) { if (!sc || sc.total === null || sc.total === undefined) return ''; const cls = sc.total >= 70 ? 's-hi' : sc.total >= 45 ? 's-mid' : 's-lo'; return `<span class="score-badge ${cls}" title="価格 ${sc.price ?? '-'} / 需要 ${sc.demand ?? '-'} / アクセス ${sc.access ?? '-'}">★ ${sc.total}</span>`; }
 const SCHED = [['viewing_date', '内見日'], ['survey_date', '現調日'], ['approval_date', '稟議承認'], ['contract_date', '契約日'],
@@ -140,9 +144,9 @@ function bindStatusChips(root, onChange) {
 
 // ---------------------------------------------------------------- router
 const VIEWS = {
-  dashboard: ['ダッシュボード', renderDashboard], map: ['マップ', renderMap], board: ['パイプライン', renderBoard],
-  list: ['物件一覧', renderList], schedule: ['スケジュール', renderSchedule], import: ['取込（PDF / テキスト / CSV）', renderImport],
-  pois: ['周辺施設（役所・病院・介護施設）', renderPois], stats: ['統計データ', renderStats], settings: ['設定・連携', renderSettings],
+  dashboard: ['ギルドホール', renderDashboard], map: ['ワールドマップ', renderMap], board: ['クエスト掲示板', renderBoard],
+  list: ['物件図鑑', renderList], schedule: ['冒険の暦', renderSchedule], import: ['素材の搬入（PDF / テキスト / CSV）', renderImport],
+  pois: ['街の施設（役所・病院・介護施設）', renderPois], stats: ['領地の統計', renderStats], settings: ['ギルド設定・連携', renderSettings],
 };
 async function route() {
   const hash = location.hash || '#/dashboard';
@@ -159,6 +163,7 @@ async function showView(v) {
   const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : ''); el.innerHTML = '';
   if (v !== 'map' && S.map) { S.map.remove(); S.map = null; }
   try { await VIEWS[v][1](el); } catch (e) { err(e); }
+  if (S.boot && S.boot.my_character) { renderPartner(); if (v === 'dashboard') setTimeout(partnerGreet, 300); }
 }
 window.addEventListener('hashchange', route);
 
@@ -174,33 +179,52 @@ async function renderDashboard(el) {
   const st = S.boot.statuses;
   const total = d.total || 0;
   const maxCnt = Math.max(1, ...Object.values(d.by_status));
+  const me_ = S.boot.me, pr = S.boot.progress, c = myChar();
+  const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
+  const todays = [...d.overdue, ...d.upcoming].slice(0, 4);
   el.innerHTML = `
+    <section class="hero">
+      <div class="hero-left">
+        <div class="hero-kicker">Guild Hall ・ 出店クエスト本部</div>
+        <div class="hero-title">${greet}、<b>${esc(me_.name)}</b> さん。<br>今日も一緒に、街に新しい「家」をつくろう。</div>
+        <div class="hero-sub">進行中の物件 ${S.props.filter(p => !['dropped', 'opened'].includes(p.status)).length} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過タスク ${d.overdue.length} 件</div>
+        <div class="hero-hud">
+          <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div></div>
+          <button class="btn btn-gold btn-sm" id="btn-char">パートナー変更</button>
+        </div>
+        <div class="hero-quests">${todays.length ? todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('') : '<span class="q">🌿 本日の期限タスクはありません</span>'}</div>
+      </div>
+      <div class="hero-right"><div class="hero-stage">
+        <div class="hero-bubble"><div class="rpg-box"><span class="nameplate">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions"><button id="hero-next">次のセリフ</button></div></div></div>
+        <div class="char-wrap"><div class="halo"></div><div class="ring"></div>${c.image ? `<img class="hero-char" id="hero-char" src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="hero-char emoji" id="hero-char">${c.emoji}</div>`}</div>
+      </div></div>
+    </section>
     <div class="kpis">
-      <div class="kpi" style="--kpi-color:#0f172a" data-go="#/list"><div class="label">物件総数</div><div class="value">${total}</div><div class="sub">関東 全域</div></div>
+      <div class="kpi" style="--kpi-color:#e9c46a" data-go="#/list"><div class="label">物件総数</div><div class="value">${total}</div><div class="sub">関東 全域</div></div>
       ${st.filter(s => s.key !== 'dropped').map(s => `<div class="kpi" style="--kpi-color:${s.color}" data-status-go="${s.key}"><div class="label">${s.label}</div><div class="value">${d.by_status[s.key] || 0}</div><div class="sub">件</div></div>`).join('')}
       <div class="kpi" style="--kpi-color:${d.overdue.length ? '#dc2626' : '#16a34a'}" data-go="#/schedule"><div class="label">期限超過タスク</div><div class="value">${d.overdue.length}</div><div class="sub">要対応</div></div>
     </div>
     <div class="dash-grid">
       <div class="col">
-        <div class="card"><div class="card-head"><div class="card-title">パイプライン</div><span class="muted small">ステータス別の物件数</span><a class="btn btn-sm" href="#/board" style="margin-left:auto">カンバンで見る</a></div>
+        <div class="card"><div class="card-head"><div class="card-title">⚔️ 進行状況</div><span class="muted small">ステータス別の物件数</span><a class="btn btn-sm" href="#/board" style="margin-left:auto">掲示板で見る</a></div>
           <div class="card-body"><div class="funnel">${st.map(s => `<div class="funnel-row"><span>${s.label}</span><div class="bar"><i style="width:${(d.by_status[s.key] || 0) / maxCnt * 100}%;background:${s.color}"></i></div><b class="right mono">${d.by_status[s.key] || 0}</b></div>`).join('')}</div>
           <div class="section-title mt16">都道府県別</div>
           <div class="chips">${Object.entries(d.by_pref).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<button class="chip" data-pref-go="${esc(k)}">${esc(k)} <b>${v}</b></button>`).join('') || '<span class="muted">まだ物件がありません</span>'}</div></div></div>
-        <div class="card"><div class="card-head"><div class="card-title">🗺️ クエストボード</div><span class="muted small">物件ごとの冒険の進み具合（7工程）</span></div>
+        <div class="card"><div class="card-head"><div class="card-title">📜 クエストボード</div><span class="muted small">物件ごとの冒険の進み具合（7工程）</span></div>
           <div class="card-body tight">${S.props.filter(p => p.status !== 'dropped' && p.status !== 'opened').length ? S.props.filter(p => p.status !== 'dropped' && p.status !== 'opened').slice(0, 12).map(p => { const ts = taskStats(p); const cur = S.boot.phases.findIndex(ph => p.tasks.some(t => t.phase === ph.key && !t.done)); return `<div class="quest" data-open="${p.id}"><div class="qn">${esc(p.name)}<div class="qs">${badgeStatus(p.status)} ${scoreBadge(p.score)}</div></div><div class="track">${S.boot.phases.map((ph, i) => `<div class="node ${cur === -1 || i < cur ? 'done' : i === cur ? 'cur' : ''}" data-ico="${ph.icon}" title="${ph.label}"></div>`).join('')}</div><div class="qp">${ts.pct}%</div></div>`; }).join('') : '<div class="empty">進行中のクエスト（物件）はありません。「＋ 物件を追加」から始めよう！</div>'}</div></div>
-        <div class="card"><div class="card-head"><div class="card-title">開業スケジュール</div><a class="btn btn-sm" href="#/schedule" style="margin-left:auto">タイムライン</a></div>
+        <div class="card"><div class="card-head"><div class="card-title">🎉 開業スケジュール</div><a class="btn btn-sm" href="#/schedule" style="margin-left:auto">タイムライン</a></div>
           <div class="card-body tight">${d.openings.length ? d.openings.map(o => `<div class="list-item" data-open="${o.prop_id}"><div class="li-date ${o.date < today() ? '' : ''}">${fmtDate(o.date)}</div><div class="grow"><div class="li-title">${esc(o.name)}</div><div class="li-sub">${esc(o.pref || '')}${esc(o.city || '')}</div></div>${badgeStatus(o.status)}</div>`).join('') : '<div class="empty">開業予定日が設定された物件はありません</div>'}</div></div>
       </div>
       <div class="col">
-        <div class="card"><div class="card-body" style="display:flex;gap:14px;align-items:center">${charAvatarHtml(myChar(), 'av').replace('class="av"', 'class="av" style="width:72px;height:72px;border-radius:50%;background-size:cover;display:inline-flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;border:3px solid ' + myChar().color + '"')}<div class="grow"><div class="small muted">パートナー</div><div style="font-weight:900;font-size:15px">${esc(myChar().name)} <span class="small muted">${esc(myChar().role)}</span></div><div class="small mt8"><b>Lv.${S.boot.progress.level} ${esc(S.boot.progress.title)}</b> ・ 累計 ${S.boot.progress.xp} XP</div><div class="progress mt8"><i style="width:${Math.round(S.boot.progress.xp_in_level / S.boot.progress.xp_next * 100)}%"></i></div><div class="small muted mt8">タスク完了 ${S.boot.progress.counts?.task_done || 0} ・ 報告 ${S.boot.progress.counts?.report || 0} ・ ステータス更新 ${S.boot.progress.counts?.status || 0}</div></div><button class="btn btn-sm" id="btn-char">変更</button></div></div>
-        <div class="card"><div class="card-head"><div class="card-title">期限超過・直近のタスク</div><span class="badge ${d.overdue.length ? 'badge-danger' : 'badge-ok'}">${d.overdue.length} 超過</span></div>
+        <div class="card"><div class="card-head"><div class="card-title">⏳ 期限超過・直近のタスク</div><span class="badge ${d.overdue.length ? 'badge-danger' : 'badge-ok'}">${d.overdue.length} 超過</span></div>
           <div class="card-body tight">${[...d.overdue, ...d.upcoming].length ? [...d.overdue, ...d.upcoming].slice(0, 14).map(e => `<div class="list-item" data-open="${e.prop_id}"><div class="li-date ${e.date < today() ? 'over' : ''}">${fmtDate(e.date)}</div><div class="grow"><div class="li-title">${esc(e.label)}</div><div class="li-sub">${esc(e.prop_name)}${e.assignee ? ' ・ ' + esc(e.assignee) : ''}${e.kind === 'milestone' ? ' ・ マイルストーン' : ''}</div></div></div>`).join('') : '<div class="empty">直近14日の予定はありません</div>'}</div></div>
-        <div class="card"><div class="card-head"><div class="card-title">最近の動き</div></div>
+        <div class="card"><div class="card-head"><div class="card-title">📯 最近の動き</div></div>
           <div class="card-body tight">${d.recent.length ? d.recent.slice(0, 12).map(h => `<div class="list-item" data-open="${h.prop_id}"><div class="li-date">${fmtDT(h.at).slice(5)}</div><div class="grow"><div class="li-title">${esc(h.prop_name)}</div><div class="li-sub">${esc(h.detail || h.action)}${h.by ? ' ・ ' + esc(h.by) : ''}</div></div></div>`).join('') : '<div class="empty">まだ活動がありません</div>'}</div></div>
       </div>
     </div>`;
   $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
   $('#btn-char').onclick = () => chooseCharacter(false);
+  $('#hero-next').onclick = () => partnerNext();
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $$('[data-status-go]', el).forEach(x => x.onclick = () => { S.filter.status = [x.dataset.statusGo]; location.hash = '#/list'; });
   $$('[data-pref-go]', el).forEach(x => x.onclick = () => { S.filter = { pref: x.dataset.prefGo === '未設定' ? '' : x.dataset.prefGo, city: '', ward: '', status: [] }; location.hash = '#/map'; });
@@ -242,7 +266,7 @@ async function renderMap(el) {
       <div id="map"></div>
       <div class="map-toolbar">
         <div class="map-panel"><span class="lbl">施設</span>${S.boot.poi_types.map(t => `<button class="chip ${S.poiTypes.includes(t.key) ? 'active' : ''}" data-poi="${t.key}" style="${S.poiTypes.includes(t.key) ? `background:${t.color};border-color:${t.color}` : ''}">${POI_EMOJI[t.key]} ${t.label}</button>`).join('')}</div>
-        <div class="map-panel"><button class="btn btn-sm" id="btn-osm">🌐 この範囲の施設を取得(OSM)</button><button class="btn btn-sm" id="btn-fit">⤢ 全体表示</button><button class="btn btn-sm" id="btn-gmaps">Googleマップで開く</button></div>
+        <div class="map-panel"><button class="btn btn-sm" id="btn-osm">🌐 この範囲の施設を取得(OSM)</button><button class="btn btn-sm" id="btn-fit">⤢ 全体表示</button><button class="btn btn-sm" id="btn-parch" title="地図の色調を切替">🗺 羊皮紙/通常</button><button class="btn btn-sm" id="btn-gmaps">Googleマップで開く</button></div>
       </div>
       <div class="stats-panel" id="stats-panel" hidden></div>
     </div>
@@ -263,6 +287,7 @@ async function renderMap(el) {
   bindStatusChips(el, onStatusChange);
   $$('[data-poi]', el).forEach(b => b.onclick = () => { const k = b.dataset.poi; const i = S.poiTypes.indexOf(k); i >= 0 ? S.poiTypes.splice(i, 1) : S.poiTypes.push(k); const t = poiTypeOf(k); b.classList.toggle('active', i < 0); b.style.cssText = i < 0 ? `background:${t.color};border-color:${t.color}` : ''; drawMapMarkers(); });
   $('#btn-fit').onclick = fitAll;
+  $('#btn-parch').onclick = () => { const pane = $('.leaflet-tile-pane'); pane.style.filter = pane.style.filter ? '' : 'none'; };
   $('#btn-gmaps').onclick = () => { const c = map.getCenter(); window.open(`https://www.google.com/maps/@${c.lat},${c.lng},${map.getZoom()}z`, '_blank'); };
   $('#btn-osm').onclick = fetchOsmHere;
   rerender();
@@ -663,7 +688,7 @@ function drawOverview(body, p) {
 }
 function scoreCardHtml(p) {
   const sc = (S.props.find(x => x.id === p.id) || {}).score; if (!sc) return '';
-  const bar = (l, v, hint) => `<div class="funnel-row"><span>${l}</span><div class="bar"><i style="width:${v ?? 0}%;background:${v === null || v === undefined ? '#e5e7eb' : v >= 70 ? '#16a34a' : v >= 45 ? '#f59e0b' : '#94a3b8'}"></i></div><b class="right mono">${v ?? '—'}</b></div><div class="small muted" style="margin:-4px 0 6px 100px">${hint}</div>`;
+  const bar = (l, v, hint) => `<div class="funnel-row"><span>${l}</span><div class="bar"><i style="width:${v ?? 0}%;background:${v === null || v === undefined ? 'rgba(255,255,255,.12)' : v >= 70 ? '#22c55e' : v >= 45 ? '#f59e0b' : '#64748b'}"></i></div><b class="right mono">${v ?? '—'}</b></div><div class="small muted" style="margin:-4px 0 6px 100px">${hint}</div>`;
   const d = sc.demand_detail || {};
   return `<div class="card"><div class="card-head"><div class="card-title">候補スコア</div>${scoreBadge(sc)}<span class="muted small">「需要のある市に近く・坪単価が低い」ほど高評価（登録物件内の相対評価）</span></div><div class="card-body"><div class="funnel">
     ${bar('価格', sc.price, sc.tsubo_price ? `坪単価 ${yen(sc.tsubo_price)}/月${p.spec?.transaction_type === '売買' ? '（売買価格を20年で月額換算）' : ''}` : '賃料と面積を入力すると算出')}
@@ -880,9 +905,20 @@ async function renderSettings(el) {
         <div class="table-wrap mt12"><table class="tbl"><thead><tr><th>名前</th><th>メール</th><th>権限</th><th></th></tr></thead><tbody>${users.map(u => `<tr><td>${esc(u.name)}</td><td class="small">${esc(u.email)}</td><td><select data-urole="${esc(u.email)}">${[['admin', '管理者'], ['member', 'メンバー'], ['viewer', '閲覧']].map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td><td>${u.email !== S.boot.me.email ? `<button class="btn btn-xs btn-danger" data-udel="${esc(u.email)}">削除</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
         <p class="small muted mt8">Googleログイン（GOOGLE_CLIENT_ID）を有効にすると、ここに登録したメールのGoogleアカウントだけがログインできます。</p>
       </div></div>
-      <div class="card"><div class="card-head"><div class="card-title">🎮 パートナーキャラクター</div></div><div class="card-body">
-        <p class="small muted">各キャラの画像（PNG/JPG、正方形推奨）をアップロードすると、画面右下のパートナーや選択画面に表示されます。名前も変更できます。</p>
-        ${S.boot.characters.map(c => `<div class="flex mt12" style="gap:12px">${charAvatarHtml(c, 'av').replace('class="av"', 'class="av" style="width:56px;height:56px;border-radius:50%;background-size:cover;display:inline-flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;background-color:#f1f5f9"')}<div class="grow"><input data-cname="${c.id}" value="${esc(c.name)}" style="font-weight:800;border:1px solid var(--line);border-radius:8px;padding:4px 8px;width:160px"> <span class="small muted">${esc(c.species)} ・ ${esc(c.role)}</span></div><input type="file" accept="image/*" data-cimg="${c.id}" style="max-width:190px">${c.image ? `<button class="btn btn-xs btn-danger" data-cdel="${c.id}">画像削除</button>` : ''}</div>`).join('')}
+      <div class="card"><div class="card-head"><div class="card-title">🎮 パートナーキャラクター</div><span class="muted small">画像を入れると「生きている」ように動きます</span></div><div class="card-body">
+        <p class="small muted">各キャラの<b>元画像（全身・白背景のPNG/JPG）</b>を枠にドロップ or クリックして選択。次に「表情を生成」を押すと、笑顔・驚き・考え中などのバリエーションを画像生成AI（Vertex AI）で自動作成し、会話の内容に合わせて表情が切り替わります。表情画像は手動でも差し替えできます。</p>
+        <div id="imagegen-status" class="small muted mt8">画像生成AIの状態を確認中…</div>
+        ${S.boot.characters.map(c => `<div class="char-setup" data-cid="${c.id}">
+          <div>
+            <div class="stage" data-drop="${c.id}" title="クリックまたはドロップで元画像を設定">${c.image ? `<img src="${esc(c.image)}" alt="">` : `<div class="ph"><b>${c.emoji}</b>元画像をここへ<br>ドロップ / クリック</div>`}</div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" data-cimg="${c.id}" hidden>
+            ${c.image ? `<div class="flex mt8" style="justify-content:center"><button class="btn btn-xs" data-cimgbtn="${c.id}">差し替え</button><button class="btn btn-xs btn-danger" data-cdel="${c.id}">削除</button></div>` : ''}
+          </div>
+          <div>
+            <div class="flex flex-wrap"><input data-cname="${c.id}" value="${esc(c.name)}" style="font-weight:800;border:1px solid var(--line);border-radius:8px;padding:5px 10px;width:170px;background:rgba(6,9,22,.6);color:#fff;font-family:var(--font-display)"><span class="small muted">${esc(c.species)} ・ ${esc(c.role)}</span><span class="grow"></span>${c.image ? `<button class="btn btn-gold btn-sm" data-gen="${c.id}">✨ 表情を生成（${S.boot.expressions.filter(e => e.key !== 'normal').length}種）</button>` : ''}</div>
+            <div class="expr-grid mt12">${S.boot.expressions.map(e => { const src = e.key === 'normal' ? c.image : (c.expressions || {})[e.key]; return `<div class="expr ${src ? 'has' : ''}"><div class="im">${src ? `<img src="${esc(src)}" alt="">` : `<span>${c.emoji}</span>`}</div><div>${e.label}</div>${e.key !== 'normal' && c.image ? `<div class="btns"><button data-egen="${c.id}|${e.key}" title="この表情だけ生成">生成</button><button data-eup="${c.id}|${e.key}" title="画像を手動でアップロード">📁</button>${src ? `<button data-edel="${c.id}|${e.key}" title="削除">✕</button>` : ''}</div><input type="file" accept="image/png,image/jpeg,image/webp" data-eupin="${c.id}|${e.key}" hidden>` : ''}</div>`; }).join('')}</div>
+          </div>
+        </div>`).join('')}
         <div class="flex mt12"><button class="btn btn-primary btn-sm" id="c-names">名前を保存</button><button class="btn btn-sm" id="c-choose">自分のパートナーを変更</button></div>
       </div></div>
       <div class="card"><div class="card-head"><div class="card-title">ℹ️ 環境</div></div><div class="card-body"><dl class="kv"><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '<span class="badge badge-ok">有効</span>' : '<span class="badge badge-warn">開発モード</span>'}</dd><dt>AI構造化</dt><dd>${S.boot.settings.llm_enabled ? '<span class="badge badge-ok">有効</span>' : '<span class="badge">無効（正規表現抽出）</span>'}</dd><dt>市区町村マスタ</dt><dd>${S.boot.municipalities.length} 件（関東1都6県）</dd></dl></div></div>
@@ -892,8 +928,30 @@ async function renderSettings(el) {
   $$('label.chip input', el).forEach(i => i.onchange = () => i.parentElement.classList.toggle('active', i.checked));
   $('#s-test').onclick = async () => { await save(); try { const r = await api('POST', '/api/slack/test'); toast(r.ok ? 'Slackに送信しました' : 'Webhookが未設定または送信失敗', r.ok ? 'ok' : 'err'); } catch (e) { err(e); } };
   $('#s-digest').onclick = async () => { await save(); try { const r = await api('POST', '/api/slack/digest'); toast(r.sent ? `送信しました（超過${r.overdue}/直近${r.soon}/予定${r.events}）` : '送る内容がないか、Webhook未設定です'); } catch (e) { err(e); } };
-  $$('[data-cimg]', el).forEach(inp => inp.onchange = async () => { const f = inp.files[0]; if (!f) return; const fd = new FormData(); fd.append('file', f); try { S.boot.characters = await api('POST', `/api/characters/${inp.dataset.cimg}/image`, fd, true); toast('画像を設定しました', 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); } });
-  $$('[data-cdel]', el).forEach(b => b.onclick = async () => { try { S.boot.characters = await api('DELETE', `/api/characters/${b.dataset.cdel}/image`); renderPartner(); renderSettings(el); } catch (e) { err(e); } });
+  const uploadChar = async (cid, file, expr = '') => {
+    if (!file) return; if (file.size > 15 * 1024 * 1024) return toast('画像は15MB以下にしてください', 'err');
+    const fd = new FormData(); fd.append('file', file);
+    try { toast('アップロード中…'); S.boot.characters = await api('POST', `/api/characters/${cid}/image${expr ? '?expr=' + expr : ''}`, fd, true); toast('画像を設定しました', 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); }
+  };
+  $$('[data-cimg]', el).forEach(inp => inp.onchange = () => uploadChar(inp.dataset.cimg, inp.files[0]));
+  $$('[data-cimgbtn]', el).forEach(b => b.onclick = () => $(`[data-cimg="${b.dataset.cimgbtn}"]`, el).click());
+  $$('[data-drop]', el).forEach(z => {
+    const cid = z.dataset.drop;
+    z.onclick = () => $(`[data-cimg="${cid}"]`, el).click();
+    z.ondragover = (e) => { e.preventDefault(); z.classList.add('over'); }; z.ondragleave = () => z.classList.remove('over');
+    z.ondrop = (e) => { e.preventDefault(); z.classList.remove('over'); uploadChar(cid, e.dataTransfer.files[0]); };
+  });
+  $$('[data-cdel]', el).forEach(b => b.onclick = async () => { if (!await confirmDlg('元画像と表情画像をすべて削除しますか？')) return; try { S.boot.characters = await api('DELETE', `/api/characters/${b.dataset.cdel}/image`); renderPartner(); renderSettings(el); } catch (e) { err(e); } });
+  $$('[data-eup]', el).forEach(b => b.onclick = () => $(`[data-eupin="${b.dataset.eup}"]`, el).click());
+  $$('[data-eupin]', el).forEach(inp => inp.onchange = () => { const [cid, expr] = inp.dataset.eupin.split('|'); uploadChar(cid, inp.files[0], expr); });
+  $$('[data-edel]', el).forEach(b => b.onclick = async () => { const [cid, expr] = b.dataset.edel.split('|'); try { S.boot.characters = await api('DELETE', `/api/characters/${cid}/image?expr=${expr}`); renderSettings(el); } catch (e) { err(e); } });
+  const gen = async (cid, exprs) => {
+    const btn = $(`[data-gen="${cid}"]`, el); if (btn) { btn.disabled = true; btn.textContent = '✨ 生成中…（1枚 10〜20秒）'; }
+    try { const r = await api('POST', `/api/characters/${cid}/generate`, { expressions: exprs }); S.boot.characters = r.characters; toast(`${r.generated.length} 枚の表情を生成しました${r.errors.length ? '（失敗 ' + r.errors.length + '）' : ''}`, r.errors.length && !r.generated.length ? 'err' : 'ok'); if (r.errors.length) modal('生成できなかった表情', `<ul class="small">${r.errors.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`); renderPartner(); renderSettings(el); } catch (e) { err(e); renderSettings(el); }
+  };
+  $$('[data-gen]', el).forEach(b => b.onclick = () => gen(b.dataset.gen, null));
+  $$('[data-egen]', el).forEach(b => b.onclick = () => { const [cid, expr] = b.dataset.egen.split('|'); gen(cid, [expr]); });
+  api('GET', '/api/imagegen/status').then(st => { const box = $('#imagegen-status', el); if (!box) return; box.innerHTML = st.available ? `<span class="badge badge-ok">画像生成AI 利用可能</span> <span class="muted">${st.vertex ? 'Vertex AI（' + esc(st.project) + '）' : 'Gemini API'} ・ モデル ${esc(st.model)} ・ 1枚あたり数円がプロジェクトに課金されます</span>` : `<span class="badge badge-warn">画像生成AI 未設定</span> <span class="muted">Cloud Run では setup-cloudshell.sh を再実行すると Vertex AI が有効になります。ローカルは環境変数 GEMINI_API_KEY を設定してください。</span>`; }).catch(() => {});
   $('#c-names').onclick = async () => { const names = {}; $$('[data-cname]', el).forEach(i => names[i.dataset.cname] = i.value.trim() || undefined); try { S.boot.characters = await api('PUT', '/api/characters/names', names); toast('名前を保存しました', 'ok'); renderPartner(); } catch (e) { err(e); } };
   $('#c-choose').onclick = () => chooseCharacter(false);
   $('#u-add').onclick = async () => { const d = formData(el); try { await api('POST', '/api/users', { email: d.u_email, name: d.u_name, role: d.u_role }); toast('招待しました', 'ok'); renderSettings(el); } catch (e) { err(e); } };
@@ -904,12 +962,19 @@ async function renderSettings(el) {
 // ================================================================ パートナー（キャラクター）・レベル
 let _typing = null, _lineIdx = 0, _lastKind = '';
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function setExpression(expr) {
+  const c = myChar(); const src = charImage(c, expr) || c.image; if (!src) return;
+  const swap = (img) => { if (!img || img.getAttribute('src') === src) return; img.style.opacity = '0'; setTimeout(() => { img.src = src; img.style.opacity = '1'; }, 180); };
+  swap($('#partner-img')); const hero = $('#hero-char'); if (hero && hero.tagName === 'IMG') { swap(hero); hero.classList.remove('talk'); void hero.offsetWidth; hero.classList.add('talk'); }
+}
 function partnerSay(text, opts = {}) {
-  const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text');
-  bubble.classList.remove('hidden'); clearInterval(_typing);
-  span.innerHTML = `<span class="name">${esc(c.name)}</span>`;
-  const body = document.createElement('span'); span.appendChild(body);
-  let i = 0; _typing = setInterval(() => { body.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(_typing); }, 22);
+  const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text'), heroText = $('#hero-text');
+  clearInterval(_typing);
+  if (opts.expr) setExpression(opts.expr);
+  const targets = [];
+  if (heroText) { heroText.textContent = ''; targets.push(heroText); $('#partner').hidden = true; }
+  else { $('#partner').hidden = false; bubble.classList.remove('hidden'); span.innerHTML = `<span class="name">${esc(c.name)}</span>`; const body = document.createElement('span'); span.appendChild(body); targets.push(body); }
+  let i = 0; _typing = setInterval(() => { i++; targets.forEach(t => t.textContent = text.slice(0, i)); if (i >= text.length) { clearInterval(_typing); setTimeout(() => setExpression('normal'), 6000); } }, 22);
   if (opts.bounce) { const av = $('#partner-avatar'); av.classList.remove('bounce'); void av.offsetWidth; av.classList.add('bounce'); }
 }
 function partnerContextLines() {
@@ -925,14 +990,14 @@ function partnerContextLines() {
   lines.push(...c.lines.idle);
   return lines;
 }
-function partnerNext() { const lines = partnerContextLines(); _lineIdx = (_lineIdx + 1) % lines.length; partnerSay(lines[_lineIdx]); }
-function partnerGreet() { const c = myChar(); partnerSay(pick(c.lines.greet), { bounce: true }); _lineIdx = -1; }
-function partnerPraise() { partnerSay(pick(myChar().lines.praise), { bounce: true }); }
+function partnerNext() { const lines = partnerContextLines(); _lineIdx = (_lineIdx + 1) % lines.length; const l = lines[_lineIdx]; const kind = /期限|超過|間に合う|忘れて/.test(l) ? 'warn' : /準備|確認|どう|？/.test(l) ? 'think' : 'idle'; partnerSay(l, { expr: pickExpr(kind) }); }
+function partnerGreet() { const c = myChar(); partnerSay(pick(c.lines.greet), { bounce: true, expr: pickExpr('greet') }); _lineIdx = -1; }
+function partnerPraise() { partnerSay(pick(myChar().lines.praise), { bounce: true, expr: pickExpr('praise') }); }
 function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
 function renderPartner() {
-  const c = myChar(); const av = $('#partner-avatar');
-  av.style.backgroundImage = c.image ? `url('${c.image}')` : ''; av.textContent = c.image ? '' : c.emoji;
-  av.style.borderColor = c.color; $('#partner').hidden = false;
+  const c = myChar(); const av = $('#partner-avatar'); const img = $('#partner-img'), em = $('#partner-emoji');
+  if (c.image) { img.src = charImage(c, 'normal'); img.hidden = false; em.textContent = ''; } else { img.hidden = true; em.textContent = c.emoji; }
+  av.style.borderColor = c.color; $('#partner').hidden = !!$('#hero-char');
 }
 function renderLevel() {
   const pr = S.boot.progress; if (!pr) return;
@@ -947,15 +1012,16 @@ async function refreshProgress(praise = true) {
   if (S.boot.progress.level > before) levelUp(S.boot.progress); else if (praise) partnerPraise();
 }
 function levelUp(pr) {
+  setExpression(pickExpr('levelup'));
   const el = document.createElement('div'); el.className = 'levelup';
-  el.innerHTML = `<div class="box"><div class="big">🎉</div><h2>レベルアップ！ Lv.${pr.level}</h2><div>${esc(pr.title)}</div><div class="muted small mt8">${esc(myChar().name)}「${esc(pick(myChar().lines.praise))}」</div><button class="btn btn-primary mt16">やったー！</button></div>`;
+  el.innerHTML = `<div class="box"><div class="big">${charImage(myChar(), 'cheer') ? `<img src="${esc(charImage(myChar(), 'cheer'))}" alt="" style="height:180px;filter:drop-shadow(0 0 20px rgba(233,196,106,.8))">` : '🎉'}</div><h2>レベルアップ！ Lv.${pr.level}</h2><div>${esc(pr.title)}</div><div class="muted small mt8">${esc(myChar().name)}「${esc(pick(myChar().lines.praise))}」</div><button class="btn btn-primary mt16">やったー！</button></div>`;
   el.querySelector('button').onclick = () => el.remove(); el.onclick = (e) => { if (e.target === el) el.remove(); };
   document.body.appendChild(el);
 }
 function chooseCharacter(force = false) {
   const cur = S.boot.my_character;
-  modal(force ? 'パートナーを選ぼう' : 'パートナーを変更', `<p class="small muted mb12">一緒に出店を進めるパートナーを選んでください。各キャラは得意な工程があり、画面右下で状況に合わせてアドバイスします。あとから「設定」で変更できます。</p>
-    <div class="char-grid">${S.boot.characters.map(c => `<div class="char-card ${c.id === cur ? 'sel' : ''}" data-cid="${c.id}">${charAvatarHtml(c)}<div class="nm">${esc(c.name)}</div><div class="rl">${esc(c.role)}</div><div class="ps">${esc(c.personality)}</div><div class="ps">得意: ${c.phases.map(k => phaseOf(k).label).join('・')}</div></div>`).join('')}</div>`, (m) => {
+  modal(force ? 'パートナーを選ぼう' : 'パートナーを変更', `<p class="small muted mb12">共に出店クエストを進める仲間を選ぼう。各キャラには得意な工程があり、ギルドホールや画面右下で状況に合わせて話しかけてくれます。あとから「ギルド設定」で変更できます。</p>
+    <div class="char-grid">${S.boot.characters.map(c => `<div class="char-card ${c.id === cur ? 'sel' : ''}" data-cid="${c.id}">${charAvatarHtml(c, 'av', 'happy')}<div class="nm">${esc(c.name)}</div><div class="rl">${esc(c.role)}</div><div class="ps">${esc(c.personality)}</div><div class="ps">得意: ${c.phases.map(k => phaseOf(k).label).join('・')}</div></div>`).join('')}</div>`, (m) => {
     $$('.char-card', m).forEach(card => card.onclick = async () => {
       try { await api('PUT', '/api/me/character', { character: card.dataset.cid }); S.boot.my_character = card.dataset.cid; closeModal(); renderPartner(); partnerGreet(); toast(`${myChar().name} がパートナーになりました`, 'ok'); } catch (e) { err(e); }
     });
@@ -982,7 +1048,7 @@ async function init() {
   document.addEventListener('click', (e) => { const sb = $('#sidebar'); if (sb.classList.contains('open') && !sb.contains(e.target) && !e.target.closest('#menu-btn,#bn-more')) sb.classList.remove('open'); });
   bindPartner(); renderLevel();
   await route();
-  if (!S.boot.my_character) chooseCharacter(true); else { renderPartner(); setTimeout(partnerGreet, 400); }
+  if (!S.boot.my_character) chooseCharacter(true); else if (S.view !== 'dashboard') { renderPartner(); setTimeout(partnerGreet, 400); }
 }
 window.MagoLove = { openDrawer, closeModal, newProperty };
 document.addEventListener('DOMContentLoaded', init);
