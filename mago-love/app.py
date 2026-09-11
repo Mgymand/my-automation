@@ -319,6 +319,7 @@ def bootstrap():
         "outreach_statuses": domain.OUTREACH_STATUSES,
         "phase_links": domain.PHASE_LINKS,
         "drive_folders": domain.DRIVE_FOLDERS,
+        "template_task_count": sum(len(v) for v in domain.TASK_TEMPLATE.values()),
         "my_character": _my_user().get("character", ""),
         "progress": user_progress(me().get("name", "")),
     })
@@ -668,6 +669,28 @@ def add_task(pid):
     touch(p, "task_add", t["title"])
     save_props(items)
     return jsonify(t), 201
+
+
+@app.route("/api/properties/<pid>/tasks/sync_template", methods=["POST"])
+@auth.require_role("member")
+def sync_template_tasks(pid):
+    """標準タスクテンプレートのうち、この物件にまだ無いタスクを追加する（テンプレート更新後の既存物件向け）。"""
+    items = load_props()
+    p = next((x for x in items if x["id"] == pid), None)
+    if not p:
+        return _bad("not found", 404)
+    have = {(t.get("phase"), t.get("title")) for t in p["tasks"]}
+    added = 0
+    for phase in domain.PHASE_KEYS:
+        for title in domain.TASK_TEMPLATE[phase]:
+            if (phase, title) not in have:
+                p["tasks"].append({"id": store.new_id("task"), "phase": phase, "title": title,
+                                   "done": False, "due": "", "assignee": "", "done_at": ""})
+                added += 1
+    if added:
+        touch(p, "task_add", f"標準タスクを補完（{added}件）")
+        save_props(items)
+    return jsonify({"added": added, "property": p})
 
 
 @app.route("/api/properties/<pid>/tasks/<tid>", methods=["PUT", "DELETE"])

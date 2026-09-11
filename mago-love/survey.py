@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import math
 import ssl
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -20,10 +21,16 @@ _UA = {"User-Agent": "MagoLove/1.0 (survey)"}
 
 
 def _get(url: str, timeout: int = 12) -> bytes | None:
+    """200 → bytes / 404 → b"" (データなし) / その他失敗 → None。"""
     try:
         req = urllib.request.Request(url, headers=_UA)
         with urllib.request.urlopen(req, timeout=timeout, context=_CTX) as r:
             return r.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return b""
+        print(f"[survey] {url}: {e}")
+        return None
     except Exception as e:  # noqa: BLE001
         print(f"[survey] {url}: {e}")
         return None
@@ -107,7 +114,10 @@ def hazards(lat: float, lon: float) -> list[dict]:
         url = f"https://disaportaldata.gsi.go.jp/raster/{path}/{_Z}/{tx}/{ty}.png"
         raw = _get(url, timeout=10)
         item = {"key": key, "label": label, "hit": False, "detail": "該当なし", "tile_url": url}
-        if raw:
+        if raw is None:
+            item["detail"] = "取得できませんでした（再調査してください）"
+            item["error"] = True
+        elif raw:
             try:
                 pix = fitz.Pixmap(raw)
                 p = pix.pixel(px, py)

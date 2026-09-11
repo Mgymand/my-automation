@@ -704,7 +704,8 @@ function drawOutreach(body, p) {
 }
 function drawTasks(body, p) {
   const users = S.boot.users.map(u => u.name);
-  body.innerHTML = `<div class="card"><div class="card-body">${S.boot.phases.map(ph => {
+  const tmplTotal = S.boot.template_task_count || 0;
+  body.innerHTML = `${canEdit() && p.tasks.length < tmplTotal ? `<div class="flex mb12"><span class="small muted">標準タスクテンプレートが更新されています（この物件 ${p.tasks.length} 件 / 標準 ${tmplTotal} 件）。</span><button class="btn btn-xs" id="t-sync">不足分を追加</button></div>` : ''}<div class="card"><div class="card-body">${S.boot.phases.map(ph => {
     const list = p.tasks.filter(t => t.phase === ph.key); const dn = list.filter(t => t.done).length; const pct = list.length ? Math.round(dn / list.length * 100) : 0;
     const rc = charForPhase(ph.key); const links = S.boot.phase_links[ph.key] || [];
     return `<div class="phase-block"><div class="phase-head">${ph.icon} ${ph.label}<span class="char-mini" title="${esc(rc.role)}">${charAvatarHtml(rc, 'av')} ${esc(rc.name)}</span><div class="progress"><i style="width:${pct}%"></i></div><span class="pct">${dn}/${list.length}</span><button class="btn btn-xs" data-add="${ph.key}" style="margin-left:auto">＋ タスク</button></div>
@@ -719,6 +720,7 @@ function drawTasks(body, p) {
     $('[data-who]', row).onchange = (e) => put({ assignee: e.target.value });
     $('[data-del]', row).onclick = async () => { if (!canEdit()) return; try { await api('DELETE', `/api/properties/${p.id}/tasks/${tid}`); reloadDrawer(); } catch (e) { err(e); } };
   });
+  $('#t-sync') && ($('#t-sync').onclick = async () => { try { const r = await api('POST', `/api/properties/${p.id}/tasks/sync_template`); toast(`${r.added} 件のタスクを追加しました`, 'ok'); reloadDrawer(); } catch (e) { err(e); } });
   $$('[data-add]', body).forEach(b => b.onclick = () => {
     if (!canEdit()) return;
     modal('タスクを追加', `<div class="form-grid">${field('タスク名', 'title', '', { span: 'span-all' })}${field('工程', 'phase', b.dataset.add, { options: S.boot.phases.map(x => [x.key, x.label]) })}${field('期限', 'due', '', { type: 'date' })}${field('担当', 'assignee', '', { options: ['', ...users] })}</div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-primary" id="t-save">追加</button></div>`, (m) => {
@@ -962,6 +964,7 @@ function chooseCharacter(force = false) {
 function bindPartner() {
   $('#partner-avatar').onclick = partnerNext; $('#partner-next').onclick = partnerNext;
   $('#partner-bubble').ondblclick = () => $('#partner-bubble').classList.add('hidden');
+  $('#partner-close').onclick = (e) => { e.stopPropagation(); $('#partner-bubble').classList.add('hidden'); };
 }
 
 // ================================================================ 起動

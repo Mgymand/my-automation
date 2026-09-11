@@ -254,7 +254,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .drawer-title input { font-size: 19px; font-weight: 900; border: 1px solid transparent; border-radius: 8px; padding: 2px 6px; width: 100%; background: transparent; }
 .drawer-title input:hover, .drawer-title input:focus { border-color: var(--line); background: #fff; outline: none; }
 .drawer-sub { color: var(--sub); font-size: 12.5px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.drawer-body { flex: 1; overflow-y: auto; padding: 16px 20px 40px; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px 20px 130px; }
 .drawer-body .card { margin-bottom: 14px; }
 .stepper { display: flex; gap: 4px; }
 .step { flex: 1; text-align: center; padding: 7px 4px; font-size: 11.5px; font-weight: 800; border-radius: 8px; background: var(--line-2); color: var(--sub); cursor: pointer; position: relative; transition: all .15s; border: 1px solid transparent; }
@@ -355,7 +355,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .progress.xp { background: rgba(255,255,255,.1); height: 7px; }
 .progress.xp > i { background: linear-gradient(90deg, #fbbf24, #f97316); }
 .lv-xp { font-size: 10.5px; color: #94a3b8; margin-top: 4px; }
-.partner { position: fixed; right: 18px; bottom: 18px; z-index: 55; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
+.partner { position: fixed; right: 18px; bottom: 18px; z-index: 62; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
 .partner > * { pointer-events: auto; }
 .partner-avatar { width: 84px; height: 84px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 24px rgba(15,23,42,.25); background: var(--primary-bg) center/cover no-repeat; font-size: 40px; display: flex; align-items: center; justify-content: center; transition: transform .15s; overflow: hidden; }
 .partner-avatar:hover { transform: scale(1.05); }
@@ -365,6 +365,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .bubble::after { content: ""; position: absolute; right: -12px; bottom: 14px; border: 8px solid transparent; border-left-color: var(--ink); }
 .bubble::before { content: ""; position: absolute; right: -8px; bottom: 15px; border: 7px solid transparent; border-left-color: #fff; z-index: 1; }
 .bubble .name { display: block; font-size: 11px; color: var(--primary); font-weight: 800; margin-bottom: 2px; }
+.bubble-close { position: absolute; right: 8px; top: 6px; font-size: 11px; color: var(--muted); }
+.bubble-close:hover { color: var(--ink); }
 .bubble-next { position: absolute; right: 8px; bottom: 8px; font-size: 11px; color: var(--muted); animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: .2 } }
 .bubble.hidden { display: none; }
