@@ -4,70 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>{{ app_name }}</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27%23e0475b%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-size=%2734%27 font-weight=%27900%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27sans-serif%27%3E孫%3C/text%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27%23ff6b9a%27/%3E%3Ctext x=%2732%27 y=%2744%27 font-size=%2734%27 font-weight=%27900%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27serif%27%3E孫%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.Default.css">
-  <link rel="stylesheet" href="/static/app.css?v=4">
+  <link rel="stylesheet" href="/static/app.css?v=5">
 </head>
-<body>
+<body data-scene="hall">
 <div class="world-bg"><canvas id="stars"></canvas></div>
+<div class="scene-bg" id="scene-bg"></div>
 <div class="layout">
-  <!-- ===== サイドバー ===== -->
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-mark">孫</div>
-      <div class="brand-text">
-        <div class="brand-name">孫LOVE</div>
-        <div class="brand-sub">SENIOR HOME · LAUNCH QUEST</div>
-      </div>
-    </div>
-    <nav class="nav">
-      <a href="#/dashboard" data-view="dashboard"><span class="ico">🏰</span>ギルドホール</a>
-      <a href="#/map" data-view="map"><span class="ico">🗺️</span>ワールドマップ</a>
-      <a href="#/board" data-view="board"><span class="ico">📜</span>クエスト掲示板</a>
-      <a href="#/list" data-view="list"><span class="ico">📖</span>物件図鑑</a>
-      <a href="#/schedule" data-view="schedule"><span class="ico">🕰️</span>冒険の暦</a>
-      <div class="nav-sep">Materials</div>
-      <a href="#/import" data-view="import"><span class="ico">📦</span>素材の搬入（PDF/CSV）</a>
-      <a href="#/pois" data-view="pois"><span class="ico">🏥</span>街の施設</a>
-      <a href="#/stats" data-view="stats"><span class="ico">📈</span>領地の統計</a>
-      <div class="nav-sep">Guild</div>
-      <a href="#/settings" data-view="settings"><span class="ico">⚙️</span>ギルド設定・連携</a>
-    </nav>
-    <div class="sidebar-foot">
-      <div class="user-chip">
-        <div class="avatar" id="user-avatar">{{ user.name[:1] }}</div>
-        <div class="user-meta">
-          <div class="user-name">{{ user.name }}</div>
-          <div class="user-role" id="user-role">{{ user.role }}</div>
-        </div>
-      </div>
-      <a class="logout" href="/logout" title="ログアウト">⎋</a>
-    </div>
-    <div class="level-box" id="level-box" title="タスク完了・報告・ステータス更新で経験値がたまります">
-      <div class="level-row"><span class="lv" id="lv-num">Lv.1</span><span class="lv-title" id="lv-title">見習い出店担当</span></div>
-      <div class="progress xp"><i id="xp-bar" style="width:0%"></i></div>
-      <div class="lv-xp" id="lv-xp"></div>
-    </div>
-  </aside>
+  <!-- サイドバーはスマホのメニュー用に残す（PCでは非表示・移動は「移動」オーバーレイ） -->
+  <aside class="sidebar" id="sidebar" hidden></aside>
 
-  <!-- ===== メイン ===== -->
   <main class="main">
     <header class="topbar">
-      <button class="icon-btn menu-btn" id="menu-btn" aria-label="メニュー">☰</button>
-      <div class="topbar-title" id="view-title">ダッシュボード</div>
+      <a class="home-btn" href="#/dashboard" id="home-btn" title="ギルドホールへ戻る"><span class="brand-mark" id="brand-mark">孫</span><span class="home-text"><b>孫LOVE</b><small>ギルドホール</small></span></a>
+      <div class="topbar-title" id="view-title">ギルドホール</div>
       <div class="topbar-search">
         <input id="global-search" type="search" placeholder="物件名・住所・担当で検索…（/ でフォーカス）">
       </div>
       <div class="topbar-actions">
+        <button class="btn" id="btn-travel">🧭 移動</button>
         <button class="btn btn-primary" id="btn-new-property">＋ 物件を追加</button>
+        <div class="user-chip" title="レベル"><div class="avatar">{{ user.name[:1] }}</div><div class="user-meta"><div class="user-name">{{ user.name }}</div><div class="user-role" id="lv-mini">Lv.1</div></div></div>
       </div>
     </header>
     <section class="view" id="view"></section>
   </main>
+</div>
+
+<!-- 移動オーバーレイ（部屋の中の行き先を選ぶ） -->
+<div class="travel" id="travel" hidden>
+  <div class="travel-inner">
+    <div class="travel-head"><div class="travel-title">🧭 どこへ行く？</div><button class="icon-btn" id="travel-close">✕</button></div>
+    <div class="travel-grid" id="travel-grid"></div>
+  </div>
 </div>
 
 <!-- パートナー（キャラクター）ウィジェット -->
@@ -82,7 +54,7 @@
   <a href="#/map" data-view="map"><span>🗺️</span>マップ</a>
   <a href="#/board" data-view="board"><span>📜</span>クエスト</a>
   <a href="#/schedule" data-view="schedule"><span>🕰️</span>暦</a>
-  <a href="#" id="bn-more"><span>☰</span>メニュー</a>
+  <a href="#" id="bn-more"><span>🧭</span>移動</a>
 </nav>
 
 <!-- 物件詳細ドロワー -->
@@ -97,6 +69,7 @@
   </div>
 </div>
 <div class="toast-wrap" id="toasts"></div>
+<div class="level-box" id="level-box" hidden><div class="level-row"><span class="lv" id="lv-num"></span><span class="lv-title" id="lv-title"></span></div><div class="progress xp"><i id="xp-bar"></i></div><div class="lv-xp" id="lv-xp"></div></div>
 
 <script>
   window.__USER = {{ user | tojson }};
@@ -107,6 +80,6 @@
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/static/stars.js?v=3"></script>
-<script src="/static/app.js?v=3"></script>
+<script src="/static/app.js?v=5"></script>
 </body>
 </html>
