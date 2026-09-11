@@ -320,6 +320,7 @@ def bootstrap():
         "phase_links": domain.PHASE_LINKS,
         "drive_folders": domain.DRIVE_FOLDERS,
         "template_task_count": sum(len(v) for v in domain.TASK_TEMPLATE.values()),
+        "expressions": domain.EXPRESSIONS,
         "my_character": _my_user().get("character", ""),
         "progress": user_progress(me().get("name", "")),
     })
@@ -337,14 +338,120 @@ def _my_user() -> dict:
     return auth.find_user(me().get("email", "")) or {}
 
 
+def _char_files(cid: str) -> dict:
+    """{expression_key: filename}. 元画像は <cid>.<ext>、表情は <cid>__<expr>.<ext>。"""
+    out = {}
+    try:
+        names = os.listdir(CHAR_IMG_DIR)
+    except OSError:
+        return out
+    for f in names:
+        base, ext = os.path.splitext(f)
+        if ext.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+            continue
+        if base == cid:
+            out["base"] = f
+        elif base.startswith(cid + "__"):
+            out[base[len(cid) + 2:]] = f
+    return out
+
+
+def _img_url(fname: str) -> str:
+    try:
+        v = int(os.path.getmtime(os.path.join(CHAR_IMG_DIR, fname)))
+    except OSError:
+        v = 0
+    return f"/character-images/{fname}?v={v}"
+
+
 def characters_public() -> list[dict]:
     overrides = store.load("settings", {}).get("character_names", {})
     out = []
     for c in domain.CHARACTERS:
-        img = next((f for f in os.listdir(CHAR_IMG_DIR) if f.startswith(c["id"] + ".")), None)
+        files = _char_files(c["id"])
+        expressions = {k: _img_url(f) for k, f in files.items() if k != "base"}
         out.append({**c, "name": overrides.get(c["id"]) or c["name"],
-                    "image": f"/character-images/{img}?v={int(os.path.getmtime(os.path.join(CHAR_IMG_DIR, img)))}" if img else ""})
+                    "image": _img_url(files["base"]) if files.get("base") else "",
+                    "expressions": expressions})
     return out
+
+
+def _save_image(fs, dest_base: str) -> str:
+    """アップロード画像を検証して保存（PNG/JPEG/WebP。HEIC等は不可）。戻り値: 保存ファイル名。"""
+    import fitz
+    raw = fs.read()
+    if not raw:
+        raise ValueError("ファイルが空です")
+    if len(raw) > 15 * 1024 * 1024:
+        raise ValueError("画像は15MB以下にしてください")
+    try:
+        pix = fitz.Pixmap(raw)
+    except Exception:  # noqa: BLE001
+        raise ValueError("画像として読み込めませんでした。PNG / JPG / WebP 形式で保存し直してください（iPhoneのHEICは非対応）")
+    ext = ".png"
+    head = raw[:12]
+    if head[:3] == b"\xff\xd8\xff":
+        ext = ".jpg"
+    elif head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        ext = ".webp"
+    for f in os.listdir(CHAR_IMG_DIR):
+        if os.path.splitext(f)[0] == dest_base:
+            os.remove(os.path.join(CHAR_IMG_DIR, f))
+    raw2, ext2 = remove_white_background(raw)
+    if raw2:
+        raw, ext = raw2, ext2
+    path = os.path.join(CHAR_IMG_DIR, dest_base + ext)
+    with open(path, "wb") as out:
+        out.write(raw)
+    print(f"[characters] saved {path} ({pix.width}x{pix.height}, {len(raw)} bytes)")
+    return dest_base + ext
+
+
+def remove_white_background(raw: bytes):
+    """白（または単色の明るい）背景を外周からのフラッドフィルで透過にする。
+
+    キャラの白い服や名札は外周と繋がっていないため残る。失敗時は (None, None)。
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFilter
+        import io as _io
+        im = Image.open(_io.BytesIO(raw)).convert("RGBA")
+        if im.width * im.height > 4000 * 4000:
+            return None, None
+        # 既に透過があるならそのまま
+        if im.getextrema()[3][0] < 250:
+            buf = _io.BytesIO(); im.save(buf, "PNG"); return buf.getvalue(), ".png"
+        rgb = im.convert("RGB")
+        # 四隅の色が明るい（背景が白系）場合のみ処理
+        corners = [rgb.getpixel((0, 0)), rgb.getpixel((im.width - 1, 0)), rgb.getpixel((0, im.height - 1)), rgb.getpixel((im.width - 1, im.height - 1))]
+        if not all(sum(c) / 3 > 225 for c in corners):
+            return None, None
+        key = (255, 0, 255)
+        work = rgb.copy()
+        for x in range(0, im.width, max(1, im.width // 40)):
+            for y in (0, im.height - 1):
+                if work.getpixel((x, y)) != key and sum(work.getpixel((x, y))) / 3 > 225:
+                    ImageDraw.floodfill(work, (x, y), key, thresh=40)
+        for y in range(0, im.height, max(1, im.height // 40)):
+            for x in (0, im.width - 1):
+                if work.getpixel((x, y)) != key and sum(work.getpixel((x, y))) / 3 > 225:
+                    ImageDraw.floodfill(work, (x, y), key, thresh=40)
+        # マスク: キー色 → 透明。境界を1px柔らかく
+        from PIL import ImageChops
+        diff = ImageChops.difference(work, Image.new("RGB", im.size, key)).convert("L")
+        mask = diff.point(lambda v: 255 if v > 0 else 0)
+        mask = mask.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.8))
+        im.putalpha(mask)
+        # 余白をトリムして少しだけ下余白を残す
+        bbox = im.getbbox()
+        if bbox:
+            pad = max(4, im.width // 60)
+            im = im.crop((max(0, bbox[0] - pad), max(0, bbox[1] - pad), min(im.width, bbox[2] + pad), min(im.height, bbox[3] + pad)))
+        buf = _io.BytesIO(); im.save(buf, "PNG", optimize=True)
+        return buf.getvalue(), ".png"
+    except Exception as e:  # noqa: BLE001
+        print(f"[characters] background removal skipped: {e}")
+        return None, None
 
 
 def user_progress(name: str) -> dict:
@@ -392,20 +499,70 @@ def character_image(filename):
 @app.route("/api/characters/<cid>/image", methods=["POST", "DELETE"])
 @auth.require_role("admin")
 def character_image_upload(cid):
+    """元画像（expr 未指定）または表情画像（?expr=happy 等）のアップロード / 削除。"""
     if cid not in domain.CHARACTER_IDS:
         return _bad("unknown character", 404)
-    for f in os.listdir(CHAR_IMG_DIR):
-        if f.startswith(cid + "."):
-            os.remove(os.path.join(CHAR_IMG_DIR, f))
-    if request.method == "POST":
-        f = request.files.get("file")
-        if not f:
-            return _bad("画像ファイルを選択してください")
-        ext = os.path.splitext(f.filename or "")[1].lower()
-        if ext not in (".png", ".jpg", ".jpeg", ".webp"):
-            return _bad("PNG / JPG / WebP のみ対応")
-        f.save(os.path.join(CHAR_IMG_DIR, cid + ext))
+    expr = request.args.get("expr") or (request.form.get("expr") if request.form else "") or ""
+    if expr and expr not in domain.EXPRESSION_KEYS:
+        return _bad("unknown expression")
+    dest = f"{cid}__{expr}" if expr else cid
+    if request.method == "DELETE":
+        for f in os.listdir(CHAR_IMG_DIR):
+            base = os.path.splitext(f)[0]
+            if base == dest or (not expr and base.startswith(cid + "__")):
+                os.remove(os.path.join(CHAR_IMG_DIR, f))
+        return jsonify(characters_public())
+    f = request.files.get("file")
+    if not f:
+        return _bad("画像ファイルを選択してください")
+    try:
+        _save_image(f, dest)
+    except ValueError as e:
+        return _bad(str(e))
+    except OSError as e:
+        return _bad(f"保存に失敗しました: {e}", 500)
     return jsonify(characters_public())
+
+
+@app.route("/api/characters/<cid>/generate", methods=["POST"])
+@auth.require_role("admin")
+def character_generate(cid):
+    """元画像から表情バリエーションを画像生成AI（Vertex AI Gemini 画像モデル）で生成する。"""
+    import imagegen
+    if cid not in domain.CHARACTER_IDS:
+        return _bad("unknown character", 404)
+    files = _char_files(cid)
+    if not files.get("base"):
+        return _bad("先に元画像をアップロードしてください")
+    want = (request.json or {}).get("expressions") or [e["key"] for e in domain.EXPRESSIONS if e["key"] != "normal"]
+    want = [w for w in want if w in domain.EXPRESSION_KEYS and w != "normal"]
+    c = next(x for x in domain.CHARACTERS if x["id"] == cid)
+    with open(os.path.join(CHAR_IMG_DIR, files["base"]), "rb") as fh:
+        base_bytes = fh.read()
+    results, errors = [], []
+    for key in want:
+        e = next(x for x in domain.EXPRESSIONS if x["key"] == key)
+        try:
+            png = imagegen.generate_expression(base_bytes, c, e["prompt"])
+            png2, _ext = remove_white_background(png)
+            png = png2 or png
+            for f in os.listdir(CHAR_IMG_DIR):
+                if os.path.splitext(f)[0] == f"{cid}__{key}":
+                    os.remove(os.path.join(CHAR_IMG_DIR, f))
+            with open(os.path.join(CHAR_IMG_DIR, f"{cid}__{key}.png"), "wb") as out:
+                out.write(png)
+            results.append(key)
+        except Exception as ex:  # noqa: BLE001
+            errors.append(f"{e['label']}: {ex}")
+            print(f"[imagegen] {cid}/{key}: {ex}")
+    return jsonify({"generated": results, "errors": errors, "characters": characters_public()})
+
+
+@app.route("/api/imagegen/status")
+@auth.require_role("admin")
+def imagegen_status():
+    import imagegen
+    return jsonify(imagegen.status())
 
 
 @app.route("/api/characters/names", methods=["PUT"])

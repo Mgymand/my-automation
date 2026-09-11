@@ -10,9 +10,10 @@
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.Default.css">
-  <link rel="stylesheet" href="/static/app.css?v=2">
+  <link rel="stylesheet" href="/static/app.css?v=3">
 </head>
 <body>
+<div class="world-bg"><canvas id="stars"></canvas></div>
 <div class="layout">
   <!-- ===== サイドバー ===== -->
   <aside class="sidebar" id="sidebar">
@@ -20,21 +21,21 @@
       <div class="brand-mark">孫</div>
       <div class="brand-text">
         <div class="brand-name">孫LOVE</div>
-        <div class="brand-sub">老人ホーム出店管理</div>
+        <div class="brand-sub">SENIOR HOME · LAUNCH QUEST</div>
       </div>
     </div>
     <nav class="nav">
-      <a href="#/dashboard" data-view="dashboard"><span class="ico">📊</span>ダッシュボード</a>
-      <a href="#/map" data-view="map"><span class="ico">🗺️</span>マップ</a>
-      <a href="#/board" data-view="board"><span class="ico">🗂️</span>パイプライン</a>
-      <a href="#/list" data-view="list"><span class="ico">📋</span>物件一覧</a>
-      <a href="#/schedule" data-view="schedule"><span class="ico">📅</span>スケジュール</a>
-      <div class="nav-sep">データ</div>
-      <a href="#/import" data-view="import"><span class="ico">📥</span>取込（PDF/CSV）</a>
-      <a href="#/pois" data-view="pois"><span class="ico">🏥</span>周辺施設</a>
-      <a href="#/stats" data-view="stats"><span class="ico">📈</span>統計データ</a>
-      <div class="nav-sep">管理</div>
-      <a href="#/settings" data-view="settings"><span class="ico">⚙️</span>設定・連携</a>
+      <a href="#/dashboard" data-view="dashboard"><span class="ico">🏰</span>ギルドホール</a>
+      <a href="#/map" data-view="map"><span class="ico">🗺️</span>ワールドマップ</a>
+      <a href="#/board" data-view="board"><span class="ico">📜</span>クエスト掲示板</a>
+      <a href="#/list" data-view="list"><span class="ico">📖</span>物件図鑑</a>
+      <a href="#/schedule" data-view="schedule"><span class="ico">🕰️</span>冒険の暦</a>
+      <div class="nav-sep">Materials</div>
+      <a href="#/import" data-view="import"><span class="ico">📦</span>素材の搬入（PDF/CSV）</a>
+      <a href="#/pois" data-view="pois"><span class="ico">🏥</span>街の施設</a>
+      <a href="#/stats" data-view="stats"><span class="ico">📈</span>領地の統計</a>
+      <div class="nav-sep">Guild</div>
+      <a href="#/settings" data-view="settings"><span class="ico">⚙️</span>ギルド設定・連携</a>
     </nav>
     <div class="sidebar-foot">
       <div class="user-chip">
@@ -72,15 +73,15 @@
 <!-- パートナー（キャラクター）ウィジェット -->
 <div class="partner" id="partner" hidden>
   <div class="bubble" id="partner-bubble"><button class="bubble-close" id="partner-close" title="閉じる">✕</button><span id="partner-text"></span><button class="bubble-next" id="partner-next" title="次のセリフ">▶</button></div>
-  <button class="partner-avatar" id="partner-avatar" title="パートナー（クリックで話す）"></button>
+  <button class="partner-avatar" id="partner-avatar" title="パートナー（クリックで話す）"><img id="partner-img" alt="" hidden><span id="partner-emoji"></span></button>
 </div>
 
 <!-- モバイル ボトムナビ -->
 <nav class="bottom-nav" id="bottom-nav">
-  <a href="#/dashboard" data-view="dashboard"><span>🏠</span>ホーム</a>
+  <a href="#/dashboard" data-view="dashboard"><span>🏰</span>ホール</a>
   <a href="#/map" data-view="map"><span>🗺️</span>マップ</a>
-  <a href="#/board" data-view="board"><span>🗂️</span>案件</a>
-  <a href="#/schedule" data-view="schedule"><span>📅</span>予定</a>
+  <a href="#/board" data-view="board"><span>📜</span>クエスト</a>
+  <a href="#/schedule" data-view="schedule"><span>🕰️</span>暦</a>
   <a href="#" id="bn-more"><span>☰</span>メニュー</a>
 </nav>
 
@@ -105,6 +106,7 @@
 <script src="/static/vendor/markercluster/leaflet.markercluster.js"></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="/static/app.js?v=2"></script>
+<script src="/static/stars.js?v=3"></script>
+<script src="/static/app.js?v=3"></script>
 </body>
 </html>
