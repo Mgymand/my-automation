@@ -43,7 +43,9 @@ TASK_TEMPLATE = {
     "legal": [
         "用途地域・建ぺい率/容積率の確認", "建築基準法（用途変更の要否）確認",
         "消防法（スプリンクラー・自火報）確認", "バリアフリー法・条例確認",
-        "有料老人ホーム設置運営指導指針との適合確認", "検査済証・既存不適格の確認",
+        "有料老人ホーム設置運営指導指針との適合確認", "検査済証・建築計画概要書の確認（建築課）",
+        "ハザードマップ判定（洪水・土砂・津波）と避難確保計画の要否", "指定道路調書・接道の確認（道路課）",
+        "埋蔵文化財包蔵地の照会（教育委員会）", "上下水道台帳・インフラの確認",
     ],
     "permit": [
         "都道府県への事前相談", "有料老人ホーム設置届 提出",
@@ -52,12 +54,12 @@ TASK_TEMPLATE = {
     ],
     "hiring": [
         "施設長候補の選定", "介護事業者（訪問介護・看護）との提携", "採用計画・求人票作成",
-        "求人媒体・紹介会社への掲載", "面接・採用決定", "研修計画・入社手続き",
+        "ジョブメドレー等の求人媒体に掲載", "人材紹介会社・ハローワークへ依頼", "面接・採用決定", "研修計画・入社手続き",
     ],
     "leads": [
-        "チラシ・パンフレット作成", "近隣ケアマネ事業所リスト作成・訪問",
-        "病院（地域連携室・MSW）への訪問・チラシ配布", "紹介会社（端末）への物件登録",
-        "内覧会・説明会の開催", "入居申込・契約",
+        "チラシ・パンフレット作成", "近隣の居宅介護支援事業所（ケアマネ）リスト作成",
+        "居宅介護支援事業所へ訪問・斡旋依頼", "病院（地域連携室・MSW）への訪問・チラシ配布",
+        "紹介会社（端末）への物件登録", "内覧会・説明会の開催", "入居申込・契約",
     ],
     "interior": [
         "設計・レイアウト確定", "見積取得・業者選定", "工事契約", "着工",
@@ -83,8 +85,33 @@ POI_TYPES = [
 POI_TYPE_KEYS = [p["key"] for p in POI_TYPES]
 
 # --- 書類種別 ---
-DOC_TYPES = ["稟議書", "収支計画", "マイソク・図面", "契約書", "内見報告", "現調報告",
-             "申請書類", "見積書", "チラシ", "その他"]
+DOC_TYPES = ["稟議書", "収支計画", "マイソク・図面", "謄本・公図", "ハザードマップ・調査資料", "道路関係",
+             "建物関係", "インフラ関係", "賃貸事例", "買付証明", "契約書", "決済書類", "申請書類",
+             "見積書", "内見報告", "現調報告", "チラシ", "その他"]
+
+# 物件フォルダの標準構成（既存ドライブ「春日部（シェアハウス）」の構成を踏襲）
+DRIVE_FOLDERS = ["謄本・公図", "道路関係", "建物関係", "インフラ関係", "賃貸事例",
+                 "購入/買付", "購入/契約", "購入/決済", "売却/契約", "売却/決済", "稟議・収支", "申請・届出"]
+
+# 工程ごとの外部リンク（採用媒体・斡旋先・行政）
+PHASE_LINKS = {
+    "acquire": [("不動産情報ライブラリ（地価・取引価格）", "https://www.reinfolib.mlit.go.jp/"),
+                ("登記情報提供サービス", "https://www1.touki.or.jp/")],
+    "legal": [("重ねるハザードマップ", "https://disaportal.gsi.go.jp/"),
+              ("国土数値情報（用途地域）", "https://nlftp.mlit.go.jp/ksj/")],
+    "permit": [("厚労省 有料老人ホーム", "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/hukushi_kaigo/kaigo_koureisha/yuryou/index.html")],
+    "hiring": [("ジョブメドレー（求人掲載）", "https://job-medley.com/"),
+               ("Indeed", "https://jp.indeed.com/"), ("ハローワーク求人", "https://www.hellowork.mhlw.go.jp/")],
+    "leads": [("介護サービス情報公表システム（居宅介護支援事業所検索）", "https://www.kaigokensaku.mhlw.go.jp/")],
+    "interior": [], "open": [],
+}
+
+# 営業先（入居者獲得）のステータス
+OUTREACH_STATUSES = [
+    {"key": "todo", "label": "未訪問"}, {"key": "flyer", "label": "チラシ配布済"},
+    {"key": "visited", "label": "訪問済"}, {"key": "requested", "label": "斡旋依頼済"},
+    {"key": "referral", "label": "紹介あり"}, {"key": "ng", "label": "見込みなし"},
+]
 
 # --- 物件の統一フォーマット ---
 PROPERTY_TEMPLATE = {
@@ -103,6 +130,9 @@ PROPERTY_TEMPLATE = {
     "source": {"type": "manual", "filename": "", "url": "", "text": ""},
     "spec": {
         "property_type": "",        # 一棟貸/区分/土地/既存施設転用 等
+        "transaction_type": "賃貸",  # 賃貸 / 売買
+        "price_yen": None,          # 売買価格
+        "land_price_sqm": None,     # 公示地価（円/㎡）近傍標準地
         "structure": "",            # RC造 等
         "built_ym": "",             # YYYY-MM
         "floors": "",               # 地上3階
@@ -148,6 +178,8 @@ PROPERTY_TEMPLATE = {
         "opening_date": "",
     },
     "drive": {"folder_url": "", "folder_id": ""},
+    "survey": {},                   # 自動調査結果（標高・地盤・ハザード）
+    "outreach": [],                 # 営業先 [{id, name, type, poi_id, status, date, memo}]
     "docs": [],                     # [{id, type, title, url, drive_id, updated_at}]
     "tasks": [],                    # [{id, phase, title, done, due, assignee, done_at}]
     "reports": [],                  # [{id, type, date, author, summary, pros, cons, rating, url}]
@@ -192,3 +224,65 @@ def default_tasks() -> list[dict]:
             tasks.append({"id": store.new_id("task"), "phase": phase, "title": title,
                           "done": False, "due": "", "assignee": "", "done_at": ""})
     return tasks
+
+
+# --- パートナーキャラクター（育成ゲーム要素） ---
+# 画像は管理者が設定画面からアップロード（data/characters/<id>.png）。未設定時は絵文字アバター。
+CHARACTERS = [
+    {"id": "ruka", "name": "ルカ", "species": "オオカミ", "emoji": "🐺", "color": "#64748b",
+     "role": "物件ハンター", "phases": ["acquire", "interior"],
+     "personality": "行動派で決断が早い。良い物件の匂いを嗅ぎ分ける。",
+     "lines": {
+         "greet": ["おはよ！今日はどの街を攻める？", "いい物件は足で探すもんだよ。行こ！", "内見の準備できてる？図面持った？"],
+         "idle": ["坪単価が安くて、ケアマネ事業所が近い。それが狙い目。", "机上候補が溜まってきたら、まず内見予定に上げよう。", "ハザードマップ判定はワンクリックでできるよ。"],
+         "praise": ["やるじゃん！その調子！", "ナイス！次いこ次！", "完璧。オレも見習わないと。"],
+         "warn": ["期限切れのタスクがあるよ。先に片付けよ？", "内見日が近いよ。忘れてない？"],
+     }},
+    {"id": "haruto", "name": "ハルト施設長", "species": "ウサギ", "emoji": "🐰", "color": "#1e40af",
+     "role": "施設長・申請担当", "phases": ["legal", "permit", "open"],
+     "personality": "冷静で几帳面。法規制と役所手続きに強い。",
+     "lines": {
+         "greet": ["おはようございます。今日の予定を確認しましょう。", "書類の準備は計画的に。焦らず一つずつ。", "本日もよろしくお願いします。"],
+         "idle": ["有料老人ホームは設置届が必要です。都道府県への事前相談を早めに。", "浸水想定区域なら避難確保計画が義務になります。", "検査済証の有無は必ず建築課で確認しましょう。"],
+         "praise": ["素晴らしい。着実に進んでいますね。", "完了ですね。次の工程へ進みましょう。", "見事です。開業が近づいてきました。"],
+         "warn": ["期限を過ぎたタスクがあります。優先して対応しましょう。", "申請の期限に注意してください。"],
+     }},
+    {"id": "kotaro", "name": "コタロウ", "species": "クマ", "emoji": "🐻", "color": "#16a34a",
+     "role": "介護スタッフ・採用担当", "phases": ["hiring"],
+     "personality": "素直で人懐っこい。現場と採用のことなら任せて。",
+     "lines": {
+         "greet": ["おはようございます！今日もがんばりましょう！", "スタッフさんの採用、進んでますか？", "元気に行きましょう！"],
+         "idle": ["ジョブメドレーに求人を出すと応募が来やすいですよ。", "施設長候補は早めに決めると開業がスムーズです。", "訪問介護・訪問看護との提携も忘れずに！"],
+         "praise": ["わあ、すごいです！", "やりましたね！ぼくもうれしいです！", "その調子です！"],
+         "warn": ["期限が過ぎているタスクがあります…一緒に片付けましょう！", "採用の締切、近いですよ！"],
+     }},
+    {"id": "momo", "name": "モモ", "species": "イヌ", "emoji": "🐶", "color": "#e0475b",
+     "role": "入居者獲得・営業担当", "phases": ["leads"],
+     "personality": "明るく社交的。ケアマネさんや病院との関係づくりが得意。",
+     "lines": {
+         "greet": ["おはよう〜！今日はどこのケアマネさんに会いに行く？", "チラシ持った？行ってらっしゃい！", "笑顔が一番の営業ツールだよ♪"],
+         "idle": ["居宅介護支援事業所からの斡旋が入居の近道！", "病院の地域連携室にも顔を出しておこうね。", "営業先リストは物件の「営業先」タブから作れるよ。"],
+         "praise": ["すご〜い！さすが！", "やったね！お祝いしよ！", "その調子♪ 入居者さん増えそう！"],
+         "warn": ["期限切れのタスクがあるみたい…先に片付けよ？", "内覧会の準備、間に合う？"],
+     }},
+]
+CHARACTER_IDS = [c["id"] for c in CHARACTERS]
+
+# 経験値（履歴アクションごと）とレベル閾値
+XP_RULES = {"created": 20, "status": 50, "task_done": 10, "report": 30, "doc_add": 5, "outreach": 15, "survey": 15}
+LEVEL_TITLES = [(1, "見習い出店担当"), (3, "出店プランナー"), (6, "エリア開拓者"), (10, "エリアマネージャー"),
+                (15, "出店の達人"), (20, "孫LOVEマスター")]
+
+
+def level_for_xp(xp: int) -> dict:
+    """XP → レベル（必要XPは 100, 150, 200, ... と漸増）。"""
+    level, need, acc = 1, 100, 0
+    while xp >= acc + need and level < 50:
+        acc += need
+        level += 1
+        need += 50
+    title = LEVEL_TITLES[0][1]
+    for lv, t in LEVEL_TITLES:
+        if level >= lv:
+            title = t
+    return {"level": level, "xp": xp, "xp_in_level": xp - acc, "xp_next": need, "title": title}

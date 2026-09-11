@@ -1,13 +1,25 @@
-# 孫LOVE デプロイ手順
+# 孫LOVE デプロイ手順（無料運用）
 
-「基本無料」で運用する前提の2案です。
+## 方針: Render は解約 → Google Cloud Run（無料枠）
 
-| 案 | 月額 | データ永続化 | 備考 |
-| --- | --- | --- | --- |
-| **A. Google Cloud Run + Cloud Storage（推奨）** | 無料枠内でほぼ0円 | GCS バケットをマウント | 東京リージョン。既存の `property-map` と同じ方式 |
-| B. Render | Starter $7（Free はディスク無しで再起動時にデータ消失） | Render Disk | Blueprint (`render.yaml`) で一発 |
+| 項目 | Cloud Run + Cloud Storage | 備考 |
+| --- | --- | --- |
+| 月額 | **0円**（無料枠: リクエスト200万/月、Cloud Storage 5GB） | 社内利用の規模なら枠内に収まります |
+| データ永続化 | GCS バケットを `/var/data` にマウント | JSON・PDF・キャラ画像をそのまま保存 |
+| 起動 | リクエスト時に起動（コールドスタート数秒） | 最小インスタンス0で課金なし |
+| 既存 | `property-map`（営業クラウド）と同じ方式 | 同じプロジェクトで運用可 |
 
-## A. Cloud Run（推奨）
+Render の Starter（$7/月）は永続ディスクのためだけに必要でした。Cloud Run では GCS が無料枠に収まるため不要です。
+**Render 解約手順**: Render ダッシュボード → 対象サービス → Settings → Delete Web Service（Disk も削除）。解約前に `/var/data` のJSONをダウンロードして GCS バケットへコピーすればデータも引き継げます。
+
+### 他の無料候補（参考）
+- **Oracle Cloud Always Free（VM）**: 完全無料で常時起動できるが、サーバー運用（OS更新・HTTPS）が必要
+- **PythonAnywhere Free**: 永続ディスクありだが外部API接続がホワイトリスト制（国土地理院・Slack が使えない可能性）
+- **Vercel / Netlify / Koyeb Free**: 永続ディスクなし（JSON保存方式と相性が悪い）
+
+→ 運用の手間と自由度から Cloud Run を推奨します。
+
+## Cloud Run デプロイ
 
 前提: `gcloud auth login` 済み、課金有効（無料枠内で運用）。
 
@@ -24,13 +36,10 @@ export CRON_TOKEN=$(openssl rand -hex 24)
 3. `mago-love/` をソースからビルドし、バケットを `/var/data` にマウントしてデプロイ
 4. 出力された URL を Google OAuth の「承認済みの JavaScript 生成元」に追加
 
-デプロイ後、アプリの **設定・連携** で Slack Webhook / アプリURL / ZENRIN / Google API キーを入力します。
+デプロイ後、アプリの **設定・連携** で Slack Webhook / アプリURL / ZENRIN / Google API キー / キャラ画像を設定します。
 
-## B. Render
-
-1. Render → New → Blueprint → このリポジトリを選択 → `render.yaml` の `mago-love` サービスを Apply
-2. ダッシュボードで `GOOGLE_CLIENT_ID`（と任意で `ANTHROPIC_API_KEY`）を入力
-3. 発行された URL を Google OAuth の承認済み生成元に追加
+## スマホ対応
+レスポンシブ対応済み（ボトムナビ・ドロワー全画面）。iPhone / Android は Chrome / Safari で URL を開き「ホーム画面に追加」するとアプリのように使えます。
 
 ## 毎朝のSlackリマインド（無料cron）
 

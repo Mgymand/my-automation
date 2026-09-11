@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.css">
   <link rel="stylesheet" href="/static/vendor/markercluster/MarkerCluster.Default.css">
-  <link rel="stylesheet" href="/static/app.css?v=1">
+  <link rel="stylesheet" href="/static/app.css?v=2">
 </head>
 <body>
 <div class="layout">
@@ -46,6 +46,11 @@
       </div>
       <a class="logout" href="/logout" title="ログアウト">⎋</a>
     </div>
+    <div class="level-box" id="level-box" title="タスク完了・報告・ステータス更新で経験値がたまります">
+      <div class="level-row"><span class="lv" id="lv-num">Lv.1</span><span class="lv-title" id="lv-title">見習い出店担当</span></div>
+      <div class="progress xp"><i id="xp-bar" style="width:0%"></i></div>
+      <div class="lv-xp" id="lv-xp"></div>
+    </div>
   </aside>
 
   <!-- ===== メイン ===== -->
@@ -63,6 +68,21 @@
     <section class="view" id="view"></section>
   </main>
 </div>
+
+<!-- パートナー（キャラクター）ウィジェット -->
+<div class="partner" id="partner" hidden>
+  <div class="bubble" id="partner-bubble"><span id="partner-text"></span><button class="bubble-next" id="partner-next" title="次のセリフ">▶</button></div>
+  <button class="partner-avatar" id="partner-avatar" title="パートナー（クリックで話す）"></button>
+</div>
+
+<!-- モバイル ボトムナビ -->
+<nav class="bottom-nav" id="bottom-nav">
+  <a href="#/dashboard" data-view="dashboard"><span>🏠</span>ホーム</a>
+  <a href="#/map" data-view="map"><span>🗺️</span>マップ</a>
+  <a href="#/board" data-view="board"><span>🗂️</span>案件</a>
+  <a href="#/schedule" data-view="schedule"><span>📅</span>予定</a>
+  <a href="#" id="bn-more"><span>☰</span>メニュー</a>
+</nav>
 
 <!-- 物件詳細ドロワー -->
 <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
@@ -85,6 +105,6 @@
 <script src="/static/vendor/markercluster/leaflet.markercluster.js"></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="/static/app.js?v=1"></script>
+<script src="/static/app.js?v=2"></script>
 </body>
 </html>

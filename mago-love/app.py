@@ -48,6 +48,7 @@ import auth  # noqa: E402
 import domain  # noqa: E402
 import notify  # noqa: E402
 import extract  # noqa: E402
+import survey  # noqa: E402
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
@@ -92,7 +93,92 @@ def me() -> dict:
 
 
 def load_props() -> list[dict]:
-    return store.load("properties", [])
+    items = store.load("properties", [])
+    for p in items:
+        for k in ("survey", "outreach"):
+            p.setdefault(k, {} if k == "survey" else [])
+        for k in ("transaction_type", "price_yen", "land_price_sqm"):
+            p.setdefault("spec", {}).setdefault(k, "賃貸" if k == "transaction_type" else None)
+    return items
+
+
+# ---------------------------------------------------------------------------
+# スコアリング（介護者・入居者が取れそうな市に近く、坪単価が低い物件を高評価）
+# ---------------------------------------------------------------------------
+
+def _dist_km(lat1, lon1, lat2, lon2) -> float:
+    import math
+    r = 6371
+    dlat, dlon = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def tsubo_price(p: dict):
+    """月額賃料の坪単価（売買は価格/坪を 1/240 で月額換算=20年償却の目安）。"""
+    sp = p.get("spec", {})
+    tsubo = sp.get("floor_area_tsubo") or (sp.get("floor_area_sqm") or 0) * 0.3025
+    if not tsubo:
+        return None
+    if sp.get("transaction_type") == "売買" and sp.get("price_yen"):
+        return round(sp["price_yen"] / tsubo / 240)
+    if sp.get("rent_yen"):
+        return round(sp["rent_yen"] / tsubo)
+    return None
+
+
+def _city_demand() -> dict:
+    """市区町村ごとの需要指標（統計CSVの 65歳以上人口 / 要介護認定者数 / 高齢化率 を利用）。"""
+    out = {}
+    for x in store.load("stats", []):
+        m = x.get("metrics", {})
+        elderly = next((v for k, v in m.items() if any(w in k for w in ("65歳", "高齢者人口", "老年人口")) and isinstance(v, (int, float))), None)
+        certified = next((v for k, v in m.items() if "要介護" in k and isinstance(v, (int, float))), None)
+        rate = next((v for k, v in m.items() if "高齢化率" in k and isinstance(v, (int, float))), None)
+        key = (x.get("pref"), x.get("city"))
+        cur = out.setdefault(key, {"elderly": None, "certified": None, "rate": None})
+        for k, v in (("elderly", elderly), ("certified", certified), ("rate", rate)):
+            if v is not None:
+                cur[k] = v
+    return out
+
+
+def compute_scores(props: list[dict]) -> dict:
+    """物件ごとの候補スコア(0-100)と内訳。相対評価（登録物件の中で比較）。"""
+    pois = [x for x in store.load("pois", []) if x.get("lat") and x.get("type") in ("caremanager", "hospital", "care", "clinic")]
+    demand = _city_demand()
+    prices = {p["id"]: tsubo_price(p) for p in props}
+    valid = sorted(v for v in prices.values() if v)
+    dem_vals = [d["certified"] or d["elderly"] or 0 for d in demand.values()]
+    dem_max = max(dem_vals) if dem_vals else 0
+    out = {}
+    for p in props:
+        tp = prices[p["id"]]
+        # 価格: 安いほど高得点（登録物件内の順位）
+        price_score = None
+        if tp and valid:
+            rank = sum(1 for v in valid if v <= tp)
+            price_score = round(100 * (1 - (rank - 1) / max(1, len(valid) - 1))) if len(valid) > 1 else 70
+        # 需要: 市の要介護認定者数（なければ65歳以上人口）を最大値で正規化
+        d = demand.get((p.get("pref"), p.get("city")))
+        demand_score = None
+        if d and dem_max:
+            demand_score = round(100 * ((d["certified"] or d["elderly"] or 0) / dem_max))
+        # アクセス: 3km以内のケアマネ事業所/病院/介護施設の数（10件で満点）
+        access_score, near = None, {}
+        if p.get("lat") and pois:
+            cnt = 0
+            for x in pois:
+                if _dist_km(p["lat"], p["lon"], x["lat"], x["lon"]) <= 3.0:
+                    cnt += 1
+                    near[x["type"]] = near.get(x["type"], 0) + 1
+            access_score = min(100, cnt * 10)
+        parts = [(w, v) for w, v in ((0.4, price_score), (0.35, demand_score), (0.25, access_score)) if v is not None]
+        total = round(sum(w * v for w, v in parts) / sum(w for w, _ in parts)) if parts else None
+        out[p["id"]] = {"total": total, "price": price_score, "demand": demand_score, "access": access_score,
+                        "tsubo_price": tp, "near": near,
+                        "demand_detail": d}
+    return out
 
 
 def save_props(items: list[dict]):
@@ -229,7 +315,228 @@ def bootstrap():
         "doc_types": domain.DOC_TYPES,
         "municipalities": municipalities(),
         "users": [{"email": u["email"], "name": u.get("name", "")} for u in auth.load_users() if u.get("active", True)],
+        "characters": characters_public(),
+        "outreach_statuses": domain.OUTREACH_STATUSES,
+        "phase_links": domain.PHASE_LINKS,
+        "drive_folders": domain.DRIVE_FOLDERS,
+        "my_character": _my_user().get("character", ""),
+        "progress": user_progress(me().get("name", "")),
     })
+
+
+# ---------------------------------------------------------------------------
+# パートナーキャラクター / 経験値（育成ゲーム要素）
+# ---------------------------------------------------------------------------
+
+CHAR_IMG_DIR = os.path.join(store.DATA_DIR, "characters")
+os.makedirs(CHAR_IMG_DIR, exist_ok=True)
+
+
+def _my_user() -> dict:
+    return auth.find_user(me().get("email", "")) or {}
+
+
+def characters_public() -> list[dict]:
+    overrides = store.load("settings", {}).get("character_names", {})
+    out = []
+    for c in domain.CHARACTERS:
+        img = next((f for f in os.listdir(CHAR_IMG_DIR) if f.startswith(c["id"] + ".")), None)
+        out.append({**c, "name": overrides.get(c["id"]) or c["name"],
+                    "image": f"/character-images/{img}?v={int(os.path.getmtime(os.path.join(CHAR_IMG_DIR, img)))}" if img else ""})
+    return out
+
+
+def user_progress(name: str) -> dict:
+    xp = 0
+    counts = {}
+    for p in load_props():
+        for h in p.get("history", []):
+            if h.get("by") != name:
+                continue
+            a = h.get("action", "")
+            if a in domain.XP_RULES:
+                xp += domain.XP_RULES[a]
+                counts[a] = counts.get(a, 0) + 1
+    prog = domain.level_for_xp(xp)
+    prog["counts"] = counts
+    return prog
+
+
+@app.route("/api/me/character", methods=["PUT"])
+@auth.require_role("viewer")
+def set_character():
+    cid = (request.json or {}).get("character", "")
+    if cid not in domain.CHARACTER_IDS:
+        return _bad("unknown character")
+    users = auth.load_users()
+    u = next((x for x in users if x["email"] == me().get("email")), None)
+    if not u:
+        return _bad("user not found", 404)
+    u["character"] = cid
+    auth.save_users(users)
+    return jsonify({"ok": True, "character": cid})
+
+
+@app.route("/api/me/progress")
+@auth.require_role("viewer")
+def my_progress():
+    return jsonify(user_progress(me().get("name", "")))
+
+
+@app.route("/character-images/<path:filename>")
+def character_image(filename):
+    return send_from_directory(CHAR_IMG_DIR, filename)
+
+
+@app.route("/api/characters/<cid>/image", methods=["POST", "DELETE"])
+@auth.require_role("admin")
+def character_image_upload(cid):
+    if cid not in domain.CHARACTER_IDS:
+        return _bad("unknown character", 404)
+    for f in os.listdir(CHAR_IMG_DIR):
+        if f.startswith(cid + "."):
+            os.remove(os.path.join(CHAR_IMG_DIR, f))
+    if request.method == "POST":
+        f = request.files.get("file")
+        if not f:
+            return _bad("画像ファイルを選択してください")
+        ext = os.path.splitext(f.filename or "")[1].lower()
+        if ext not in (".png", ".jpg", ".jpeg", ".webp"):
+            return _bad("PNG / JPG / WebP のみ対応")
+        f.save(os.path.join(CHAR_IMG_DIR, cid + ext))
+    return jsonify(characters_public())
+
+
+@app.route("/api/characters/names", methods=["PUT"])
+@auth.require_role("admin")
+def character_names():
+    s = store.load("settings", {})
+    names = {k: v for k, v in (request.json or {}).items() if k in domain.CHARACTER_IDS and isinstance(v, str)}
+    s["character_names"] = {**s.get("character_names", {}), **names}
+    store.save("settings", s)
+    return jsonify(characters_public())
+
+
+# ---------------------------------------------------------------------------
+# 現地リスク自動調査 / 営業先（入居者獲得）
+# ---------------------------------------------------------------------------
+
+@app.route("/api/properties/<pid>/survey", methods=["POST"])
+@auth.require_role("member")
+def run_survey(pid):
+    items = load_props()
+    p = next((x for x in items if x["id"] == pid), None)
+    if not p:
+        return _bad("not found", 404)
+    if not (p.get("lat") and p.get("lon")):
+        return _bad("座標がありません。先に住所から座標を取得してください。")
+    res = survey.run(float(p["lat"]), float(p["lon"]))
+    res["at"] = store.now_iso()
+    res["by"] = me().get("name", "")
+    p["survey"] = res
+    hits = [h["label"] for h in res["hazards"] if h["hit"]]
+    touch(p, "survey", "自動調査: " + ("該当 " + "・".join(hits) if hits else "ハザード該当なし"))
+    save_props(items)
+    return jsonify(p)
+
+
+@app.route("/api/properties/<pid>/nearby")
+@auth.require_role("viewer")
+def nearby_pois(pid):
+    p = find_prop(pid)
+    if not p or not p.get("lat"):
+        return jsonify([])
+    km = float(request.args.get("km", 3))
+    out = []
+    for x in store.load("pois", []):
+        if x.get("lat"):
+            d = _dist_km(p["lat"], p["lon"], x["lat"], x["lon"])
+            if d <= km:
+                out.append({**x, "distance_km": round(d, 2)})
+    out.sort(key=lambda x: x["distance_km"])
+    return jsonify(out[:100])
+
+
+@app.route("/api/properties/<pid>/outreach", methods=["POST"])
+@auth.require_role("member")
+def add_outreach(pid):
+    items = load_props()
+    p = next((x for x in items if x["id"] == pid), None)
+    if not p:
+        return _bad("not found", 404)
+    d = request.json or {}
+    if not d.get("name"):
+        return _bad("name required")
+    o = {"id": store.new_id("out"), "name": d["name"], "type": d.get("type", "caremanager"), "poi_id": d.get("poi_id", ""),
+         "status": d.get("status") if d.get("status") in [x["key"] for x in domain.OUTREACH_STATUSES] else "todo",
+         "date": d.get("date", ""), "contact": d.get("contact", ""), "memo": d.get("memo", ""), "by": me().get("name", ""),
+         "updated_at": store.today()}
+    p["outreach"].insert(0, o)
+    touch(p, "outreach", f"営業先追加: {o['name']}")
+    save_props(items)
+    return jsonify(p), 201
+
+
+@app.route("/api/properties/<pid>/outreach/<oid>", methods=["PUT", "DELETE"])
+@auth.require_role("member")
+def edit_outreach(pid, oid):
+    items = load_props()
+    p = next((x for x in items if x["id"] == pid), None)
+    if not p:
+        return _bad("not found", 404)
+    o = next((x for x in p["outreach"] if x["id"] == oid), None)
+    if not o:
+        return _bad("not found", 404)
+    if request.method == "DELETE":
+        p["outreach"].remove(o)
+        touch(p, "outreach_delete", o["name"])
+    else:
+        d = request.json or {}
+        for k in ("name", "type", "status", "date", "contact", "memo"):
+            if k in d:
+                o[k] = d[k]
+        o["updated_at"] = store.today()
+        touch(p, "outreach_update", f"{o['name']}: {dict((x['key'], x['label']) for x in domain.OUTREACH_STATUSES).get(o['status'], o['status'])}")
+    save_props(items)
+    return jsonify(p)
+
+
+@app.route("/api/area_scores")
+@auth.require_role("viewer")
+def area_scores():
+    """市区町村ごとの比較: 需要（統計）× 供給（他社施設・ケアマネ数）× 価格（候補物件の坪単価）。"""
+    props = load_props()
+    demand = _city_demand()
+    pois = store.load("pois", [])
+    rows = {}
+    for (pref, city), d in demand.items():
+        rows.setdefault((pref, city), {"pref": pref, "city": city, **d, "caremanager": 0, "care": 0, "hospital": 0, "props": 0, "tsubo_prices": []})
+    for x in pois:
+        key = (x.get("pref"), x.get("city"))
+        if not x.get("city"):
+            continue
+        r = rows.setdefault(key, {"pref": key[0], "city": key[1], "elderly": None, "certified": None, "rate": None, "caremanager": 0, "care": 0, "hospital": 0, "props": 0, "tsubo_prices": []})
+        if x.get("type") in r:
+            r[x["type"]] += 1
+    for p in props:
+        key = (p.get("pref"), p.get("city"))
+        if not p.get("city"):
+            continue
+        r = rows.setdefault(key, {"pref": key[0], "city": key[1], "elderly": None, "certified": None, "rate": None, "caremanager": 0, "care": 0, "hospital": 0, "props": 0, "tsubo_prices": []})
+        r["props"] += 1
+        tp = tsubo_price(p)
+        if tp:
+            r["tsubo_prices"].append(tp)
+    out = []
+    for r in rows.values():
+        tps = r.pop("tsubo_prices")
+        r["avg_tsubo_price"] = round(sum(tps) / len(tps)) if tps else None
+        # 需要/供給: 要介護認定者数（or 65歳以上人口）÷ 他社施設数（+1）
+        base = r["certified"] or r["elderly"]
+        r["demand_per_supply"] = round(base / (r["care"] + 1)) if base else None
+        out.append(r)
+    out.sort(key=lambda x: (-(x["demand_per_supply"] or 0), x["avg_tsubo_price"] or 1e12))
+    return jsonify(out)
 
 
 # ---------------------------------------------------------------------------
@@ -247,9 +554,11 @@ def list_properties():
         items = [p for p in items if p.get("city") == q["city"]]
     if q.get("status"):
         items = [p for p in items if p.get("status") in q["status"].split(",")]
+    scores = compute_scores(load_props())
     light = []
     for p in items:
-        c = {k: v for k, v in p.items() if k not in ("history", "source")}
+        c = {k: v for k, v in p.items() if k not in ("history", "source", "survey")}
+        c["score"] = scores.get(p["id"])
         c["task_total"] = len(p.get("tasks", []))
         c["task_done"] = sum(1 for t in p.get("tasks", []) if t.get("done"))
         c["task_overdue"] = sum(1 for t in p.get("tasks", [])

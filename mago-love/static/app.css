@@ -346,3 +346,83 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   .kv { grid-template-columns: 100px 1fr; }
   .report .pc { grid-template-columns: 1fr; }
 }
+
+/* ---------- 育成ゲーム要素: レベル / パートナー ---------- */
+.level-box { padding: 10px 14px 12px; border-top: 1px solid rgba(255,255,255,.07); }
+.level-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.level-row .lv { font-weight: 900; color: #fff; font-size: 14px; }
+.level-row .lv-title { font-size: 11px; color: #fbbf24; font-weight: 700; }
+.progress.xp { background: rgba(255,255,255,.1); height: 7px; }
+.progress.xp > i { background: linear-gradient(90deg, #fbbf24, #f97316); }
+.lv-xp { font-size: 10.5px; color: #94a3b8; margin-top: 4px; }
+.partner { position: fixed; right: 18px; bottom: 18px; z-index: 55; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
+.partner > * { pointer-events: auto; }
+.partner-avatar { width: 84px; height: 84px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 8px 24px rgba(15,23,42,.25); background: var(--primary-bg) center/cover no-repeat; font-size: 40px; display: flex; align-items: center; justify-content: center; transition: transform .15s; overflow: hidden; }
+.partner-avatar:hover { transform: scale(1.05); }
+.partner-avatar.bounce { animation: bounce .5s; }
+@keyframes bounce { 0%,100% { transform: translateY(0) } 40% { transform: translateY(-14px) } 70% { transform: translateY(-4px) } }
+.bubble { position: relative; max-width: 320px; background: #fff; border: 2px solid var(--ink); border-radius: 16px; padding: 12px 34px 12px 14px; font-size: 13.5px; font-weight: 600; line-height: 1.5; box-shadow: var(--shadow-lg); margin-bottom: 18px; animation: pop .2s ease-out; }
+.bubble::after { content: ""; position: absolute; right: -12px; bottom: 14px; border: 8px solid transparent; border-left-color: var(--ink); }
+.bubble::before { content: ""; position: absolute; right: -8px; bottom: 15px; border: 7px solid transparent; border-left-color: #fff; z-index: 1; }
+.bubble .name { display: block; font-size: 11px; color: var(--primary); font-weight: 800; margin-bottom: 2px; }
+.bubble-next { position: absolute; right: 8px; bottom: 8px; font-size: 11px; color: var(--muted); animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .2 } }
+.bubble.hidden { display: none; }
+.char-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.char-card { border: 2px solid var(--line); border-radius: 14px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all .15s; background: #fff; }
+.char-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.char-card.sel { border-color: var(--primary); background: var(--primary-bg); }
+.char-card .av { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 8px; background: var(--line-2) center/cover no-repeat; font-size: 44px; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: var(--shadow); }
+.char-card .nm { font-weight: 900; font-size: 14px; }
+.char-card .rl { font-size: 11.5px; color: var(--primary); font-weight: 700; }
+.char-card .ps { font-size: 11px; color: var(--sub); margin-top: 4px; }
+.char-mini { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--sub); }
+.char-mini .av { width: 22px; height: 22px; border-radius: 50%; background: var(--line-2) center/cover; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+.levelup { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 90; background: rgba(15,23,42,.55); animation: pop .2s; }
+.levelup .box { background: #fff; border-radius: 20px; padding: 28px 36px; text-align: center; box-shadow: var(--shadow-lg); }
+.levelup .big { font-size: 44px; }
+.levelup h2 { font-size: 22px; font-weight: 900; margin: 6px 0; color: var(--primary); }
+
+/* クエストボード（物件を冒険の進捗として表示） */
+.quest { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-2); cursor: pointer; }
+.quest:last-child { border-bottom: 0; }
+.quest .qn { min-width: 150px; font-weight: 700; font-size: 13px; }
+.quest .qn .qs { font-size: 11px; color: var(--sub); font-weight: 500; }
+.track { flex: 1; display: flex; gap: 4px; align-items: center; }
+.track .node { flex: 1; height: 10px; border-radius: 6px; background: var(--line-2); position: relative; }
+.track .node.done { background: #22c55e; }
+.track .node.cur { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.track .node.cur::after { content: attr(data-ico); position: absolute; top: -13px; left: 50%; transform: translateX(-50%); font-size: 14px; }
+.track .node .tip { display: none; }
+.quest .qp { font-size: 11.5px; color: var(--sub); min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+.score-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 900; color: #fff; background: var(--sub); }
+.score-badge.s-hi { background: #16a34a; } .score-badge.s-mid { background: #f59e0b; } .score-badge.s-lo { background: #94a3b8; }
+.hz { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--line-2); font-size: 12.5px; }
+.hz .lab { flex: 1; }
+.hz .ok { color: var(--ok); font-weight: 700; } .hz .ng { color: var(--danger); font-weight: 700; }
+.note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 9px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
+.out { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line-2); margin-bottom: 6px; background: #fff; }
+.out .on { font-weight: 700; font-size: 13px; }
+.out .on small { display: block; color: var(--sub); font-weight: 500; font-size: 11.5px; }
+.out select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; font-size: 12px; }
+.phase-links { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 10px 8px; }
+.phase-links a { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+
+/* ボトムナビ（スマホ） */
+.bottom-nav { display: none; }
+@media (max-width: 860px) {
+  .bottom-nav { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; height: 60px; background: rgba(255,255,255,.96); backdrop-filter: blur(10px); border-top: 1px solid var(--line); z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+  .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10.5px; font-weight: 700; color: var(--sub); }
+  .bottom-nav a span { font-size: 20px; }
+  .bottom-nav a.active { color: var(--primary); }
+  .view { padding-bottom: 90px; }
+  .partner { right: 10px; bottom: 70px; }
+  .partner-avatar { width: 60px; height: 60px; font-size: 28px; }
+  .bubble { max-width: min(260px, calc(100vw - 100px)); font-size: 12.5px; }
+  .map-main { height: calc(58vh - 60px); }
+  .drawer-body { padding-bottom: 100px; }
+  .out { grid-template-columns: 1fr auto; }
+  .quest .qn { min-width: 100px; }
+  .level-box { display: none; }
+  .card-head { flex-wrap: wrap; }
+}

@@ -27,6 +27,11 @@ const poiTypeOf = (k) => S.boot.poi_types.find(p => p.key === k) || S.boot.poi_t
 const isAdmin = () => S.boot.me.role === 'admin';
 const canEdit = () => ['admin', 'member'].includes(S.boot.me.role);
 const PREFS = ['茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県'];
+const charOf = (id) => S.boot.characters.find(c => c.id === id) || S.boot.characters[0];
+const myChar = () => charOf(S.boot.my_character || S.boot.characters[0].id);
+const charAvatarHtml = (c, cls = 'av') => c.image ? `<span class="${cls}" style="background-image:url('${esc(c.image)}')"></span>` : `<span class="${cls}">${c.emoji}</span>`;
+const charForPhase = (phase) => S.boot.characters.find(c => c.phases.includes(phase)) || S.boot.characters[0];
+function scoreBadge(sc) { if (!sc || sc.total === null || sc.total === undefined) return ''; const cls = sc.total >= 70 ? 's-hi' : sc.total >= 45 ? 's-mid' : 's-lo'; return `<span class="score-badge ${cls}" title="価格 ${sc.price ?? '-'} / 需要 ${sc.demand ?? '-'} / アクセス ${sc.access ?? '-'}">★ ${sc.total}</span>`; }
 const SCHED = [['viewing_date', '内見日'], ['survey_date', '現調日'], ['approval_date', '稟議承認'], ['contract_date', '契約日'],
                ['construction_start', '着工'], ['construction_end', '竣工'], ['opening_date', '開業予定日']];
 
@@ -149,7 +154,7 @@ async function route() {
 }
 async function showView(v) {
   S.view = v; $('#view-title').textContent = VIEWS[v][0];
-  $$('.nav a').forEach(a => a.classList.toggle('active', a.dataset.view === v));
+  $$('.nav a, .bottom-nav a').forEach(a => a.classList.toggle('active', a.dataset.view === v));
   $('#sidebar').classList.remove('open');
   const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : ''); el.innerHTML = '';
   if (v !== 'map' && S.map) { S.map.remove(); S.map = null; }
@@ -181,10 +186,13 @@ async function renderDashboard(el) {
           <div class="card-body"><div class="funnel">${st.map(s => `<div class="funnel-row"><span>${s.label}</span><div class="bar"><i style="width:${(d.by_status[s.key] || 0) / maxCnt * 100}%;background:${s.color}"></i></div><b class="right mono">${d.by_status[s.key] || 0}</b></div>`).join('')}</div>
           <div class="section-title mt16">都道府県別</div>
           <div class="chips">${Object.entries(d.by_pref).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<button class="chip" data-pref-go="${esc(k)}">${esc(k)} <b>${v}</b></button>`).join('') || '<span class="muted">まだ物件がありません</span>'}</div></div></div>
+        <div class="card"><div class="card-head"><div class="card-title">🗺️ クエストボード</div><span class="muted small">物件ごとの冒険の進み具合（7工程）</span></div>
+          <div class="card-body tight">${S.props.filter(p => p.status !== 'dropped' && p.status !== 'opened').length ? S.props.filter(p => p.status !== 'dropped' && p.status !== 'opened').slice(0, 12).map(p => { const ts = taskStats(p); const cur = S.boot.phases.findIndex(ph => p.tasks.some(t => t.phase === ph.key && !t.done)); return `<div class="quest" data-open="${p.id}"><div class="qn">${esc(p.name)}<div class="qs">${badgeStatus(p.status)} ${scoreBadge(p.score)}</div></div><div class="track">${S.boot.phases.map((ph, i) => `<div class="node ${cur === -1 || i < cur ? 'done' : i === cur ? 'cur' : ''}" data-ico="${ph.icon}" title="${ph.label}"></div>`).join('')}</div><div class="qp">${ts.pct}%</div></div>`; }).join('') : '<div class="empty">進行中のクエスト（物件）はありません。「＋ 物件を追加」から始めよう！</div>'}</div></div>
         <div class="card"><div class="card-head"><div class="card-title">開業スケジュール</div><a class="btn btn-sm" href="#/schedule" style="margin-left:auto">タイムライン</a></div>
           <div class="card-body tight">${d.openings.length ? d.openings.map(o => `<div class="list-item" data-open="${o.prop_id}"><div class="li-date ${o.date < today() ? '' : ''}">${fmtDate(o.date)}</div><div class="grow"><div class="li-title">${esc(o.name)}</div><div class="li-sub">${esc(o.pref || '')}${esc(o.city || '')}</div></div>${badgeStatus(o.status)}</div>`).join('') : '<div class="empty">開業予定日が設定された物件はありません</div>'}</div></div>
       </div>
       <div class="col">
+        <div class="card"><div class="card-body" style="display:flex;gap:14px;align-items:center">${charAvatarHtml(myChar(), 'av').replace('class="av"', 'class="av" style="width:72px;height:72px;border-radius:50%;background-size:cover;display:inline-flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;border:3px solid ' + myChar().color + '"')}<div class="grow"><div class="small muted">パートナー</div><div style="font-weight:900;font-size:15px">${esc(myChar().name)} <span class="small muted">${esc(myChar().role)}</span></div><div class="small mt8"><b>Lv.${S.boot.progress.level} ${esc(S.boot.progress.title)}</b> ・ 累計 ${S.boot.progress.xp} XP</div><div class="progress mt8"><i style="width:${Math.round(S.boot.progress.xp_in_level / S.boot.progress.xp_next * 100)}%"></i></div><div class="small muted mt8">タスク完了 ${S.boot.progress.counts?.task_done || 0} ・ 報告 ${S.boot.progress.counts?.report || 0} ・ ステータス更新 ${S.boot.progress.counts?.status || 0}</div></div><button class="btn btn-sm" id="btn-char">変更</button></div></div>
         <div class="card"><div class="card-head"><div class="card-title">期限超過・直近のタスク</div><span class="badge ${d.overdue.length ? 'badge-danger' : 'badge-ok'}">${d.overdue.length} 超過</span></div>
           <div class="card-body tight">${[...d.overdue, ...d.upcoming].length ? [...d.overdue, ...d.upcoming].slice(0, 14).map(e => `<div class="list-item" data-open="${e.prop_id}"><div class="li-date ${e.date < today() ? 'over' : ''}">${fmtDate(e.date)}</div><div class="grow"><div class="li-title">${esc(e.label)}</div><div class="li-sub">${esc(e.prop_name)}${e.assignee ? ' ・ ' + esc(e.assignee) : ''}${e.kind === 'milestone' ? ' ・ マイルストーン' : ''}</div></div></div>`).join('') : '<div class="empty">直近14日の予定はありません</div>'}</div></div>
         <div class="card"><div class="card-head"><div class="card-title">最近の動き</div></div>
@@ -192,6 +200,7 @@ async function renderDashboard(el) {
       </div>
     </div>`;
   $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
+  $('#btn-char').onclick = () => chooseCharacter(false);
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $$('[data-status-go]', el).forEach(x => x.onclick = () => { S.filter.status = [x.dataset.statusGo]; location.hash = '#/list'; });
   $$('[data-pref-go]', el).forEach(x => x.onclick = () => { S.filter = { pref: x.dataset.prefGo === '未設定' ? '' : x.dataset.prefGo, city: '', ward: '', status: [] }; location.hash = '#/map'; });
@@ -325,7 +334,7 @@ function drawMapList() {
   list.innerHTML = items.length ? items.map(p => { const ts = taskStats(p); return `<div class="map-card ${S.mapSelected === p.id ? 'active' : ''}" data-id="${p.id}">
       <div class="t"><span class="prio prio-${p.priority || 'B'}">${p.priority || 'B'}</span>${esc(p.name || '(名称未設定)')}</div>
       <div class="a">${esc(p.address || '住所未設定')}${!p.lat ? ' <span class="badge badge-warn">座標なし</span>' : ''}</div>
-      <div class="m">${badgeStatus(p.status)}<span>${p.spec?.floor_area_tsubo ? num(p.spec.floor_area_tsubo, '坪') : ''}</span><span>${p.spec?.rent_yen ? yen(p.spec.rent_yen) + '/月' : ''}</span><span>${p.assignee ? '👤 ' + esc(p.assignee) : ''}</span>${ts.overdue ? `<span class="badge badge-danger">期限超過 ${ts.overdue}</span>` : ''}</div>
+      <div class="m">${badgeStatus(p.status)}${scoreBadge(p.score)}<span>${p.spec?.floor_area_tsubo ? num(p.spec.floor_area_tsubo, '坪') : ''}</span><span>${p.spec?.rent_yen ? yen(p.spec.rent_yen) + '/月' : ''}</span><span>${p.assignee ? '👤 ' + esc(p.assignee) : ''}</span>${ts.overdue ? `<span class="badge badge-danger">期限超過 ${ts.overdue}</span>` : ''}</div>
     </div>`; }).join('') : `<div class="empty"><div class="big">🗺️</div>該当する物件がありません<br><button class="btn btn-sm mt12" onclick="MagoLove.newProperty()">物件を追加</button></div>`;
   $$('.map-card', list).forEach(c => {
     c.onclick = () => { const p = S.props.find(x => x.id === c.dataset.id); highlightCard(p.id); if (p.lat) { S.map.flyTo([p.lat, p.lon], Math.max(S.map.getZoom(), 15), { duration: .5 }); S.mapLayers.props.eachLayer(m => { if (m.options.title === p.name && m.getLatLng().lat === p.lat) setTimeout(() => m.openPopup(), 550); }); } };
@@ -368,7 +377,7 @@ async function renderBoard(el) {
   const draw = () => {
     const items = filteredProps();
     el.innerHTML = `<div class="flex flex-wrap mb12" id="board-filters">${areaFilterHtml()}<span class="grow"></span><a class="btn btn-sm" href="/api/export/properties.csv">⬇ CSV（スプレッドシート用）</a></div>
-    <div class="board">${S.boot.statuses.map(s => `<div class="board-col" data-col="${s.key}" style="--col-color:${s.color}"><div class="board-col-head"><span class="badge badge-status" style="background:${s.color}">${s.label}</span><span class="cnt">${items.filter(p => p.status === s.key).length}</span></div><div class="board-col-body">${items.filter(p => p.status === s.key).map(p => { const ts = taskStats(p); return `<div class="kcard" draggable="${canEdit()}" data-id="${p.id}"><div class="t"><span class="prio prio-${p.priority || 'B'}">${p.priority || 'B'}</span> ${esc(p.name || '(名称未設定)')}</div><div class="a">${esc((p.pref || '') + (p.city || ''))}${p.ward ? esc(p.ward) : ''} ${p.spec?.floor_area_tsubo ? '・' + num(p.spec.floor_area_tsubo, '坪') : ''}</div><div class="foot"><div class="progress"><i style="width:${ts.pct}%"></i></div><span>${ts.done}/${ts.total}</span>${ts.overdue ? `<span class="badge badge-danger">${ts.overdue}</span>` : ''}${p.schedule?.opening_date ? `<span class="badge badge-outline">🎉 ${fmtDate(p.schedule.opening_date).slice(2)}</span>` : ''}${p.assignee ? `<span>👤${esc(p.assignee)}</span>` : ''}</div></div>`; }).join('')}</div></div>`).join('')}</div>`;
+    <div class="board">${S.boot.statuses.map(s => `<div class="board-col" data-col="${s.key}" style="--col-color:${s.color}"><div class="board-col-head"><span class="badge badge-status" style="background:${s.color}">${s.label}</span><span class="cnt">${items.filter(p => p.status === s.key).length}</span></div><div class="board-col-body">${items.filter(p => p.status === s.key).map(p => { const ts = taskStats(p); return `<div class="kcard" draggable="${canEdit()}" data-id="${p.id}"><div class="t"><span class="prio prio-${p.priority || 'B'}">${p.priority || 'B'}</span> ${esc(p.name || '(名称未設定)')}</div><div class="a">${esc((p.pref || '') + (p.city || ''))}${p.ward ? esc(p.ward) : ''} ${p.spec?.floor_area_tsubo ? '・' + num(p.spec.floor_area_tsubo, '坪') : ''}</div><div class="foot">${scoreBadge(p.score)}<div class="progress"><i style="width:${ts.pct}%"></i></div><span>${ts.done}/${ts.total}</span>${ts.overdue ? `<span class="badge badge-danger">${ts.overdue}</span>` : ''}${p.schedule?.opening_date ? `<span class="badge badge-outline">🎉 ${fmtDate(p.schedule.opening_date).slice(2)}</span>` : ''}${p.assignee ? `<span>👤${esc(p.assignee)}</span>` : ''}</div></div>`; }).join('')}</div></div>`).join('')}</div>`;
     bindAreaFilter(el, draw);
     $$('.kcard', el).forEach(c => {
       c.onclick = () => openDrawer(c.dataset.id);
@@ -384,7 +393,7 @@ async function renderBoard(el) {
   draw();
 }
 async function changeStatus(id, status) {
-  try { const p = await api('PUT', `/api/properties/${id}`, { status }); Object.assign(S.props.find(x => x.id === id), p); toast(`「${p.name}」を ${statusOf(status).label} に変更しました`, 'ok'); } catch (e) { err(e); }
+  try { const p = await api('PUT', `/api/properties/${id}`, { status }); Object.assign(S.props.find(x => x.id === id), p); toast(`「${p.name}」を ${statusOf(status).label} に変更しました`, 'ok'); refreshProgress(); } catch (e) { err(e); }
 }
 
 // ================================================================ 一覧
@@ -398,7 +407,7 @@ async function renderList(el) {
     items = [...items].sort((a, b) => { let x = key === 'tasks' ? taskStats(a).pct : get(a, key); let y = key === 'tasks' ? taskStats(b).pct : get(b, key); if (key === 'status') { x = S.boot.statuses.findIndex(s => s.key === x); y = S.boot.statuses.findIndex(s => s.key === y); } x = x ?? ''; y = y ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * dir; });
     el.innerHTML = `<div class="flex flex-wrap mb12">${areaFilterHtml()}<span class="grow"></span><a class="btn btn-sm" href="/api/export/properties.csv">⬇ CSV</a></div><div class="mb12">${statusChipsHtml()}</div>
       <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th style="width:36px"></th>${cols.map(([k, l]) => `<th class="sortable" data-sort="${k}">${l} ${S.listSort.key === k ? (dir > 0 ? '▲' : '▼') : ''}</th>`).join('')}</tr></thead>
-      <tbody>${items.map(p => { const ts = taskStats(p); return `<tr class="row-link" data-id="${p.id}"><td><span class="prio prio-${p.priority || 'B'}">${p.priority || 'B'}</span></td><td class="name">${esc(p.name || '(名称未設定)')}<div class="small muted">${esc(p.address || '')}</div></td><td>${badgeStatus(p.status)}</td><td class="nowrap">${esc((p.pref || '') + ' ' + (p.city || '') + (p.ward || ''))}</td><td class="mono">${num(p.spec?.floor_area_tsubo)}</td><td class="mono">${yen(p.spec?.rent_yen)}</td><td class="mono">${num(p.spec?.rooms_planned)}</td><td class="nowrap">${fmtDate(p.schedule?.opening_date)}</td><td>${esc(p.assignee || '')}</td><td style="min-width:120px"><div class="flex"><div class="progress grow"><i style="width:${ts.pct}%"></i></div><span class="small muted">${ts.done}/${ts.total}</span>${ts.overdue ? `<span class="badge badge-danger">${ts.overdue}</span>` : ''}</div></td><td class="small muted nowrap">${fmtDT(p.updated_at).slice(0, 10)}</td></tr>`; }).join('') || `<tr><td colspan="11"><div class="empty"><div class="big">📋</div>該当する物件がありません</div></td></tr>`}</tbody></table></div></div>`;
+      <tbody>${items.map(p => { const ts = taskStats(p); return `<tr class="row-link" data-id="${p.id}"><td><span class="prio prio-${p.priority || 'B'}">${p.priority || 'B'}</span></td><td class="name">${esc(p.name || '(名称未設定)')}<div class="small muted">${esc(p.address || '')}</div></td><td>${badgeStatus(p.status)} ${scoreBadge(p.score)}</td><td class="nowrap">${esc((p.pref || '') + ' ' + (p.city || '') + (p.ward || ''))}</td><td class="mono">${num(p.spec?.floor_area_tsubo)}</td><td class="mono">${yen(p.spec?.rent_yen)}${p.score?.tsubo_price ? `<div class="small muted">坪 ${yen(p.score.tsubo_price)}</div>` : ''}</td><td class="mono">${num(p.spec?.rooms_planned)}</td><td class="nowrap">${fmtDate(p.schedule?.opening_date)}</td><td>${esc(p.assignee || '')}</td><td style="min-width:120px"><div class="flex"><div class="progress grow"><i style="width:${ts.pct}%"></i></div><span class="small muted">${ts.done}/${ts.total}</span>${ts.overdue ? `<span class="badge badge-danger">${ts.overdue}</span>` : ''}</div></td><td class="small muted nowrap">${fmtDT(p.updated_at).slice(0, 10)}</td></tr>`; }).join('') || `<tr><td colspan="11"><div class="empty"><div class="big">📋</div>該当する物件がありません</div></td></tr>`}</tbody></table></div></div>`;
     bindAreaFilter(el, draw); bindStatusChips(el, draw);
     $$('[data-sort]', el).forEach(th => th.onclick = () => { const k = th.dataset.sort; S.listSort = { key: k, dir: S.listSort.key === k ? -S.listSort.dir : 1 }; draw(); });
     $$('tr[data-id]', el).forEach(tr => tr.onclick = () => openDrawer(tr.dataset.id));
@@ -511,7 +520,10 @@ function propertyFormHtml(d = {}) {
       ${field('優先度', 'priority', d.priority || 'B', { options: ['A', 'B', 'C'] })}
       ${field('住所 *', 'address', d.address, { span: 'span2', placeholder: '東京都〇〇区〇〇1-2-3（座標を自動取得）' })}
       ${field('担当', 'assignee', d.assignee, { options: ['', ...users].map(u => [u, u || '未設定']) })}
-      ${field('種別', 'spec.property_type', sp.property_type, { options: ['', '一棟貸', '区分', '土地', '既存施設転用', '建貸(BTS)', '売買'] })}
+      ${field('種別', 'spec.property_type', sp.property_type, { options: ['', '一棟貸', '区分', '土地', '既存施設転用', '建貸(BTS)', '中古住宅', '売買'] })}
+      ${field('取引', 'spec.transaction_type', sp.transaction_type || '賃貸', { options: ['賃貸', '売買'] })}
+      ${field('売買価格 (円)', 'spec.price_yen', sp.price_yen, { type: 'number', hint: '売買の場合' })}
+      ${field('公示地価 (円/㎡)', 'spec.land_price_sqm', sp.land_price_sqm, { type: 'number', hint: '近傍標準地' })}
       ${field('緯度', 'lat', d.lat ?? '', { type: 'number', hint: '空欄なら住所から自動取得' })}
       ${field('経度', 'lon', d.lon ?? '', { type: 'number' })}
     </div>
@@ -579,7 +591,7 @@ function newProperty(draft = {}) {
       const d = readPropertyForm($('#prop-form', body));
       if (!d.name && !d.address) return toast('物件名または住所を入力してください', 'err');
       if (src.type) d.source = src;
-      try { const p = await api('POST', '/api/properties', d); closeModal(); toast('物件を登録しました', 'ok'); await refreshProps(); if (S.view !== 'map') showView(S.view); else { drawMapMarkers(); drawMapList(); } openDrawer(p.id); } catch (e) { err(e); }
+      try { const p = await api('POST', '/api/properties', d); closeModal(); toast('物件を登録しました', 'ok'); refreshProgress(); await refreshProps(); if (S.view !== 'map') showView(S.view); else { drawMapMarkers(); drawMapList(); } openDrawer(p.id); } catch (e) { err(e); }
     };
   });
 }
@@ -597,8 +609,8 @@ async function reloadDrawer() { if (S.drawerId) { const p = await api('GET', `/a
 function drawDrawer(p) {
   const ts = taskStats(p); const st = statusOf(p.status);
   const idx = S.boot.statuses.findIndex(s => s.key === p.status);
-  const tabs = [['overview', '概要'], ['tasks', `工程・タスク`], ['reports', '内見・現調報告'], ['docs', '書類・Drive'], ['history', 'メモ・履歴']];
-  const cnt = { tasks: `${ts.done}/${ts.total}`, reports: p.reports.length, docs: p.docs.length };
+  const tabs = [['overview', '概要'], ['tasks', `工程・タスク`], ['outreach', '営業先'], ['reports', '内見・現調報告'], ['docs', '書類・Drive'], ['history', 'メモ・履歴']];
+  const cnt = { tasks: `${ts.done}/${ts.total}`, reports: p.reports.length, docs: p.docs.length, outreach: (p.outreach || []).length };
   const d = $('#drawer');
   d.innerHTML = `<div class="drawer-head">
     <div class="row1"><div class="grow"><div class="drawer-title"><input value="${esc(p.name)}" id="d-name" ${canEdit() ? '' : 'readonly'} placeholder="物件名"></div>
@@ -616,7 +628,8 @@ function drawDrawer(p) {
   $$('[data-st]', d).forEach(s => s.onclick = async () => { if (!canEdit() || s.dataset.st === p.status) return; await changeStatus(p.id, s.dataset.st); reloadDrawer(); });
   $$('[data-dtab]', d).forEach(b => b.onclick = () => { S.drawerTab = b.dataset.dtab; drawDrawer(p); });
   const body = $('#d-body');
-  ({ overview: drawOverview, tasks: drawTasks, reports: drawReports, docs: drawDocs, history: drawHistory })[S.drawerTab](body, p);
+  ({ overview: drawOverview, tasks: drawTasks, outreach: drawOutreach, reports: drawReports, docs: drawDocs, history: drawHistory })[S.drawerTab](body, p);
+  if (Math.random() < 0.5) partnerNext();
 }
 function drawOverview(body, p) {
   const sp = p.spec || {}, sc = p.schedule || {}, fi = p.finance || {};
@@ -627,12 +640,14 @@ function drawOverview(body, p) {
     <div class="card"><div class="card-head"><div class="card-title">進捗サマリー</div><span class="muted small">タスク ${ts.done}/${ts.total} 完了</span>${ts.overdue ? `<span class="badge badge-danger">期限超過 ${ts.overdue}</span>` : ''}</div><div class="card-body">
       <div class="progress mb12"><i style="width:${ts.pct}%"></i></div>
       <div class="flex flex-wrap">${S.boot.phases.map(ph => { const t = p.tasks.filter(x => x.phase === ph.key); const dn = t.filter(x => x.done).length; return `<span class="badge ${t.length && dn === t.length ? 'badge-ok' : dn ? 'badge-info' : ''}">${ph.icon} ${ph.label} ${dn}/${t.length}</span>`; }).join('')}</div></div></div>
+    ${scoreCardHtml(p)}
+    ${surveyCardHtml(p)}
     <div class="card"><div class="card-head"><div class="card-title">スケジュール</div></div><div class="card-body">
       <div class="form-grid">${SCHED.map(([k, l]) => `<div class="field"><label>${l}</label><input type="date" data-sched="${k}" value="${esc(sc[k] || '')}" ${canEdit() ? '' : 'disabled'}></div>`).join('')}</div>
       <div class="small muted mt8">日付を変更すると保存され、Slackに予定更新の通知が届きます。</div></div></div>
     <div class="dash-grid">
       <div class="col"><div class="card"><div class="card-head"><div class="card-title">物件スペック</div></div><div class="card-body">${kv([
-        ['種別', esc(sp.property_type)], ['延床面積', sp.floor_area_sqm ? `${num(sp.floor_area_sqm, '㎡')} / ${num(sp.floor_area_tsubo, '坪')}` : (sp.floor_area_tsubo ? num(sp.floor_area_tsubo, '坪') : '')], ['敷地面積', sp.site_area_sqm ? num(sp.site_area_sqm, '㎡') : ''], ['想定居室数', sp.rooms_planned ? num(sp.rooms_planned, '室') : ''],
+        ['種別', [sp.property_type, sp.transaction_type].filter(Boolean).map(esc).join(' / ')], ['売買価格', sp.price_yen ? yen(sp.price_yen) : ''], ['公示地価', sp.land_price_sqm ? yen(sp.land_price_sqm) + '/㎡' : ''], ['延床面積', sp.floor_area_sqm ? `${num(sp.floor_area_sqm, '㎡')} / ${num(sp.floor_area_tsubo, '坪')}` : (sp.floor_area_tsubo ? num(sp.floor_area_tsubo, '坪') : '')], ['敷地面積', sp.site_area_sqm ? num(sp.site_area_sqm, '㎡') : ''], ['想定居室数', sp.rooms_planned ? num(sp.rooms_planned, '室') : ''],
         ['月額賃料', sp.rent_yen ? yen(sp.rent_yen) + (sp.floor_area_tsubo ? ` <span class="muted small">(坪 ${yen(Math.round(sp.rent_yen / sp.floor_area_tsubo))})</span>` : '') : ''], ['管理費', sp.management_fee_yen ? yen(sp.management_fee_yen) : ''], ['敷金・礼金', [sp.deposit, sp.key_money].filter(Boolean).map(esc).join(' / ')], ['契約', [sp.contract_type, sp.contract_years].filter(Boolean).map(esc).join(' ')],
         ['構造・階数', [sp.structure, sp.floors].filter(Boolean).map(esc).join(' ')], ['築年月', esc(sp.built_ym)], ['入居可能', esc(sp.availability)], ['最寄駅', (sp.stations || []).map(s => esc(`${s.line} ${s.station}駅 徒歩${s.walk_min ?? '?'}分`)).join('<br>')],
         ['元付', esc(sp.source_company)], ['連絡先', esc(sp.contact)], ['物件番号', esc(sp.property_number)]])}</div></div></div>
@@ -643,19 +658,63 @@ function drawOverview(body, p) {
     </div>
     ${src.type === 'pdf' && src.url ? `<div class="card"><div class="card-head"><div class="card-title">取込元PDF</div><a class="btn btn-sm" href="${esc(src.url)}" target="_blank" style="margin-left:auto">原本を開く</a></div><div class="card-body"><img class="pdf-preview" src="${esc(src.url)}/preview.png" alt="PDFプレビュー" loading="lazy"></div></div>` : ''}
     ${p.memo ? `<div class="card"><div class="card-head"><div class="card-title">メモ・特記事項</div></div><div class="card-body" style="white-space:pre-wrap">${esc(p.memo)}</div></div>` : ''}`;
+  $('#btn-survey') && ($('#btn-survey').onclick = async () => { const b = $('#btn-survey'); b.disabled = true; b.textContent = '調査中…（公開APIを照会）'; try { await api('POST', `/api/properties/${p.id}/survey`); toast('リスク調査が完了しました', 'ok'); refreshProgress(false); reloadDrawer(); } catch (e) { err(e); b.disabled = false; b.textContent = '🔎 自動調査を実行'; } });
   $$('[data-sched]', body).forEach(inp => inp.onchange = async () => { try { await api('PUT', `/api/properties/${p.id}`, { schedule: { [inp.dataset.sched]: inp.value } }); toast('予定を更新しました', 'ok'); await refreshProps(); } catch (e) { err(e); } });
+}
+function scoreCardHtml(p) {
+  const sc = (S.props.find(x => x.id === p.id) || {}).score; if (!sc) return '';
+  const bar = (l, v, hint) => `<div class="funnel-row"><span>${l}</span><div class="bar"><i style="width:${v ?? 0}%;background:${v === null || v === undefined ? '#e5e7eb' : v >= 70 ? '#16a34a' : v >= 45 ? '#f59e0b' : '#94a3b8'}"></i></div><b class="right mono">${v ?? '—'}</b></div><div class="small muted" style="margin:-4px 0 6px 100px">${hint}</div>`;
+  const d = sc.demand_detail || {};
+  return `<div class="card"><div class="card-head"><div class="card-title">候補スコア</div>${scoreBadge(sc)}<span class="muted small">「需要のある市に近く・坪単価が低い」ほど高評価（登録物件内の相対評価）</span></div><div class="card-body"><div class="funnel">
+    ${bar('価格', sc.price, sc.tsubo_price ? `坪単価 ${yen(sc.tsubo_price)}/月${p.spec?.transaction_type === '売買' ? '（売買価格を20年で月額換算）' : ''}` : '賃料と面積を入力すると算出')}
+    ${bar('需要', sc.demand, d.certified ? `${esc(p.city)} 要介護認定者 ${Number(d.certified).toLocaleString()}人` : d.elderly ? `${esc(p.city)} 65歳以上 ${Number(d.elderly).toLocaleString()}人` : '統計データ（65歳以上人口・要介護認定者数）を取り込むと算出')}
+    ${bar('アクセス', sc.access, Object.keys(sc.near || {}).length ? '3km以内: ' + Object.entries(sc.near).map(([k, v]) => `${poiTypeOf(k).label} ${v}`).join('・') : '周辺施設（ケアマネ事業所・病院）を登録すると算出')}
+  </div></div></div>`;
+}
+function surveyCardHtml(p) {
+  const sv = p.survey || {};
+  const head = `<div class="card-head"><div class="card-title">🔎 現地リスク調査（自動）</div><span class="muted small">${sv.at ? '調査日時 ' + fmtDT(sv.at) + ' ・ ' + esc(sv.by || '') : '標高・地盤・ハザードマップを公開APIで自動判定'}</span>${canEdit() && p.lat ? `<button class="btn btn-sm ${sv.at ? '' : 'btn-primary'}" id="btn-survey" style="margin-left:auto">${sv.at ? '🔄 再調査' : '🔎 自動調査を実行'}</button>` : ''}</div>`;
+  if (!sv.at) return `<div class="card">${head}<div class="card-body small muted">${p.lat ? '国土地理院 標高API / J-SHIS 表層地盤 / 重ねるハザードマップ（洪水・浸水継続・家屋倒壊・土砂・津波・高潮）を座標で判定します。' : '座標を取得すると自動調査ができます。'}</div></div>`;
+  const e = sv.elevation || {}, g = sv.ground || {};
+  return `<div class="card">${head}<div class="card-body">
+    <div class="dash-grid"><div class="col"><dl class="kv"><dt>標高</dt><dd>${e.ok ? e.elevation_m + ' m' : '取得不可'} <span class="small muted">${esc(e.source || '')}</span></dd><dt>微地形</dt><dd>${esc(g.landform || '—')}</dd><dt>揺れやすさ</dt><dd>${esc(g.grade || '—')} <span class="small muted">${g.avs30 ? 'AVS30 ' + g.avs30 + ' m/s ・ 増幅率 ' + g.arv : ''}</span></dd></dl></div>
+    <div class="col">${(sv.hazards || []).map(h => `<div class="hz"><span class="lab">${esc(h.label)}</span><span class="${h.hit ? 'ng' : 'ok'}">${h.hit ? '⚠ ' + esc(h.detail) : '該当なし'}</span></div>`).join('')}</div></div>
+    ${(sv.notes || []).map(n => `<div class="note">${esc(n)}</div>`).join('')}
+    <div class="flex flex-wrap mt12">${Object.entries(sv.links || {}).map(([k, v]) => `<a class="btn btn-xs" href="${esc(v)}" target="_blank">${esc(k)}</a>`).join('')}</div>
+    <div class="small muted mt8">※ タイルの色による参考判定です。用途地域・地価公示・埋蔵文化財は不動産情報ライブラリ／自治体窓口で確認し、「書類」に調査資料を登録してください。</div></div></div>`;
+}
+function drawOutreach(body, p) {
+  const st = S.boot.outreach_statuses; const stLabel = (k) => (st.find(x => x.key === k) || {}).label || k;
+  const list = p.outreach || [];
+  const counts = st.map(x => `<span class="badge ${x.key === 'referral' ? 'badge-ok' : x.key === 'requested' ? 'badge-info' : ''}">${x.label} ${list.filter(o => o.status === x.key).length}</span>`).join('');
+  body.innerHTML = `<div class="card"><div class="card-head"><div class="card-title">📣 入居者獲得の営業先</div><span class="muted small">居宅介護支援事業所（ケアマネ）・病院・紹介会社への訪問と斡旋依頼を記録</span><span class="grow"></span>${canEdit() ? `<button class="btn btn-sm" id="o-near">📍 近くの施設から追加</button><button class="btn btn-primary btn-sm" id="o-add">＋ 営業先</button>` : ''}</div>
+    <div class="card-body"><div class="flex flex-wrap mb12">${counts}</div>
+    ${list.map(o => `<div class="out" data-oid="${o.id}"><div class="on">${POI_EMOJI[o.type] || '📍'} ${esc(o.name)}<small>${esc(poiTypeOf(o.type).label)}${o.contact ? ' ・ ' + esc(o.contact) : ''}${o.memo ? ' ・ ' + esc(o.memo) : ''}</small></div><select data-ost ${canEdit() ? '' : 'disabled'}>${st.map(x => `<option value="${x.key}" ${o.status === x.key ? 'selected' : ''}>${x.label}</option>`).join('')}</select><input type="date" data-odate value="${esc(o.date || '')}" class="inline" style="border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:12px" ${canEdit() ? '' : 'disabled'}>${canEdit() ? `<button class="btn btn-xs" data-odel>✕</button>` : '<span></span>'}</div>`).join('') || '<div class="empty"><div class="big">📣</div>まだ営業先がありません。<br>「近くの施設から追加」で周辺のケアマネ事業所・病院をリストにできます。</div>'}
+    <div class="phase-links mt12" style="padding:0">${(S.boot.phase_links.leads || []).map(([l, u]) => `<a href="${esc(u)}" target="_blank">${esc(l)}</a>`).join('')}</div></div></div>`;
+  const put = async (oid, d) => { try { await api('PUT', `/api/properties/${p.id}/outreach/${oid}`, d); refreshProgress(false); reloadDrawer(); } catch (e) { err(e); } };
+  $$('.out', body).forEach(row => { const oid = row.dataset.oid; $('[data-ost]', row).onchange = (e) => put(oid, { status: e.target.value, date: $('[data-odate]', row).value || today() }); $('[data-odate]', row).onchange = (e) => put(oid, { date: e.target.value }); const del = $('[data-odel]', row); del && (del.onclick = async () => { try { await api('DELETE', `/api/properties/${p.id}/outreach/${oid}`); reloadDrawer(); } catch (e) { err(e); } }); });
+  $('#o-add') && ($('#o-add').onclick = () => modal('営業先を追加', `<div class="form-grid">${field('種別', 'type', 'caremanager', { options: S.boot.poi_types.map(t => [t.key, t.label]) })}${field('名称', 'name', '')}${field('担当者・連絡先', 'contact', '', { span: 'span2' })}${field('ステータス', 'status', 'todo', { options: st.map(x => [x.key, x.label]) })}${field('日付', 'date', today(), { type: 'date' })}${field('メモ', 'memo', '', { span: 'span-all', rows: 2 })}</div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-primary" id="o-save">追加</button></div>`, (m) => { $('#o-save', m).onclick = async () => { const d = formData(m); if (!d.name) return toast('名称を入力', 'err'); try { await api('POST', `/api/properties/${p.id}/outreach`, d); closeModal(); refreshProgress(); reloadDrawer(); } catch (e) { err(e); } }; }));
+  $('#o-near') && ($('#o-near').onclick = async () => {
+    let near = []; try { near = await api('GET', `/api/properties/${p.id}/nearby?km=3`); } catch (e) { return err(e); }
+    near = near.filter(x => ['caremanager', 'hospital', 'clinic', 'care', 'other'].includes(x.type) && !list.some(o => o.poi_id === x.id));
+    modal('近くの施設から営業先を追加（3km以内）', near.length ? `<div class="small muted mb8">チェックして追加。周辺施設は「周辺施設」画面やマップのOSM取得で増やせます。</div>${near.map(x => `<label class="task"><input type="checkbox" value="${x.id}"><span class="tt">${POI_EMOJI[x.type]} ${esc(x.name)} <span class="small muted">${esc(poiTypeOf(x.type).label)} ・ ${x.distance_km}km${x.tel ? ' ・ ' + esc(x.tel) : ''}</span></span></label>`).join('')}<div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-primary" id="o-bulk">選択を追加</button></div>` : '<div class="empty">3km以内に登録済みの施設がありません。マップの「この範囲の施設を取得(OSM)」か、周辺施設のCSV取込で追加してください。</div>', (m) => {
+      $('#o-bulk', m) && ($('#o-bulk', m).onclick = async () => { const ids = $$('input:checked', m).map(i => i.value); for (const id of ids) { const x = near.find(n => n.id === id); await api('POST', `/api/properties/${p.id}/outreach`, { name: x.name, type: x.type, poi_id: x.id, contact: x.tel || '', status: 'todo' }); } closeModal(); toast(`${ids.length} 件追加しました`, 'ok'); refreshProgress(); reloadDrawer(); });
+    });
+  });
 }
 function drawTasks(body, p) {
   const users = S.boot.users.map(u => u.name);
   body.innerHTML = `<div class="card"><div class="card-body">${S.boot.phases.map(ph => {
     const list = p.tasks.filter(t => t.phase === ph.key); const dn = list.filter(t => t.done).length; const pct = list.length ? Math.round(dn / list.length * 100) : 0;
-    return `<div class="phase-block"><div class="phase-head">${ph.icon} ${ph.label}<div class="progress"><i style="width:${pct}%"></i></div><span class="pct">${dn}/${list.length}</span><button class="btn btn-xs" data-add="${ph.key}" style="margin-left:auto">＋ タスク</button></div>
+    const rc = charForPhase(ph.key); const links = S.boot.phase_links[ph.key] || [];
+    return `<div class="phase-block"><div class="phase-head">${ph.icon} ${ph.label}<span class="char-mini" title="${esc(rc.role)}">${charAvatarHtml(rc, 'av')} ${esc(rc.name)}</span><div class="progress"><i style="width:${pct}%"></i></div><span class="pct">${dn}/${list.length}</span><button class="btn btn-xs" data-add="${ph.key}" style="margin-left:auto">＋ タスク</button></div>
+      ${links.length ? `<div class="phase-links">${links.map(([l, u]) => `<a href="${esc(u)}" target="_blank">🔗 ${esc(l)}</a>`).join('')}</div>` : ''}
       ${list.map(t => `<div class="task ${t.done ? 'done' : ''}" data-tid="${t.id}"><input type="checkbox" ${t.done ? 'checked' : ''} ${canEdit() ? '' : 'disabled'}><span class="tt">${esc(t.title)}</span>${t.assignee ? `<span class="who">${esc(t.assignee)}</span>` : ''}<input type="date" class="inline" value="${esc(t.due || '')}" data-due title="期限" ${canEdit() ? '' : 'disabled'}><select class="inline" data-who style="width:90px" ${canEdit() ? '' : 'disabled'}>${['', ...users].map(u => `<option value="${esc(u)}" ${t.assignee === u ? 'selected' : ''}>${u || '担当'}</option>`).join('')}</select>${t.due && !t.done ? `<span class="due ${t.due < today() ? 'over' : ''}">${t.due < today() ? '超過' : ''}</span>` : ''}<button class="del" data-del title="削除">✕</button></div>`).join('') || '<div class="small muted" style="padding:4px 10px">タスクなし</div>'}</div>`;
   }).join('')}</div></div>`;
   $$('.task', body).forEach(row => {
     const tid = row.dataset.tid;
     const put = async (d) => { try { await api('PUT', `/api/properties/${p.id}/tasks/${tid}`, d); await reloadDrawer(); } catch (e) { err(e); } };
-    $('input[type=checkbox]', row).onchange = (e) => put({ done: e.target.checked });
+    $('input[type=checkbox]', row).onchange = (e) => { put({ done: e.target.checked }); if (e.target.checked) refreshProgress(); };
     $('[data-due]', row).onchange = (e) => put({ due: e.target.value });
     $('[data-who]', row).onchange = (e) => put({ assignee: e.target.value });
     $('[data-del]', row).onclick = async () => { if (!canEdit()) return; try { await api('DELETE', `/api/properties/${p.id}/tasks/${tid}`); reloadDrawer(); } catch (e) { err(e); } };
@@ -672,7 +731,7 @@ function drawReports(body, p) {
   body.innerHTML = `<div class="flex mb12"><span class="muted small">内見・現地調査の結果を記録します。登録するとSlackに通知されます。</span><span class="grow"></span>${canEdit() ? '<button class="btn btn-primary btn-sm" id="r-add">＋ 報告を書く</button>' : ''}</div>
     ${p.reports.map(r => `<div class="report"><div class="rh"><span class="badge badge-info">${kind[r.type] || '報告'}</span><span>${fmtDate(r.date)}</span><span>👤 ${esc(r.author)}</span><span class="stars">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</span><span class="grow"></span>${r.url ? `<a href="${esc(r.url)}" target="_blank" class="small">📎 写真・資料</a>` : ''}${canEdit() ? `<button class="btn btn-xs" data-rdel="${r.id}">削除</button>` : ''}</div><div class="sum">${esc(r.summary)}</div>${(r.pros || r.cons) ? `<div class="pc"><div class="pros">👍 ${esc(r.pros || '—')}</div><div class="cons">👎 ${esc(r.cons || '—')}</div></div>` : ''}${r.next_action ? `<div class="mt8 small"><b>次のアクション:</b> ${esc(r.next_action)}</div>` : ''}</div>`).join('') || '<div class="empty"><div class="big">📝</div>まだ報告はありません</div>'}`;
   $('#r-add') && ($('#r-add').onclick = () => modal('内見・現調 報告', `<div class="form-grid">${field('種類', 'type', p.status === 'survey' ? 'survey' : 'viewing', { options: [['viewing', '内見報告'], ['survey', '現調報告'], ['other', 'その他']] })}${field('実施日', 'date', today(), { type: 'date' })}${field('評価 (1-5)', 'rating', 3, { options: [[1, '★ 1'], [2, '★★ 2'], [3, '★★★ 3'], [4, '★★★★ 4'], [5, '★★★★★ 5']] })}${field('所感・総評', 'summary', '', { span: 'span-all', rows: 4, placeholder: '立地・建物の状態・改修の必要性・周辺の競合など' })}${field('良い点', 'pros', '', { rows: 3 })}${field('懸念点', 'cons', '', { rows: 3 })}${field('次のアクション', 'next_action', '', { span: 'span-all' })}${field('写真・資料 URL (Drive)', 'url', '', { span: 'span-all', placeholder: 'https://drive.google.com/…' })}</div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-primary" id="r-save">登録してSlack通知</button></div>`, (m) => {
-    $('#r-save', m).onclick = async () => { const d = formData(m); if (!d.summary) return toast('所感を入力してください', 'err'); try { await api('POST', `/api/properties/${p.id}/reports`, d); closeModal(); toast('報告を登録しました', 'ok'); reloadDrawer(); } catch (e) { err(e); } };
+    $('#r-save', m).onclick = async () => { const d = formData(m); if (!d.summary) return toast('所感を入力してください', 'err'); try { await api('POST', `/api/properties/${p.id}/reports`, d); closeModal(); toast('報告を登録しました', 'ok'); refreshProgress(); reloadDrawer(); } catch (e) { err(e); } };
   }));
   $$('[data-rdel]', body).forEach(b => b.onclick = async () => { if (!await confirmDlg('この報告を削除しますか？')) return; try { await api('DELETE', `/api/properties/${p.id}/reports/${b.dataset.rdel}`); reloadDrawer(); } catch (e) { err(e); } });
 }
@@ -680,7 +739,7 @@ function drawDocs(body, p) {
   const s = S.boot.settings; const folder = p.drive?.folder_url;
   const pickerReady = !!(s.google_client_id && s.google_api_key);
   body.innerHTML = `<div class="card"><div class="card-head"><div class="card-title">📁 Googleドライブ</div><span class="grow"></span>${folder ? `<a class="btn btn-sm" href="${esc(folder)}" target="_blank">フォルダを開く</a>` : ''}${canEdit() ? `<button class="btn btn-sm" id="d-folder">${folder ? 'フォルダを変更' : 'フォルダを設定'}</button>` : ''}${pickerReady && canEdit() ? `<button class="btn btn-sm" id="d-mkfolder">＋ Driveにフォルダ作成</button>` : ''}</div>
-    <div class="card-body">${folder ? `<div class="small muted">この物件の書類は ${esc(folder)} に保存。${s.drive_root_url ? `<a href="${esc(s.drive_root_url)}" target="_blank">ルートフォルダ</a>` : ''}</div>` : `<div class="small muted">Driveフォルダが未設定です。${s.drive_root_url ? `<a href="${esc(s.drive_root_url)}" target="_blank">ルートフォルダ</a>に「${esc(p.name)}」フォルダを作り、URLを設定してください。` : ''}</div>`}</div></div>
+    <div class="card-body"><div class="small muted mb8">標準フォルダ構成: ${S.boot.drive_folders.map(f => `<code>${esc(f)}</code>`).join(' ')}</div>${folder ? `<div class="small muted">この物件の書類は ${esc(folder)} に保存。${s.drive_root_url ? `<a href="${esc(s.drive_root_url)}" target="_blank">ルートフォルダ</a>` : ''}</div>` : `<div class="small muted">Driveフォルダが未設定です。${s.drive_root_url ? `<a href="${esc(s.drive_root_url)}" target="_blank">ルートフォルダ</a>に「${esc(p.name)}」フォルダを作り、URLを設定してください。` : ''}</div>`}</div></div>
     <div class="card"><div class="card-head"><div class="card-title">書類（稟議書・収支・図面・契約書 など）</div><span class="grow"></span>${canEdit() ? `<button class="btn btn-primary btn-sm" id="doc-add">＋ リンクを追加</button>${pickerReady ? `<button class="btn btn-sm" id="doc-pick">Driveから選択</button>` : ''}` : ''}</div>
     <div class="card-body">${p.docs.map(d => `<div class="doc"><span class="dt">${esc(d.type)}</span><a class="dn" href="${esc(d.url || (d.drive_id ? 'https://drive.google.com/open?id=' + d.drive_id : '#'))}" target="_blank">${esc(d.title)}</a><span class="small muted nowrap">${esc(d.updated_at)} ${esc(d.by || '')}</span>${canEdit() ? `<button class="btn btn-xs" data-ddel="${d.id}">✕</button>` : ''}</div>`).join('') || '<div class="empty">書類リンクはまだありません。稟議書・収支計画などのDriveリンクを登録しましょう。</div>'}</div></div>`;
   $('#d-folder') && ($('#d-folder').onclick = () => modal('Driveフォルダを設定', `<div class="field"><label>フォルダURL</label><input id="f-url" value="${esc(folder || '')}" placeholder="https://drive.google.com/drive/folders/…"></div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">キャンセル</button><button class="btn btn-primary" id="f-save">保存</button></div>`, (m) => { $('#f-save', m).onclick = async () => { try { await api('PUT', `/api/properties/${p.id}`, { drive: { folder_url: $('#f-url', m).value } }); closeModal(); reloadDrawer(); } catch (e) { err(e); } }; }));
@@ -755,6 +814,7 @@ async function renderPois(el) {
 async function renderStats(el) {
   await refreshStats();
   const ds = await api('GET', '/api/stats/datasets');
+  S.areaScores = await api('GET', '/api/area_scores');
   const draw = () => {
     const f = S.filter;
     const rows = S.stats.filter(x => (!f.pref || x.pref === f.pref) && (!f.city || x.city === f.city));
@@ -768,9 +828,11 @@ async function renderStats(el) {
         ${canEdit() ? '<button class="btn btn-primary mt12" id="stat-imp">取込</button>' : ''}</div></div>
       <div class="card"><div class="card-head"><div class="card-title">取込済みデータセット</div></div><div class="card-body">${ds.map(d => `<div class="flex mb8"><b>${esc(d.dataset)}</b><span class="muted small">${d.rows} 行</span><span class="grow"></span>${isAdmin() ? `<button class="btn btn-xs btn-danger" data-dsdel="${esc(d.dataset)}">削除</button>` : ''}</div>`).join('') || '<div class="muted">まだありません</div>'}</div></div>
     </div>
+    <div class="card mb16"><div class="card-head"><div class="card-title">🏆 エリア比較（需要 ÷ 他社施設 が高く、坪単価が低い順）</div><span class="muted small">統計CSV・周辺施設・登録物件から自動集計</span></div><div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>都道府県</th><th>市区町村</th><th class="right">要介護認定者</th><th class="right">65歳以上</th><th class="right">高齢化率</th><th class="right">他社施設</th><th class="right">ケアマネ</th><th class="right">病院</th><th class="right">需要/供給</th><th class="right">候補 坪単価</th><th class="right">候補数</th></tr></thead><tbody>${(S.areaScores || []).slice(0, 50).map((r, i) => `<tr class="row-link" data-area-go="${esc(r.pref)}|${esc(r.city)}"><td class="muted">${i + 1}</td><td>${esc(r.pref || '')}</td><td class="name">${esc(r.city)}</td><td class="right mono">${num(r.certified)}</td><td class="right mono">${num(r.elderly)}</td><td class="right mono">${r.rate ?? '—'}${r.rate ? '%' : ''}</td><td class="right mono">${r.care}</td><td class="right mono">${r.caremanager}</td><td class="right mono">${r.hospital}</td><td class="right mono"><b>${num(r.demand_per_supply)}</b></td><td class="right mono">${r.avg_tsubo_price ? yen(r.avg_tsubo_price) : '—'}</td><td class="right mono">${r.props}</td></tr>`).join('') || '<tr><td colspan="12"><div class="empty">統計CSVや周辺施設を取り込むとエリア比較が表示されます</div></td></tr>'}</tbody></table></div></div>
     <div class="flex flex-wrap mb12">${areaFilterHtml()}</div>
     <div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>データセット</th><th>都道府県</th><th>市区町村</th>${cols.map(c => `<th class="right">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, 400).map(r => `<tr><td class="small muted">${esc(r.dataset)}</td><td>${esc(r.pref)}</td><td class="name">${esc(r.city)}</td>${cols.map(c => `<td class="right mono">${r.metrics[c] === undefined ? '' : (typeof r.metrics[c] === 'number' ? r.metrics[c].toLocaleString() : esc(r.metrics[c]))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${3 + cols.length}"><div class="empty">統計データがありません</div></td></tr>`}</tbody></table></div></div>`;
     bindAreaFilter(el, draw);
+    $$('[data-area-go]', el).forEach(tr => tr.onclick = () => { const [pref, city] = tr.dataset.areaGo.split('|'); S.filter = { pref, city, ward: '', status: [] }; location.hash = '#/map'; });
     $('#stat-imp') && ($('#stat-imp').onclick = async () => { const f = $('#stat-file').files[0]; if (!f) return toast('CSVを選択', 'err'); const fd = new FormData(); fd.append('file', f); fd.append('dataset', $('[name=dataset]', el).value); try { const r = await api('POST', '/api/stats/import', fd, true); toast(`${r.created} 行を取込`, 'ok'); renderStats(el); } catch (e) { err(e); } });
     $$('[data-dsdel]', el).forEach(b => b.onclick = async () => { if (!await confirmDlg(`データセット「${b.dataset.dsdel}」を削除しますか？`)) return; try { await api('DELETE', `/api/stats/datasets/${encodeURIComponent(b.dataset.dsdel)}`); renderStats(el); } catch (e) { err(e); } });
   };
@@ -779,7 +841,7 @@ async function renderStats(el) {
 
 // ================================================================ 設定
 async function renderSettings(el) {
-  if (!isAdmin()) { el.innerHTML = `<div class="card"><div class="card-body"><div class="section-title">連携状況</div><dl class="kv"><dt>Slack通知</dt><dd>${S.boot.settings.slack_configured ? '<span class="badge badge-ok">設定済み</span>' : '<span class="badge">未設定</span>'}</dd><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '有効' : '開発モード'}</dd><dt>ZENRIN地図</dt><dd>${S.boot.settings.zenrin_tile_url ? '有効' : '未設定（地理院地図を使用）'}</dd></dl><p class="muted mt12">設定の変更は管理者のみ行えます。</p></div></div>`; return; }
+  if (!isAdmin()) { el.innerHTML = `<div class="card"><div class="card-body"><div class="section-title">連携状況</div><dl class="kv"><dt>Slack通知</dt><dd>${S.boot.settings.slack_configured ? '<span class="badge badge-ok">設定済み</span>' : '<span class="badge">未設定</span>'}</dd><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '有効' : '開発モード'}</dd><dt>ZENRIN地図</dt><dd>${S.boot.settings.zenrin_tile_url ? '有効' : '未設定（地理院地図を使用）'}</dd></dl><p class="muted mt12">設定の変更は管理者のみ行えます。</p><button class="btn btn-sm mt12" id="c-choose">🎮 パートナーを変更</button></div></div>`; $('#c-choose').onclick = () => chooseCharacter(false); return; }
   const s = await api('GET', '/api/settings'); const users = await api('GET', '/api/users');
   const origin = location.origin;
   el.innerHTML = `<div class="dash-grid">
@@ -816,6 +878,11 @@ async function renderSettings(el) {
         <div class="table-wrap mt12"><table class="tbl"><thead><tr><th>名前</th><th>メール</th><th>権限</th><th></th></tr></thead><tbody>${users.map(u => `<tr><td>${esc(u.name)}</td><td class="small">${esc(u.email)}</td><td><select data-urole="${esc(u.email)}">${[['admin', '管理者'], ['member', 'メンバー'], ['viewer', '閲覧']].map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td><td>${u.email !== S.boot.me.email ? `<button class="btn btn-xs btn-danger" data-udel="${esc(u.email)}">削除</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
         <p class="small muted mt8">Googleログイン（GOOGLE_CLIENT_ID）を有効にすると、ここに登録したメールのGoogleアカウントだけがログインできます。</p>
       </div></div>
+      <div class="card"><div class="card-head"><div class="card-title">🎮 パートナーキャラクター</div></div><div class="card-body">
+        <p class="small muted">各キャラの画像（PNG/JPG、正方形推奨）をアップロードすると、画面右下のパートナーや選択画面に表示されます。名前も変更できます。</p>
+        ${S.boot.characters.map(c => `<div class="flex mt12" style="gap:12px">${charAvatarHtml(c, 'av').replace('class="av"', 'class="av" style="width:56px;height:56px;border-radius:50%;background-size:cover;display:inline-flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;background-color:#f1f5f9"')}<div class="grow"><input data-cname="${c.id}" value="${esc(c.name)}" style="font-weight:800;border:1px solid var(--line);border-radius:8px;padding:4px 8px;width:160px"> <span class="small muted">${esc(c.species)} ・ ${esc(c.role)}</span></div><input type="file" accept="image/*" data-cimg="${c.id}" style="max-width:190px">${c.image ? `<button class="btn btn-xs btn-danger" data-cdel="${c.id}">画像削除</button>` : ''}</div>`).join('')}
+        <div class="flex mt12"><button class="btn btn-primary btn-sm" id="c-names">名前を保存</button><button class="btn btn-sm" id="c-choose">自分のパートナーを変更</button></div>
+      </div></div>
       <div class="card"><div class="card-head"><div class="card-title">ℹ️ 環境</div></div><div class="card-body"><dl class="kv"><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '<span class="badge badge-ok">有効</span>' : '<span class="badge badge-warn">開発モード</span>'}</dd><dt>AI構造化</dt><dd>${S.boot.settings.llm_enabled ? '<span class="badge badge-ok">有効</span>' : '<span class="badge">無効（正規表現抽出）</span>'}</dd><dt>市区町村マスタ</dt><dd>${S.boot.municipalities.length} 件（関東1都6県）</dd></dl></div></div>
     </div></div>`;
   const save = async () => { const d = formData(el); const out = {}; ['slack_webhook_url', 'app_url', 'notify_on_create', 'notify_on_status', 'notify_on_report', 'notify_on_schedule', 'digest_days_ahead', 'cron_token', 'zenrin_tile_url', 'google_api_key', 'drive_root_url', 'ics_token', 'default_zoom'].forEach(k => out[k] = d[k]); const c = (d.default_center_text || '').split(',').map(Number); if (c.length === 2 && !c.some(isNaN)) out.default_center = c; try { await api('PUT', '/api/settings', out); toast('設定を保存しました', 'ok'); S.boot = await api('GET', '/api/bootstrap'); } catch (e) { err(e); } };
@@ -823,9 +890,78 @@ async function renderSettings(el) {
   $$('label.chip input', el).forEach(i => i.onchange = () => i.parentElement.classList.toggle('active', i.checked));
   $('#s-test').onclick = async () => { await save(); try { const r = await api('POST', '/api/slack/test'); toast(r.ok ? 'Slackに送信しました' : 'Webhookが未設定または送信失敗', r.ok ? 'ok' : 'err'); } catch (e) { err(e); } };
   $('#s-digest').onclick = async () => { await save(); try { const r = await api('POST', '/api/slack/digest'); toast(r.sent ? `送信しました（超過${r.overdue}/直近${r.soon}/予定${r.events}）` : '送る内容がないか、Webhook未設定です'); } catch (e) { err(e); } };
+  $$('[data-cimg]', el).forEach(inp => inp.onchange = async () => { const f = inp.files[0]; if (!f) return; const fd = new FormData(); fd.append('file', f); try { S.boot.characters = await api('POST', `/api/characters/${inp.dataset.cimg}/image`, fd, true); toast('画像を設定しました', 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); } });
+  $$('[data-cdel]', el).forEach(b => b.onclick = async () => { try { S.boot.characters = await api('DELETE', `/api/characters/${b.dataset.cdel}/image`); renderPartner(); renderSettings(el); } catch (e) { err(e); } });
+  $('#c-names').onclick = async () => { const names = {}; $$('[data-cname]', el).forEach(i => names[i.dataset.cname] = i.value.trim() || undefined); try { S.boot.characters = await api('PUT', '/api/characters/names', names); toast('名前を保存しました', 'ok'); renderPartner(); } catch (e) { err(e); } };
+  $('#c-choose').onclick = () => chooseCharacter(false);
   $('#u-add').onclick = async () => { const d = formData(el); try { await api('POST', '/api/users', { email: d.u_email, name: d.u_name, role: d.u_role }); toast('招待しました', 'ok'); renderSettings(el); } catch (e) { err(e); } };
   $$('[data-urole]', el).forEach(sel => sel.onchange = async () => { try { await api('PUT', `/api/users/${encodeURIComponent(sel.dataset.urole)}`, { role: sel.value }); toast('権限を更新', 'ok'); } catch (e) { err(e); } });
   $$('[data-udel]', el).forEach(b => b.onclick = async () => { if (!await confirmDlg(`${b.dataset.udel} を削除しますか？`)) return; try { await api('DELETE', `/api/users/${encodeURIComponent(b.dataset.udel)}`); renderSettings(el); } catch (e) { err(e); } });
+}
+
+// ================================================================ パートナー（キャラクター）・レベル
+let _typing = null, _lineIdx = 0, _lastKind = '';
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function partnerSay(text, opts = {}) {
+  const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text');
+  bubble.classList.remove('hidden'); clearInterval(_typing);
+  span.innerHTML = `<span class="name">${esc(c.name)}</span>`;
+  const body = document.createElement('span'); span.appendChild(body);
+  let i = 0; _typing = setInterval(() => { body.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(_typing); }, 22);
+  if (opts.bounce) { const av = $('#partner-avatar'); av.classList.remove('bounce'); void av.offsetWidth; av.classList.add('bounce'); }
+}
+function partnerContextLines() {
+  const c = myChar(); const lines = [];
+  const overdue = S.props.reduce((n, p) => n + taskStats(p).overdue, 0);
+  if (overdue) lines.push(pick(c.lines.warn).replace('期限切れのタスク', `期限切れのタスク（${overdue}件）`).replace('期限を過ぎたタスク', `期限を過ぎたタスク（${overdue}件）`).replace('期限が過ぎているタスク', `期限が過ぎているタスク（${overdue}件）`));
+  const soon = S.props.flatMap(p => SCHED.filter(([k]) => p.schedule?.[k] && p.schedule[k] >= today() && p.schedule[k] <= addDays(3)).map(([k, l]) => `${p.name}の${l}が ${fmtDate(p.schedule[k])} だよ。準備は大丈夫？`));
+  lines.push(...soon.slice(0, 2));
+  if (S.view === 'map') lines.push('地図では「関東 → 都道府県 → 市区町村」で絞り込めるよ。坪単価が低くてケアマネ事業所が近い場所を探そう。');
+  if (S.view === 'board') lines.push('カードをドラッグしてステータスを進めよう。ステータスが進むと経験値も入るよ！');
+  if (S.view === 'import') lines.push('マイソクPDFをドロップすれば、住所や賃料を自動で読み取るよ。');
+  if (S.drawerId) { const p = S.props.find(x => x.id === S.drawerId); if (p) { const ph = S.boot.phases.find(ph => p.tasks.some(t => t.phase === ph.key && !t.done)); if (ph) { const rc = charForPhase(ph.key); lines.push(rc.id === c.id ? `「${p.name}」は今「${ph.label}」の工程。ここは${c.name === rc.name ? '私' : rc.name}の得意分野！` : `「${p.name}」の次は「${ph.label}」。${rc.name}が詳しいよ。`); } if (!p.survey?.at && p.lat) lines.push('この物件はまだリスク調査をしてないね。概要タブの「自動調査」を押してみて。'); } }
+  lines.push(...c.lines.idle);
+  return lines;
+}
+function partnerNext() { const lines = partnerContextLines(); _lineIdx = (_lineIdx + 1) % lines.length; partnerSay(lines[_lineIdx]); }
+function partnerGreet() { const c = myChar(); partnerSay(pick(c.lines.greet), { bounce: true }); _lineIdx = -1; }
+function partnerPraise() { partnerSay(pick(myChar().lines.praise), { bounce: true }); }
+function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+function renderPartner() {
+  const c = myChar(); const av = $('#partner-avatar');
+  av.style.backgroundImage = c.image ? `url('${c.image}')` : ''; av.textContent = c.image ? '' : c.emoji;
+  av.style.borderColor = c.color; $('#partner').hidden = false;
+}
+function renderLevel() {
+  const pr = S.boot.progress; if (!pr) return;
+  $('#lv-num').textContent = `Lv.${pr.level}`; $('#lv-title').textContent = pr.title;
+  $('#xp-bar').style.width = `${Math.round(pr.xp_in_level / pr.xp_next * 100)}%`;
+  $('#lv-xp').textContent = `${pr.xp_in_level} / ${pr.xp_next} XP（累計 ${pr.xp}）`;
+}
+async function refreshProgress(praise = true) {
+  const before = S.boot.progress?.level || 1;
+  try { S.boot.progress = await api('GET', '/api/me/progress'); } catch { return; }
+  renderLevel();
+  if (S.boot.progress.level > before) levelUp(S.boot.progress); else if (praise) partnerPraise();
+}
+function levelUp(pr) {
+  const el = document.createElement('div'); el.className = 'levelup';
+  el.innerHTML = `<div class="box"><div class="big">🎉</div><h2>レベルアップ！ Lv.${pr.level}</h2><div>${esc(pr.title)}</div><div class="muted small mt8">${esc(myChar().name)}「${esc(pick(myChar().lines.praise))}」</div><button class="btn btn-primary mt16">やったー！</button></div>`;
+  el.querySelector('button').onclick = () => el.remove(); el.onclick = (e) => { if (e.target === el) el.remove(); };
+  document.body.appendChild(el);
+}
+function chooseCharacter(force = false) {
+  const cur = S.boot.my_character;
+  modal(force ? 'パートナーを選ぼう' : 'パートナーを変更', `<p class="small muted mb12">一緒に出店を進めるパートナーを選んでください。各キャラは得意な工程があり、画面右下で状況に合わせてアドバイスします。あとから「設定」で変更できます。</p>
+    <div class="char-grid">${S.boot.characters.map(c => `<div class="char-card ${c.id === cur ? 'sel' : ''}" data-cid="${c.id}">${charAvatarHtml(c)}<div class="nm">${esc(c.name)}</div><div class="rl">${esc(c.role)}</div><div class="ps">${esc(c.personality)}</div><div class="ps">得意: ${c.phases.map(k => phaseOf(k).label).join('・')}</div></div>`).join('')}</div>`, (m) => {
+    $$('.char-card', m).forEach(card => card.onclick = async () => {
+      try { await api('PUT', '/api/me/character', { character: card.dataset.cid }); S.boot.my_character = card.dataset.cid; closeModal(); renderPartner(); partnerGreet(); toast(`${myChar().name} がパートナーになりました`, 'ok'); } catch (e) { err(e); }
+    });
+  });
+}
+function bindPartner() {
+  $('#partner-avatar').onclick = partnerNext; $('#partner-next').onclick = partnerNext;
+  $('#partner-bubble').ondblclick = () => $('#partner-bubble').classList.add('hidden');
 }
 
 // ================================================================ 起動
@@ -839,7 +975,11 @@ async function init() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else if (!$('#drawer').hidden) closeDrawer(); } if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); $('#global-search').focus(); } });
   let t; $('#global-search').addEventListener('input', (e) => { clearTimeout(t); t = setTimeout(() => { S.q = e.target.value; if (S.view === 'map') { drawMapMarkers(); drawMapList(); } else showView(S.view); }, 250); });
   if (!canEdit()) $('#btn-new-property').hidden = true;
+  $('#bn-more').onclick = (e) => { e.preventDefault(); $('#sidebar').classList.toggle('open'); };
+  document.addEventListener('click', (e) => { const sb = $('#sidebar'); if (sb.classList.contains('open') && !sb.contains(e.target) && !e.target.closest('#menu-btn,#bn-more')) sb.classList.remove('open'); });
+  bindPartner(); renderLevel();
   await route();
+  if (!S.boot.my_character) chooseCharacter(true); else { renderPartner(); setTimeout(partnerGreet, 400); }
 }
 window.MagoLove = { openDrawer, closeModal, newProperty };
 document.addEventListener('DOMContentLoaded', init);
