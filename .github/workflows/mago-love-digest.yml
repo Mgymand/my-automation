@@ -1,0 +1,23 @@
+name: 孫LOVE 毎朝のSlackリマインド
+
+# 毎日 8:00 JST（= 23:00 UTC 前日）に日次ダイジェストを送る。無料の cron 代替。
+# Secrets: MAGO_APP_URL（アプリURL）, MAGO_CRON_TOKEN（CRON_TOKEN）
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    if: ${{ vars.MAGO_DIGEST_ENABLED != 'false' }}
+    steps:
+      - name: Call digest endpoint
+        env:
+          APP_URL: ${{ secrets.MAGO_APP_URL }}
+          TOKEN: ${{ secrets.MAGO_CRON_TOKEN }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$TOKEN" ]; then
+            echo "MAGO_APP_URL / MAGO_CRON_TOKEN が未設定のためスキップ"; exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 10 "${APP_URL%/}/api/cron/digest" -H "X-Cron-Token: ${TOKEN}"

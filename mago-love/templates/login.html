@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン | {{ app_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/static/app.css">
+  {% if google_client_id %}<script src="https://accounts.google.com/gsi/client" async defer></script>{% endif %}
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">孫</div>
+      <div>
+        <div class="login-title">孫LOVE</div>
+        <div class="login-sub">老人ホーム出店専用アプリ</div>
+      </div>
+    </div>
+    <p class="login-lead">出店候補の物件仕入れから開業まで、すべてのエリア・すべての物件を同じフォーマットで一元管理します。</p>
+
+    {% if google_client_id %}
+      <div id="g_id_onload" data-client_id="{{ google_client_id }}" data-callback="onGoogle" data-auto_prompt="false"></div>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="signin_with" data-shape="pill" data-width="320"></div>
+      <p class="login-note">招待されたGoogleアカウントでログインしてください。</p>
+    {% else %}
+      <div class="login-dev">
+        <div class="login-dev-title">開発用ログイン（GOOGLE_CLIENT_ID 未設定）</div>
+        {% if dev_users %}
+          {% for u in dev_users %}
+            <button class="btn btn-block" onclick="devLogin('{{ u.email }}')">{{ u.name }} <span class="muted">({{ u.email }} / {{ u.role }})</span></button>
+          {% endfor %}
+        {% else %}
+          <p class="muted">ユーザーが未登録です。環境変数 <code>ADMIN_EMAIL</code> を設定して起動してください。</p>
+        {% endif %}
+      </div>
+    {% endif %}
+    <p id="login-error" class="login-error" hidden></p>
+  </div>
+  <script>
+    const NEXT = {{ next | tojson }};
+    function showErr(m){ const e=document.getElementById('login-error'); e.textContent=m; e.hidden=false; }
+    async function post(url, body){
+      const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok) throw new Error(d.error || 'ログインに失敗しました');
+      location.href = NEXT.startsWith('/') ? NEXT : '/';
+    }
+    function onGoogle(resp){ post('/api/login/google', {credential: resp.credential}).catch(e=>showErr(e.message)); }
+    function devLogin(email){ post('/api/login/dev', {email}).catch(e=>showErr(e.message)); }
+  </script>
+</body>
+</html>

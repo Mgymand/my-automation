@@ -25,3 +25,33 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_ID     # ダッシュボードで手入力（Googleログイン）
         sync: false
+
+  # ===== 老人ホーム出店専用アプリ 孫LOVE =====
+  - type: web
+    name: mago-love
+    runtime: python
+    rootDir: mago-love
+    plan: starter            # 永続ディスクに必要（Freeはディスク不可＝再起動でデータ消失）
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 2 -t 120 -b 0.0.0.0:$PORT app:app
+    healthCheckPath: /healthz
+    disk:
+      name: mago-love-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: MAGO_DATA_DIR
+        value: /var/data
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ADMIN_EMAIL
+        value: k.iwamoto@lime-fit.com
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CRON_TOKEN
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID     # ダッシュボードで手入力
+        sync: false
+      - key: ANTHROPIC_API_KEY    # 任意
+        sync: false
