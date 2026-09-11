@@ -19,7 +19,22 @@ Render の Starter（$7/月）は永続ディスクのためだけに必要で�
 
 → 運用の手間と自由度から Cloud Run を推奨します。
 
-## Cloud Run デプロイ
+## いちばん簡単な方法: Cloud Shell で対話式セットアップ（推奨・PCに何も入れない）
+
+1. https://console.cloud.google.com/ を開き、右上の「Cloud Shell をアクティブにする」（ >_ のアイコン）を押す
+2. 画面下に黒い端末が開いたら、次の1行を貼り付けて Enter
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Mgymand/my-automation/main/mago-love/setup-cloudshell.sh)
+```
+
+3. 質問（プロジェクトID・管理者メール）に答えると自動でデプロイされ、最後に Google ログイン用クライアントIDの作り方が表示される
+4. 表示された手順どおりにクライアントIDを作って貼り付ければ完了。アプリURLが表示される
+
+Googleログインが未設定の間は、誰もログインできない状態（安全側）で公開されます。
+アプリを更新したいときも同じ1行を実行するだけです。
+
+## 手動でデプロイする場合（gcloud をPCに入れている人向け）
 
 前提: `gcloud auth login` 済み、課金有効（無料枠内で運用）。
 

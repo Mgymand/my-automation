@@ -26,7 +26,7 @@ echo "== Cloud Run にデプロイ"
 gcloud run deploy "${SERVICE}" \
   --project "${PROJECT_ID}" --region "${REGION}" \
   --source "${SRC_DIR}" \
-  --allow-unauthenticated \
+  --allow-unauthenticated --execution-environment gen2 \
   --max-instances 1 --memory 1Gi \
   --add-volume "name=data,type=cloud-storage,bucket=${BUCKET}" \
   --add-volume-mount "volume=data,mount-path=/var/data" \
