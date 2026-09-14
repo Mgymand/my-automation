@@ -204,6 +204,8 @@ function bindParallax(root) {
   root.addEventListener('mousemove', onMove); root.addEventListener('mouseleave', () => { root.style.setProperty('--px', 0); root.style.setProperty('--py', 0); });
 }
 const stillsOf = (cid) => ((S.boot.stills || {})[cid] || {});
+const stillUrl = (cid, sc) => (stillsOf(cid)[sc] || {}).url;
+const stillFocus = (cid, sc) => (stillsOf(cid)[sc] || {}).focus;
 const LINES_AT = { hall: null, map: '地図の机だよ。次はどのエリアを攻める？', board: '掲示板をチェック。止まってる案件はない？', list: '図鑑の整理中。物件の記録は全部ここにあるんだ。', schedule: '暦を見てるよ。期限が近い予定、忘れてない？', import: '倉庫に新しい資料は届いてる？マイソクはここから搬入だよ。', pois: '街の様子を見てるよ。病院や役所、ケアマネ事業所の場所は大事だね。', stats: '観測所から街を眺めてる。人口の多い街は入居者も集まりやすいよ。', journal: '日誌を読み返してるよ。最近の動きを振り返ろう。', settings: '受付で連絡事項を確認中。Slack通知はもう設定した？' };
 async function renderHub(el) {
   const d = await api('GET', '/api/dashboard');
@@ -211,15 +213,16 @@ async function renderHub(el) {
   const me_ = S.boot.me, pr = S.boot.progress, c = myChar(), a = S.boot.assets || {};
   const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
   const todays = [...d.overdue, ...d.upcoming].slice(0, 4); const cnt = sceneCounts();
-  const photo = !!a.hall; // ホール画像があれば「写真の中にいる」モード（場面ごとの静止画を切り替える）
-  const st = stillsOf(c.id); const first = st.hall || a.hall;
+  const photo = !!a.hall; // ホール画像があれば「写真の中にいる」モード（場面ごとの静止画 + カメラ寄り）
+  const first = stillUrl(c.id, 'hall') || a.hall;
   const hotspots = S.boot.scenes.filter(sc => sc.id !== 'hall').map((sc, i) => { const cn = cnt[sc.id]; const pos = photo && sc.photo ? sc.photo : { x: sc.x, y: sc.y }; return `<div class="hotspot" style="left:${pos.x}%;top:${pos.y}%;--depth:${8 + (i % 4) * 5}" data-view="${sc.view}" data-scene="${sc.id}"><div class="obj">${sc.icon}${cn && cn.n ? `<span class="cnt ${cn.warn ? 'warn' : ''}">${cn.n}</span>` : ''}</div><div class="lbl">${esc(sc.label)}</div><div class="tag">${esc(sc.tagline)}</div></div>`; }).join('');
-  // 仲間は持ち場に「顔チップ」で立つ。クリックで話しかけると、その人の場面画像に切り替わり案内してくれる
-  const npcs = photo ? S.boot.characters.filter(x => x.id !== c.id && x.post).map(x => { const sc = S.boot.scenes.find(y => y.id === x.post); if (!sc || !sc.npc) return ''; const img = charImage(x, 'normal'); return `<button class="npc-chip" data-npc="${x.id}" style="left:${sc.npc.x}%;top:${sc.npc.y}%;--c:${x.color}" title="${esc(x.name)}に話しかける">${img ? `<img src="${esc(img)}" alt="">` : `<span>${x.emoji}</span>`}<b>${esc(x.name)}</b></button>`; }).join('') : '';
-  const heroImg = c.image ? `<img id="hero-char" src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" id="hero-char">${c.emoji}</div>`;
+  // 仲間は持ち場に「顔チップ」で立つ。クリックで話しかける（カメラが寄り、正面を向いて話す）
+  const npcs = photo ? S.boot.characters.filter(x => x.id !== c.id && x.post).map(x => { const sc = S.boot.scenes.find(y => y.id === x.post); if (!sc || !sc.npc) return ''; const f = stillFocus(x.id, x.post); const pos = f ? { x: f.x + f.w / 2, y: f.y - 4 } : sc.npc; const img = charImage(x, 'normal'); return `<button class="npc-chip" data-npc="${x.id}" style="left:${pos.x}%;top:${pos.y}%;--c:${x.color}" title="${esc(x.name)}に話しかける">${img ? `<img src="${esc(img)}" alt="">` : `<span>${x.emoji}</span>`}<b>${esc(x.name)}</b></button>`; }).join('') : '';
+  const heroImg = c.image ? `<img data-expr-img src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" data-expr-img>${c.emoji}</div>`;
+  const motes = photo ? Array.from({ length: 14 }, (_, i) => `<i style="left:${(i * 37 + 11) % 100}%;top:${(i * 53 + 20) % 90}%;animation-delay:${-(i * 1.7) % 12}s;animation-duration:${9 + (i % 5) * 2}s"></i>`).join('') : '';
   el.innerHTML = `<div class="hub ${photo ? 'photo' : ''}" id="hub">
     ${photo ? `<div class="hub-bg blur" id="hub-blur" style="background-image:url('${first}')"></div>
-    <div class="stage" id="stage"><div class="still on" style="background-image:url('${first}')"></div><div class="still"></div></div>
+    <div class="stage" id="stage"><div class="still on" style="background-image:url('${first}')"></div><div class="still"></div><div class="breath" id="breath"></div><div class="motes">${motes}</div><div class="focus-hit" id="focus-hit" hidden><span class="talk-tag">💬 話す</span></div><div class="hub-actor" id="actor" hidden></div></div>
     <div class="hub-layer" id="hub-layer">${hotspots}${npcs}</div>` : `<div class="hub-bg css"></div>
     <div class="hub-rays"></div><div class="hub-vignette"></div>
     <div class="hub-layer" id="hub-layer">${hotspots}</div>
@@ -227,21 +230,26 @@ async function renderHub(el) {
     <div class="hub-hud">
       <div class="hub-kicker">Guild Hall ・ 出店クエスト本部</div>
       <div class="hub-title">${greet}、<b>${esc(me_.name)}</b> さん。</div>
-      <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ ${photo ? '部屋の中の物や仲間をクリック' : '行き先をクリックして移動'}</div>
+      <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ ${photo ? '仲間や部屋の中の物をクリック' : '行き先をクリックして移動'}</div>
       <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div><button class="btn btn-xs" id="btn-char">パートナー</button></div>
       <div class="hub-quests">${todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('')}</div>
     </div>
     <div class="hub-dialog"><div class="rpg-box ${photo ? 'with-portrait' : ''}">${photo ? `<div class="hub-portrait" id="hub-portrait" style="--c:${c.color}">${heroImg}</div>` : ''}<div class="rpg-body"><span class="nameplate" id="hero-name">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions" id="hero-actions"><button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button></div></div></div></div>
-    <div class="hub-hint">${photo ? 'CLICK AN OBJECT OR A FRIEND' : 'CLICK A PLACE TO TRAVEL'}</div>
+    <div class="hub-hint">${photo ? 'CLICK A FRIEND TO TALK ・ CLICK AN OBJECT TO TRAVEL' : 'CLICK A PLACE TO TRAVEL'}</div>
   </div>`;
   $$('.hotspot', el).forEach(h => h.onclick = () => goScene(h.dataset.scene, h.dataset.view));
-  $$('.npc-chip', el).forEach(n => n.onclick = () => npcTalk(n.dataset.npc));
+  $$('.npc-chip', el).forEach(n => n.onclick = (e) => { e.stopPropagation(); talkTo(n.dataset.npc); });
   $$('[data-open]', el).forEach(x => x.onclick = () => openDrawer(x.dataset.open));
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $('#btn-char').onclick = () => chooseCharacter(false);
-  $('#hero-next').onclick = () => { speakerReset(); partnerNext(); };
+  $('#hero-next').onclick = () => { if (!$('#hub').classList.contains('zoomed')) speakerReset(); partnerNext(); };
   bindParallax($('#hub', el));
-  if (photo) { fitStage(); window.addEventListener('resize', fitStage); startIdle(); }
+  if (photo) {
+    _stillCur = ''; showStill(first, stillFocus(c.id, 'hall'), { cid: c.id, scene: 'hall' });
+    $('#focus-hit').onclick = (e) => { e.stopPropagation(); talkTo(_stillKey.cid, _stillKey.scene); };
+    $('#stage').onclick = () => { if ($('#hub').classList.contains('zoomed')) cameraBack(); };
+    fitStage(); window.addEventListener('resize', fitStage); startIdle();
+  }
 }
 // ---- 写真の中のステージ（16:9 を保ってピンの位置がずれないようにする）
 function fitStage() {
@@ -252,46 +260,90 @@ function fitStage() {
   const v = { left: (W - w) / 2 + 'px', top: (H - h) / 2 + 'px', width: w + 'px', height: h + 'px' };
   [st, layer].forEach(x => geo(x, v));
 }
-// ---- 場面画像をゆっくりクロスフェードで切り替える（キャラは動かさず、その場所にいる絵に変わる）
-let _stillCur = '';
-function showStill(url) {
-  const st = $('#stage'); if (!st || !url || url === _stillCur) return; _stillCur = url;
-  const layers = $$('.still', st); const on = layers.find(x => x.classList.contains('on')) || layers[0]; const off = layers.find(x => x !== on);
-  off.style.backgroundImage = `url('${url}')`; void off.offsetWidth; off.classList.add('on'); on.classList.remove('on');
-  const bl = $('#hub-blur'); if (bl) bl.style.backgroundImage = `url('${url}')`;
+// ---- 場面画像をゆっくりクロスフェードで切り替える。焦点（キャラのいる範囲）には「呼吸」と話しかけ用の当たり判定を置く
+let _stillCur = '', _stillKey = { cid: '', scene: 'hall' };
+const FALLBACK_FOCUS = { x: 40, y: 40, w: 12, h: 40 };
+function showStill(url, focus, key) {
+  const st = $('#stage'); if (!st || !url) return;
+  if (key) _stillKey = key;
+  if (url !== _stillCur) {
+    _stillCur = url;
+    const layers = $$('.still', st); const on = layers.find(x => x.classList.contains('on')) || layers[0]; const off = layers.find(x => x !== on);
+    off.style.backgroundImage = `url('${url}')`; void off.offsetWidth; off.classList.add('on'); on.classList.remove('on');
+    const bl = $('#hub-blur'); if (bl) bl.style.backgroundImage = `url('${url}')`;
+  }
+  const br = $('#breath'), hit = $('#focus-hit'); if (!br || !hit) return;
+  if (focus) {
+    const cx = focus.x + focus.w / 2, cy = focus.y + focus.h / 2;
+    br.style.backgroundImage = `url('${url}')`; br.style.transformOrigin = `${cx}% ${focus.y + focus.h}%`;
+    const mask = `radial-gradient(ellipse ${Math.max(6, focus.w * 0.9)}% ${Math.max(10, focus.h * 0.62)}% at ${cx}% ${cy}%, #000 55%, transparent 100%)`;
+    br.style.webkitMaskImage = mask; br.style.maskImage = mask; br.hidden = false;
+    hit.style.left = `${focus.x - 2}%`; hit.style.top = `${focus.y - 3}%`; hit.style.width = `${focus.w + 4}%`; hit.style.height = `${focus.h + 4}%`; hit.hidden = false;
+  } else { br.hidden = true; hit.hidden = true; }
 }
-function stillFor(cid, scene) { const st = stillsOf(cid); return st[scene] || st.hall || (S.boot.assets || {}).hall; }
-function speakerSet(ch) { const np = $('#hero-name'); if (np) np.textContent = ch.name; const po = $('#hub-portrait'); if (po) { po.style.setProperty('--c', ch.color); const img = charImage(ch, 'normal'); po.innerHTML = img ? `<img id="hero-char" src="${esc(img)}" alt="">` : `<div class="emoji" id="hero-char">${ch.emoji}</div>`; } }
-function speakerReset() { const me = myChar(); speakerSet(me); showStill(stillFor(me.id, 'hall')); const act = $('#hero-actions'); if (act && !$('#hero-next', act)) { act.innerHTML = `<button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button>`; $('#hero-next').onclick = () => { speakerReset(); partnerNext(); }; $$('[data-go]', act).forEach(x => x.onclick = () => location.hash = x.dataset.go); } }
+// ---- カメラ寄り（モンハン風）: 焦点へズームして背景をぼかし、キャラが正面を向いて話す
+function zoomTo(focus, scale) {
+  const st = $('#stage'); if (!st) return;
+  const f = focus || FALLBACK_FOCUS; const s = scale || Math.min(2.6, Math.max(1.4, 66 / Math.max(f.h * 1.12, 12)));
+  const half = 50 / s; const cx = Math.min(100 - half, Math.max(half, f.x + f.w / 2)), cy = Math.min(100 - half, Math.max(half, f.y + f.h * 0.5));
+  st.style.transform = `scale(${s.toFixed(3)}) translate(${(50 - cx).toFixed(2)}%, ${(50 - cy).toFixed(2)}%)`;
+}
+function setActor(ch, focus) {
+  const actor = $('#actor'); if (!actor) return; const f = focus || FALLBACK_FOCUS;
+  const img = charImage(ch, 'normal');
+  actor.innerHTML = img ? `<img data-expr-img src="${esc(img)}" alt="">` : `<div class="emoji" data-expr-img>${ch.emoji}</div>`;
+  actor.style.left = `${f.x + f.w / 2}%`; actor.style.top = `${f.y + f.h}%`; actor.style.height = `${Math.min(60, f.h * 1.12)}%`;
+}
+function talkTo(cid, scene) {
+  const ch = S.boot.characters.find(x => x.id === cid); const hub = $('#hub'); if (!ch || !hub) return;
+  const me = myChar(); const sc = scene || (ch.id === me.id ? _stillKey.scene : ch.post) || 'hall';
+  const url = stillUrl(ch.id, sc); const focus = stillFocus(ch.id, sc) || (ch.id !== me.id ? npcFallbackFocus(ch) : stillFocus(me.id, _stillKey.scene)) || FALLBACK_FOCUS;
+  if (url) showStill(url, focus, { cid: ch.id, scene: sc });
+  speakerSet(ch); setActor(ch, focus);
+  hub.classList.add('zoomed'); zoomTo(focus);
+  const actor = $('#actor'); actor.hidden = false; requestAnimationFrame(() => actor.classList.add('in'));
+  const kind = ch.id === me.id ? 'greet' : 'greet';
+  setTimeout(() => { const line = ch.id === me.id ? pick(me.lines.greet) : pick(ch.lines.greet) + (ch.post ? ` ${(S.boot.scenes.find(x => x.id === ch.post) || {}).label || ''}のことなら任せて。` : ''); partnerSay(line, { expr: pickExprFor(ch, kind) }); }, 420);
+  const act = $('#hero-actions'); const post = ch.id !== me.id && S.boot.scenes.find(x => x.id === ch.post);
+  act.innerHTML = `${post ? `<button id="npc-go">➜ ${esc(ch.name)}と${esc(post.label)}へ</button>` : ''}<button id="hero-next">次のセリフ</button><button id="cam-back">◀ 戻る</button>`;
+  if (post) $('#npc-go').onclick = () => goScene(post.id, post.view);
+  $('#hero-next').onclick = () => { if (ch.id === me.id) partnerNext(); else partnerSay(pick(ch.lines.idle), { expr: pickExprFor(ch, 'idle') }); };
+  $('#cam-back').onclick = cameraBack;
+}
+function npcFallbackFocus(ch) { const sc = S.boot.scenes.find(x => x.id === ch.post); if (!sc || !sc.npc) return null; return { x: sc.npc.x - 5, y: sc.npc.y - 6, w: 10, h: 34 }; }
+function pickExprFor(ch, kind) { const cands = (EXPR_FOR[kind] || ['normal']).filter(k => k === 'normal' || (ch.expressions && ch.expressions[k])); return cands[0] || 'normal'; }
+function cameraBack() {
+  const hub = $('#hub'), st = $('#stage'), actor = $('#actor'); if (!hub) return;
+  hub.classList.remove('zoomed'); if (st) st.style.transform = ''; if (actor) { actor.classList.remove('in'); setTimeout(() => { actor.hidden = true; }, 500); }
+  speakerReset();
+}
+function speakerSet(ch) { _speaker = ch; const np = $('#hero-name'); if (np) np.textContent = ch.name; const po = $('#hub-portrait'); if (po) { po.style.setProperty('--c', ch.color); const img = charImage(ch, 'normal'); po.innerHTML = img ? `<img data-expr-img src="${esc(img)}" alt="">` : `<div class="emoji" data-expr-img>${ch.emoji}</div>`; } }
+function speakerReset() {
+  const me = myChar(); speakerSet(me); const u = stillUrl(me.id, 'hall') || (S.boot.assets || {}).hall; if (u) showStill(u, stillFocus(me.id, 'hall'), { cid: me.id, scene: 'hall' });
+  const act = $('#hero-actions'); if (act && !$('#hero-next', act) || (act && $('#cam-back', act))) { act.innerHTML = `<button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button>`; $('#hero-next').onclick = () => { speakerReset(); partnerNext(); }; $$('[data-go]', act).forEach(x => x.onclick = () => location.hash = x.dataset.go); }
+}
 function goScene(sceneId, view) {
   const sc = S.boot.scenes.find(x => x.id === sceneId); const hub = $('#hub'); const photo = hub && hub.classList.contains('photo');
-  const go = () => { if (hub) hub.classList.add('leaving'); setTimeout(() => location.hash = '#/' + view, 380); };
+  const go = () => { if (hub) hub.classList.add('leaving'); setTimeout(() => location.hash = '#/' + view, 420); };
   if (!photo || !sc) { go(); return; }
-  const me = myChar(); const url = stillsOf(me.id)[sc.id];
+  const me = myChar(); const url = stillUrl(me.id, sc.id); const focus = stillFocus(me.id, sc.id);
+  hub.classList.remove('zoomed'); const actor = $('#actor'); if (actor) { actor.classList.remove('in'); actor.hidden = true; }
   speakerSet(me); partnerSay(LINES_AT[sc.id] || `${sc.label}へ行こう！`, { expr: pickExpr('idle') });
-  if (url) { showStill(url); setTimeout(go, 1600); } else setTimeout(go, 500);
+  if (url) { showStill(url, focus, { cid: me.id, scene: sc.id }); setTimeout(() => zoomTo(focus || { x: sc.photo.x - 6, y: sc.photo.y - 8, w: 12, h: 20 }, 1.4), 250); setTimeout(go, 1500); }
+  else { zoomTo({ x: sc.photo.x - 6, y: sc.photo.y - 8, w: 12, h: 20 }, 1.35); setTimeout(go, 600); }
 }
 // ---- 放置中: 数十秒ごとに別の場面画像へゆっくり切り替わり、独り言を言う
 let _idle = null;
 function startIdle() {
   clearInterval(_idle);
   _idle = setInterval(() => {
-    if (S.view !== 'dashboard' || document.hidden || !$('#stage')) return;
-    const me = myChar(); const st = stillsOf(me.id); const keys = Object.keys(st).filter(k => k !== 'hall' && st[k] !== _stillCur);
+    const hub = $('#hub'); if (S.view !== 'dashboard' || document.hidden || !$('#stage') || !hub || hub.classList.contains('zoomed')) return;
+    const me = myChar(); const st = stillsOf(me.id); const keys = Object.keys(st).filter(k => k !== 'hall' && st[k].url !== _stillCur);
     if (!keys.length || Math.random() < .3) { speakerReset(); partnerSay(pick(me.lines.idle), { expr: pickExpr('idle') }); return; }
-    const k = pick(keys); speakerSet(me); showStill(st[k]); partnerSay(LINES_AT[k] || '', { expr: pickExpr('idle') });
+    const k = pick(keys); speakerSet(me); showStill(st[k].url, st[k].focus, { cid: me.id, scene: k }); partnerSay(LINES_AT[k] || '', { expr: pickExpr('idle') });
   }, 40000);
 }
 function stopIdle() { clearInterval(_idle); _idle = null; window.removeEventListener('resize', fitStage); _stillCur = ''; }
-// ---- 仲間に話しかける → その人がいる場面に切り替わり、持ち場へ案内してくれる
-function npcTalk(cid) {
-  const npc = S.boot.characters.find(x => x.id === cid); if (!npc) return;
-  const sc = S.boot.scenes.find(x => x.id === npc.post);
-  const url = stillsOf(npc.id)[npc.post]; if (url) showStill(url);
-  speakerSet(npc);
-  partnerSay(pick(npc.lines.greet) + (sc ? ` ${sc.label}のことなら任せて。` : ''), {});
-  const act = $('#hero-actions'); if (act && sc) { act.innerHTML = `<button id="npc-go">➜ ${esc(npc.name)}と${esc(sc.label)}へ</button><button id="npc-back">戻る</button>`; $('#npc-go').onclick = () => goScene(sc.id, sc.view); $('#npc-back').onclick = () => { speakerReset(); partnerNext(); }; }
-}
 
 // ================================================================ ギルド日誌（進捗・最近の動き）
 async function renderDashboard(el) {
@@ -1031,7 +1083,7 @@ async function renderSettings(el) {
         <div class="still-tabs mt12">${S.boot.characters.map(x => `<button class="${(S.stillTab || myChar().id) === x.id ? 'on' : ''}" data-stab="${x.id}">${x.image ? `<img src="${esc(charImage(x, 'normal'))}" alt="">` : x.emoji} ${esc(x.name)}</button>`).join('')}</div>
         ${(() => { const cid = S.stillTab || myChar().id; const ch = S.boot.characters.find(x => x.id === cid); const st = stillsOf(cid); const n = Object.keys(st).length; return `
         <div class="flex mt12"><button class="btn btn-gold btn-sm" data-sgenall="${cid}" ${ch.image && (S.boot.assets || {}).hall ? '' : 'disabled'}>✨ ${esc(ch.name)}の全場面を生成（${S.boot.scenes.length}枚 ・ 数分）</button><span class="small muted">${n} / ${S.boot.scenes.length} 枚あり ${ch.image ? '' : '・ 先にキャラの元画像をアップロード'}</span></div>
-        <div class="asset-grid mt12">${S.boot.scenes.map(sc => { const url = st[sc.id]; return `<div class="asset"><div class="thumb wide ${url ? 'has' : ''}" data-sdrop="${cid}|${sc.id}" style="${url ? `background-image:url('${url}')` : ''}">${url ? '' : sc.icon + ' 画像をドロップ / クリック'}</div><input type="file" accept="image/*" data-sfile="${cid}|${sc.id}" hidden><div class="info"><b>${sc.icon} ${esc(sc.label)}</b><small>${esc(sc.place)}</small><div class="btns"><button data-sgen="${cid}|${sc.id}" ${ch.image && (S.boot.assets || {}).hall ? '' : 'disabled'}>✨ 生成</button><button data-sprompt="${cid}|${sc.id}">📋 プロンプト</button>${url ? `<button data-sdel="${cid}|${sc.id}">✕ 削除</button>` : ''}</div></div></div>`; }).join('')}</div>`; })()}
+        <div class="asset-grid mt12">${S.boot.scenes.map(sc => { const it = st[sc.id] || {}; const url = it.url; const f = it.focus; return `<div class="asset"><div class="thumb wide ${url ? 'has' : ''}" data-sdrop="${cid}|${sc.id}" style="${url ? `background-image:url('${url}')` : ''}">${url ? (f ? `<span class="focus-box" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%" title="話しかけたときにカメラが寄る範囲"></span>` : '<span class="focus-none">焦点なし</span>') : sc.icon + ' 画像をドロップ / クリック'}</div><input type="file" accept="image/*" data-sfile="${cid}|${sc.id}" hidden><div class="info"><b>${sc.icon} ${esc(sc.label)}</b><small>${esc(sc.place)}</small><div class="btns"><button data-sgen="${cid}|${sc.id}" ${ch.image && (S.boot.assets || {}).hall ? '' : 'disabled'}>✨ 生成</button><button data-sprompt="${cid}|${sc.id}">📋 プロンプト</button>${url ? `<button data-sfocus="${cid}|${sc.id}" title="キャラ位置を検出し直す">🎯 焦点</button><button data-sdel="${cid}|${sc.id}">✕ 削除</button>` : ''}</div></div></div>`; }).join('')}</div>`; })()}
       </div></div>
       <div class="card"><div class="card-head"><div class="card-title">ℹ️ 環境</div></div><div class="card-body"><dl class="kv"><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '<span class="badge badge-ok">有効</span>' : '<span class="badge badge-warn">開発モード</span>'}</dd><dt>AI構造化</dt><dd>${S.boot.settings.llm_enabled ? '<span class="badge badge-ok">有効</span>' : '<span class="badge">無効（正規表現抽出）</span>'}</dd><dt>市区町村マスタ</dt><dd>${S.boot.municipalities.length} 件（関東1都6県）</dd></dl></div></div>
     </div></div>`;
@@ -1077,6 +1129,7 @@ async function renderSettings(el) {
   $$('[data-sprompt]', el).forEach(b => b.onclick = async () => { const [cid, sc] = b.dataset.sprompt.split('|'); try { const r = await api('GET', `/api/stills/${cid}/prompt/${sc}`); modal('合成プロンプト（ChatGPT に背景とキャラの2枚を添付して貼り付け）', `<div class="field"><textarea rows="9" id="pr-text">${esc(r.prompt)}</textarea></div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">閉じる</button><button class="btn btn-primary" id="pr-copy">コピー</button></div>`, (m) => { $('#pr-copy', m).onclick = () => navigator.clipboard.writeText($('#pr-text', m).value).then(() => toast('コピーしました', 'ok')); }); } catch (e) { err(e); } });
   const genStills = async (cid, scenes) => { const btns = $$(`[data-sgenall="${cid}"], [data-sgen^="${cid}|"]`, el); btns.forEach(b => { b.disabled = true; }); const main = $(`[data-sgenall="${cid}"]`, el); if (main) main.textContent = `✨ 生成中…（1枚 15〜30秒 × ${scenes ? scenes.length : S.boot.scenes.length}）`; try { const r = await api('POST', `/api/stills/${cid}/generate`, { scenes }); S.boot.stills = r.stills; toast(`${r.generated.length} 枚の場面画像を生成しました${r.errors.length ? '（失敗 ' + r.errors.length + '）' : ''}`, r.errors.length && !r.generated.length ? 'err' : 'ok'); if (r.errors.length) modal('生成できなかった場面', `<ul class="small">${r.errors.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`); } catch (e) { err(e); } renderSettings(el); };
   $$('[data-sgenall]', el).forEach(b => b.onclick = () => genStills(b.dataset.sgenall, null));
+  $$('[data-sfocus]', el).forEach(b => b.onclick = async () => { const [cid, sc] = b.dataset.sfocus.split('|'); try { S.boot.stills = await api('PUT', `/api/stills/${cid}/${sc}/focus`, { redetect: true }); toast('焦点を検出し直しました', 'ok'); renderSettings(el); } catch (e) { err(e); } });
   $$('[data-sgen]', el).forEach(b => b.onclick = () => { const [cid, sc] = b.dataset.sgen.split('|'); genStills(cid, [sc]); });
   $('#c-reprocess').onclick = async () => { try { const r = await api('POST', '/api/characters/reprocess'); S.boot.characters = r.characters; toast(`${r.processed} 枚を処理しました`, 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); } };
   $$('[data-egen]', el).forEach(b => b.onclick = () => { const [cid, expr] = b.dataset.egen.split('|'); gen(cid, [expr]); });
@@ -1091,10 +1144,12 @@ async function renderSettings(el) {
 // ================================================================ パートナー（キャラクター）・レベル
 let _typing = null, _lineIdx = 0, _lastKind = '';
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+let _speaker = null; // ハブで今話している人（仲間なら表情もその人のものに）
 function setExpression(expr) {
-  const c = myChar(); const src = charImage(c, expr) || c.image; if (!src) return;
-  const swap = (img) => { if (!img || img.getAttribute('src') === src) return; img.style.opacity = '0'; setTimeout(() => { img.src = src; img.style.opacity = '1'; }, 180); };
-  swap($('#partner-img')); const hero = $('#hero-char'); if (hero && hero.tagName === 'IMG') { swap(hero); hero.classList.remove('talk'); void hero.offsetWidth; hero.classList.add('talk'); }
+  const me = myChar(); const c = _speaker || me; const src = charImage(c, expr) || c.image; if (!src) return;
+  const mine = charImage(me, expr) || me.image;
+  const swapTo = (img, url) => { if (!img || !url || img.getAttribute('src') === url) return; img.style.opacity = '0'; setTimeout(() => { img.src = url; img.style.opacity = '1'; }, 180); };
+  swapTo($('#partner-img'), mine); $$('[data-expr-img]').forEach(hero => { if (hero.tagName === 'IMG') swapTo(hero, src); hero.classList.remove('talk'); void hero.offsetWidth; hero.classList.add('talk'); });
 }
 function partnerSay(text, opts = {}) {
   const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text'), heroText = $('#hero-text');
@@ -1126,7 +1181,7 @@ function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return d
 function renderPartner() {
   const c = myChar(); const av = $('#partner-avatar'); const img = $('#partner-img'), em = $('#partner-emoji');
   if (c.image) { img.src = charImage(c, 'normal'); img.hidden = false; em.textContent = ''; } else { img.hidden = true; em.textContent = c.emoji; }
-  av.style.borderColor = c.color; $('#partner').hidden = !!$('#hero-char');
+  av.style.borderColor = c.color; $('#partner').hidden = !!$('#hero-text');
 }
 function renderLevel() {
   const pr = S.boot.progress; if (!pr) return;
