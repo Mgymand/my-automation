@@ -25,6 +25,7 @@ from PIL import Image
 _FONT_CANDIDATES = {
     "regular": [
         os.environ.get("NAIKEN_FONT_REGULAR", ""),
+        "./fonts/NotoSansJP-Regular.ttf",
         "./fonts/NotoSansCJKjp-Regular.otf",
         "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
         "/System/Library/Fonts/Hiragino Sans GB.ttc",
@@ -33,6 +34,7 @@ _FONT_CANDIDATES = {
     ],
     "bold": [
         os.environ.get("NAIKEN_FONT_BOLD", ""),
+        "./fonts/NotoSansJP-Bold.ttf",
         "./fonts/NotoSansCJKjp-Bold.otf",
         "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc",
         "/System/Library/Fonts/Hiragino Sans GB.ttc",
@@ -49,10 +51,37 @@ def _find_font(kind: str) -> str:
     raise RuntimeError(f"日本語フォント({kind})が見つかりません。NAIKEN_FONT_{kind.upper()} で指定してください")
 
 
+def _subset_font(path: str, chars: str) -> bytes | None:
+    """fontTools で使用文字だけのサブセットを作る。失敗したら None（フル埋め込みにフォールバック）。
+
+    フル埋め込みだと CJK フォント 2 書体で 30MB 近くになるため。
+    """
+    try:
+        from fontTools import subset
+        from fontTools.ttLib import TTFont
+    except ImportError:
+        return None
+    try:
+        font = TTFont(path, fontNumber=0)
+        opts = subset.Options()
+        opts.layout_features = ["*"]
+        opts.name_IDs = ["*"]
+        opts.notdef_outline = True
+        sub = subset.Subsetter(options=opts)
+        sub.populate(text=chars + "0123456789-:/ ")
+        sub.subset(font)
+        buf = io.BytesIO()
+        font.save(buf)
+        return buf.getvalue()
+    except Exception as e:  # noqa: BLE001
+        print(f"font subset failed for {path}: {e}; embedding full font", file=sys.stderr)
+        return None
+
+
 # ---- 名刺画像 -------------------------------------------------------------
 
 def load_card_image(path: str, rotate: int = 0) -> bytes:
-    """名刺画像（PNG/JPG または PDF）を読み込み、PNG bytes を返す。"""
+    """名刺画像（PNG/JPG または PDF）を読み込み、JPEG bytes を返す。"""
     if path.lower().endswith(".pdf"):
         doc = fitz.open(path)
         page = doc[0]
@@ -71,7 +100,7 @@ def load_card_image(path: str, rotate: int = 0) -> bytes:
     if rotate:
         im = im.rotate(rotate, expand=True)  # 反時計回り（PIL の仕様）
     buf = io.BytesIO()
-    im.save(buf, format="PNG")
+    im.save(buf, format="JPEG", quality=90)  # スキャン画像は JPEG でサイズを抑える
     return buf.getvalue()
 
 
@@ -86,20 +115,33 @@ class Writer:
         self.page = page
         self.reg = _find_font("regular")
         self.bold = _find_font("bold")
-        self.page.insert_font(fontname="JPR", fontfile=self.reg)
-        self.page.insert_font(fontname="JPB", fontfile=self.bold)
         self._fr = fitz.Font(fontfile=self.reg)
         self._fb = fitz.Font(fontfile=self.bold)
+        self._ops: list[tuple[float, float, str, float, bool]] = []
+
+    def flush(self) -> None:
+        """溜めた文字列を、使用グリフだけに絞ったフォントで書き込む。"""
+        chars = "".join(op[2] for op in self._ops)
+        for name, path, bold in (("JPR", self.reg, False), ("JPB", self.bold, True)):
+            used = "".join(op[2] for op in self._ops if op[4] == bold)
+            buf = _subset_font(path, used or chars)
+            if buf is not None:
+                self.page.insert_font(fontname=name, fontbuffer=buf)
+            else:
+                self.page.insert_font(fontname=name, fontfile=path)
+        for (x, top, s, size, bold) in self._ops:
+            self.page.insert_text(
+                (x, top + size * ASCENT), s, fontsize=size,
+                fontname="JPB" if bold else "JPR", color=(0, 0, 0),
+            )
+        self._ops.clear()
 
     def width(self, text: str, size: float, bold: bool = False) -> float:
         return (self._fb if bold else self._fr).text_length(text, fontsize=size)
 
     def text(self, x: float, top: float, s: str, size: float, bold: bool = False) -> float:
-        """bbox の上端 top を基準に文字を置き、右端 x を返す。"""
-        self.page.insert_text(
-            (x, top + size * ASCENT), s, fontsize=size,
-            fontname="JPB" if bold else "JPR", color=(0, 0, 0),
-        )
+        """bbox の上端 top を基準に文字を置き、右端 x を返す（実書き込みは flush 時）。"""
+        self._ops.append((x, top, s, size, bold))
         return x + self.width(s, size, bold)
 
     def text_center(self, top: float, s: str, size: float, bold: bool = False) -> None:
@@ -225,6 +267,7 @@ def build(cfg: dict, card_png: bytes, out_path: str) -> None:
                 "※ 本書は宅地建物取引業者間の業務連絡です。ご提供いただいた物件資料を、"
                 "貴社の承諾なく第三者へ開示・転載することはいたしません。", 9.5, 16)
 
+    w.flush()
     doc.save(out_path, garbage=3, deflate=True)
     doc.close()
 
