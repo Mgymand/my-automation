@@ -59,7 +59,7 @@ ask ADMIN_EMAIL "管理者メール（Googleログインに使うアドレス）
 # ---- 3. 必要なAPIとバケット --------------------------------------------------
 say "【3/5】必要な機能を有効化しています（1〜2分かかります）"
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-  storage.googleapis.com aiplatform.googleapis.com --project "$PROJECT_ID" >/dev/null
+  storage.googleapis.com aiplatform.googleapis.com texttospeech.googleapis.com --project "$PROJECT_ID" >/dev/null
 BUCKET="${PROJECT_ID}-mago-love-data"
 if ! gcloud storage buckets describe "gs://$BUCKET" --project "$PROJECT_ID" >/dev/null 2>&1; then
   gcloud storage buckets create "gs://$BUCKET" --project "$PROJECT_ID" --location "$REGION" \
@@ -103,7 +103,7 @@ gcloud run deploy "$SERVICE" \
   --project "$PROJECT_ID" --region "$REGION" \
   --source "$WORK_DIR/mago-love" \
   --allow-unauthenticated --execution-environment gen2 \
-  --max-instances 1 --memory 1Gi \
+  --max-instances 1 --memory 1Gi --timeout 300 \
   --add-volume "name=data,type=cloud-storage,bucket=$BUCKET" \
   --add-volume-mount "volume=data,mount-path=/var/data" \
   --set-env-vars "MAGO_DATA_DIR=/var/data,TRUST_PROXY=1,ADMIN_EMAIL=$ADMIN_EMAIL,GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID,CRON_TOKEN=$CRON_TOKEN" \

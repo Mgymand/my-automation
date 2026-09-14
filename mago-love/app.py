@@ -325,6 +325,9 @@ def bootstrap():
         "ui_assets": domain.UI_ASSETS,
         "assets": assets_public(),
         "stills": stills_public(),
+        "clips": clips_public(),
+        "audio_assets": domain.AUDIO_ASSETS,
+        "video_seconds": int(os.environ.get("VIDEO_SECONDS", "8")),
         "my_character": _my_user().get("character", ""),
         "progress": user_progress(me().get("name", "")),
     })
@@ -566,7 +569,9 @@ def character_generate(cid):
 @auth.require_role("admin")
 def imagegen_status():
     import imagegen
-    return jsonify(imagegen.status())
+    import videogen
+    import voice
+    return jsonify({**imagegen.status(), "video": videogen.status(), "voice": voice.status()})
 
 
 # ---------------------------------------------------------------------------
@@ -575,7 +580,8 @@ def imagegen_status():
 
 ASSET_DIR = os.path.join(store.DATA_DIR, "assets")
 os.makedirs(ASSET_DIR, exist_ok=True)
-_ASSET_KEYS = domain.SCENE_IDS + domain.UI_ASSET_IDS
+_ASSET_KEYS = domain.SCENE_IDS + domain.UI_ASSET_IDS + domain.AUDIO_ASSET_IDS
+_AUDIO_EXT = (".mp3", ".ogg", ".m4a", ".wav", ".webm")
 
 
 def assets_public() -> dict:
@@ -586,7 +592,7 @@ def assets_public() -> dict:
         names = []
     for f in names:
         base, ext = os.path.splitext(f)
-        if base in _ASSET_KEYS and ext.lower() in (".png", ".jpg", ".jpeg", ".webp"):
+        if base in _ASSET_KEYS and ext.lower() in (".png", ".jpg", ".jpeg", ".webp") + _AUDIO_EXT:
             try:
                 v = int(os.path.getmtime(os.path.join(ASSET_DIR, f)))
             except OSError:
@@ -615,7 +621,14 @@ def asset_upload(key):
         return _bad("画像ファイルを選択してください")
     raw = f.read()
     if len(raw) > 15 * 1024 * 1024:
-        return _bad("画像は15MB以下にしてください")
+        return _bad("ファイルは15MB以下にしてください")
+    if key in domain.AUDIO_ASSET_IDS:  # 環境音（音声ファイル）
+        ext = os.path.splitext(f.filename or "")[1].lower()
+        if ext not in _AUDIO_EXT:
+            return _bad("音声ファイル（MP3 / OGG / M4A / WAV）を選択してください")
+        with open(os.path.join(ASSET_DIR, key + ext), "wb") as out:
+            out.write(raw)
+        return jsonify(assets_public())
     try:
         import fitz
         fitz.Pixmap(raw)
@@ -854,6 +867,158 @@ def still_generate(cid):
             errors.append(f"{sc['label']}: {ex}")
             print(f"[imagegen] still {cid}/{scene}: {ex}")
     return jsonify({"generated": done, "errors": errors, "stills": stills_public()})
+
+
+# ---------------------------------------------------------------------------
+# 動画クリップ（Veo）: clips/{cid}__{scene}__{kind}.mp4  kind = idle（待機ループ）| talk（会話）
+# ---------------------------------------------------------------------------
+
+CLIP_DIR = os.path.join(store.DATA_DIR, "clips")
+os.makedirs(CLIP_DIR, exist_ok=True)
+CLIP_KINDS = ("idle", "talk")
+_VIDEO_EXT = (".mp4", ".webm", ".mov")
+
+
+def clips_public() -> dict:
+    """{character_id: {scene_id: {idle: url, talk: url}}}"""
+    out: dict = {}
+    try:
+        names = os.listdir(CLIP_DIR)
+    except OSError:
+        names = []
+    for f in names:
+        base, ext = os.path.splitext(f)
+        parts = base.split("__")
+        if len(parts) != 3 or ext.lower() not in _VIDEO_EXT:
+            continue
+        cid, scene, kind = parts
+        if cid not in domain.CHARACTER_IDS or scene not in domain.SCENE_IDS or kind not in CLIP_KINDS:
+            continue
+        try:
+            v = int(os.path.getmtime(os.path.join(CLIP_DIR, f)))
+        except OSError:
+            v = 0
+        out.setdefault(cid, {}).setdefault(scene, {})[kind] = f"/clip-videos/{f}?v={v}"
+    return out
+
+
+def _remove_clip(cid: str, scene: str, kind: str) -> None:
+    for f in os.listdir(CLIP_DIR):
+        if os.path.splitext(f)[0] == f"{cid}__{scene}__{kind}":
+            os.remove(os.path.join(CLIP_DIR, f))
+
+
+@app.route("/clip-videos/<path:filename>")
+def clip_video(filename):
+    return send_from_directory(CLIP_DIR, filename, conditional=True)
+
+
+@app.route("/api/clips/<cid>/<scene>/<kind>", methods=["POST", "DELETE"])
+@auth.require_role("admin")
+def clip_upload(cid, scene, kind):
+    if cid not in domain.CHARACTER_IDS or scene not in domain.SCENE_IDS or kind not in CLIP_KINDS:
+        return _bad("unknown clip", 404)
+    _remove_clip(cid, scene, kind)
+    if request.method == "DELETE":
+        return jsonify(clips_public())
+    f = request.files.get("file")
+    if not f:
+        return _bad("動画ファイルを選択してください")
+    ext = os.path.splitext(f.filename or "")[1].lower()
+    if ext not in _VIDEO_EXT:
+        return _bad("動画ファイル（MP4 / WebM）を選択してください")
+    raw = f.read()
+    if len(raw) > 60 * 1024 * 1024:
+        return _bad("動画は60MB以下にしてください")
+    with open(os.path.join(CLIP_DIR, f"{cid}__{scene}__{kind}{ext}"), "wb") as out:
+        out.write(raw)
+    return jsonify(clips_public())
+
+
+def _clip_job(job: dict) -> None:
+    import videogen
+    cid, scene, kind = job["cid"], job["scene"], job["kind"]
+    still = next((f for f in os.listdir(STILL_DIR) if os.path.splitext(f)[0] == f"{cid}__{scene}" and not f.endswith(".json")), None)
+    if not still:
+        raise RuntimeError("先に場面画像（キャラがその場所にいる絵）を作ってください")
+    with open(os.path.join(STILL_DIR, still), "rb") as fh:
+        img = fh.read()
+    sc = next(x for x in domain.SCENES if x["id"] == scene)
+    prompt = job.get("prompt") or (videogen.IDLE_PROMPT.format(place=sc["place"]) if kind == "idle" else videogen.TALK_PROMPT)
+    def tick():
+        job["polls"] = job.get("polls", 0) + 1
+    data = videogen.generate_clip(img, prompt, on_progress=tick)
+    _remove_clip(cid, scene, kind)
+    with open(os.path.join(CLIP_DIR, f"{cid}__{scene}__{kind}.mp4"), "wb") as out:
+        out.write(data)
+
+
+@app.route("/api/clips/<cid>/generate", methods=["POST"])
+@auth.require_role("admin")
+def clip_generate(cid):
+    """動画クリップの生成をキューに入れる。body: {scene, kind, prompt?} または {jobs: [{scene, kind}, ...]}"""
+    import videogen
+    if cid not in domain.CHARACTER_IDS:
+        return _bad("unknown character", 404)
+    if not videogen.status()["available"]:
+        return _bad("動画生成AI（Veo）が利用できません。Vertex AI の設定を確認してください", 503)
+    body = request.json or {}
+    reqs = body.get("jobs") or [{"scene": body.get("scene"), "kind": body.get("kind", "idle"), "prompt": body.get("prompt")}]
+    queued = []
+    for r in reqs:
+        scene, kind = r.get("scene"), r.get("kind", "idle")
+        if scene not in domain.SCENE_IDS or kind not in CLIP_KINDS:
+            continue
+        queued.append(videogen.enqueue(f"{cid}__{scene}__{kind}", {"cid": cid, "scene": scene, "kind": kind, "prompt": r.get("prompt")}, _clip_job))
+    return jsonify({"jobs": queued, "all": videogen.jobs()})
+
+
+@app.route("/api/clips/jobs")
+@auth.require_role("admin")
+def clip_jobs():
+    import videogen
+    return jsonify({"jobs": videogen.jobs(), "clips": clips_public()})
+
+
+@app.route("/api/clips/prompt/<scene>/<kind>")
+@auth.require_role("admin")
+def clip_prompt(scene, kind):
+    import videogen
+    sc = next((x for x in domain.SCENES if x["id"] == scene), None)
+    if not sc or kind not in CLIP_KINDS:
+        return _bad("unknown", 404)
+    return jsonify({"prompt": videogen.IDLE_PROMPT.format(place=sc["place"]) if kind == "idle" else videogen.TALK_PROMPT})
+
+
+# ---------------------------------------------------------------------------
+# キャラの声（Cloud Text-to-Speech、キャッシュ付き）
+# ---------------------------------------------------------------------------
+
+VOICE_DIR = os.path.join(store.DATA_DIR, "voice")
+os.makedirs(VOICE_DIR, exist_ok=True)
+
+
+@app.route("/api/voice", methods=["POST"])
+@auth.require_role("viewer")
+def voice_say():
+    import voice
+    body = request.json or {}
+    text = (body.get("text") or "").strip()
+    cid = body.get("cid")
+    c = next((x for x in domain.CHARACTERS if x["id"] == cid), None)
+    if not text or not c:
+        return _bad("text / cid が必要です")
+    v = c.get("voice") or {}
+    key = voice.cache_key(text, v)
+    path = os.path.join(VOICE_DIR, key + ".mp3")
+    if not os.path.exists(path):
+        try:
+            data = voice.synthesize(text, v)
+        except Exception as e:  # noqa: BLE001
+            return jsonify({"fallback": True, "error": str(e)})  # ブラウザ読み上げに切り替える（エラーにはしない）
+        with open(path, "wb") as out:
+            out.write(data)
+    return send_from_directory(VOICE_DIR, key + ".mp3", conditional=True)
 
 
 def reprocess_character_images() -> int:

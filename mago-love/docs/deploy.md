@@ -71,3 +71,10 @@ export CRON_TOKEN=$(openssl rand -hex 24)
 ## Google ログイン
 [docs/google-login-setup.md](../../docs/google-login-setup.md) の手順で OAuth クライアントID（ウェブ）を作成し、`GOOGLE_CLIENT_ID` に設定します。
 Drive Picker / フォルダ作成も同じクライアントIDを使います（Google Cloud Console で **Google Picker API** と **Google Drive API** を有効化し、APIキーを作成して設定画面に入力）。
+
+
+## 画像・動画・音声の生成に使う API
+- 画像（表情・背景・場面画像）: Vertex AI（`aiplatform.googleapis.com`）。実行サービスアカウントに `roles/aiplatform.user`
+- 動画（待機ループ・会話クリップ）: 同じ Vertex AI の Veo（環境変数 `VIDEO_MODEL`、既定 `veo-3.0-fast-generate-001`。`VIDEO_SECONDS` で秒数）。1本 1〜3 分かかるためサーバー側でキューにして順番に実行し、設定画面が 5 秒ごとに進捗を取得します
+- 声: Cloud Text-to-Speech（`texttospeech.googleapis.com`）。setup-cloudshell.sh が有効化します。無料枠内で十分。使えない場合はブラウザ読み上げに自動で切り替わります
+- Cloud Run のリクエストタイムアウトは 300 秒に設定しています（setup-cloudshell.sh）

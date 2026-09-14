@@ -796,7 +796,17 @@ body[data-scene="settings"] .world-bg { background: radial-gradient(1000px 600px
 .hub.photo .hub-actor img.talk { animation: talkBob .35s ease-in-out 3, actorIdle 3.8s ease-in-out infinite 1.1s; }
 .hub.photo .hub-actor .emoji { font-size: 120px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
 @keyframes actorIdle { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-1.2%) rotate(-.6deg); } }
-.hub.zoomed .stage .still { filter: blur(4px) brightness(.55) saturate(.9); }
+/* 動画レイヤー（待機ループ 2枚 + 会話クリップ 1枚）。静止画の上に重ね、クロスフェードで切り替える */
+.hub.photo .stage video.clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; opacity: 0; transition: opacity .9s ease-in-out, filter .9s ease; pointer-events: none; background: transparent; }
+.hub.photo .stage video.clip.on { opacity: 1; }
+.hub.photo .stage video.clip.talk { z-index: 2; }
+.hub.video .breath { opacity: 0; }
+.hub.zoomed .stage .still, .hub.zoomed .stage video.clip.idle { filter: blur(4px) brightness(.55) saturate(.9); }
+.hub.zoomed.talking-clip .stage .still, .hub.zoomed.talking-clip .stage video.clip.idle { filter: blur(2px) brightness(.8); }
+.hub-sound { display: flex; gap: 6px; margin-top: 2px; }
+.hub-sound .snd { padding: 4px 10px; border-radius: 999px; background: rgba(6,9,22,.55); border: 1px solid var(--line); color: var(--sub); font-size: 11.5px; font-weight: 700; cursor: pointer; backdrop-filter: blur(6px); }
+.hub-sound .snd.on { color: var(--gold-2); border-color: rgba(233,196,106,.5); }
+.hub-sound .snd:hover { border-color: var(--gold); }
 .hub.zoomed .breath, .hub.zoomed .motes { opacity: 0; }
 .hub.zoomed .focus-hit { display: none; }
 .hub.zoomed .hub-layer { opacity: 0; pointer-events: none; }
@@ -849,6 +859,16 @@ body[data-scene="settings"] .world-bg { background: radial-gradient(1000px 600px
 .still-tabs button.on { border-color: var(--gold); color: var(--gold-2); box-shadow: var(--glow-gold); }
 .still-tabs button img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: 50% 0; }
 .asset .thumb.wide { height: 132px; position: relative; }
+.clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.clip { border-radius: 12px; background: rgba(255,255,255,.03); padding: 10px 12px; }
+.clip .kinds { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.clip .kind { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.clip .kind .st { min-width: 64px; font-size: 11px; font-weight: 700; }
+.clip .kind .st.ok { color: var(--ok); } .clip .kind .st.run { color: var(--gold-2); animation: blink 1.4s infinite; } .clip .kind .st.err { color: var(--danger); }
+.clip .kind .btns { margin-left: auto; display: flex; gap: 4px; }
+.clip .kind .btns button { font-size: 11px; padding: 2px 7px; border-radius: 7px; border: 1px solid var(--line); color: var(--ink-2); }
+.clip .kind .btns button:hover { border-color: var(--gold); color: var(--gold-2); }
+.clip video { width: 100%; border-radius: 8px; margin-top: 6px; background: #000; }
 .asset .thumb .focus-box { position: absolute; border: 1.5px solid var(--gold); border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 10px rgba(233,196,106,.5); pointer-events: none; }
 .asset .thumb .focus-none { position: absolute; right: 6px; bottom: 6px; font-size: 10px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.6); color: #fca5a5; }
 .asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }

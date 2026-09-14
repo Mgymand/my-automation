@@ -163,7 +163,7 @@ async function showView(v) {
   const el = $('#view'); el.className = 'view' + (v === 'map' ? ' view-map' : '') + (v === 'dashboard' ? ' view-hub' : ''); el.innerHTML = '';
   applyScene(v);
   if (v !== 'map' && S.map) { S.map.remove(); S.map = null; }
-  if (v !== 'dashboard') stopIdle();
+  if (v !== 'dashboard') { stopIdle(); ambStop(); }
   try { await VIEWS[v][1](el); } catch (e) { err(e); }
   if (S.boot && S.boot.my_character) { renderPartner(); if (v === 'dashboard') setTimeout(partnerGreet, 300); }
 }
@@ -206,23 +206,27 @@ function bindParallax(root) {
 const stillsOf = (cid) => ((S.boot.stills || {})[cid] || {});
 const stillUrl = (cid, sc) => (stillsOf(cid)[sc] || {}).url;
 const stillFocus = (cid, sc) => (stillsOf(cid)[sc] || {}).focus;
+const clipsOf = (cid) => ((S.boot.clips || {})[cid] || {});
+const clipUrl = (cid, sc, kind) => (clipsOf(cid)[sc] || {})[kind];
 const LINES_AT = { hall: null, map: '地図の机だよ。次はどのエリアを攻める？', board: '掲示板をチェック。止まってる案件はない？', list: '図鑑の整理中。物件の記録は全部ここにあるんだ。', schedule: '暦を見てるよ。期限が近い予定、忘れてない？', import: '倉庫に新しい資料は届いてる？マイソクはここから搬入だよ。', pois: '街の様子を見てるよ。病院や役所、ケアマネ事業所の場所は大事だね。', stats: '観測所から街を眺めてる。人口の多い街は入居者も集まりやすいよ。', journal: '日誌を読み返してるよ。最近の動きを振り返ろう。', settings: '受付で連絡事項を確認中。Slack通知はもう設定した？' };
+const pref = (k, d) => { try { const v = localStorage.getItem('mago.' + k); return v === null ? d : v === '1'; } catch { return d; } };
+const setPref = (k, v) => { try { localStorage.setItem('mago.' + k, v ? '1' : '0'); } catch {} };
 async function renderHub(el) {
   const d = await api('GET', '/api/dashboard');
   await refreshProps(); if (!S.pois.length) { try { await refreshPois(); } catch {} }
   const me_ = S.boot.me, pr = S.boot.progress, c = myChar(), a = S.boot.assets || {};
   const hour = new Date().getHours(); const greet = hour < 11 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'おつかれさまです';
   const todays = [...d.overdue, ...d.upcoming].slice(0, 4); const cnt = sceneCounts();
-  const photo = !!a.hall; // ホール画像があれば「写真の中にいる」モード（場面ごとの静止画 + カメラ寄り）
+  const photo = !!a.hall; // ホール画像があれば「その場所にいる」モード（場面の静止画 / 動画ループ + カメラ寄り）
   const first = stillUrl(c.id, 'hall') || a.hall;
+  if (S.voiceOn === undefined) S.voiceOn = pref('voice', true); if (S.ambOn === undefined) S.ambOn = pref('amb', true);
   const hotspots = S.boot.scenes.filter(sc => sc.id !== 'hall').map((sc, i) => { const cn = cnt[sc.id]; const pos = photo && sc.photo ? sc.photo : { x: sc.x, y: sc.y }; return `<div class="hotspot" style="left:${pos.x}%;top:${pos.y}%;--depth:${8 + (i % 4) * 5}" data-view="${sc.view}" data-scene="${sc.id}"><div class="obj">${sc.icon}${cn && cn.n ? `<span class="cnt ${cn.warn ? 'warn' : ''}">${cn.n}</span>` : ''}</div><div class="lbl">${esc(sc.label)}</div><div class="tag">${esc(sc.tagline)}</div></div>`; }).join('');
-  // 仲間は持ち場に「顔チップ」で立つ。クリックで話しかける（カメラが寄り、正面を向いて話す）
   const npcs = photo ? S.boot.characters.filter(x => x.id !== c.id && x.post).map(x => { const sc = S.boot.scenes.find(y => y.id === x.post); if (!sc || !sc.npc) return ''; const f = stillFocus(x.id, x.post); const pos = f ? { x: f.x + f.w / 2, y: f.y - 4 } : sc.npc; const img = charImage(x, 'normal'); return `<button class="npc-chip" data-npc="${x.id}" style="left:${pos.x}%;top:${pos.y}%;--c:${x.color}" title="${esc(x.name)}に話しかける">${img ? `<img src="${esc(img)}" alt="">` : `<span>${x.emoji}</span>`}<b>${esc(x.name)}</b></button>`; }).join('') : '';
   const heroImg = c.image ? `<img data-expr-img src="${esc(charImage(c, 'normal'))}" alt="${esc(c.name)}">` : `<div class="emoji" data-expr-img>${c.emoji}</div>`;
   const motes = photo ? Array.from({ length: 14 }, (_, i) => `<i style="left:${(i * 37 + 11) % 100}%;top:${(i * 53 + 20) % 90}%;animation-delay:${-(i * 1.7) % 12}s;animation-duration:${9 + (i % 5) * 2}s"></i>`).join('') : '';
   el.innerHTML = `<div class="hub ${photo ? 'photo' : ''}" id="hub">
     ${photo ? `<div class="hub-bg blur" id="hub-blur" style="background-image:url('${first}')"></div>
-    <div class="stage" id="stage"><div class="still on" style="background-image:url('${first}')"></div><div class="still"></div><div class="breath" id="breath"></div><div class="motes">${motes}</div><div class="focus-hit" id="focus-hit" hidden><span class="talk-tag">💬 話す</span></div><div class="hub-actor" id="actor" hidden></div></div>
+    <div class="stage" id="stage"><div class="still on" style="background-image:url('${first}')"></div><div class="still"></div><video class="clip idle" muted playsinline preload="auto"></video><video class="clip idle" muted playsinline preload="auto"></video><video class="clip talk" muted playsinline preload="auto"></video><div class="breath" id="breath"></div><div class="motes">${motes}</div><div class="focus-hit" id="focus-hit" hidden><span class="talk-tag">💬 話す</span></div><div class="hub-actor" id="actor" hidden></div></div>
     <div class="hub-layer" id="hub-layer">${hotspots}${npcs}</div>` : `<div class="hub-bg css"></div>
     <div class="hub-rays"></div><div class="hub-vignette"></div>
     <div class="hub-layer" id="hub-layer">${hotspots}</div>
@@ -233,6 +237,7 @@ async function renderHub(el) {
       <div class="hub-sub">進行中 ${cnt.board.n} 件 ・ 開業済み ${d.by_status.opened || 0} 件 ・ 期限超過 ${d.overdue.length} 件 ・ ${photo ? '仲間や部屋の中の物をクリック' : '行き先をクリックして移動'}</div>
       <div class="hud-level"><div class="lv"><small>LEVEL</small>${pr.level}</div><div class="body"><div class="title">${esc(pr.title)}</div><div class="progress"><i style="width:${Math.round(pr.xp_in_level / pr.xp_next * 100)}%"></i></div><div class="xp">${pr.xp_in_level} / ${pr.xp_next} XP ・ 累計 ${pr.xp} XP</div></div><button class="btn btn-xs" id="btn-char">パートナー</button></div>
       <div class="hub-quests">${todays.map(e => `<span class="q ${e.date < today() ? 'over' : ''}" data-open="${e.prop_id}">${e.date < today() ? '⚠' : '◆'} ${fmtDate(e.date).slice(5)} ${esc(e.label)}</span>`).join('')}</div>
+      <div class="hub-sound"><button class="snd ${S.voiceOn ? 'on' : ''}" id="snd-voice" title="キャラの声">${S.voiceOn ? '🔊' : '🔇'} 声</button><button class="snd ${S.ambOn ? 'on' : ''}" id="snd-amb" title="環境音">${S.ambOn ? '🎵' : '🎵'} 環境音${S.ambOn ? '' : ' OFF'}</button></div>
     </div>
     <div class="hub-dialog"><div class="rpg-box ${photo ? 'with-portrait' : ''}">${photo ? `<div class="hub-portrait" id="hub-portrait" style="--c:${c.color}">${heroImg}</div>` : ''}<div class="rpg-body"><span class="nameplate" id="hero-name">${esc(c.name)}</span><span id="hero-text"></span><span class="cursor">▼</span><div class="rpg-actions" id="hero-actions"><button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button></div></div></div></div>
     <div class="hub-hint">${photo ? 'CLICK A FRIEND TO TALK ・ CLICK AN OBJECT TO TRAVEL' : 'CLICK A PLACE TO TRAVEL'}</div>
@@ -243,13 +248,16 @@ async function renderHub(el) {
   $$('[data-go]', el).forEach(x => x.onclick = () => location.hash = x.dataset.go);
   $('#btn-char').onclick = () => chooseCharacter(false);
   $('#hero-next').onclick = () => { if (!$('#hub').classList.contains('zoomed')) speakerReset(); partnerNext(); };
+  $('#snd-voice').onclick = () => { S.voiceOn = !S.voiceOn; setPref('voice', S.voiceOn); if (!S.voiceOn) stopVoice(); $('#snd-voice').className = 'snd ' + (S.voiceOn ? 'on' : ''); $('#snd-voice').textContent = (S.voiceOn ? '🔊' : '🔇') + ' 声'; };
+  $('#snd-amb').onclick = () => { S.ambOn = !S.ambOn; setPref('amb', S.ambOn); S.ambOn ? ambStart() : ambStop(); $('#snd-amb').className = 'snd ' + (S.ambOn ? 'on' : ''); $('#snd-amb').textContent = '🎵 環境音' + (S.ambOn ? '' : ' OFF'); };
   bindParallax($('#hub', el));
   if (photo) {
-    _stillCur = ''; showStill(first, stillFocus(c.id, 'hall'), { cid: c.id, scene: 'hall' });
+    _stillCur = ''; showScene(c.id, 'hall');
     $('#focus-hit').onclick = (e) => { e.stopPropagation(); talkTo(_stillKey.cid, _stillKey.scene); };
     $('#stage').onclick = () => { if ($('#hub').classList.contains('zoomed')) cameraBack(); };
     fitStage(); window.addEventListener('resize', fitStage); startIdle();
   }
+  document.body.addEventListener('pointerdown', ambStart, { once: true });
 }
 // ---- 写真の中のステージ（16:9 を保ってピンの位置がずれないようにする）
 function fitStage() {
@@ -260,9 +268,14 @@ function fitStage() {
   const v = { left: (W - w) / 2 + 'px', top: (H - h) / 2 + 'px', width: w + 'px', height: h + 'px' };
   [st, layer].forEach(x => geo(x, v));
 }
-// ---- 場面画像をゆっくりクロスフェードで切り替える。焦点（キャラのいる範囲）には「呼吸」と話しかけ用の当たり判定を置く
-let _stillCur = '', _stillKey = { cid: '', scene: 'hall' };
+// ---- 場面の切り替え: 動画ループがあれば動画、無ければ静止画をクロスフェード。焦点には「呼吸」と話しかけ用の当たり判定
+let _stillCur = '', _stillKey = { cid: '', scene: 'hall' }, _idleClip = '';
 const FALLBACK_FOCUS = { x: 40, y: 40, w: 12, h: 40 };
+function showScene(cid, scene) {
+  const url = stillUrl(cid, scene) || (scene !== 'hall' && stillUrl(cid, 'hall')) || (S.boot.assets || {}).hall; if (!url) return;
+  showStill(url, stillFocus(cid, scene), { cid, scene });
+  playIdle(clipUrl(cid, scene, 'idle'));
+}
 function showStill(url, focus, key) {
   const st = $('#stage'); if (!st || !url) return;
   if (key) _stillKey = key;
@@ -281,7 +294,17 @@ function showStill(url, focus, key) {
     hit.style.left = `${focus.x - 2}%`; hit.style.top = `${focus.y - 3}%`; hit.style.width = `${focus.w + 4}%`; hit.style.height = `${focus.h + 4}%`; hit.hidden = false;
   } else { br.hidden = true; hit.hidden = true; }
 }
-// ---- カメラ寄り（モンハン風）: 焦点へズームして背景をぼかし、キャラが正面を向いて話す
+// 待機ループ動画: 2枚の <video> を交互に使い、終わり際に次を重ねてクロスフェード（つなぎ目を目立たせない）
+function playIdle(url) {
+  const st = $('#stage'); if (!st) return; const vids = $$('video.clip.idle', st); const hub = $('#hub');
+  if (!url) { _idleClip = ''; vids.forEach(v => { v.classList.remove('on'); v.pause(); v.removeAttribute('src'); v.load(); }); hub.classList.remove('video'); return; }
+  if (url === _idleClip) return; _idleClip = url; hub.classList.add('video');
+  const [a, b] = vids; let cur = a, nxt = b;
+  vids.forEach(v => { v.onended = null; v.ontimeupdate = null; v.classList.remove('on'); });
+  const arm = (v, other) => { v.ontimeupdate = () => { if (v.duration && v.currentTime > v.duration - 1.0 && !other.classList.contains('on')) { other.src = url; other.currentTime = 0; other.play().catch(() => {}); other.classList.add('on'); setTimeout(() => { v.classList.remove('on'); v.pause(); }, 900); arm(other, v); v.ontimeupdate = null; } }; };
+  cur.src = url; cur.currentTime = 0; cur.play().catch(() => {}); cur.classList.add('on'); arm(cur, nxt);
+}
+// ---- カメラ寄り（モンハン風）: 焦点へズームして背景をぼかし、キャラが正面を向いて話す。会話クリップがあればそれを再生
 function zoomTo(focus, scale) {
   const st = $('#stage'); if (!st) return;
   const f = focus || FALLBACK_FOCUS; const s = scale || Math.min(2.6, Math.max(1.4, 66 / Math.max(f.h * 1.12, 12)));
@@ -298,12 +321,18 @@ function talkTo(cid, scene) {
   const ch = S.boot.characters.find(x => x.id === cid); const hub = $('#hub'); if (!ch || !hub) return;
   const me = myChar(); const sc = scene || (ch.id === me.id ? _stillKey.scene : ch.post) || 'hall';
   const url = stillUrl(ch.id, sc); const focus = stillFocus(ch.id, sc) || (ch.id !== me.id ? npcFallbackFocus(ch) : stillFocus(me.id, _stillKey.scene)) || FALLBACK_FOCUS;
-  if (url) showStill(url, focus, { cid: ch.id, scene: sc });
-  speakerSet(ch); setActor(ch, focus);
-  hub.classList.add('zoomed'); zoomTo(focus);
-  const actor = $('#actor'); actor.hidden = false; requestAnimationFrame(() => actor.classList.add('in'));
-  const kind = ch.id === me.id ? 'greet' : 'greet';
-  setTimeout(() => { const line = ch.id === me.id ? pick(me.lines.greet) : pick(ch.lines.greet) + (ch.post ? ` ${(S.boot.scenes.find(x => x.id === ch.post) || {}).label || ''}のことなら任せて。` : ''); partnerSay(line, { expr: pickExprFor(ch, kind) }); }, 420);
+  if (url) { showStill(url, focus, { cid: ch.id, scene: sc }); playIdle(clipUrl(ch.id, sc, 'idle')); }
+  speakerSet(ch);
+  const talk = clipUrl(ch.id, sc, 'talk'); const tv = $('video.clip.talk');
+  hub.classList.add('zoomed'); hub.classList.toggle('talking-clip', !!talk);
+  if (talk && tv) { // 会話クリップ: カメラは軽く寄るだけ（動画の中でキャラが振り向いて話す）
+    tv.src = talk; tv.currentTime = 0; tv.play().catch(() => {}); tv.classList.add('on'); tv.onended = () => { tv.classList.add('hold'); };
+    zoomTo(focus, 1.18);
+  } else { // クリップが無ければ、正面向きの立ち絵が立ち上がる
+    setActor(ch, focus); zoomTo(focus);
+    const actor = $('#actor'); actor.hidden = false; requestAnimationFrame(() => actor.classList.add('in'));
+  }
+  setTimeout(() => { const line = ch.id === me.id ? pick(me.lines.greet) : pick(ch.lines.greet) + (ch.post ? ` ${(S.boot.scenes.find(x => x.id === ch.post) || {}).label || ''}のことなら任せて。` : ''); partnerSay(line, { expr: pickExprFor(ch, 'greet') }); }, talk ? 900 : 420);
   const act = $('#hero-actions'); const post = ch.id !== me.id && S.boot.scenes.find(x => x.id === ch.post);
   act.innerHTML = `${post ? `<button id="npc-go">➜ ${esc(ch.name)}と${esc(post.label)}へ</button>` : ''}<button id="hero-next">次のセリフ</button><button id="cam-back">◀ 戻る</button>`;
   if (post) $('#npc-go').onclick = () => goScene(post.id, post.view);
@@ -313,26 +342,28 @@ function talkTo(cid, scene) {
 function npcFallbackFocus(ch) { const sc = S.boot.scenes.find(x => x.id === ch.post); if (!sc || !sc.npc) return null; return { x: sc.npc.x - 5, y: sc.npc.y - 6, w: 10, h: 34 }; }
 function pickExprFor(ch, kind) { const cands = (EXPR_FOR[kind] || ['normal']).filter(k => k === 'normal' || (ch.expressions && ch.expressions[k])); return cands[0] || 'normal'; }
 function cameraBack() {
-  const hub = $('#hub'), st = $('#stage'), actor = $('#actor'); if (!hub) return;
-  hub.classList.remove('zoomed'); if (st) st.style.transform = ''; if (actor) { actor.classList.remove('in'); setTimeout(() => { actor.hidden = true; }, 500); }
-  speakerReset();
+  const hub = $('#hub'), st = $('#stage'), actor = $('#actor'), tv = $('video.clip.talk'); if (!hub) return;
+  hub.classList.remove('zoomed', 'talking-clip'); if (st) st.style.transform = '';
+  if (actor) { actor.classList.remove('in'); setTimeout(() => { actor.hidden = true; }, 500); }
+  if (tv) { tv.classList.remove('on', 'hold'); setTimeout(() => { tv.pause(); }, 900); }
+  stopVoice(); speakerReset();
 }
 function speakerSet(ch) { _speaker = ch; const np = $('#hero-name'); if (np) np.textContent = ch.name; const po = $('#hub-portrait'); if (po) { po.style.setProperty('--c', ch.color); const img = charImage(ch, 'normal'); po.innerHTML = img ? `<img data-expr-img src="${esc(img)}" alt="">` : `<div class="emoji" data-expr-img>${ch.emoji}</div>`; } }
 function speakerReset() {
-  const me = myChar(); speakerSet(me); const u = stillUrl(me.id, 'hall') || (S.boot.assets || {}).hall; if (u) showStill(u, stillFocus(me.id, 'hall'), { cid: me.id, scene: 'hall' });
-  const act = $('#hero-actions'); if (act && !$('#hero-next', act) || (act && $('#cam-back', act))) { act.innerHTML = `<button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button>`; $('#hero-next').onclick = () => { speakerReset(); partnerNext(); }; $$('[data-go]', act).forEach(x => x.onclick = () => location.hash = x.dataset.go); }
+  const me = myChar(); speakerSet(me); showScene(me.id, 'hall');
+  const act = $('#hero-actions'); if (act && (!$('#hero-next', act) || $('#cam-back', act))) { act.innerHTML = `<button id="hero-next">次のセリフ</button><button data-go="#/journal">📯 ギルド日誌を見る</button>`; $('#hero-next').onclick = () => { speakerReset(); partnerNext(); }; $$('[data-go]', act).forEach(x => x.onclick = () => location.hash = x.dataset.go); }
 }
 function goScene(sceneId, view) {
   const sc = S.boot.scenes.find(x => x.id === sceneId); const hub = $('#hub'); const photo = hub && hub.classList.contains('photo');
   const go = () => { if (hub) hub.classList.add('leaving'); setTimeout(() => location.hash = '#/' + view, 420); };
   if (!photo || !sc) { go(); return; }
   const me = myChar(); const url = stillUrl(me.id, sc.id); const focus = stillFocus(me.id, sc.id);
-  hub.classList.remove('zoomed'); const actor = $('#actor'); if (actor) { actor.classList.remove('in'); actor.hidden = true; }
+  hub.classList.remove('zoomed', 'talking-clip'); const actor = $('#actor'); if (actor) { actor.classList.remove('in'); actor.hidden = true; } const tv = $('video.clip.talk'); if (tv) tv.classList.remove('on', 'hold');
   speakerSet(me); partnerSay(LINES_AT[sc.id] || `${sc.label}へ行こう！`, { expr: pickExpr('idle') });
-  if (url) { showStill(url, focus, { cid: me.id, scene: sc.id }); setTimeout(() => zoomTo(focus || { x: sc.photo.x - 6, y: sc.photo.y - 8, w: 12, h: 20 }, 1.4), 250); setTimeout(go, 1500); }
+  if (url) { showScene(me.id, sc.id); setTimeout(() => zoomTo(focus || { x: sc.photo.x - 6, y: sc.photo.y - 8, w: 12, h: 20 }, 1.4), 250); setTimeout(go, 1500); }
   else { zoomTo({ x: sc.photo.x - 6, y: sc.photo.y - 8, w: 12, h: 20 }, 1.35); setTimeout(go, 600); }
 }
-// ---- 放置中: 数十秒ごとに別の場面画像へゆっくり切り替わり、独り言を言う
+// ---- 放置中: 数十秒ごとに別の場面へゆっくり切り替わり、独り言を言う
 let _idle = null;
 function startIdle() {
   clearInterval(_idle);
@@ -340,10 +371,43 @@ function startIdle() {
     const hub = $('#hub'); if (S.view !== 'dashboard' || document.hidden || !$('#stage') || !hub || hub.classList.contains('zoomed')) return;
     const me = myChar(); const st = stillsOf(me.id); const keys = Object.keys(st).filter(k => k !== 'hall' && st[k].url !== _stillCur);
     if (!keys.length || Math.random() < .3) { speakerReset(); partnerSay(pick(me.lines.idle), { expr: pickExpr('idle') }); return; }
-    const k = pick(keys); speakerSet(me); showStill(st[k].url, st[k].focus, { cid: me.id, scene: k }); partnerSay(LINES_AT[k] || '', { expr: pickExpr('idle') });
+    const k = pick(keys); speakerSet(me); showScene(me.id, k); partnerSay(LINES_AT[k] || '', { expr: pickExpr('idle') });
   }, 40000);
 }
-function stopIdle() { clearInterval(_idle); _idle = null; window.removeEventListener('resize', fitStage); _stillCur = ''; }
+function stopIdle() { clearInterval(_idle); _idle = null; window.removeEventListener('resize', fitStage); _stillCur = ''; _idleClip = ''; stopVoice(); }
+// ---- 声: Cloud Text-to-Speech（サーバー）→ 失敗時はブラウザ読み上げ
+let _voiceAudio = null, _voiceSeq = 0;
+function stopVoice() { if (_voiceAudio) { _voiceAudio.pause(); _voiceAudio = null; } try { speechSynthesis.cancel(); } catch {} }
+async function speak(ch, text) {
+  if (!S.voiceOn || !text || S.view !== 'dashboard') return; stopVoice(); const seq = ++_voiceSeq;
+  try {
+    const r = await fetch('/api/voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cid: ch.id, text }) });
+    if (!r.ok || (r.headers.get('content-type') || '').includes('json')) throw new Error('tts');
+    const blob = await r.blob(); if (seq !== _voiceSeq) return;
+    _voiceAudio = new Audio(URL.createObjectURL(blob)); _voiceAudio.volume = .95; await _voiceAudio.play();
+  } catch {
+    if (seq !== _voiceSeq || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'ja-JP'; const v = (ch.voice || {}); u.pitch = Math.min(2, Math.max(.5, 1 + (v.pitch || 0) * .08)); u.rate = v.rate || 1;
+    const ja = speechSynthesis.getVoices().find(x => x.lang && x.lang.startsWith('ja')); if (ja) u.voice = ja;
+    speechSynthesis.speak(u);
+  }
+}
+// ---- 環境音: アップロードした音源をループ再生。無ければ WebAudio で暖炉のパチパチ音を合成
+let _amb = null, _ambCtx = null;
+function ambStart() {
+  if (!S.ambOn || S.view !== 'dashboard' || _amb || _ambCtx) return;
+  const url = (S.boot.assets || {}).ambience;
+  if (url) { _amb = new Audio(url); _amb.loop = true; _amb.volume = .3; _amb.play().catch(() => { _amb = null; }); return; }
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)(); _ambCtx = ctx;
+    const master = ctx.createGain(); master.gain.value = .12; master.connect(ctx.destination);
+    const noise = (len) => { const buf = ctx.createBuffer(1, ctx.sampleRate * len, ctx.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; return src; };
+    const bed = noise(4); const bp = ctx.createBiquadFilter(); bp.type = 'lowpass'; bp.frequency.value = 320; const bg = ctx.createGain(); bg.gain.value = .35; bed.connect(bp); bp.connect(bg); bg.connect(master); bed.start();
+    const crackle = () => { if (!_ambCtx) return; const s = noise(.25); const hp = ctx.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 1800 + Math.random() * 2500; hp.Q.value = 1.2; const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(.5 + Math.random() * .6, ctx.currentTime + .01); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .05 + Math.random() * .12); s.connect(hp); hp.connect(g); g.connect(master); s.start(); s.stop(ctx.currentTime + .3); setTimeout(crackle, 80 + Math.random() * 420); };
+    crackle();
+  } catch { _ambCtx = null; }
+}
+function ambStop() { if (_amb) { _amb.pause(); _amb = null; } if (_ambCtx) { try { _ambCtx.close(); } catch {} _ambCtx = null; } }
 
 // ================================================================ ギルド日誌（進捗・最近の動き）
 async function renderDashboard(el) {
@@ -1085,6 +1149,17 @@ async function renderSettings(el) {
         <div class="flex mt12"><button class="btn btn-gold btn-sm" data-sgenall="${cid}" ${ch.image && (S.boot.assets || {}).hall ? '' : 'disabled'}>✨ ${esc(ch.name)}の全場面を生成（${S.boot.scenes.length}枚 ・ 数分）</button><span class="small muted">${n} / ${S.boot.scenes.length} 枚あり ${ch.image ? '' : '・ 先にキャラの元画像をアップロード'}</span></div>
         <div class="asset-grid mt12">${S.boot.scenes.map(sc => { const it = st[sc.id] || {}; const url = it.url; const f = it.focus; return `<div class="asset"><div class="thumb wide ${url ? 'has' : ''}" data-sdrop="${cid}|${sc.id}" style="${url ? `background-image:url('${url}')` : ''}">${url ? (f ? `<span class="focus-box" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;height:${f.h}%" title="話しかけたときにカメラが寄る範囲"></span>` : '<span class="focus-none">焦点なし</span>') : sc.icon + ' 画像をドロップ / クリック'}</div><input type="file" accept="image/*" data-sfile="${cid}|${sc.id}" hidden><div class="info"><b>${sc.icon} ${esc(sc.label)}</b><small>${esc(sc.place)}</small><div class="btns"><button data-sgen="${cid}|${sc.id}" ${ch.image && (S.boot.assets || {}).hall ? '' : 'disabled'}>✨ 生成</button><button data-sprompt="${cid}|${sc.id}">📋 プロンプト</button>${url ? `<button data-sfocus="${cid}|${sc.id}" title="キャラ位置を検出し直す">🎯 焦点</button><button data-sdel="${cid}|${sc.id}">✕ 削除</button>` : ''}</div></div></div>`; }).join('')}</div>`; })()}
       </div></div>
+      <div class="card"><div class="card-head"><div class="card-title">🎬 動画クリップ（本当に生きているホール）</div><span class="muted small">場面画像を最初のフレームにして、Veo で数秒の動画を作る</span></div><div class="card-body">
+        <p class="small muted">各場面について <b>待機ループ</b>（その場で呼吸し、視線を動かし、ろうそくの光が揺れる）と <b>会話クリップ</b>（カメラが寄り、キャラが振り向いて話しかけてくる）を生成します。ホールでは待機ループが流れ続け、話しかけると会話クリップに切り替わります。1本（${S.boot.video_seconds || 8}秒）あたり百数十円〜数百円程度、1〜3分かかります。<span id="video-status"></span></p>
+        ${(() => { const cid = S.stillTab || myChar().id; const ch = S.boot.characters.find(x => x.id === cid); const st = stillsOf(cid); const cl = clipsOf(cid); const jobs = S.clipJobs || []; const jobOf = (sc, k) => jobs.find(j => j.id === `${cid}__${sc}__${k}`); const label = (sc, k) => { const j = jobOf(sc, k); const u = (cl[sc] || {})[k]; if (j && (j.status === 'queued' || j.status === 'running')) return `<span class="st run">${j.status === 'queued' ? '待機中' : '生成中…'}</span>`; if (j && j.status === 'error') return `<span class="st err" title="${esc(j.error || '')}">失敗</span>`; return u ? '<span class="st ok">あり</span>' : '<span class="st muted">なし</span>'; }; return `
+        <div class="flex mt8 flex-wrap"><span class="small">対象: <b>${esc(ch.name)}</b>（上の人物タブで切替）</span><span class="grow"></span><button class="btn btn-gold btn-sm" data-cgenall="${cid}|idle" ${Object.keys(st).length ? '' : 'disabled'}>✨ 待機ループを全部生成（${Object.keys(st).length}本）</button><button class="btn btn-sm" data-cgenall="${cid}|talk" ${Object.keys(st).length ? '' : 'disabled'}>✨ 会話クリップを全部生成（${Object.keys(st).length}本）</button></div>
+        <div class="clip-grid mt12">${S.boot.scenes.map(sc => { const has = !!st[sc.id]; const c2 = cl[sc.id] || {}; return `<div class="clip"><b>${sc.icon} ${esc(sc.label)}</b> ${has ? '' : '<span class="small muted">（先に場面画像を作成）</span>'}<div class="kinds">${['idle', 'talk'].map(k => `<div class="kind"><span>${k === 'idle' ? '🌀 待機ループ' : '💬 会話'}</span>${label(sc.id, k)}<span class="btns"><button data-cgen="${cid}|${sc.id}|${k}" ${has ? '' : 'disabled'}>✨ 生成</button><button data-cup="${cid}|${sc.id}|${k}" title="動画を手動でアップロード">📁</button><button data-cprompt="${sc.id}|${k}" title="Veo / 他の動画AI用の指示文">📋</button>${c2[k] ? `<button data-cdel="${cid}|${sc.id}|${k}">✕</button>` : ''}</span><input type="file" accept="video/mp4,video/webm" data-cupin="${cid}|${sc.id}|${k}" hidden></div>`).join('')}</div>${c2.idle ? `<video src="${esc(c2.idle)}" muted loop playsinline controls preload="metadata"></video>` : ''}</div>`; }).join('')}</div>`; })()}
+      </div></div>
+      <div class="card"><div class="card-head"><div class="card-title">🔈 声と環境音</div><span class="muted small">セリフを声で読み上げ、ホールに環境音を流す</span></div><div class="card-body">
+        <p class="small muted">セリフは Google Cloud Text-to-Speech（日本語の自然な声・無料枠で十分）で読み上げます。利用できない場合はブラウザの読み上げ機能で代用します。<span id="voice-status"></span></p>
+        <div class="flex mt8 flex-wrap">${S.boot.characters.map(x => `<button class="btn btn-sm" data-vtest="${x.id}">▶ ${esc(x.name)}の声を試す</button>`).join('')}</div>
+        <div class="asset-grid mt12">${S.boot.audio_assets.map(x => { const url = (S.boot.assets || {})[x.id]; return `<div class="asset"><div class="thumb ${url ? 'has' : ''}" data-adrop="${x.id}" style="height:70px">${url ? '🎵 設定済み（クリックで差し替え）' : '🎵 音声ファイルをドロップ / クリック'}</div><input type="file" accept="audio/*" data-afile="${x.id}" hidden><div class="info"><b>${esc(x.label)}</b><small>${esc(x.size)}</small><div class="btns">${url ? `<button data-adel="${x.id}">✕ 削除</button>` : ''}</div>${url ? `<audio src="${esc(url)}" controls preload="none" style="width:100%;margin-top:6px"></audio>` : '<div class="small muted mt8">未設定のときは、暖炉のパチパチ音を自動で合成して流します。</div>'}</div></div>`; }).join('')}</div>
+      </div></div>
       <div class="card"><div class="card-head"><div class="card-title">ℹ️ 環境</div></div><div class="card-body"><dl class="kv"><dt>Googleログイン</dt><dd>${S.boot.settings.google_login ? '<span class="badge badge-ok">有効</span>' : '<span class="badge badge-warn">開発モード</span>'}</dd><dt>AI構造化</dt><dd>${S.boot.settings.llm_enabled ? '<span class="badge badge-ok">有効</span>' : '<span class="badge">無効（正規表現抽出）</span>'}</dd><dt>市区町村マスタ</dt><dd>${S.boot.municipalities.length} 件（関東1都6県）</dd></dl></div></div>
     </div></div>`;
   const save = async () => { const d = formData(el); const out = {}; ['slack_webhook_url', 'app_url', 'notify_on_create', 'notify_on_status', 'notify_on_report', 'notify_on_schedule', 'digest_days_ahead', 'cron_token', 'zenrin_tile_url', 'google_api_key', 'drive_root_url', 'ics_token', 'default_zoom'].forEach(k => out[k] = d[k]); const c = (d.default_center_text || '').split(',').map(Number); if (c.length === 2 && !c.some(isNaN)) out.default_center = c; try { await api('PUT', '/api/settings', out); toast('設定を保存しました', 'ok'); S.boot = await api('GET', '/api/bootstrap'); } catch (e) { err(e); } };
@@ -1131,9 +1206,19 @@ async function renderSettings(el) {
   $$('[data-sgenall]', el).forEach(b => b.onclick = () => genStills(b.dataset.sgenall, null));
   $$('[data-sfocus]', el).forEach(b => b.onclick = async () => { const [cid, sc] = b.dataset.sfocus.split('|'); try { S.boot.stills = await api('PUT', `/api/stills/${cid}/${sc}/focus`, { redetect: true }); toast('焦点を検出し直しました', 'ok'); renderSettings(el); } catch (e) { err(e); } });
   $$('[data-sgen]', el).forEach(b => b.onclick = () => { const [cid, sc] = b.dataset.sgen.split('|'); genStills(cid, [sc]); });
+  const pollJobs = async () => { try { const r = await api('GET', '/api/clips/jobs'); S.clipJobs = r.jobs; const changed = JSON.stringify(S.boot.clips) !== JSON.stringify(r.clips); S.boot.clips = r.clips; if (r.jobs.some(j => j.status === 'queued' || j.status === 'running')) { S._jobTimer = setTimeout(() => { if (S.view === 'settings') { renderSettings(el); } }, 5000); } else if (changed) renderSettings(el); } catch {} };
+  clearTimeout(S._jobTimer); if ((S.clipJobs || []).some(j => j.status === 'queued' || j.status === 'running')) S._jobTimer = setTimeout(pollJobs, 5000);
+  const genClips = async (cid, list) => { try { const r = await api('POST', `/api/clips/${cid}/generate`, { jobs: list }); S.clipJobs = r.all; toast(`${list.length} 本の生成をキューに入れました（1本 1〜3分）`, 'ok'); renderSettings(el); } catch (e) { err(e); } };
+  $$('[data-cgen]', el).forEach(b => b.onclick = () => { const [cid, sc, k] = b.dataset.cgen.split('|'); genClips(cid, [{ scene: sc, kind: k }]); });
+  $$('[data-cgenall]', el).forEach(b => b.onclick = async () => { const [cid, k] = b.dataset.cgenall.split('|'); const scenes = Object.keys(stillsOf(cid)); if (!await confirmDlg(`${scenes.length} 本の${k === 'idle' ? '待機ループ' : '会話クリップ'}を生成します（合計 ${scenes.length * 2}〜${scenes.length * 4} 分、料金はプロジェクトに課金）。よろしいですか？`)) return; genClips(cid, scenes.map(sc => ({ scene: sc, kind: k }))); });
+  $$('[data-cup]', el).forEach(b => b.onclick = () => $(`[data-cupin="${b.dataset.cup}"]`, el).click());
+  $$('[data-cupin]', el).forEach(inp => inp.onchange = async () => { const [cid, sc, k] = inp.dataset.cupin.split('|'); const fd = new FormData(); fd.append('file', inp.files[0]); try { toast('アップロード中…'); S.boot.clips = await api('POST', `/api/clips/${cid}/${sc}/${k}`, fd, true); toast('動画を設定しました', 'ok'); renderSettings(el); } catch (e) { err(e); } });
+  $$('[data-cdel]', el).forEach(b => b.onclick = async () => { const [cid, sc, k] = b.dataset.cdel.split('|'); try { S.boot.clips = await api('DELETE', `/api/clips/${cid}/${sc}/${k}`); renderSettings(el); } catch (e) { err(e); } });
+  $$('[data-cprompt]', el).forEach(b => b.onclick = async () => { const [sc, k] = b.dataset.cprompt.split('|'); try { const r = await api('GET', `/api/clips/prompt/${sc}/${k}`); modal('動画生成プロンプト（場面画像を最初のフレームにして貼り付け）', `<p class="small muted">Veo / Runway / Kling などの「画像から動画」に、その場面の画像と一緒に貼り付けてください。できた動画（MP4）は 📁 でアップロードできます。</p><div class="field mt8"><textarea rows="8" id="pr-text">${esc(r.prompt)}</textarea></div><div class="modal-foot"><button class="btn" onclick="MagoLove.closeModal()">閉じる</button><button class="btn btn-primary" id="pr-copy">コピー</button></div>`, (m) => { $('#pr-copy', m).onclick = () => navigator.clipboard.writeText($('#pr-text', m).value).then(() => toast('コピーしました', 'ok')); }); } catch (e) { err(e); } });
+  $$('[data-vtest]', el).forEach(b => b.onclick = () => { const ch = S.boot.characters.find(x => x.id === b.dataset.vtest); const line = pick(ch.lines.greet); S.voiceOn = true; const keep = S.view; S.view = 'dashboard'; speak(ch, line).finally(() => { S.view = keep; }); toast(`${ch.name}「${line}」`); });
   $('#c-reprocess').onclick = async () => { try { const r = await api('POST', '/api/characters/reprocess'); S.boot.characters = r.characters; toast(`${r.processed} 枚を処理しました`, 'ok'); renderPartner(); renderSettings(el); } catch (e) { err(e); } };
   $$('[data-egen]', el).forEach(b => b.onclick = () => { const [cid, expr] = b.dataset.egen.split('|'); gen(cid, [expr]); });
-  api('GET', '/api/imagegen/status').then(st => { const box = $('#imagegen-status', el); if (!box) return; box.innerHTML = st.available ? `<span class="badge badge-ok">画像生成AI 利用可能</span> <span class="muted">${st.vertex ? 'Vertex AI（' + esc(st.project) + '）' : 'Gemini API'} ・ モデル ${esc(st.model)} ・ 1枚あたり数円がプロジェクトに課金されます</span>` : `<span class="badge badge-warn">画像生成AI 未設定</span> <span class="muted">Cloud Run では setup-cloudshell.sh を再実行すると Vertex AI が有効になります。ローカルは環境変数 GEMINI_API_KEY を設定してください。</span>`; }).catch(() => {});
+  api('GET', '/api/imagegen/status').then(st => { const vs = $('#video-status', el); if (vs) vs.innerHTML = st.video && st.video.available ? ` <span class="badge badge-ok">Veo 利用可能</span> <span class="muted">モデル ${esc(st.video.model)}</span>` : ' <span class="badge">Veo 未設定</span> <span class="muted">Cloud Run 上で Vertex AI が有効なら使えます。手動アップロード（📁）は常に可能です</span>'; const vo = $('#voice-status', el); if (vo) vo.innerHTML = st.voice && st.voice.available ? ' <span class="badge badge-ok">Cloud TTS 利用可能</span>' : ' <span class="badge">ブラウザ読み上げで代用中</span>'; const box = $('#imagegen-status', el); if (!box) return; box.innerHTML = st.available ? `<span class="badge badge-ok">画像生成AI 利用可能</span> <span class="muted">${st.vertex ? 'Vertex AI（' + esc(st.project) + '）' : 'Gemini API'} ・ モデル ${esc(st.model)} ・ 1枚あたり数円がプロジェクトに課金されます</span>` : `<span class="badge badge-warn">画像生成AI 未設定</span> <span class="muted">Cloud Run では setup-cloudshell.sh を再実行すると Vertex AI が有効になります。ローカルは環境変数 GEMINI_API_KEY を設定してください。</span>`; }).catch(() => {});
   $('#c-names').onclick = async () => { const names = {}; $$('[data-cname]', el).forEach(i => names[i.dataset.cname] = i.value.trim() || undefined); try { S.boot.characters = await api('PUT', '/api/characters/names', names); toast('名前を保存しました', 'ok'); renderPartner(); } catch (e) { err(e); } };
   $('#c-choose').onclick = () => chooseCharacter(false);
   $('#u-add').onclick = async () => { const d = formData(el); try { await api('POST', '/api/users', { email: d.u_email, name: d.u_name, role: d.u_role }); toast('招待しました', 'ok'); renderSettings(el); } catch (e) { err(e); } };
@@ -1155,6 +1240,7 @@ function partnerSay(text, opts = {}) {
   const c = myChar(); const bubble = $('#partner-bubble'), span = $('#partner-text'), heroText = $('#hero-text');
   clearInterval(_typing);
   if (opts.expr) setExpression(opts.expr);
+  if (heroText) speak(_speaker || c, text);
   const targets = [];
   if (heroText) { heroText.textContent = ''; targets.push(heroText); $('#partner').hidden = true; }
   else { $('#partner').hidden = false; bubble.classList.remove('hidden'); span.innerHTML = `<span class="name">${esc(c.name)}</span>`; const body = document.createElement('span'); span.appendChild(body); targets.push(body); }
