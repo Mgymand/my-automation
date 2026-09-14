@@ -664,8 +664,77 @@ STILL_DIR = os.path.join(store.DATA_DIR, "stills")
 os.makedirs(STILL_DIR, exist_ok=True)
 
 
+def _hall_path() -> str | None:
+    f = next((f for f in os.listdir(ASSET_DIR) if os.path.splitext(f)[0] == "hall"), None)
+    return os.path.join(ASSET_DIR, f) if f else None
+
+
+def detect_focus(bg_raw: bytes, still_raw: bytes) -> dict | None:
+    """背景と場面画像の差分から、キャラのいる範囲（% の x,y,w,h）を推定する。見つからなければ None。"""
+    try:
+        from PIL import Image, ImageChops, ImageFilter
+        bg = Image.open(io.BytesIO(bg_raw)).convert("RGB")
+        st = Image.open(io.BytesIO(still_raw)).convert("RGB")
+        W, H = 192, 108
+        bg = bg.resize((W, H), Image.BILINEAR).filter(ImageFilter.GaussianBlur(1))
+        st = st.resize((W, H), Image.BILINEAR).filter(ImageFilter.GaussianBlur(1))
+        d = ImageChops.difference(bg, st)
+        r, g, b = d.split()
+        diff = ImageChops.lighter(ImageChops.lighter(r, g), b).point(lambda v: 255 if v > 40 else 0)
+        diff = diff.filter(ImageFilter.MaxFilter(5))  # 細い首や脚で分かれないよう膨張させてから連結成分を取る
+        px = diff.load()
+        seen = [[False] * W for _ in range(H)]
+        best = None
+        for y0 in range(H):
+            for x0 in range(W):
+                if px[x0, y0] and not seen[y0][x0]:
+                    stack = [(x0, y0)]; seen[y0][x0] = True; n = 0; minx = maxx = x0; miny = maxy = y0
+                    while stack:
+                        x, y = stack.pop(); n += 1
+                        minx, maxx, miny, maxy = min(minx, x), max(maxx, x), min(miny, y), max(maxy, y)
+                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                            nx, ny = x + dx, y + dy
+                            if 0 <= nx < W and 0 <= ny < H and px[nx, ny] and not seen[ny][nx]:
+                                seen[ny][nx] = True; stack.append((nx, ny))
+                    if n >= 60 and (best is None or n > best[0]):
+                        best = (n, minx, miny, maxx, maxy)
+        if not best:
+            return None
+        _, minx, miny, maxx, maxy = best
+        w, h = (maxx - minx + 1) / W * 100, (maxy - miny + 1) / H * 100
+        if w > 70 or h > 90:  # 全面が違う＝合成失敗か別画像
+            return None
+        return {"x": round(minx / W * 100, 1), "y": round(miny / H * 100, 1), "w": round(w, 1), "h": round(h, 1)}
+    except Exception as e:  # noqa: BLE001
+        print(f"[stills] focus detect failed: {e}")
+        return None
+
+
+def _focus_path(fname: str) -> str:
+    return os.path.join(STILL_DIR, os.path.splitext(fname)[0] + ".json")
+
+
+def _ensure_focus(fname: str) -> dict | None:
+    """場面画像の焦点（キャラ位置）を JSON で保存。無ければ背景との差分から作る。"""
+    jp = _focus_path(fname)
+    if os.path.exists(jp):
+        try:
+            with open(jp, encoding="utf-8") as fh:
+                return json.load(fh).get("focus")
+        except (OSError, ValueError):
+            pass
+    hall = _hall_path()
+    focus = None
+    if hall:
+        with open(hall, "rb") as fh, open(os.path.join(STILL_DIR, fname), "rb") as sh:
+            focus = detect_focus(fh.read(), sh.read())
+    with open(jp, "w", encoding="utf-8") as fh:
+        json.dump({"focus": focus}, fh)
+    return focus
+
+
 def stills_public() -> dict:
-    """{character_id: {scene_id: url}}"""
+    """{character_id: {scene_id: {url, focus}}}"""
     out: dict = {}
     try:
         names = os.listdir(STILL_DIR)
@@ -682,14 +751,33 @@ def stills_public() -> dict:
             v = int(os.path.getmtime(os.path.join(STILL_DIR, f)))
         except OSError:
             v = 0
-        out.setdefault(cid, {})[scene] = f"/still-images/{f}?v={v}"
+        out.setdefault(cid, {})[scene] = {"url": f"/still-images/{f}?v={v}", "focus": _ensure_focus(f)}
     return out
 
 
 def _remove_still(cid: str, scene: str) -> None:
     for f in os.listdir(STILL_DIR):
-        if os.path.splitext(f)[0] == f"{cid}__{scene}":
+        if os.path.splitext(f)[0] == f"{cid}__{scene}":  # 画像も焦点 JSON も消す
             os.remove(os.path.join(STILL_DIR, f))
+
+
+@app.route("/api/stills/<cid>/<scene>/focus", methods=["PUT"])
+@auth.require_role("admin")
+def still_focus(cid, scene):
+    """焦点（キャラ位置）を手動で設定 / 再検出（body 無し or {redetect:true} で再検出）。"""
+    f = next((f for f in os.listdir(STILL_DIR) if os.path.splitext(f)[0] == f"{cid}__{scene}" and not f.endswith(".json")), None)
+    if not f:
+        return _bad("unknown still", 404)
+    body = request.json or {}
+    jp = _focus_path(f)
+    if body.get("redetect") or not all(k in body for k in ("x", "y", "w", "h")):
+        if os.path.exists(jp):
+            os.remove(jp)
+        _ensure_focus(f)
+    else:
+        with open(jp, "w", encoding="utf-8") as fh:
+            json.dump({"focus": {k: float(body[k]) for k in ("x", "y", "w", "h")}}, fh)
+    return jsonify(stills_public())
 
 
 @app.route("/still-images/<path:filename>")
@@ -740,7 +828,7 @@ def still_generate(cid):
     import imagegen
     if cid not in domain.CHARACTER_IDS:
         return _bad("unknown character", 404)
-    hall = next((f for f in os.listdir(ASSET_DIR) if os.path.splitext(f)[0] == "hall"), None)
+    hall = _hall_path()
     if not hall:
         return _bad("先に「シーン背景・UI素材」でギルドホールの背景画像を入れてください")
     files = _char_files(cid)
@@ -749,7 +837,7 @@ def still_generate(cid):
     want = (request.json or {}).get("scenes") or domain.SCENE_IDS
     want = [w for w in want if w in domain.SCENE_IDS]
     c = next(x for x in domain.CHARACTERS if x["id"] == cid)
-    with open(os.path.join(ASSET_DIR, hall), "rb") as fh:
+    with open(hall, "rb") as fh:
         bg = fh.read()
     with open(os.path.join(CHAR_IMG_DIR, files["base"]), "rb") as fh:
         char_img = fh.read()
