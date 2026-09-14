@@ -112,6 +112,27 @@ Image 1 is a background painting of a fantasy guild hall. Image 2 is a character
 - ギルド日誌: `sitting in the armchair by the fireplace on the left, reading a ledger`
 - ギルド設定: `standing at the foot of the staircase in the center, one hand on the railing`
 
+## 動画クリップ（本当に生きているホール）
+場面画像を **最初のフレーム** にして、数秒の動画を作ります。ホールでは待機ループが流れ続け、キャラをクリックすると会話クリップに切り替わります。
+
+- アプリ内で生成: ギルド設定 → 「🎬 動画クリップ」 → 「待機ループを全部生成」「会話クリップを全部生成」（Veo、Cloud Run 上で自動認証。1本 1〜3分、百数十円〜数百円程度）
+- 他のツールで作る場合: 各行の 📋 で指示文をコピーし、Veo（Google AI Studio）/ Runway / Kling / Luma などの「画像から動画」に、その場面の画像と一緒に貼り付けます。できた MP4 を 📁 でアップロード
+- 待機ループは「最後のフレームが最初のフレームに近い」ように指示してあります。アプリ側でも終わり際に次の再生を重ねてクロスフェードするので、つなぎ目は目立ちません
+
+### 待機ループ（画像から動画）
+```
+Cinematic idle loop of the same scene. The character stays in place and {場所の指示}, breathing softly, shifting weight slightly, blinking and glancing around the room naturally. Candle light flickers, dust motes drift in the sunbeams. The camera holds almost still with a very slow, subtle drift. No speech, no text, no captions, no new people. The final frame should closely match the first frame so the clip can loop seamlessly. Painterly anime style consistent with the image.
+```
+### 会話クリップ（画像から動画）
+```
+The camera slowly pushes in toward the character. The character notices the viewer, turns to face the camera, smiles warmly and starts talking with natural, lively gestures and clear mouth movement, like a friendly guild member greeting a visitor. Warm lighting, shallow depth of field on the background. No text, no captions, no new people. Painterly anime style consistent with the image.
+```
+
+## 声と環境音
+- セリフは Google Cloud Text-to-Speech（日本語 Neural2 の声）で読み上げます。キャラごとに声の高さと速さを変えてあります。利用できない環境ではブラウザの読み上げで代用します
+- 環境音は「🔈 声と環境音」に MP3 をドロップするとループ再生されます（例: 暖炉の音、酒場のざわめき、静かなハープ。フリー音源サイトや Suno / Udio などで作成）。未設定のときは暖炉のパチパチ音を自動合成します
+- ホール右上の「🔊 声」「🎵 環境音」で ON/OFF できます
+
 ## キャラクター（元画像は白背景・全身。アプリが自動で透過します）
 既存の4キャラの表情は、アプリの「表情を生成」で元画像から作るのが最も一致します。ChatGPT で作る場合は、元画像を添付して次のように指示してください。
 ```

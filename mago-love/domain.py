@@ -229,7 +229,7 @@ def default_tasks() -> list[dict]:
 # --- パートナーキャラクター（育成ゲーム要素） ---
 # 画像は管理者が設定画面からアップロード（data/characters/<id>.png）。未設定時は絵文字アバター。
 CHARACTERS = [
-    {"id": "ruka", "post": "map", "name": "ルカ", "species": "オオカミ", "emoji": "🐺", "color": "#64748b",
+    {"id": "ruka", "voice": {"name": "ja-JP-Neural2-B", "pitch": 1.0, "rate": 1.08}, "post": "map", "name": "ルカ", "species": "オオカミ", "emoji": "🐺", "color": "#64748b",
      "role": "物件ハンター", "phases": ["acquire", "interior"],
      "personality": "行動派で決断が早い。良い物件の匂いを嗅ぎ分ける。",
      "lines": {
@@ -238,7 +238,7 @@ CHARACTERS = [
          "praise": ["やるじゃん！その調子！", "ナイス！次いこ次！", "完璧。オレも見習わないと。"],
          "warn": ["期限切れのタスクがあるよ。先に片付けよ？", "内見日が近いよ。忘れてない？"],
      }},
-    {"id": "haruto", "post": "board", "name": "ハルト施設長", "species": "ウサギ", "emoji": "🐰", "color": "#1e40af",
+    {"id": "haruto", "voice": {"name": "ja-JP-Neural2-C", "pitch": -1.0, "rate": 0.98}, "post": "board", "name": "ハルト施設長", "species": "ウサギ", "emoji": "🐰", "color": "#1e40af",
      "role": "施設長・申請担当", "phases": ["legal", "permit", "open"],
      "personality": "冷静で几帳面。法規制と役所手続きに強い。",
      "lines": {
@@ -247,7 +247,7 @@ CHARACTERS = [
          "praise": ["素晴らしい。着実に進んでいますね。", "完了ですね。次の工程へ進みましょう。", "見事です。開業が近づいてきました。"],
          "warn": ["期限を過ぎたタスクがあります。優先して対応しましょう。", "申請の期限に注意してください。"],
      }},
-    {"id": "kotaro", "post": "journal", "name": "コタロウ", "species": "クマ", "emoji": "🐻", "color": "#16a34a",
+    {"id": "kotaro", "voice": {"name": "ja-JP-Neural2-D", "pitch": 2.0, "rate": 1.02}, "post": "journal", "name": "コタロウ", "species": "クマ", "emoji": "🐻", "color": "#16a34a",
      "role": "介護スタッフ・採用担当", "phases": ["hiring"],
      "personality": "素直で人懐っこい。現場と採用のことなら任せて。",
      "lines": {
@@ -256,7 +256,7 @@ CHARACTERS = [
          "praise": ["わあ、すごいです！", "やりましたね！ぼくもうれしいです！", "その調子です！"],
          "warn": ["期限が過ぎているタスクがあります…一緒に片付けましょう！", "採用の締切、近いですよ！"],
      }},
-    {"id": "momo", "post": "pois", "name": "モモ", "species": "イヌ", "emoji": "🐶", "color": "#e0475b",
+    {"id": "momo", "voice": {"name": "ja-JP-Neural2-B", "pitch": 3.0, "rate": 1.1}, "post": "pois", "name": "モモ", "species": "イヌ", "emoji": "🐶", "color": "#e0475b",
      "role": "入居者獲得・営業担当", "phases": ["leads"],
      "personality": "明るく社交的。ケアマネさんや病院との関係づくりが得意。",
      "lines": {
@@ -364,4 +364,8 @@ UI_ASSETS = [
     {"id": "logo", "label": "ロゴ・紋章", "size": "1024×1024 / PNG 透過",
      "prompt": "A guild emblem for a caring senior-home company named 孫LOVE: a warm heart with a small house and a sprout, gold and rose-pink metallic, fantasy RPG crest style, centered, transparent background, no text"},
 ]
+AUDIO_ASSETS = [
+    {"id": "ambience", "label": "環境音（ホールのBGM・暖炉の音など）", "size": "MP3 / OGG / M4A ・ 数分のループ推奨"},
+]
+AUDIO_ASSET_IDS = [a["id"] for a in AUDIO_ASSETS]
 UI_ASSET_IDS = [a["id"] for a in UI_ASSETS]
