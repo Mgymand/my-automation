@@ -1,0 +1,598 @@
+<meta charset="utf-8">
+<title>老人シェアハウス事業 第1回全体MTG</title>
+<style>
+  @page { size: 338.667mm 190.5mm; margin: 0; }
+  :root{
+    --ink:#14181d; --ink2:#3f4852; --muted:#7b858f; --rule:#dde3e9;
+    --panel:#f4f7f9; --panel2:#eaeff4; --navy:#0f2f5c; --accent:#1a5fb4;
+    --good:#1a7a4c; --warn:#96660a; --bad:#a52a2a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"IPAPGothic","IPAGothic",sans-serif;color:var(--ink);
+       font-size:10.5pt;line-height:1.6;-webkit-print-color-adjust:exact}
+  .slide{width:338.667mm;height:190.5mm;padding:14mm 18mm 12mm;page-break-after:always;
+         position:relative;display:flex;flex-direction:column;overflow:hidden}
+  .slide:last-child{page-break-after:auto}
+  .num{position:absolute;right:12mm;bottom:7mm;font-size:8pt;color:var(--muted);
+       font-family:"IPAGothic"}
+  .foot{position:absolute;left:18mm;bottom:7mm;font-size:8pt;color:var(--muted)}
+  .kicker{font-size:9pt;letter-spacing:.18em;color:var(--accent);font-weight:bold;margin-bottom:2.5mm}
+  h1{font-size:23pt;line-height:1.3;letter-spacing:.01em;margin-bottom:5mm;font-weight:bold}
+  h1 .sub{display:block;font-size:12pt;color:var(--ink2);font-weight:normal;margin-top:3mm;line-height:1.6}
+  h2{font-size:19pt;line-height:1.35;margin-bottom:6mm;font-weight:bold}
+  h2 em{font-style:normal;color:var(--accent)}
+  .lead{font-size:12.5pt;line-height:1.7;color:var(--ink2);margin-bottom:6mm}
+  .rule{height:2.5pt;background:var(--navy);width:26mm;margin-bottom:6mm}
+  /* 表紙 */
+  .cover{background:var(--navy);color:#fff;justify-content:center}
+  .cover h1{font-size:34pt;color:#fff;letter-spacing:.02em}
+  .cover .tag{font-size:11pt;letter-spacing:.3em;color:#9fc0e8;margin-bottom:8mm;font-weight:bold}
+  .cover .sub2{font-size:15pt;color:#cfe0f5;margin-top:6mm;line-height:1.7}
+  .cover .meta{margin-top:16mm;font-size:10.5pt;color:#9fc0e8;border-top:1pt solid #2d5487;padding-top:5mm}
+  /* 汎用 */
+  ul{list-style:none} li{position:relative;padding-left:6mm;margin-bottom:2.6mm}
+  li::before{content:"";position:absolute;left:0;top:2.6mm;width:2.6mm;height:2.6mm;
+             background:var(--accent);border-radius:.6mm}
+  li.plain::before{display:none}
+  b,strong{font-weight:bold}
+  .hl{background:#cfe4ff;padding:0 .8mm;font-weight:bold;border-radius:.6mm}
+  table{width:100%;border-collapse:collapse;font-size:9.6pt;font-family:"IPAGothic"}
+  th{background:var(--navy);color:#fff;font-weight:normal;text-align:left;
+     padding:2.2mm 3mm;font-size:9.2pt;letter-spacing:.04em}
+  td{padding:2.2mm 3mm;border-bottom:.75pt solid var(--rule);vertical-align:top}
+  tr:nth-child(even) td{background:#f8fafc}
+  td.c,th.c{text-align:center}
+  .ok{color:var(--good);font-weight:bold}
+  .ng{color:var(--bad);font-weight:bold}
+  .tb{color:var(--warn);font-weight:bold}
+  /* カード */
+  .cards{display:flex;gap:6mm;flex:1}
+  .card{flex:1;background:var(--panel);border-top:2.5pt solid var(--navy);padding:6mm 6mm 5mm}
+  .card .n{font-size:9pt;color:var(--accent);font-weight:bold;letter-spacing:.14em;margin-bottom:2.5mm}
+  .card h3{font-size:13pt;margin-bottom:3mm;line-height:1.45}
+  .card p{font-size:9.8pt;color:var(--ink2);line-height:1.65}
+  /* 数字タイル */
+  .stats{display:flex;gap:6mm;margin:2mm 0 6mm}
+  .stat{flex:1;background:var(--panel);padding:5mm 5mm 4mm;border-left:2.5pt solid var(--accent)}
+  .stat .v{font-size:26pt;font-weight:bold;line-height:1.1;font-family:"IPAGothic";letter-spacing:-.01em}
+  .stat .v small{font-size:12pt;font-weight:normal;color:var(--ink2)}
+  .stat .l{font-size:9pt;color:var(--ink2);margin-top:2mm;line-height:1.5}
+  /* ファネル */
+  .funnel{display:flex;flex-direction:column;gap:3mm;flex:1;justify-content:center}
+  .fstep{display:flex;align-items:center;gap:5mm}
+  .fbar{height:15mm;display:flex;align-items:center;padding-left:5mm;color:#fff;
+        font-weight:bold;font-size:11.5pt;border-radius:0 1mm 1mm 0}
+  .fmeta{font-size:9.6pt;color:var(--ink2);line-height:1.5}
+  .fmeta b{color:var(--ink)}
+  /* 2カラム */
+  .cols{display:flex;gap:8mm;flex:1}
+  .col{flex:1}
+  .col.n{flex:0 0 40%}
+  .panel{background:var(--panel);padding:5mm 6mm}
+  .panel h4{font-size:11pt;margin-bottom:3mm;color:var(--navy)}
+  .quote{border-left:3pt solid var(--accent);padding:3mm 0 3mm 5mm;margin:4mm 0;
+         font-size:12pt;line-height:1.65}
+  .bad-line{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1pt}
+  .note{font-size:8.6pt;color:var(--muted);margin-top:3mm;line-height:1.55}
+  .big{font-size:15pt;line-height:1.6;font-weight:bold}
+  .end{background:var(--navy);color:#fff;justify-content:center;align-items:center;text-align:center}
+  .end .msg{font-size:26pt;line-height:1.55;font-weight:bold}
+  .end .sub3{font-size:12pt;color:#9fc0e8;margin-top:8mm}
+</style>
+
+<!-- 1 表紙 -->
+<div class="slide cover">
+  <div class="tag">第 1 回 全体ミーティング</div>
+  <h1>老人シェアハウス事業<br>物件判定を、属人から仕組みへ</h1>
+  <div class="sub2">「使える物件か」を、稟議に上げる前に自分で判定できる状態をつくる</div>
+  <div class="meta">2026年9月7日　／　担当：岩本</div>
+</div>
+
+<!-- 2 結論 -->
+<div class="slide">
+  <div class="kicker">CONCLUSION</div>
+  <h2>先に結論を3つ</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <div class="card">
+      <div class="n">01</div>
+      <h3>判定基準を確定させ、<br>シートに落とした</h3>
+      <p>物件の可否は<b>卓上8項目</b>で判定できる。基準・根拠条文・NGラインを確定させ、A4のヒアリングシート（1枚版／2枚版／記入例）として完成させた。印刷して持って行けば、その場で判定が終わる。</p>
+    </div>
+    <div class="card">
+      <div class="n">02</div>
+      <h3>実物件で<br>通しで検証した</h3>
+      <p>春日部の930万円の物件で全項目を判定（8項目中5項目は資料だけで確定）。さらに<b>手元の仕入れ候補7件も本日その場で判定</b>し、<b>否決4／保留1／通過2</b>まで絞り込んだ。所要は約10分。</p>
+    </div>
+    <div class="card">
+      <div class="n">03</div>
+      <h3>初期調査を<br>自動化した</h3>
+      <p>住所を1行入れるだけで、地盤・ハザード・用途地域・地価が返る仕組みを作った。<b>費用0円・所要30秒</b>。1件あたりの初期調査を半日から数分に落とす。</p>
+    </div>
+  </div>
+  <div class="num">2</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 3 ボトルネック -->
+<div class="slide">
+  <div class="kicker">ISSUE</div>
+  <h2>この事業のボトルネックは、物件でも営業でもない</h2>
+  <div class="rule"></div>
+  <div class="cols">
+    <div class="col">
+      <p class="lead">物件は市場にある。営業先も埼玉県だけで1,548件ある。<br>
+      詰まるのは「この物件、そもそも使えるんだっけ？」で止まっている時間だ。</p>
+      <ul>
+        <li>判定に3日かかれば、月に見られるのは10件</li>
+        <li>判定が30分で終われば、月に100件見られる</li>
+        <li>母数が10倍になれば、拾える1件の質も上がる</li>
+      </ul>
+      <div class="quote"><b>見た件数が全て。判定速度が、そのまま事業速度になる。</b></div>
+      <p class="lead" style="margin:0">だから最初の仕事に、判定の仕組み化を選んだ。</p>
+    </div>
+    <div class="col n">
+      <div class="panel">
+        <h4>判定が遅いと何が起きるか</h4>
+        <ul style="margin-top:2mm">
+          <li class="plain" style="padding-left:0">良い物件ほど早く消える。判定待ちは<b>機会損失そのもの</b></li>
+          <li class="plain" style="padding-left:0">「たぶん大丈夫」で稟議に上げると、<b>差し戻しで往復が増える</b></li>
+          <li class="plain" style="padding-left:0">判定が特定の人にしか出せないと、<b>その人が休むと止まる</b></li>
+        </ul>
+        <div class="note">※ 埼玉県の高齢者施設 1,548件のうち、住宅型有料老人ホーム255件・特別養護老人ホーム471件を営業の優先母数とする。</div>
+      </div>
+    </div>
+  </div>
+  <div class="num">3</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 4 ミッション再定義 -->
+<div class="slide">
+  <div class="kicker">MISSION</div>
+  <h2>ミッションを、こう読み替えました</h2>
+  <div class="rule"></div>
+  <div class="quote" style="font-size:14pt;border-left-width:4pt">
+    「岩本に確認すれば、候補物件がシェアハウスとして活用可能か判断できる状態」
+  </div>
+  <p class="lead">これは「私が詳しくなること」ではありません。<br>
+  私だけが分かる状態は、<b>私がボトルネックになる</b>だけです。</p>
+  <div class="cards" style="flex:0 0 auto;margin-top:2mm">
+    <div class="card" style="border-top-color:#b9c2cc">
+      <div class="n" style="color:var(--muted)">目指さない状態</div>
+      <h3 style="color:var(--muted)">私の頭の中に判定基準がある</h3>
+      <p>聞けば答えられるが、私が不在だと止まる。基準がぶれる。教えるのに時間がかかる。</p>
+    </div>
+    <div class="card">
+      <div class="n">目指す状態</div>
+      <h3>誰が使っても同じ答えが出る道具がある</h3>
+      <p>シートとフローに沿えば同じ結論に着く。私は判定の<b>質と例外</b>だけを持てばよくなる。</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:6mm;margin-bottom:0">だから今日持ってきたのは、知識の説明ではなく<b>道具</b>です。</p>
+  <div class="num">4</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 5 判定の全体像 -->
+<div class="slide">
+  <div class="kicker">FRAMEWORK</div>
+  <h2>判定は3段。<em>1段目は私の単独決裁</em>にします</h2>
+  <div class="rule"></div>
+  <div class="funnel">
+    <div class="fstep">
+      <div class="fbar" style="width:62%;background:#0f2f5c">STEP 1　卓上判定（8項目）　所要 約30分／資料のみ</div>
+      <div class="fmeta">マイソク＋登記だけで判定。<br><b>NGが1つでも出たら、稟議に上げずその場で落とす</b></div>
+    </div>
+    <div class="fstep">
+      <div class="fbar" style="width:40%;background:#1a5fb4">STEP 2　現地・役所・消防　所要 約1日</div>
+      <div class="fmeta">採光・階段の実測、建築指導課2点、消防本部1点。<br>ここで工事費と工期が確定する</div>
+    </div>
+    <div class="fstep">
+      <div class="fbar" style="width:22%;background:#5b93d6">STEP 3　稟議</div>
+      <div class="fmeta">数字と法令根拠が揃った状態でのみ上げる。<br><b>差し戻しをゼロにするのが目的</b></div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:5mm;margin-bottom:0">STEP 1 で落とせる件数が、この事業の処理能力そのものです。</p>
+  <div class="num">5</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 6 8項目 -->
+<div class="slide">
+  <div class="kicker">CRITERIA</div>
+  <h2>卓上判定の8項目と、その根拠</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:20%">確認する項目</th><th style="width:27%">判定ライン</th><th style="width:48%">なぜ効くのか（根拠）</th></tr>
+    <tr><td>1</td><td>検査済証の有無</td><td>有 ／ 無</td><td>無いと用途変更・融資・保険で詰まる。無い場合は「即NG」ではなく<b>要調査</b>として扱う</td></tr>
+    <tr><td>2</td><td>建築年</td><td>昭和56年6月1日以降</td><td>新耐震基準。<b>建築確認の日付</b>で見る。以前なら耐震補強のコストが乗る</td></tr>
+    <tr><td>3</td><td>延べ面積</td><td>200㎡以下／275㎡以下</td><td><b>200㎡以下なら用途変更の確認申請が不要</b>（法87条）。275㎡は消防のスプリンクラーの分岐</td></tr>
+    <tr><td>4</td><td>階数</td><td>3階以下</td><td>避難規定と、既存戸建の転用特例の前提</td></tr>
+    <tr><td>5</td><td>用途地域</td><td>工業専用地域以外</td><td>老人ホームは第一種低層住居専用地域でも建てられる用途</td></tr>
+    <tr><td>6</td><td>2階の居室面積の合計</td><td>50㎡以下（準耐火は100㎡）</td><td>超えると<b>2つ目の直通階段</b>が必要（令121条1項6号イ）。工事費が跳ねる最大の分岐</td></tr>
+    <tr><td>7</td><td>各居室の窓</td><td>採光1/7を満たすか</td><td>満たせない部屋は<b>居室にできない＝部屋数が減る</b>。収益に直結</td></tr>
+    <tr><td>8</td><td>階段の幅・蹴上・踏面</td><td>実測</td><td>高齢者の動線。改修可否と費用の見積り根拠</td></tr>
+  </table>
+  <p class="note" style="margin-top:4mm">3・6・7 が<b>「部屋数と工事費」</b>を決め、1・2 が<b>「そもそも土俵に乗るか」</b>を決める。8項目は安全確認のリストではなく、事業性を即断するための項目。</p>
+  <div class="num">6</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 7 作ったもの -->
+<div class="slide">
+  <div class="kicker">DELIVERABLES</div>
+  <h2>今日までに作ったもの</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <div class="card">
+      <div class="n">TOOL 01</div>
+      <h3>物件ヒアリングシート</h3>
+      <p><b>A4 1枚版</b>（卓上判定用）<br>
+      <b>A4 2枚版</b>（現地持ち出し用・下半分が間取図の貼付欄）<br>
+      <b>記入例</b>（実物件で記入済み）<br><br>
+      基本情報・部屋情報・設備・告知事項・取得資料・法規制確認8項目を1枚に集約。項目ごとに根拠条文つき。</p>
+    </div>
+    <div class="card">
+      <div class="n">TOOL 02</div>
+      <h3>一次否決フローチャート</h3>
+      <p>8項目をYes／Noで降りるだけの1枚。<br>
+      NGに当たったらその場で落とし、理由コードを記録する。<br><br>
+      <b>私が不在でも同じ判定が出る</b>ことがこのフローの目的。否決理由が溜まれば、次に見るべき物件像も見えてくる。</p>
+    </div>
+    <div class="card">
+      <div class="n">TOOL 03</div>
+      <h3>初期調査の自動取得</h3>
+      <p>住所を1行渡すと、公開APIから6項目が返る。<br>
+      <b>費用0円・登録不要・所要30秒</b>。<br><br>
+      国土地理院／防災科学技術研究所／重ねるハザードマップ／国土数値情報。すべて公的な一次情報で、出典URLも残る。</p>
+    </div>
+  </div>
+  <div class="num">7</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 8 自動取得の中身 -->
+<div class="slide">
+  <div class="kicker">TOOL 03</div>
+  <h2>住所1行で、ここまで返ります</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <div class="cols">
+    <div class="col">
+      <table>
+        <tr><th style="width:34%">取得する情報</th><th>出典（すべて公的機関・無料）</th></tr>
+        <tr><td>座標</td><td>国土地理院 アドレス検索API</td></tr>
+        <tr><td>標高</td><td>国土地理院 標高API</td></tr>
+        <tr><td>微地形区分・AVS30・地盤増幅率</td><td>防災科学技術研究所 J-SHIS</td></tr>
+        <tr><td>洪水浸水想定・浸水継続時間<br>家屋倒壊等氾濫想定・土砂災害</td><td>重ねるハザードマップ（座標のタイルを色判定）</td></tr>
+        <tr><td>用途地域・建ぺい率・容積率</td><td>国土数値情報 A29</td></tr>
+        <tr><td>最寄りの地価公示 標準地</td><td>国土数値情報 L01</td></tr>
+      </table>
+    </div>
+    <div class="col n">
+      <div class="panel">
+        <h4>これで何が変わるか</h4>
+        <ul style="margin-top:2mm">
+          <li class="plain" style="padding-left:0">従来は各サイトを1つずつ開いて転記していた作業が<b>1コマンド</b>になる</li>
+          <li class="plain" style="padding-left:0">数字の転記ミスがなくなる。<b>出典URLが残る</b>ので稟議でも使える</li>
+          <li class="plain" style="padding-left:0">物件を見た瞬間に<b>ハザードと地価が分かる</b>＝その場で足切りできる</li>
+        </ul>
+        <div class="note">※ 取引価格（土地総合情報システム）と不動産情報ライブラリAPIは、それぞれ社内ネットワークの制限とキー申請が必要なため今回は対象外。ブラウザからは閲覧可能。</div>
+      </div>
+    </div>
+  </div>
+  <div class="num">8</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 9 実証 物件 -->
+<div class="slide">
+  <div class="kicker">CASE STUDY</div>
+  <h2>実物件で通しました：春日部市東中野</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <div class="stats">
+    <div class="stat"><div class="v">930<small> 万円</small></div><div class="l">売出価格（税込）</div></div>
+    <div class="stat"><div class="v">118.92<small> ㎡</small></div><div class="l">延床（1F 73.48／2F 45.44）</div></div>
+    <div class="stat"><div class="v">9<small> 室</small></div><div class="l">現況6DK → 分割後の想定居室数</div></div>
+    <div class="stat"><div class="v">44<small> 年</small></div><div class="l">築年数（昭和56年11月築）</div></div>
+  </div>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:22%">項目</th><th style="width:12%" class="c">判定</th><th>根拠</th></tr>
+    <tr><td>1</td><td>検査済証</td><td class="c tb">要確認</td><td>建築確認 第1563号（昭56.7.30）は判明。検査済証の記載なし</td></tr>
+    <tr><td>2</td><td>建築年</td><td class="c ok">○ 適合</td><td>建築確認が昭和56年7月30日＝新耐震</td></tr>
+    <tr><td>3</td><td>延べ面積</td><td class="c ok">○ 適合</td><td>118.92㎡＝200㎡以下。<b>用途変更の確認申請が不要</b></td></tr>
+    <tr><td>4</td><td>階数</td><td class="c ok">○ 適合</td><td>木造瓦葺2階建</td></tr>
+    <tr><td>5</td><td>用途地域</td><td class="c ok">○ 適合</td><td>第一種低層住居専用地域（建ぺい50%／容積80%）</td></tr>
+    <tr><td>6</td><td>2階の居室面積合計</td><td class="c ok">○ 適合</td><td>洋6＋洋6＋和6＝18帖 ≒ 29.2㎡ ＜ 50㎡。<b>2つ目の階段は不要</b></td></tr>
+    <tr><td>7</td><td>各居室の窓</td><td class="c ng">△ 2室NG</td><td>9室のうち2室が無窓の見込み。割り方の再設計が必要</td></tr>
+    <tr><td>8</td><td>階段の寸法</td><td class="c tb">要実測</td><td>資料に記載なし</td></tr>
+  </table>
+  <p class="note" style="margin-top:3mm">使用した資料：マイソク／土地・建物の登記事項証明書／公図／地積測量図／建物図面・各階平面図／内装資料（9室割り）</p>
+  <div class="num">9</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 10 勝ち筋 -->
+<div class="slide">
+  <div class="kicker">KEY FINDING 01</div>
+  <h2>検証で見つけた勝ち筋：<em>「9室」は偶然ではない</em></h2>
+  <div class="rule"></div>
+  <div class="cols">
+    <div class="col">
+      <p class="lead" style="margin-bottom:4mm">9室に割ると、<b>全室が13㎡未満</b>になります。<br>
+      有料老人ホーム設置運営標準指導指針は「個室・1人あたり13㎡以上」が原則。<br>
+      普通ならここで詰みます。</p>
+      <div class="panel" style="background:#eef5ff;border-left:3pt solid var(--accent)">
+        <h4>ところが、同じ指針に特例があります</h4>
+        <p style="font-size:10pt;line-height:1.7">「<b>既存の建築物を転用して開設される有料老人ホーム</b><b class="hl">又は</b><b>定員9人以下の有料老人ホーム</b>について、建物の構造上5⑼に定める基準を満たすことが困難である場合においては、次のいずれかの基準を満たす場合、当該基準に適合することを要しない」<br>
+        <span style="font-size:8.6pt;color:var(--muted)">— 有料老人ホーム設置運営標準指導指針 6⑴</span></p>
+      </div>
+      <p class="lead" style="margin-top:4mm;margin-bottom:0">この物件は<b>「既存転用」と「定員9人以下」の両方</b>に当たります。</p>
+    </div>
+    <div class="col n">
+      <div class="panel">
+        <h4>適用の条件（3つ）</h4>
+        <ul style="margin-top:2mm">
+          <li>すべての居室が<b>個室</b>であること</li>
+          <li>未達の事項を<b>重要事項説明書または管理規程に記載</b>し、入居者に説明すること</li>
+          <li><b>代替措置</b>を講じる、または将来の改善計画を策定すること</li>
+        </ul>
+        <div style="border-top:1pt solid var(--rule);margin:4mm 0 3mm"></div>
+        <p style="font-size:11pt;line-height:1.6"><b>ここが要点です。</b><br>
+        <span class="hl">9室は特例が使える上限</span>。<br>
+        10室にすると「定員9人以下」が外れます。</p>
+        <p style="font-size:9.6pt;color:var(--ink2);margin-top:3mm">部屋数の設計は「詰め込む」のではなく<b>「9で止める」</b>のが正解。既存転用にも当たるため二重に成立しますが、横展開先が新築寄りの物件だと定員9人以下だけが頼りになります。</p>
+        <div class="note">※ 最終判断は都道府県（本件は埼玉県 高齢者福祉課）。適用可否の確認を最優先の照会事項とします。</div>
+      </div>
+    </div>
+  </div>
+  <div class="num">10</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 11 リスク -->
+<div class="slide">
+  <div class="kicker">KEY FINDING 02</div>
+  <h2>同時に、資料には書かれていないリスクも出ました</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <table>
+    <tr><th style="width:22%">論点</th><th style="width:30%">分かったこと</th><th style="width:26%">事業への影響</th><th style="width:22%">打ち手</th></tr>
+    <tr>
+      <td><b>洪水浸水想定</b></td>
+      <td><b class="tb">0.5〜3.0m に該当</b>。ただし家屋倒壊等氾濫想定区域は非該当、浸水継続は12時間未満</td>
+      <td>水防法により<b>要配慮者利用施設の避難確保計画が義務</b>になる可能性が高い</td>
+      <td>危機管理防災課へ確認。開所準備タスクに最初から計上</td>
+    </tr>
+    <tr>
+      <td><b>埋蔵文化財</b></td>
+      <td>県の遺跡地図に、地番の字名と同じ<b class="tb">「駿河遺跡」</b>が登録されている（マイソクの備考は「該当なし」）</td>
+      <td>包蔵地なら着工前の届出と試掘調査。<b>工期と開所日が動く</b></td>
+      <td>市教育委員会へ書面照会。<b>最優先</b></td>
+    </tr>
+    <tr>
+      <td><b>採光</b></td>
+      <td>9室のうち<b class="ng">2室が無窓の見込み</b>（1階の②、2階の⑧）</td>
+      <td>居室にできないと<b>実質7室</b>。収益が2割落ちる</td>
+      <td>現地で開口を確認。割り方を内装業者と再設計</td>
+    </tr>
+    <tr>
+      <td><b>土地面積</b></td>
+      <td>登記148㎡ に対しマイソクは164㎡。<b class="tb">16㎡の差</b>（測量図上、隣接地の残積がちょうど16㎡）</td>
+      <td>148㎡で計算すると建ぺい49.6%・容積80.4%で<b>上限ぎりぎり</b></td>
+      <td>別筆が売買に含まれるか元付に確認</td>
+    </tr>
+  </table>
+  <p class="note" style="margin-top:4mm">いずれも<b>マイソクを読むだけでは出てこない</b>論点。登記・図面・公開データを突き合わせて初めて見えるもので、これが卓上判定を仕組みにする価値そのものです。</p>
+  <div class="num">11</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 12 価格 -->
+<div class="slide">
+  <div class="kicker">VALUATION</div>
+  <h2>価格の妥当性も、その場で出せます</h2>
+  <div class="rule"></div>
+  <div class="cols">
+    <div class="col">
+      <table>
+        <tr><th>最寄りの地価公示 標準地（2026年）</th><th class="c" style="width:18%">距離</th><th class="c" style="width:24%">価格</th></tr>
+        <tr><td>春日部市新宿新田字大砂355番262</td><td class="c"><b>0.18 km</b></td><td class="c"><b>56,500 円/㎡</b></td></tr>
+        <tr><td>春日部市米島字外谷津358番108</td><td class="c">1.13 km</td><td class="c">64,500 円/㎡</td></tr>
+        <tr><td>春日部市西金野井字愛宕1855番33</td><td class="c">1.20 km</td><td class="c">50,500 円/㎡</td></tr>
+      </table>
+      <p class="note" style="margin-top:2.5mm">3地点とも<b>利用現況は住宅・前面道路は市道</b>。つまり本物件より条件が良い地点との比較になっている。</p>
+      <div class="stats" style="margin-top:5mm">
+        <div class="stat"><div class="v">836<small> 万円</small></div><div class="l">土地148㎡ × 56,500円／公示ベースの更地値</div></div>
+        <div class="stat"><div class="v">670<small>〜</small>840<small> 万円</small></div><div class="l">実勢の目安（公示の8〜9割）</div></div>
+      </div>
+    </div>
+    <div class="col n">
+      <div class="panel">
+        <h4>読み方</h4>
+        <p style="font-size:10.2pt;line-height:1.7">売出<b>930万円</b>との差し引きで、建物分は<b>90〜260万円</b>。<br>
+        築44年の木造で建物評価はほぼ出ないため、<b class="hl">930万円は土地値＋α</b>の水準です。</p>
+        <div style="border-top:1pt solid var(--rule);margin:4mm 0"></div>
+        <h4>そのうえで、本物件には減価要因が3つ</h4>
+        <ul style="margin-top:2mm">
+          <li>位置指定道路（私道）に接道。持分1/4で、他共有者の通行・掘削承諾が要る</li>
+          <li>旗竿形状（間口4.2m・竿の奥行4.0m）</li>
+          <li>洪水浸水想定区域に該当</li>
+        </ul>
+        <p style="font-size:11pt;font-weight:bold;margin-top:3mm">近隣標準地は市道接道の整形地。<br>指値の材料は揃っています。</p>
+      </div>
+    </div>
+  </div>
+  <div class="num">12</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 13 パイプライン -->
+<div class="slide">
+  <div class="kicker">PIPELINE</div>
+  <h2>同じ判定を、手元の仕入れ候補7件にかけました</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <table>
+    <tr><th style="width:4%">#</th><th style="width:24%">所在地</th><th class="c" style="width:8%">価格</th><th class="c" style="width:13%">建物／間取</th><th class="c" style="width:9%">築年月</th><th class="c" style="width:10%">用途地域</th><th class="c" style="width:9%">判定</th><th>理由</th></tr>
+    <tr><td>1</td><td>千葉県市原市椎の木台2丁目</td><td class="c">298万</td><td class="c">120.86㎡ 7DK</td><td class="c">昭46.5</td><td class="c">一低</td><td class="c ng">✕ 否決</td><td>旧耐震</td></tr>
+    <tr><td>2</td><td>千葉県市原市西国吉1697-258</td><td class="c">380万</td><td class="c">121.15㎡ 5DK</td><td class="c">昭52.3</td><td class="c">定めなし</td><td class="c ng">✕ 否決</td><td>旧耐震 ＋ <b>市街化調整区域</b></td></tr>
+    <tr><td>3</td><td>埼玉県熊谷市上根3</td><td class="c">600万</td><td class="c">109.83㎡ 3LDK</td><td class="c">昭60.4</td><td class="c">定めなし</td><td class="c tb">△ 保留</td><td><b>市街化調整区域</b>。用途変更の可否を要確認</td></tr>
+    <tr><td>4</td><td><b>埼玉県熊谷市押切2653-117</b></td><td class="c"><b>725万</b></td><td class="c">104.59㎡ 5LDK</td><td class="c">昭60.11</td><td class="c">一住</td><td class="c ok">○ 通過</td><td><b>新耐震・市街化区域・公道接道・空家。最有力</b></td></tr>
+    <tr><td>5</td><td>千葉県市原市西広6丁目</td><td class="c">990万</td><td class="c">100.19㎡ 4LDK</td><td class="c">平3.6</td><td class="c">一低</td><td class="c ok">○ 通過</td><td>新耐震。ただし<b>賃貸中</b>＝退去条件を要確認</td></tr>
+    <tr><td>6</td><td>千葉県市原市有秋台東2丁目</td><td class="c">998万</td><td class="c">119.07㎡ 6LDK</td><td class="c">昭50.5</td><td class="c">一中</td><td class="c ng">✕ 否決</td><td>旧耐震</td></tr>
+    <tr><td>7</td><td>千葉県市原市姉崎2235-3</td><td class="c">998万</td><td class="c">107.00㎡ 7DK</td><td class="c">昭54.8</td><td class="c">一住</td><td class="c ng">✕ 否決</td><td>旧耐震</td></tr>
+  </table>
+  <div class="stats" style="margin-top:5mm">
+    <div class="stat" style="border-left-color:#a52a2a"><div class="v">4<small> 件</small></div><div class="l">一次否決（旧耐震）<br>稟議に上げずその場で落とす</div></div>
+    <div class="stat" style="border-left-color:#96660a"><div class="v">1<small> 件</small></div><div class="l">保留（市街化調整区域）<br>用途変更の可否を確認してから</div></div>
+    <div class="stat" style="border-left-color:#1a7a4c"><div class="v">2<small> 件</small></div><div class="l">卓上通過<br>次工程（現地・役所・消防）へ</div></div>
+    <div class="stat"><div class="v">約10<small> 分</small></div><div class="l">7件の判定に要した時間</div></div>
+  </div>
+  <div class="num">13</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 14 パイプラインからの示唆 -->
+<div class="slide">
+  <div class="kicker">INSIGHT</div>
+  <h2>7件を並べて見えたこと</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <div class="card" style="border-top-color:#1a7a4c">
+      <div class="n" style="color:#1a7a4c">追い風</div>
+      <h3>この価格帯は、そもそも<br>特例が効く帯に集中している</h3>
+      <p>7件すべてが<b>延床100〜121㎡＝200㎡以下</b>、かつ<b>全件2階建</b>。<br><br>
+      つまり<b>用途変更の確認申請が不要</b>（法87条）で、<b>耐火・準耐火化も不要</b>（指導指針6⑶）。
+      さらに<b>定員9人以下</b>に収まる規模なので、13㎡の特例も射程に入る。<br><br>
+      <b>狙う帯が、法令の緩和帯とそのまま重なっている。</b></p>
+    </div>
+    <div class="card" style="border-top-color:#a52a2a">
+      <div class="n" style="color:#a52a2a">最大の落とし穴</div>
+      <h3>否決4件は、すべて<br>同じ理由で落ちた</h3>
+      <p>4件とも<b>旧耐震（昭和56年6月1日より前）</b>。<br><br>
+      高齢者施設で旧耐震は、耐震補強のコストが乗るだけでなく、<b>融資・保険・行政の目線すべてで不利</b>になる。<br><br>
+      安い物件ほど古い。<b>価格の安さは、多くの場合この理由による</b>。298万円・380万円が安い理由は、ここにある。</p>
+    </div>
+    <div class="card" style="border-top-color:#96660a">
+      <div class="n" style="color:#96660a">見落としやすい罠</div>
+      <h3>市街化調整区域が<br>2件混ざっていた</h3>
+      <p>用途地域が「定めなし」の2件は<b>市街化調整区域</b>。<br><br>
+      用途地域の8項目チェックだけでは<b>すり抜ける</b>。調整区域では用途変更に都市計画法の許可が必要になり、原則として通らない。<br><br>
+      <b>判定項目に「都市計画区域の別」を追加します。</b>実際に回して初めて見つかった穴。</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:5mm;margin-bottom:0">仕組みは、回すほど精度が上がります。<b>否決理由が溜まれば、そもそも見に行くべき物件像が定義できる。</b></p>
+  <div class="num">14</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 13 集客 -->
+<div class="slide">
+  <div class="kicker">SALES</div>
+  <h2>集客：<em>「何を言うか」で歩留まりが変わります</em></h2>
+  <div class="rule"></div>
+  <div class="cols">
+    <div class="col n">
+      <div class="stats" style="flex-direction:column;gap:3mm;margin:0">
+        <div class="stat"><div class="v">726<small> 件</small></div><div class="l">優先母数（住宅型有料255＋特養471）<br>埼玉県の施設一覧1,548件から抽出</div></div>
+        <div class="stat"><div class="v">200<small> 件／週</small></div><div class="l">架電目標。約4週で母数を1周する</div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="panel" style="background:#fdf1f1;border-left:3pt solid var(--bad)">
+        <h4 style="color:var(--bad)">これでは入らない</h4>
+        <p style="font-size:12pt"><span class="bad-line">「生活保護の方を紹介してください」</span></p>
+        <p style="font-size:9.8pt;color:var(--ink2);margin-top:2mm">相手にとっては<b>こちらが得をするだけの依頼</b>。断る理由しかなく、担当者名すら残らない。</p>
+      </div>
+      <div class="panel" style="margin-top:4mm;background:#eef7f1;border-left:3pt solid var(--good)">
+        <h4 style="color:var(--good)">これで入る</h4>
+        <p style="font-size:12pt;font-weight:bold">「費用の面でお受けできなかったご相談は<br>ありませんか」</p>
+        <p style="font-size:9.8pt;color:var(--ink2);margin-top:2mm">相手の<b>取りこぼし</b>を拾う話に変わる。施設側は断った相談の行き先ができ、<b>相談元との関係を保てる</b>。つまり相手にメリットがある依頼になる。</p>
+      </div>
+      <p class="lead" style="margin:4mm 0 0;font-size:10.5pt">この一言で、電話は「お願い」から「提案」に変わります。<br>
+      架電の直後に送るのが<b>受け入れ可否ライン表（A4 1枚）</b>。相手が判断できる材料を、1枚で渡します。</p>
+    </div>
+  </div>
+  <div class="num">15</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 14 数字責任 -->
+<div class="slide">
+  <div class="kicker">KPI</div>
+  <h2>私が持つ数字</h2>
+  <div class="rule" style="margin-bottom:4mm"></div>
+  <table>
+    <tr><th style="width:30%">指標</th><th class="c" style="width:14%">今週</th><th class="c" style="width:14%">月間目標</th><th>この数字を追う理由</th></tr>
+    <tr><td><b>卓上判定を完了した物件数</b></td><td class="c">—</td><td class="c"><b>40 件</b></td><td>母数がすべて。判定を回した数が、拾える1件の確率を決める</td></tr>
+    <tr><td><b>一次否決した件数と理由の内訳</b></td><td class="c">—</td><td class="c">全件記録</td><td>否決理由が溜まると<b>探すべき物件像</b>が定義できる。次の仕入れ精度に直結</td></tr>
+    <tr><td><b>老人ホームへの架電件数</b></td><td class="c">—</td><td class="c"><b>800 件</b></td><td>週200件×4週。優先母数726件を約1周する</td></tr>
+    <tr><td><b>担当者名を取れた件数</b></td><td class="c">—</td><td class="c">架電の20%</td><td>件数より重要。<b>次に電話する相手がいる</b>状態を作った数</td></tr>
+    <tr><td><b>資料送付件数（ライン表）</b></td><td class="c">—</td><td class="c">担当者取得の全件</td><td>電話の翌日までに送る。送っていない架電は成果ゼロと数える</td></tr>
+  </table>
+  <p class="lead" style="margin-top:5mm;margin-bottom:0">定例では<b>「判定した物件数と否決理由の内訳」「架電件数と資料送付件数」</b>を報告します。<br>
+  数字が動かない週は、理由と打ち手をセットで持ってきます。</p>
+  <div class="num">16</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 15 ロードマップ -->
+<div class="slide">
+  <div class="kicker">ROADMAP</div>
+  <h2>90日でここまで持っていきます</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <div class="card">
+      <div class="n">PHASE 1 ／ 〜2週</div>
+      <h3>判定の型を固める</h3>
+      <ul style="margin-top:2mm;font-size:9.8pt">
+        <li>卓上判定 20件</li>
+        <li>埼玉県へ指導指針6⑴の特例適用を確認</li>
+        <li>建築指導課・消防本部の一次回答を取得</li>
+        <li>市教委へ埋蔵文化財の照会</li>
+        <li>ライン表を100件へ送付</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="n">PHASE 2 ／ 〜6週</div>
+      <h3>1号案件を決める</h3>
+      <ul style="margin-top:2mm;font-size:9.8pt">
+        <li>稟議に上げる案件 1件</li>
+        <li>内装業者から工期見積（4／6／8週）</li>
+        <li><b>開所日の確定</b></li>
+        <li>避難確保計画の雛形を作成</li>
+        <li>架電から入居見込みの初回獲得</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="n">PHASE 3 ／ 〜12週</div>
+      <h3>横展開する</h3>
+      <ul style="margin-top:2mm;font-size:9.8pt">
+        <li>1エリア5件以上のデモ掲載</li>
+        <li>パンフレットの作成</li>
+        <li>2号案件の選定</li>
+        <li>判定フローを他メンバーへ移管</li>
+      </ul>
+    </div>
+  </div>
+  <div class="num">17</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 16 依頼 -->
+<div class="slide">
+  <div class="kicker">ASK</div>
+  <h2>お願いしたいこと</h2>
+  <div class="rule"></div>
+  <div class="cols">
+    <div class="col">
+      <div class="panel" style="background:#eef5ff;border-left:3pt solid var(--accent)">
+        <h4>意思決定をいただきたいこと</h4>
+        <p style="font-size:11.5pt;line-height:1.7"><b>一次否決の単独決裁</b>をお認めください。<br>
+        卓上8項目のいずれかで明確にNGなら、稟議に上げずその場で落とします。</p>
+        <p style="font-size:9.6pt;color:var(--ink2);margin-top:2mm">否決した全件について、理由コードと根拠を残します。判断の正しさは記録で検証できる状態にします。</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="panel">
+        <h4>皆さんにお願いしたいこと（3つ）</h4>
+        <ul style="margin-top:2mm">
+          <li>候補物件は<b>「マイソク＋登記」</b>で投げてください。この2つがあれば判定できます</li>
+          <li>役所・消防への確認で得た回答は、<b>自治体名つきで共有</b>してください。次の物件で使い回せます</li>
+          <li>架電で断られた理由を<b>1行でいい</b>ので残してください。断り文句の型が見えると、返しが作れます</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:5mm;margin-bottom:0">配布資料：<b>ヒアリングシート（1枚版・2枚版・記入例）／一次否決フローチャート／受け入れ可否ライン表／架電スクリプト</b></p>
+  <div class="num">18</div><div class="foot">老人シェアハウス事業 ／ 第1回全体MTG</div>
+</div>
+
+<!-- 17 締め -->
+<div class="slide end">
+  <div class="msg">この事業の勝ち負けは、<br>判定の速度で決まる。</div>
+  <div class="sub3">だから最初に、判定を仕組みにしました。<br>物件は、私に投げてください。</div>
+</div>
