@@ -20,11 +20,11 @@ const html = `<!DOCTYPE html>
   @page { size: A4; margin: 18mm 20mm; }
   body { font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", "IPAMincho", "IPAGothic", serif;
          font-size: 10pt; line-height: 1.65; color: #000; margin: 0; }
-  p { margin: 0 0 0.5em; text-align: justify; }
+  p { margin: 0 0 0.45em; text-align: justify; }
   .right { text-align: right; }
   .center { text-align: center; }
   h1 { font-size: 14pt; text-align: center; letter-spacing: .2em; margin: .9em 0 1em; font-weight: 700; }
-  h2 { font-size: 10pt; font-weight: 700; margin: 1.1em 0 .4em; break-after: avoid; }
+  h2 { font-size: 10pt; font-weight: 700; margin: .95em 0 .35em; break-after: avoid; }
   table.grid, .sig { break-inside: avoid; }
   p { orphans: 2; widows: 2; }
   .sig { width: 62mm; margin-left: auto; border-collapse: collapse; margin-bottom: .3em; }
@@ -40,7 +40,7 @@ const html = `<!DOCTYPE html>
   table.grid td.date { width: 46mm; white-space: nowrap; }
   .sub { font-size: 9pt; }
   .cond { margin: 0 0 .2em 1em; }
-  .end { text-align: right; margin-top: 1.2em; }
+  .end { text-align: right; margin-top: .8em; break-before: avoid; }
 </style></head>
 <body>
   <p class="right">${esc(c.BLANK_DATE)}</p>
