@@ -64,7 +64,7 @@ const doc = new Document({
         columnWidths: [1400, 2800, 1000],
         indent: { size: 4200, type: WidthType.DXA },
         borders: NOBORDER,
-        rows: c.signatureRows.map(([label, ruled]) => new TableRow({
+        rows: c.signatureRows.map(([label, ruled, seal]) => new TableRow({
           children: [
             cell([p(label, { after: 0 })], 1400),
             cell([new Paragraph({
@@ -72,7 +72,7 @@ const doc = new Document({
               border: ruled ? { bottom: { style: BorderStyle.SINGLE, size: 6, color: '000000' } } : undefined,
               children: [t('')],
             })], 2800),
-            cell([p(label === '代 表 者' ? '㊞' : '', { after: 0, align: AlignmentType.CENTER })], 1000),
+            cell([p(seal ? '㊞' : '', { after: 0, align: AlignmentType.CENTER })], 1000),
           ],
         })),
       }),

@@ -5,12 +5,12 @@ module.exports = {
   BLANK_DATE,
   addressee: '賃貸人　株式会社邱永漢事務所　御中',
   title: '解　約　通　知　書',
-  signatureNote: '※ 個人名義でご契約の場合は、住所・氏名をご記入のうえご捺印ください。',
+  signatureNote: '※ 氏名はご自筆でご署名のうえ、ご実印を押印ください。',
+  // [ラベル, 記入用の下線を引くか, 押印欄を設けるか]
   signatureRows: [
-    ['賃借人', false],
-    ['所 在 地', true],
-    ['法 人 名', true],
-    ['代 表 者', true],
+    ['賃借人', false, false],
+    ['住　　所', true, false],
+    ['氏　　名', true, true],
   ],
   opening: [
     '　拝啓　時下ますますご清栄のこととお慶び申し上げます。平素は格別のご高配を賜り、厚く御礼申し上げます。',

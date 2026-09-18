@@ -5,8 +5,8 @@ const c = require('./content');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const nl = (s) => esc(s).replace(/\n/g, '<br>');
 
-const sigRows = c.signatureRows.map(([label, line]) =>
-  `<tr><th>${esc(label)}</th><td class="${line ? 'ruled' : ''}"></td><td class="seal">${label === '代 表 者' ? '㊞' : ''}</td></tr>`).join('');
+const sigRows = c.signatureRows.map(([label, line, seal]) =>
+  `<tr><th>${esc(label)}</th><td class="${line ? 'ruled' : ''}"></td><td class="seal">${seal ? '㊞' : ''}</td></tr>`).join('');
 
 const s2Rows = c.s2.rows.map(([label, vals]) =>
   `<tr><th>${nl(label)}</th><td>${vals.map((v) => `<div>${esc(v)}</div>`).join('')}</td></tr>`).join('');
