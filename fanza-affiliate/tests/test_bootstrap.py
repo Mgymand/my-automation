@@ -12,6 +12,8 @@ from affiliate_bot.secrets_store import LocalEnvStore, mask
 def _ctx(db, settings, tmp_path, answers=None, secrets=None, interactive=True):
     store = LocalEnvStore(tmp_path / ".env")
     out = io.StringIO()
+    # CI（GitHub Actions）ではクラウド実行と判定され .env に書かないため、テストは local 実行として固定する
+    db.set_setting("env_platform", "local")
     return bootstrap.Ctx(settings=settings, db=db, io=IO(interactive, answers, secrets, out), store=store,
                          repo_root=tmp_path, project_dir=tmp_path, network=False), out
 
