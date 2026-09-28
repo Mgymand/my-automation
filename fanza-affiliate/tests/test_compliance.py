@@ -18,14 +18,22 @@ def test_media_rights():
     assert not compliance.media_rights_ok("https://evil.pics.dmm.co.jp.attacker.com/x.jpg")
 
 
-def test_adult_requires_human_ack(settings):
-    settings.adult_on_x_acknowledged = False
-    r = compliance.check_post("作品【PR】", None, None, True, settings)
-    assert not r.ok and r.requires_human
-    settings.adult_on_x_acknowledged = True
+def test_adult_is_hard_blocked_regardless_of_settings(settings):
     settings.sensitive_media_setting_confirmed = True
-    r = compliance.check_post("作品【PR】", None, "https://pics.dmm.co.jp/a.jpg", True, settings)
-    assert r.ok
+    settings.dmm_media_registered = True
+    r = compliance.check_post("作品【PR】", None, "https://pics.dmm.co.jp/a.jpg", True, settings, site="FANZA")
+    assert not r.ok and r.hard_block and not r.requires_human
+    assert any("有料パートナーシップ" in x for x in r.reasons)
+    # is_adult=False でも site=FANZA なら保守的にブロック
+    r = compliance.check_post("作品【PR】", None, None, False, settings, site="FANZA")
+    assert r.hard_block
+
+
+def test_policy_registry_hard_block():
+    from affiliate_bot.policy import x_affiliate_hard_block
+    assert x_affiliate_hard_block("FANZA").blocked
+    assert x_affiliate_hard_block("DMM.com", genres=["アダルト"]).blocked
+    assert not x_affiliate_hard_block("DMM.com", genres=["ドラマ"]).blocked
 
 
 def test_non_adult_ok(settings):

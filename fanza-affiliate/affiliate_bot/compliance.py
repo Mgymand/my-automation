@@ -3,7 +3,8 @@
 根拠（docs/COMPLIANCE.md 参照）:
 - X 自動化ルール: 公式 API のみ、スパム禁止、複数アカウントで同一内容禁止
 - X 成人向けコンテンツ: メディアをセンシティブ設定、プロフィール画像/ヘッダー禁止、未成年 NG
-- X 有料パートナーシップ方針: アフィリエイトは開示対象。「成人向け・性的な商品/サービス」は禁止カテゴリ
+- X 有料パートナーシップ方針: アフィリエイトは開示対象。「成人向け・性的な商品/サービス」「成人向けエンターテインメント」は
+  禁止カテゴリ → 成人向け商品の X 投稿は policy.py により HARD BLOCK（設定で解除不可）
 - DMM 参加規約/ガイドライン: 公式素材のみ、スパム禁止、児童ポルノ相当は一切禁止、「広告/PR」表記必須
 - 景表法ステマ規制（2023-10-01〜）: 広告であることを一般消費者が判別できる表示
 """
@@ -14,6 +15,7 @@ from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
 from .config import Settings
+from .policy import x_affiliate_hard_block
 
 # 未成年を想起させる表現・強制/非同意を想起させる表現・誤認を招く表現。
 # 部分一致で判定する。作品タイトルに含まれていても投稿文には使わない。
@@ -43,6 +45,7 @@ class PolicyResult:
     risk: float                      # 0.0 (安全) 〜 1.0 (公開不可)
     reasons: list[str] = field(default_factory=list)
     requires_human: bool = False
+    hard_block: bool = False         # 規約上禁止。人間の了承でも解除できない
 
 
 def weighted_len(text: str) -> int:
@@ -78,11 +81,24 @@ def media_rights_ok(url: str | None) -> bool:
     return any(host == h or host.endswith("." + h) for h in DMM_MEDIA_HOSTS)
 
 
+SENSITIVE_HINT_WORDS = ("グラビア", "水着", "セクシー", "ランジェリー", "下着", "sexy", "gravure")
+
+
+def _maybe_sensitive(genres: list[str] | None) -> bool:
+    hay = " ".join(genres or []).lower()
+    return any(w.lower() in hay for w in SENSITIVE_HINT_WORDS)
+
+
 def check_post(text: str, reply_text: str | None, media_url: str | None, is_adult: bool,
-               settings: Settings) -> PolicyResult:
+               settings: Settings, site: str | None = None, genres: list[str] | None = None) -> PolicyResult:
     reasons: list[str] = []
     risk = 0.0
     requires_human = False
+
+    # 0) HARD BLOCK: X 有料パートナーシップの禁止カテゴリ（成人向け商品）。設定では解除不可
+    hb = x_affiliate_hard_block(site or ("FANZA" if is_adult else "DMM.com"), None, genres)
+    if hb.blocked:
+        return PolicyResult(ok=False, risk=1.0, reasons=[hb.reason], requires_human=False, hard_block=True)
 
     combined = text + "\n" + (reply_text or "")
 
@@ -112,16 +128,11 @@ def check_post(text: str, reply_text: str | None, media_url: str | None, is_adul
         reasons.append("メディアが DMM 提供素材ではない（権利確認不能）")
         risk = max(risk, 1.0)
 
-    # 6) 成人向けゲート
-    if is_adult:
-        if not settings.sensitive_media_setting_confirmed and media_url:
-            reasons.append("X のセンシティブメディア設定の人間確認が未完了")
-            risk = max(risk, 1.0)
-            requires_human = True
-        if not settings.adult_on_x_acknowledged:
-            reasons.append("X 有料パートナーシップ方針（成人向け商品は禁止カテゴリ）のリスクを人間が未承認")
-            risk = max(risk, 1.0)
-            requires_human = True
+    # 6) センシティブになり得るメディア（水着・グラビア等の非成人向け商品）はアカウント設定の確認を推奨
+    if media_url and not settings.sensitive_media_setting_confirmed and _maybe_sensitive(genres):
+        reasons.append("センシティブになり得るメディア: X の『メディアをセンシティブとしてマーク』設定の確認が未完了")
+        risk = max(risk, 0.8)
+        requires_human = True
 
     # 7) 媒体登録
     if not settings.dmm_media_registered:

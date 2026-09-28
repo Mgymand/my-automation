@@ -25,12 +25,22 @@ import requests
 API = "https://api.x.com/2"
 UPLOAD = "https://api.x.com/2/media/upload"
 
-# 料金（USD）。docs.x.com/x-api/getting-started/pricing より（2026-09 取得）
+# 料金の既定値（USD）。docs.x.com/x-api/getting-started/pricing より（2026-09 取得）。
+# 実際の計算は XClient(pricing=...) / DryRunXClient(pricing=...) に渡した pricing.XPricing を使う
+# （環境変数 → DB settings.x_pricing の順で上書き可能。pricing.verify_x_pricing が公式ページと照合する）。
 PRICE_POST_USD = 0.015
 PRICE_POST_WITH_URL_USD = 0.20
 PRICE_READ_POST_USD = 0.005
 PRICE_OWNED_READ_USD = 0.001
 PRICE_READ_USER_USD = 0.010
+
+
+class _DefaultPricing:
+    post = PRICE_POST_USD
+    post_url = PRICE_POST_WITH_URL_USD
+    read_post = PRICE_READ_POST_USD
+    owned_read = PRICE_OWNED_READ_USD
+    read_user = PRICE_READ_USER_USD
 
 
 class XError(RuntimeError):
@@ -83,11 +93,12 @@ class PostResult:
 
 
 class XClient:
-    def __init__(self, ck: str, cs: str, at: str, ats: str, session: requests.Session | None = None):
+    def __init__(self, ck: str, cs: str, at: str, ats: str, session: requests.Session | None = None, pricing=None):
         if not all([ck, cs, at, ats]):
             raise XError("X API の認証情報が未設定です")
         self.auth = OAuth1(ck, cs, at, ats)
         self.s = session or requests.Session()
+        self.pricing = pricing or _DefaultPricing()
 
     # ---- 低レベル ----
     def _req(self, method: str, url: str, *, params: dict | None = None, json_body: Any = None,
@@ -118,7 +129,7 @@ class XClient:
             body["paid_partnership"] = True
         data = self._req("POST", f"{API}/tweets", json_body=body)
         d = data.get("data") or {}
-        cost = PRICE_POST_WITH_URL_USD if ("http://" in text or "https://" in text) else PRICE_POST_USD
+        cost = self.pricing.post_url if ("http://" in text or "https://" in text) else self.pricing.post
         return PostResult(post_id=str(d.get("id", "")), text=d.get("text", text), cost_usd=cost)
 
     def delete_post(self, post_id: str) -> None:
@@ -177,7 +188,7 @@ class XClient:
                     "profile_visits": int(npm.get("user_profile_clicks") or 0),
                     "url_clicks": int(npm.get("url_link_clicks") or 0),
                 }
-            cost += PRICE_OWNED_READ_USD * len(batch)
+            cost += self.pricing.owned_read * len(batch)
         return out, cost
 
     def search_recent(self, query: str, max_results: int = 50, next_token: str | None = None) -> tuple[dict, float]:
@@ -195,21 +206,22 @@ class XClient:
         data = self._req("GET", f"{API}/tweets/search/recent", params=params)
         n_posts = len(data.get("data") or [])
         n_users = len((data.get("includes") or {}).get("users") or [])
-        return data, PRICE_READ_POST_USD * n_posts + PRICE_READ_USER_USD * n_users
+        return data, self.pricing.read_post * n_posts + self.pricing.read_user * n_users
 
 
 class DryRunXClient:
     """DRY_RUN 用。API を呼ばず、ログだけ残す。"""
 
-    def __init__(self):
+    def __init__(self, pricing=None):
         self.calls: list[dict] = []
         self._n = 0
+        self.pricing = pricing or _DefaultPricing()
 
     def create_post(self, text: str, media_ids=None, reply_to=None, paid_partnership=False) -> PostResult:
         self._n += 1
         self.calls.append({"op": "create_post", "text": text, "media_ids": media_ids, "reply_to": reply_to,
                            "paid_partnership": paid_partnership})
-        cost = PRICE_POST_WITH_URL_USD if "http" in text else PRICE_POST_USD
+        cost = self.pricing.post_url if "http" in text else self.pricing.post
         return PostResult(post_id=f"dry-{int(time.time())}-{self._n}", text=text, cost_usd=cost)
 
     def upload_media(self, content: bytes, media_type: str, category: str = "tweet_image") -> str:

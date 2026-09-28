@@ -28,6 +28,41 @@ PRICING = {
 ROLE_MODEL = {"sonnet": "model_sonnet", "opus": "model_opus", "fable": "model_fable"}
 ROLE_EFFORT = {"sonnet": "low", "opus": "medium", "fable": "high"}
 
+# 利用できないモデルがあった場合の代替チェーン（品質が近い順）。運用開始そのものは止めない。
+FALLBACK_CHAIN = {
+    "fable": ["claude-fable-5-1", "claude-fable-5", "claude-opus-5-5", "claude-opus-5", "claude-opus-4-8", "claude-sonnet-5"],
+    "opus": ["claude-opus-5-5", "claude-opus-5", "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-5", "claude-sonnet-4-6"],
+    "sonnet": ["claude-sonnet-5", "claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-5"],
+}
+# Fable 系のみ thinking 常時 ON / beta fallbacks を使う
+FABLE_PREFIXES = ("claude-fable", "claude-mythos")
+
+
+def resolve_models(client, settings: Settings, db: Database) -> dict:
+    """Models API で各役割のモデルが使えるか確認し、使えなければ代替へ。結果を DB に保存する。
+    戻り値: {"sonnet": {"requested":..., "resolved":..., "fallback": bool}, ...}
+    """
+    result: dict[str, dict] = {}
+    cache: dict[str, bool] = {}
+
+    def ok(model_id: str) -> bool:
+        if model_id in cache:
+            return cache[model_id]
+        try:
+            client.models.retrieve(model_id)
+            cache[model_id] = True
+        except Exception:  # noqa: BLE001 - NotFound / Permission など全て「使えない」
+            cache[model_id] = False
+        return cache[model_id]
+
+    for role, attr in ROLE_MODEL.items():
+        requested = getattr(settings, attr)
+        chain = [requested] + [m for m in FALLBACK_CHAIN[role] if m != requested]
+        resolved = next((m for m in chain if ok(m)), None)
+        result[role] = {"requested": requested, "resolved": resolved, "fallback": resolved != requested}
+    db.set_setting("model_map", json.dumps({r: v["resolved"] for r, v in result.items()}))
+    return result
+
 
 class LLMUnavailable(RuntimeError):
     """API キーなし／予算超過／refusal など。呼び出し側はフォールバックする。"""
@@ -45,7 +80,8 @@ class LLMResult:
 
 
 def estimate_cost_usd(model: str, inp: int, out: int, cache: int = 0) -> float:
-    p = PRICING.get(model) or {"in": 5.0, "out": 25.0, "cache": 0.5}
+    from .pricing import llm_pricing_overrides
+    p = llm_pricing_overrides().get(model) or PRICING.get(model) or {"in": 5.0, "out": 25.0, "cache": 0.5}
     return (inp * p["in"] + out * p["out"] + cache * p["cache"]) / 1_000_000
 
 
@@ -69,6 +105,18 @@ class LLMRouter:
         spent = self.spent_today_jpy()
         if spent >= self.settings.daily_ai_budget_jpy:
             raise LLMUnavailable(f"AI 日次予算超過: {spent:.0f}円 >= {self.settings.daily_ai_budget_jpy:.0f}円")
+
+    def model_for(self, role: str) -> str | None:
+        """DB に保存された解決済みモデル（bootstrap の可用性確認結果）を優先する。"""
+        raw = self.db.get_setting("model_map")
+        if raw:
+            try:
+                m = json.loads(raw).get(role)
+                if m:
+                    return m
+            except json.JSONDecodeError:
+                pass
+        return getattr(self.settings, ROLE_MODEL[role])
 
     def _get_client(self):
         if self._client is not None:
@@ -95,7 +143,9 @@ class LLMRouter:
         if not self.enabled:
             raise LLMUnavailable("LLM 無効（API キー未設定）")
         self._check_budget(role)
-        model = getattr(self.settings, ROLE_MODEL[role])
+        model = self.model_for(role)
+        if not model:
+            raise LLMUnavailable(f"役割 {role} に利用可能なモデルがありません")
         client = self._get_client()
 
         kwargs: dict[str, Any] = {
@@ -108,7 +158,7 @@ class LLMRouter:
         if schema is not None:
             kwargs["output_config"]["format"] = {"type": "json_schema", "schema": schema}
 
-        if role == "fable":
+        if model.startswith(FABLE_PREFIXES):
             # Fable 5.1: thinking は常時 ON（パラメータ省略）。安全分類器の refusal に備え
             # サーバーサイドの fallbacks を既定で有効化する。
             resp = client.beta.messages.create(

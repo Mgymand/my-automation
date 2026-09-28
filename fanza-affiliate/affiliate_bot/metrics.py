@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from . import bandit, patterns
 from .config import Settings
 from .db import Database, utcnow
-from .tracking import attribute_conversion
+from .tracking import attribute_conversion, tracking_mode
 from .x_client import to_jpy
 
 
@@ -29,13 +29,24 @@ def ingest_x_metrics(db: Database, settings: Settings, x, max_age_days: int = 14
     if cost_usd:
         db.add_cost("x_api", to_jpy(cost_usd, settings.usd_jpy), ref="metrics")
     n = 0
+    derive = tracking_mode(settings) != "db"
     for xid, m in metrics.items():
+        pid = id_map[xid]
+        prev = db.one("SELECT url_clicks FROM post_metrics WHERE post_id=? ORDER BY captured_at DESC LIMIT 1", (pid,))
+        now = utcnow()
         db.exec(
             "INSERT INTO post_metrics(post_id,captured_at,views,likes,reposts,replies,quotes,bookmarks,profile_visits,url_clicks) "
             "VALUES(?,?,?,?,?,?,?,?,?,?)",
-            (id_map[xid], utcnow(), m["views"], m["likes"], m["reposts"], m["replies"], m["quotes"], m["bookmarks"],
+            (pid, now, m["views"], m["likes"], m["reposts"], m["replies"], m["quotes"], m["bookmarks"],
              m["profile_visits"], m["url_clicks"]),
         )
+        if derive:
+            delta = int(m["url_clicks"]) - int(prev["url_clicks"] if prev else 0)
+            code = db.one("SELECT tracking_code FROM posts WHERE post_id=?", (pid,))
+            if delta > 0 and code and code["tracking_code"]:
+                db.conn.executemany("INSERT INTO clicks(tracking_code,ts,ua_hash,referer) VALUES(?,?,NULL,'x_metrics_delta')",
+                                    [(code["tracking_code"], now)] * delta)
+                db.conn.commit()
         n += 1
     return n
 

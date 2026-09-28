@@ -64,12 +64,27 @@ def test_plan_and_publish_dry_run(db, settings):
     assert post["status"] == "posted" and post["api_cost_jpy"] > 0
 
 
-def test_adult_products_blocked_without_ack(db, settings):
+def test_adult_products_hard_blocked(db, settings):
     _seed(db, settings, site="FANZA")
+    settings.sensitive_media_setting_confirmed = True
     ids = scheduler.plan_day(db, settings, None, day_jst=datetime(2030, 1, 1, tzinfo=timezone.utc), rng=random.Random(2))
     assert ids == []
     assert db.one("SELECT COUNT(*) c FROM candidates WHERE status='human_review'")["c"] == 0  # 商品段階で除外
-    assert db.one("SELECT 1 FROM events WHERE code='plan_short'")
+    assert db.one("SELECT 1 FROM events WHERE code='hard_block_excluded'")
+    # 公開直前ゲートでも止まる（予定を手で差し込んでも投稿されない）
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    db.exec("INSERT INTO posts(account,product_id,pattern_id,text,scheduled_at,status,created_at) VALUES('m','demo001','P01','x【PR】',?,'scheduled',?)", (now, now))
+    assert publish_due(db, settings, DryRunXClient()) == []
+    assert db.one("SELECT status FROM posts")["status"] == "blocked"
+
+
+def test_go_live_requires_explicit_approval(db, settings):
+    _seed(db, settings)
+    scheduler.plan_day(db, settings, None, day_jst=datetime(2030, 1, 1, tzinfo=timezone.utc), rng=random.Random(5))
+    settings.dry_run = False
+    assert publish_due(db, settings, DryRunXClient(), now=datetime(2030, 1, 3, tzinfo=timezone.utc)) == []
+    db.set_setting("go_live_approved_at", "2030-01-01T00:00:00+00:00")
+    assert len(publish_due(db, settings, DryRunXClient(), now=datetime(2030, 1, 3, tzinfo=timezone.utc))) == 1
 
 
 def test_similarity_rewrite(db, settings):

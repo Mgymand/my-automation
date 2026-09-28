@@ -33,7 +33,12 @@
 | `db` | SQLite スキーマ・原価台帳・イベント | − |
 | `dmm_client` | ItemList / FloorList / GenreSearch / ActressSearch。1 秒間隔 | − |
 | `x_client` | OAuth1.0a 署名、投稿（`paid_partnership`）、メディア chunked upload、指標取得、検索 | − |
-| `compliance` | PR 表記・NG ワード・素材権利・成人向けゲート・媒体登録ゲート | − |
+| `policy` | 規約台帳（X 有料パートナーシップ禁止カテゴリ）。成人向け商品の X 投稿を **設定で解除不能な HARD BLOCK** にし、公式ページの変更を監視 | − |
+| `compliance` | HARD BLOCK → PR 表記・NG ワード・素材権利・媒体登録ゲート | − |
+| `bootstrap` | 対話型初期設定エージェント（環境判定 → Secret 入力 → 疎通 → 自動デプロイ → READY/ACTION/BLOCKED → 本番承認） | Sonnet（媒体登録文） |
+| `secrets_store` | .env(600) / Google Secret Manager / Vercel env / GitHub Actions への保存 | − |
+| `pricing` | X API・LLM 価格の設定値化と公式ページ照合（固定値に依存しない利益計算） | − |
+| `attention` | Human Attention Queue（起票・重複排除・Slack 通知） | − |
 | `products` | 候補取得・ERPI 推定（事前分布 × 実測のベイズ的縮小） | − |
 | `patterns` | Winning Pattern DB（シード・更新・減衰・降格） | − |
 | `generation` | 1 商品 × 複数訴求軸の候補生成（Sonnet／テンプレ） | Sonnet |
@@ -174,13 +179,25 @@
 | リンク障害 | 予定投稿のアフィリエイト URL が 4xx/5xx | 停止 |
 | 投稿重複 | 3 日以内に同一本文 2 件以上 | 停止 |
 | 素材権利不明 | メディア URL が DMM ドメイン外 | 当該投稿をブロック |
-| 成人向け判定・設定未確認 | `ADULT_ON_X_ACKNOWLEDGED` / `SENSITIVE_MEDIA_SETTING_CONFIRMED` 未設定 | 当該投稿を人間レビューへ |
+| 成人向け商品（FANZA / 成人向けジャンル） | `policy.x_affiliate_hard_block` | **HARD BLOCK**（候補・計画・公開直前の 3 箇所で除外。設定で解除不可） |
+| センシティブになり得るメディア | 水着・グラビア等 × `SENSITIVE_MEDIA_SETTING_CONFIRMED` 未設定 | 当該投稿を人間レビューへ（policy_undecidable） |
+| 規約・価格の変更 | `policy.verify_policy` / `pricing.verify_x_pricing`（bootstrap と週次） | Attention Queue（policy_change） |
+| 本番承認なし | `DRY_RUN=false` かつ `go_live_approved_at` 未記録 | 投稿しない（bootstrap で「本番運用開始」を要求） |
 | 媒体未登録 | `DMM_MEDIA_REGISTERED` 未設定 | 全投稿ブロック |
 | アカウント警告 | 人間が `settings.account_warning=1` | 停止 |
 | AI 予算超過 | 24h の AI 費 ≥ `DAILY_AI_BUDGET_JPY` | テンプレ生成へ切替（投稿は継続） |
 | 規約変更 | 週次レビューのチェック項目（人間） | 人間判断 |
 
 停止中は `publish` が何もしない。`events` に停止理由を記録し、日次レポート冒頭に「停止中」を表示。
+
+**Human Attention Queue**（`attention_queue`）: 通常運用では人間に報告しない。起票カテゴリは
+auth_expired / policy_change / account_warning / review_needed / billing_cap / metric_anomaly / tracking_failure /
+policy_undecidable / profit_negative / prod_outage の 10 種のみ。同一 dedupe_key の open 項目は再起票しない。
+通知は Slack Webhook（未設定なら stdout）。`attention --resolve ID` で解決。
+
+**トラッキングの自動構築**: `TRACKING_SECRET` を生成し、署名付きペイロード（`/r/<payload>.<sig>`）で DB を持たない
+リダイレクトを Vercel Functions（`deploy/vercel-tracking`, 無料枠）または Cloud Run に bootstrap がデプロイする。
+クリック時刻は X の `url_link_clicks` の毎時差分から推定し、成果帰属に使う。
 
 ---
 
@@ -199,5 +216,6 @@
 | **合計** | | **約 ¥6,700〜7,900 / 月** |
 
 - 損益分岐: 平均報酬 ¥300/CV なら **月 25 CV**（1 日 0.8 CV）。CVR 2% なら 1,250 クリック/月、CTR 0.8% なら 156k 表示/月（≒1,040 表示/投稿）。
+- 価格は固定値ではなく設定値（`X_PRICE_*`）で、bootstrap と週次が公式ページと照合して DB に保存する（変更時は Attention Queue）。
 - 費用の 2/3 は「リンク付き投稿 $0.20」。週次レビューで **リンクリプを固定投稿／プロフィールへ集約する変種**（投稿費 $0.015 のみ）を A/B し、EPC が維持できればコストを 1/6 に圧縮できる。
 - AI 費は投稿数に線形。Fable は週 1 回に固定し、日次運用では呼ばない。

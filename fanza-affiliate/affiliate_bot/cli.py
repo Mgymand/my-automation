@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import bandit, failsafe, metrics, patterns, products, reports, research, scheduler, tracking
+from . import attention, bandit, bootstrap, failsafe, metrics, patterns, products, reports, research, scheduler, tracking
 from .config import Settings, load_settings
 from .db import Database
 from .dmm_client import DMMClient, DMMError
@@ -18,9 +18,12 @@ from .x_client import DryRunXClient, XClient
 
 
 def _x(settings: Settings, db: Database):
+    from .pricing import x_pricing
+    pr = x_pricing(settings, db)
     if settings.dry_run or not settings.x_credentials_present():
-        return DryRunXClient()
-    return XClient(settings.x_consumer_key, settings.x_consumer_secret, settings.x_access_token, settings.x_access_token_secret)
+        return DryRunXClient(pricing=pr)
+    return XClient(settings.x_consumer_key, settings.x_consumer_secret, settings.x_access_token,
+                   settings.x_access_token_secret, pricing=pr)
 
 
 def _llm(settings: Settings, db: Database) -> LLMRouter | None:
@@ -45,7 +48,8 @@ def cmd_status(settings: Settings, db: Database, args) -> None:
     print(f"X 認証: {'あり' if settings.x_credentials_present() else 'なし'}")
     print(f"Anthropic: {'あり' if settings.anthropic_api_key else 'なし'} (sonnet={settings.model_sonnet}, opus={settings.model_opus}, fable={settings.model_fable})")
     print("== 人間確認ゲート ==")
-    print(f"ADULT_ON_X_ACKNOWLEDGED={settings.adult_on_x_acknowledged}  SENSITIVE_MEDIA_SETTING_CONFIRMED={settings.sensitive_media_setting_confirmed}  DMM_MEDIA_REGISTERED={settings.dmm_media_registered}")
+    print(f"SENSITIVE_MEDIA_SETTING_CONFIRMED={settings.sensitive_media_setting_confirmed}  DMM_MEDIA_REGISTERED={settings.dmm_media_registered}")
+    print("成人向け（FANZA）商品の X 投稿: HARD BLOCK（policy.py / X 有料パートナーシップ方針の禁止カテゴリ。設定で解除不可）")
     print("== 集計 ==")
     for t in ("products", "patterns", "candidates", "posts", "post_metrics", "clicks", "conversions", "costs", "events"):
         print(f"{t}: {db.one(f'SELECT COUNT(*) c FROM {t}')['c']}")
@@ -175,6 +179,24 @@ def cmd_serve_tracking(settings: Settings, db: Database, args) -> None:
     tracking.serve(settings, db)
 
 
+def cmd_bootstrap(settings: Settings, db: Database, args) -> None:
+    io = bootstrap.IO(interactive=not args.check)
+    bootstrap.run(settings, db, io, network=not args.no_network, only=args.only.split(",") if args.only else None)
+
+
+def cmd_attention(settings: Settings, db: Database, args) -> None:
+    if args.resolve:
+        attention.resolve(db, int(args.resolve))
+        print(f"resolved #{args.resolve}")
+    if args.notify:
+        print(f"notified: {attention.notify_pending(db, settings)}")
+    items = attention.open_items(db)
+    if not items:
+        print("要対応: なし（自律運用中）")
+    for it in items:
+        print(f"#{it['id']} {it['ts']} [{it['severity']}/{it['category']}] {it['title']}\n   → {it['action']}")
+
+
 def cmd_pause(settings: Settings, db: Database, args) -> None:
     failsafe.halt(db, "manual", args.reason or "人間による停止")
     print("paused")
@@ -189,27 +211,59 @@ def cmd_loop(settings: Settings, db: Database, args) -> None:
     """常駐スケジューラ（cron の代替）。毎時: publish/metrics/checks。06:00 JST: learn/report/plan。月曜 07:00: weekly。"""
     tz = ZoneInfo(settings.timezone)
     last_hourly = last_daily = last_weekly = None
+    errors = 0
     while True:
         now = datetime.now(tz)
         try:
             if last_hourly is None or (now - last_hourly) >= timedelta(minutes=args.every):
-                failsafe.run_checks(db, settings, check_network=False)
+                settings = load_settings()   # bootstrap/resume による .env 変更を拾う
+                failsafe.run_checks(db, settings, check_network=(now.hour % 6 == 0))
                 publish_due(db, settings, _x(settings, db))
                 metrics.ingest_x_metrics(db, settings, _x(settings, db))
+                attention.notify_pending(db, settings)   # 要対応があるときだけ人間へ
                 last_hourly = now
             if now.hour == 6 and (last_daily is None or last_daily.date() != now.date()):
                 metrics.learn(db)
                 if settings.dmm_credentials_present():
                     cmd_fetch_products(settings, db, argparse.Namespace(demo=False, sorts="rank,date", pages=1, hits=100))
-                reports.daily_report(db, settings, _llm(settings, db))
+                md = reports.daily_report(db, settings, _llm(settings, db))
+                out = settings.data_dir.parent / "reports" / f"daily-{now.strftime('%Y-%m-%d')}.md"
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(md, encoding="utf-8")
                 scheduler.plan_day(db, settings, _llm(settings, db))
                 last_daily = now
             if now.weekday() == 0 and now.hour == 7 and (last_weekly is None or (now - last_weekly) > timedelta(days=6)):
+                weekly_maintenance(db, settings)
                 reports.weekly_review(db, settings, _llm(settings, db))
                 last_weekly = now
+            errors = 0
         except Exception as e:  # noqa: BLE001 - 常駐は落とさずログに残す
+            errors += 1
             db.log_event("warn", "loop_error", f"{e.__class__.__name__}: {e}")
+            if errors >= 3:
+                attention.raise_item(db, "prod_outage", f"loop が連続 {errors} 回失敗: {e.__class__.__name__}",
+                                     detail=str(e)[:500], action="ログ（events）を確認して原因を解決", severity="critical",
+                                     dedupe_key="loop_error_streak")
+                attention.notify_pending(db, settings)
         time.sleep(60)
+
+
+def weekly_maintenance(db: Database, settings: Settings) -> None:
+    """週次の規約・価格の再確認。変化があれば Attention Queue へ。"""
+    from . import policy
+    from .pricing import verify_x_pricing
+    try:
+        res = policy.verify_policy(db)
+        for k, v in res.items():
+            if v["status"] in ("changed", "phrase_missing"):
+                attention.raise_item(db, "policy_change", f"規約ページの変更を検知: {k}", detail=str(v),
+                                     action="一次情報を確認し policy.py / 運用を見直す", severity="critical")
+        pv = verify_x_pricing(settings, db)
+        if pv["status"] == "changed":
+            attention.raise_item(db, "policy_change", "X API 価格の変更を検知", detail=str(pv["changed"]),
+                                 action="コスト見積を確認（計算は新価格で継続）")
+    except Exception as e:  # noqa: BLE001
+        db.log_event("warn", "weekly_maintenance_error", str(e))
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -230,6 +284,13 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("research"); p.add_argument("--collect", action="store_true"); p.add_argument("--analyze", action="store_true")
     p.add_argument("--import-csv"); p.add_argument("--per-query", type=int, default=100); p.set_defaults(fn=cmd_research)
     sub.add_parser("serve-tracking").set_defaults(fn=cmd_serve_tracking)
+    p = sub.add_parser("bootstrap", help="対話型の初期設定エージェント（再実行で続きから再開）")
+    p.add_argument("--check", action="store_true", help="質問せずに現状判定だけ表示")
+    p.add_argument("--no-network", action="store_true", help="疎通確認・デプロイを行わない")
+    p.add_argument("--only", help="実行するステップをカンマ区切りで限定（例: x,tracking）")
+    p.set_defaults(fn=cmd_bootstrap)
+    p = sub.add_parser("attention", help="Human Attention Queue の表示/解決")
+    p.add_argument("--resolve"); p.add_argument("--notify", action="store_true"); p.set_defaults(fn=cmd_attention)
     p = sub.add_parser("pause"); p.add_argument("--reason"); p.set_defaults(fn=cmd_pause)
     sub.add_parser("resume").set_defaults(fn=cmd_resume)
     p = sub.add_parser("loop"); p.add_argument("--every", type=int, default=60); p.set_defaults(fn=cmd_loop)

@@ -7,7 +7,7 @@
 
 | # | 事項 | 影響 | 本システムの対応 |
 |---|---|---|---|
-| 1 | **X 有料パートナーシップ方針**: アフィリエイトリンク・紹介コードを含む投稿は「有料パートナーシップ」として開示対象。**「成人向け・性的な商品/サービス」は禁止カテゴリ** | FANZA 成人向け商品の X 宣伝は、X の方針上「禁止カテゴリの有料パートナーシップ」に該当し得る。**事業の根幹リスク** | 成人向け商品（site=FANZA）は `ADULT_ON_X_ACKNOWLEDGED=true` を人間が明示設定しない限り投稿しない（`compliance.check_post`）。非成人向け（DMM.com 一般商品）は同じシステムでそのまま運用可能 |
+| 1 | **X 有料パートナーシップ方針**: 公式（日本語版, 2026-09-28 取得）で「アフィリエイトリンクや割引コードを含むポスト」が有料パートナーシップに該当し開示が必要と明記。現行英語版は禁止カテゴリに **「Adult and sexual products and services」「Adult entertainment」** を列挙 | FANZA 成人向け商品の X 宣伝は「禁止カテゴリの有料パートナーシップ」に該当する | **HARD BLOCK**（`policy.py` の台帳。環境変数・人間の了承では解除不可）。センシティブメディアとして投稿可能なことと有料パートナーシップとして宣伝可能なことは別物。運用対象は DMM.com 一般商品。`verify_policy()` が公式ページの変更を監視し Attention Queue へ |
 | 2 | X API v2 `POST /2/tweets` は `paid_partnership: true` で開示ラベルを付けられる | 本文の「PR」表記に加えて API でもラベル付与が可能 | `USE_PAID_PARTNERSHIP_LABEL=true`（既定）で本文・リプ両方に付与 |
 | 3 | X 自動化ルール: 公式 API のみ／スパム禁止／複数アカウントで同一内容禁止／自動リプは @メンションされた投稿へのみ（2026-02-23〜）／トレンド便乗自動投稿禁止 | 画面操作 Bot・自動いいね・自動フォローは不可 | 投稿は `POST /2/tweets` のみ。いいね／フォロー／無差別リプ機能は実装しない。同一本文の重複はフェイルセーフで停止 |
 | 4 | X 成人向けコンテンツ方針: 同意のある成人向けコンテンツは可。**メディアにセンシティブ設定**（アカウント設定「投稿するメディアをセンシティブな内容としてマーク」）が必須。プロフィール画像・ヘッダー・ライブ不可。未成年および生年月日未設定ユーザーは閲覧不可。未表示は強制ラベル＋設定変更＋制限の対象 | API v2 の投稿・メディアアップロードに「センシティブ」フラグは無く、**アカウント設定で行う** | `SENSITIVE_MEDIA_SETTING_CONFIRMED=true` を人間が確認するまで成人向けメディア投稿をブロック |
@@ -22,13 +22,15 @@
 
 ## 2. 人間が確認・設定すべき項目（チェックリスト）
 
-- [ ] X ヘルプの原文確認: 有料パートナーシップ方針（`help.x.com/en/rules-and-policies/paid-partnerships-policy` および `/ja/.../paid-partnerships`）で「Adult and sexual products and services」が禁止カテゴリであることを確認し、**FANZA 成人向け商品を X で扱うか**を決定する。扱う場合のみ `ADULT_ON_X_ACKNOWLEDGED=true`
-- [ ] 代替案の検討: 同じ DMM アフィリエイト／同じシステムで **DMM.com 一般商品（電子書籍・通販・ゲーム等）や FANZA の非成人向けフロア** を運用対象にする（`DMM_SITE=DMM.com`）。この場合 X 方針上の禁止カテゴリ問題は発生しない
-- [ ] X アカウント設定 → プライバシーと安全 → 「投稿するメディアをセンシティブな内容としてマーク」を ON → `SENSITIVE_MEDIA_SETTING_CONFIRMED=true`
-- [ ] DMM アフィリエイト管理画面で X アカウントを媒体登録（審査通過）→ `DMM_MEDIA_REGISTERED=true`
-- [ ] X Developer Console でプロジェクト作成、クレジット購入、OAuth 1.0a（Read and Write）トークン発行
-- [ ] DMM API ID の取得（`affiliate.dmm.com/api/`）
-- [ ] プロフィール画像・ヘッダーに成人向け表現を使わない／bio に 18 禁表記と PR 表記
+これらは `python -m affiliate_bot bootstrap` が順に案内する。本人操作が必要な瞬間だけ `★ここだけ人間★` と表示される。
+
+- [ ] 一次情報の再確認（英語版はブラウザで）: `help.x.com/en/rules-and-policies/paid-partnerships-policy`。禁止カテゴリから成人向けが外れた場合のみ `policy.py` の台帳を更新する（設定では変更できない）
+- [ ] 運用対象は **DMM.com 一般商品**（`DMM_SITE=DMM.com`、既定）。FANZA を指定すると bootstrap が BLOCKED を表示し切替を提案する
+- [ ] X アカウント設定「投稿するメディアをセンシティブな内容としてマーク」（水着・グラビア等を扱う場合）
+- [ ] DMM 媒体登録の審査申請（申請文は bootstrap が生成）→ 承認後に bootstrap で「承認済み」と入力
+- [ ] X Developer: 登録・クレジット購入・App 権限（Read and write）・キー発行（bootstrap が手順と設定値を提示）
+- [ ] DMM API ID の発行（規約同意）
+- [ ] プロフィール画像・ヘッダーに成人向け表現を使わない／bio に PR 表記
 - [ ] 複数アカウント運用時は `accounts` テーブルにテーマ・対象・戦略を必ず分ける（同一内容の投稿は禁止）
 
 ## 3. 参照した一次・二次資料

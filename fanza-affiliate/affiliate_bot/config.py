@@ -43,7 +43,8 @@ class Settings:
     # --- DMM / FANZA ---
     dmm_api_id: str = field(default_factory=lambda: _env("DMM_API_ID"))
     dmm_affiliate_id: str = field(default_factory=lambda: _env("DMM_AFFILIATE_ID"))
-    dmm_site: str = field(default_factory=lambda: _env("DMM_SITE", "FANZA"))  # FANZA | DMM.com
+    # DMM.com（一般商品）が既定。FANZA（成人向け）は X 有料パートナーシップ方針により X 投稿が HARD BLOCK される
+    dmm_site: str = field(default_factory=lambda: _env("DMM_SITE", "DMM.com"))  # DMM.com | FANZA
     dmm_service: str = field(default_factory=lambda: _env("DMM_SERVICE", "digital"))
     dmm_floor: str = field(default_factory=lambda: _env("DMM_FLOOR", "videoa"))
     dmm_payout_rate: float = field(default_factory=lambda: float(_env("DMM_PAYOUT_RATE", "0.20")))
@@ -60,10 +61,8 @@ class Settings:
     disclosure_text: str = field(default_factory=lambda: _env("DISCLOSURE_TEXT", "【PR】"))
     use_paid_partnership_label: bool = field(default_factory=lambda: _flag("USE_PAID_PARTNERSHIP_LABEL", True))
 
-    # --- コンプライアンス・ゲート（人間が確認したら true にする） ---
-    # X 有料パートナーシップ方針は「成人向け・性的な商品/サービス」を禁止カテゴリに挙げている。
-    # FANZA 成人向け商品を X で宣伝する判断は人間が行い、明示的に承認した場合のみ投稿を許可する。
-    adult_on_x_acknowledged: bool = field(default_factory=lambda: _flag("ADULT_ON_X_ACKNOWLEDGED", False))
+    # --- コンプライアンス（人間が確認したら true にする。規約上の禁止事項はここでは解除できない） ---
+    # 注意: 成人向け（FANZA）商品の X 投稿は policy.py の HARD BLOCK であり、設定フラグは存在しない。
     # X 設定「投稿するメディアをセンシティブな内容としてマーク」を有効化済みであることの人間確認
     sensitive_media_setting_confirmed: bool = field(
         default_factory=lambda: _flag("SENSITIVE_MEDIA_SETTING_CONFIRMED", False)
@@ -81,8 +80,20 @@ class Settings:
 
     # --- トラッキング ---
     tracking_base_url: str = field(default_factory=lambda: _env("TRACKING_BASE_URL", ""))
+    tracking_secret: str = field(default_factory=lambda: _env("TRACKING_SECRET", ""))
     tracking_port: int = field(default_factory=lambda: int(_env("TRACKING_PORT", "8400")))
     attribution_window_hours: int = field(default_factory=lambda: int(_env("ATTRIBUTION_WINDOW_HOURS", "72")))
+
+    # --- 通知（Human Attention Queue）---
+    slack_webhook_url: str = field(default_factory=lambda: _env("SLACK_WEBHOOK_URL", ""))
+    notify_email: str = field(default_factory=lambda: _env("NOTIFY_EMAIL", ""))
+
+    # --- X API 価格（USD）。既定値は 2026-09 の公式 pay-per-use。DB の settings.x_pricing が優先される ---
+    x_price_post_usd: float = field(default_factory=lambda: float(_env("X_PRICE_POST_USD", "0.015")))
+    x_price_post_url_usd: float = field(default_factory=lambda: float(_env("X_PRICE_POST_URL_USD", "0.20")))
+    x_price_read_post_usd: float = field(default_factory=lambda: float(_env("X_PRICE_READ_POST_USD", "0.005")))
+    x_price_owned_read_usd: float = field(default_factory=lambda: float(_env("X_PRICE_OWNED_READ_USD", "0.001")))
+    x_price_read_user_usd: float = field(default_factory=lambda: float(_env("X_PRICE_READ_USER_USD", "0.010")))
 
     # --- 固定費（月額、円） ---
     infra_cost_month_jpy: float = field(default_factory=lambda: float(_env("INFRA_COST_MONTH_JPY", "1000")))

@@ -93,7 +93,8 @@ def score_candidate(db: Database, settings: Settings, cand: dict, product: dict,
     media_url = (product.get("sample_image_urls") or [None])[0] if pattern.get("media") != "video" else product.get("sample_movie_url")
     if isinstance(media_url, list):
         media_url = media_url[0] if media_url else None
-    pol: PolicyResult = check_post(text, cand.get("reply_text"), media_url, bool(product.get("is_adult")), settings)
+    pol: PolicyResult = check_post(text, cand.get("reply_text"), media_url, bool(product.get("is_adult")), settings,
+                                   site=product.get("site"), genres=product.get("genres") or [])
 
     views = expected_views(db, pattern, account_baseline_views(db))
     # 新規性・スパムリスクは表示数に効く（アルゴリズムの減衰を近似）
@@ -107,7 +108,7 @@ def score_candidate(db: Database, settings: Settings, cand: dict, product: dict,
         conf = min(0.95, conf + 0.2)
 
     if not pol.ok:
-        decision = "human" if pol.requires_human else "reject"
+        decision = "human" if (pol.requires_human and not pol.hard_block) else "reject"
         reasons += pol.reasons
     elif sim >= SIMILARITY_REJECT:
         decision, reasons = "reject", reasons + [f"既存投稿と酷似 ({sim:.2f})"]

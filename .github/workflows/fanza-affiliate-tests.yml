@@ -32,3 +32,5 @@ jobs:
           python -m affiliate_bot plan
           python -m affiliate_bot publish --force-now
           python -m affiliate_bot report --no-llm --out /tmp/affdata/report.md
+          python -m affiliate_bot bootstrap --check --no-network
+          python -m affiliate_bot attention

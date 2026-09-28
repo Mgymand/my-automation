@@ -18,8 +18,9 @@ from .db import Database, dumps, loads, utcnow
 from .generation import build_reply_text, generate_for_product
 from .llm import LLMRouter
 from .scoring import persist_scores, score_candidate
-from .tracking import new_code, tracking_url
-from .x_client import PRICE_POST_USD, PRICE_POST_WITH_URL_USD, to_jpy
+from .tracking import build_link, new_code
+from .pricing import x_pricing
+from .x_client import to_jpy
 
 
 def recent_post_texts(db: Database, n: int = 60) -> list[str]:
@@ -56,8 +57,11 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     pats = patterns.active_patterns(db)
     if not pats:
         return []
-    adult_ok = settings.adult_on_x_acknowledged
-    cands = products.top_candidates(db, limit=settings.posts_per_day * 4, adult_allowed=True)
+    # X 有料パートナーシップ方針の禁止カテゴリ（成人向け商品）は policy.py の HARD BLOCK。候補から除外する
+    cands = products.top_candidates(db, limit=settings.posts_per_day * 4, adult_allowed=False)
+    blocked = db.one("SELECT COUNT(*) c FROM products WHERE is_adult=1")["c"]
+    if blocked:
+        db.log_event("info", "hard_block_excluded", f"成人向け商品 {blocked} 件を X 投稿対象から除外（policy: x_paid_partnership_prohibited）")
     if not cands:
         db.log_event("warn", "no_products", "商品候補がありません。fetch-products を実行してください")
         return []
@@ -70,7 +74,8 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     used_products: set[str] = set()
     used_genres: dict[str, int] = {}
     scheduled: list[int] = []
-    post_cost = to_jpy(PRICE_POST_USD + (PRICE_POST_WITH_URL_USD if settings.link_in_reply else 0), settings.usd_jpy)
+    pr = x_pricing(settings, db)
+    post_cost = to_jpy(pr.post + (pr.post_url if settings.link_in_reply else 0), settings.usd_jpy)
 
     for i in range(settings.posts_per_day):
         # 商品: ERPI 順に、同一商品・同一ジャンル偏りを避ける
@@ -79,12 +84,12 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
             g = (c["genres"] or ["-"])[0]
             if c["content_id"] in used_products or used_genres.get(g, 0) >= 2:
                 continue
-            if c["is_adult"] and not adult_ok:
+            if c["is_adult"]:
                 continue
             prod = c
             break
         if prod is None:
-            db.log_event("warn", "plan_short", f"{i} 件で候補が尽きました（成人向けゲート未承認の可能性）")
+            db.log_event("warn", "plan_short", f"{i} 件で候補が尽きました（DMM_SITE=FANZA の商品は X 投稿対象外です）")
             break
         slot = bandit.choose(db, "hour_slot", slots, rng)
         pid = bandit.choose(db, "pattern", pat_ids, rng, prior_bonus=pat_bonus)
@@ -115,7 +120,7 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
                 when += timedelta(minutes=15)
         used_times.append(when)
         code = new_code()
-        reply = build_reply_text(tracking_url(settings, code) if settings.tracking_base_url else prod["affiliate_url"],
+        reply = build_reply_text(build_link(settings, code, prod["affiliate_url"]),
                                  settings.disclosure_text) if settings.link_in_reply else None
         media_type = "video" if (pat["media"] == "video" and prod.get("sample_movie_url")) else ("image" if prod.get("sample_image_urls") or prod.get("image_url") else "none")
         media_src = prod.get("sample_movie_url") if media_type == "video" else ((prod.get("sample_image_urls") or [prod.get("image_url")])[0])

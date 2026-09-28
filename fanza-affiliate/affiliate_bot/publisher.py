@@ -26,6 +26,10 @@ def publish_due(db: Database, settings: Settings, x, session: requests.Session |
     if paused:
         db.log_event("warn", "publish_skipped", f"停止中: {reason}")
         return []
+    # 本番投稿は「本番運用開始」の明示承認（bootstrap）が記録されている場合のみ
+    if not settings.dry_run and db.get_setting("go_live_approved_at") is None:
+        db.log_event("warn", "publish_skipped", "DRY_RUN=false だが本番運用開始の承認が未記録（bootstrap を実行）")
+        return []
     session = session or requests.Session()
     due = db.q("SELECT * FROM posts WHERE status='scheduled' AND scheduled_at<=? ORDER BY scheduled_at",
                (now.isoformat(timespec="seconds"),))
@@ -37,7 +41,9 @@ def publish_due(db: Database, settings: Settings, x, session: requests.Session |
             db.exec("UPDATE posts SET status='failed', error='product missing' WHERE post_id=?", (post["post_id"],))
             continue
         # 公開直前の最終ゲート（設定が変わっている可能性）
-        pol = compliance.check_post(post["text"], post["reply_text"], post["media_source"], bool(prod["is_adult"]), settings)
+        from .db import loads as _loads
+        pol = compliance.check_post(post["text"], post["reply_text"], post["media_source"], bool(prod["is_adult"]), settings,
+                                    site=prod["site"], genres=_loads(prod["genres"], []))
         if not pol.ok:
             db.exec("UPDATE posts SET status='blocked', error=? WHERE post_id=?", ("; ".join(pol.reasons), post["post_id"]))
             db.log_event("warn", "blocked", f"post {post['post_id']} をブロック", {"reasons": pol.reasons})
@@ -76,8 +82,12 @@ def publish_due(db: Database, settings: Settings, x, session: requests.Session |
             now = datetime.now(timezone.utc)
         except XError as e:
             db.exec("UPDATE posts SET status='failed', error=? WHERE post_id=?", (str(e)[:300], post["post_id"]))
+            if e.status in (402,) or (e.is_rate_limit and "credit" in e.body.lower()):
+                failsafe.halt(db, "x_billing", f"X API 課金/クレジット: {e.status} {e.body[:200]}", category="billing_cap")
+                break
             if e.is_auth_or_policy or e.is_rate_limit:
-                failsafe.halt(db, "x_api_error", f"X API {e.status}: {e.body[:200]}")
+                cat = "account_warning" if (e.status == 403 and any(k in e.body.lower() for k in ("suspend", "policy", "violat"))) else "auth_expired"
+                failsafe.halt(db, "x_api_error", f"X API {e.status}: {e.body[:200]}", category=cat)
                 break
             db.log_event("warn", "x_post_failed", str(e), {"post_id": post["post_id"]})
         except requests.RequestException as e:
