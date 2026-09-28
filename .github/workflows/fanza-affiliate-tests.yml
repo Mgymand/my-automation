@@ -1,0 +1,42 @@
+name: fanza-affiliate tests
+
+on:
+  push:
+    paths: ["fanza-affiliate/**"]
+  pull_request:
+    paths: ["fanza-affiliate/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fanza-affiliate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q tests
+      - name: dry run (manual posting flow)
+        env:
+          DATA_DIR: /tmp/affdata
+          DMM_MEDIA_REGISTERED: "true"
+        run: |
+          python -m affiliate_bot research --demo
+          python -m affiliate_bot fetch-products --demo
+          python -m affiliate_bot plan
+          python -m affiliate_bot today
+          python -m affiliate_bot export
+          python -m affiliate_bot posted --url "https://x.com/me/status/1970000000000000001" --post 1
+          python -m affiliate_bot metrics --manual 1 1200 8 1 0 2
+          printf '日時,商品ID,報酬,注文ID\n2030-01-01 12:00:00,demo003,196,o-1\n' > /tmp/conv.csv
+          python -m affiliate_bot ingest-conversions --csv /tmp/conv.csv
+          python -m affiliate_bot learn
+          python -m affiliate_bot report --no-llm --out /tmp/affdata/report.md
+          python -m affiliate_bot weekly --no-llm
+          python -m affiliate_bot checks
+          python -m affiliate_bot attention
+          python -m affiliate_bot bootstrap --check --no-network
+          python -m affiliate_bot status
