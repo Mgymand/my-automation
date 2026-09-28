@@ -44,6 +44,11 @@ def _slot_time(slot: str, day0: datetime, rng: random.Random, used: list[datetim
     return day0.replace(hour=a, minute=0)
 
 
+# 2026-09 公開調査（Yahoo!リアルタイム検索で観測した FANZA 系投稿の JST 時刻分布）と一般的な X の反応時間帯から。
+# 自分の実績・X READ の調査データが溜まるまでの初期値。固定時刻ではなく「枠の重み」。
+DEFAULT_SLOT_PRIOR = {"21-24": 1.0, "18-21": 0.7, "12-15": 0.55, "09-12": 0.5, "15-18": 0.35}
+
+
 def research_slot_prior(db: Database, tz_name: str) -> dict[str, float]:
     """公開調査の外れ値投稿の投稿時刻（JST）分布から、時間帯ごとの事前ボーナス（0..1）を作る。データが無ければ空。"""
     rows = db.q("SELECT created_at, outlier_score FROM research_posts WHERE created_at IS NOT NULL AND views>0 ORDER BY outlier_score DESC LIMIT 200")
@@ -106,7 +111,7 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     n_posts, why = suggest_posts_per_day(db, settings.posts_per_day)
     db.set_setting("suggested_posts_per_day", dumps({"n": n_posts, "why": why}))
     slots = [f"{a:02d}-{b:02d}" for a, b in bandit.SLOTS if a >= 9]     # 深夜 0-9 時は既定で除外（人間が投稿できる時間）
-    slot_prior = research_slot_prior(db, settings.timezone)              # 固定時刻の決め打ちはしない。調査 → バンディットの順で根拠を持つ
+    slot_prior = research_slot_prior(db, settings.timezone) or dict(DEFAULT_SLOT_PRIOR)   # 固定時刻の決め打ちはしない。調査 → 既定重み → バンディット
     slot_arms = bandit.get_arms(db, "hour_slot")
     pat_bonus = {p["pattern_id"]: float(p.get("confidence") or 0.2) + 0.2 * float(p.get("trend_score") or 0) for p in pats}
     recent = recent_post_texts(db)
@@ -126,10 +131,10 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
         n_obs = slot_arms.get(slot, (1, 1, 0))[2]
         if n_obs >= 5:
             slot_reason = f"時間帯 {slot}: 自分の投稿実績（{n_obs} 件）のバンディット推定で選択"
-        elif slot_prior:
+        elif slot_prior is not DEFAULT_SLOT_PRIOR and slot_prior != DEFAULT_SLOT_PRIOR:
             slot_reason = f"時間帯 {slot}: 公開調査の外れ値投稿の JST 時刻分布（ボーナス {slot_prior.get(slot, 0):.2f}）と探索で選択（自分の実績 {n_obs} 件）"
         else:
-            slot_reason = f"時間帯 {slot}: 調査データ不足のため安全な既定枠（9〜24 時）から探索で選択（自分の実績 {n_obs} 件）"
+            slot_reason = f"時間帯 {slot}: 2026-09 公開調査の既定重み（夜 21-24 が最大、次に 18-21・昼）と探索で選択（自分の実績 {n_obs} 件）"
         cids = generate_for_product(db, llm, prod, recent)
         scored = []
         texts = []

@@ -19,15 +19,25 @@ from .llm import LLMRouter, LLMUnavailable
 from .patterns import add_pattern, update_trend
 from .x_client import to_jpy
 
+# 複数ジャンル・複数アカウントから集めるための既定クエリ（1 クエリ最大 100 件・$0.005/件）。
+# 2026-09 の公開調査（docs/ACCOUNT_RESEARCH.md）で活発だった型を網羅する。
 DEFAULT_QUERIES = [
-    "FANZA -is:retweet lang:ja has:media",
-    "FANZA 新作 -is:retweet lang:ja",
-    "FANZA セール OFF -is:retweet lang:ja",
-    "FANZA ランキング -is:retweet lang:ja",
+    "FANZA セール OFF -is:retweet lang:ja",                 # セール速報型
+    "FANZA (100円 OR 10円 OR 半額) -is:retweet lang:ja",    # 激安・価格訴求型
+    "FANZA 新作 配信 -is:retweet lang:ja",                  # 新作速報型
+    "FANZA 女優 -is:retweet lang:ja has:media",             # 女優訴求型
+    "FANZA レビュー -is:retweet lang:ja",                   # レビュー型 / 掘り出し物型
+    "FANZA ランキング -is:retweet lang:ja",                 # ランキング型 / まとめ型
+    "FANZA -is:retweet lang:ja has:videos",                 # 動画主導型
+    "FANZA (今夜 OR 今日の1本 OR おすすめ) -is:retweet lang:ja",  # キャラクター人格型 / 一言フック型
 ]
 
 CATEGORIES = ["女優訴求型", "作品タイトル訴求型", "シチュエーション訴求型", "新作訴求型", "割引訴求型", "ランキング型", "掘り出し物型",
-              "動画主導型", "画像主導型", "短文型", "長文レビュー型", "問いかけ型", "意外性フック型", "数字型", "シリーズ型", "その他"]
+              "動画主導型", "画像主導型", "短文型", "長文レビュー型", "問いかけ型", "意外性フック型", "数字型", "シリーズ型",
+              "セール速報型", "激安・価格訴求型", "まとめ型", "キャラクター人格型", "その他"]
+PERSONA_RE = re.compile(r"(おはよ|こんばんは|にゃ|ぼく|わたし|今日の1本|今夜の一本|今日のおすすめ|案内人|発掘|チェックしてきました)")
+ROUNDUP_RE = re.compile(r"(まとめ|\d+選|(?:[2-9]|\d{2,})本|安い順|多い順|TOP\d|上位\d)")
+DEADLINE_RE = re.compile(r"(まで|締切|残り|期限|\d{1,2}:\d{2}|\d{1,2}/\d{1,2})")
 
 EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐‼⁉\U0001F900-\U0001F9FF]")
 CTA_RE = re.compile(r"(続き|リプ欄|↓|詳細|こちら|チェック|見て|プロフ|固定|サンプル)")
@@ -66,6 +76,8 @@ def text_features(text: str, post: dict | None = None) -> dict:
         "question": bool(QUESTION_RE.search(first)), "surprise": bool(SURPRISE_RE.search(first)),
         "number_first": bool(NUMBER_RE.search(first)), "series": bool(re.search(r"シリーズ|第\d+弾|最新作", body)),
         "review_words": bool(re.search(r"レビュー|評価|★|☆", body)),
+        "persona": bool(PERSONA_RE.search(first)), "roundup": bool(ROUNDUP_RE.search(first)), "deadline": bool(DEADLINE_RE.search(body)),
+        "cta_position": ("tail" if CTA_RE.search(lines[-1] if lines else "") else ("head" if CTA_RE.search(first) else ("middle" if CTA_RE.search(body) else None))),
     }
 
 
@@ -77,8 +89,16 @@ def rule_category(f: dict) -> tuple[str, str]:
         return "問いかけ型", "問い"
     if f["ranking"] or re.search(r"ランキング|TOP|上位", f["first_chars"]):
         return "ランキング型", "枠組み提示"
+    if f.get("roundup"):
+        return "まとめ型", "集計の切り口"
+    if f["discount"] and f.get("deadline"):
+        return "セール速報型", "割引＋期限"
+    if f["price"] is not None and f["price"] <= 300:
+        return "激安・価格訴求型", "具体価格先頭"
     if f["discount"]:
         return "割引訴求型", "割引先頭"
+    if f.get("persona") and f["lines"] >= 2:
+        return "キャラクター人格型", "挨拶＋人格"
     if f["number_first"]:
         return "数字型", "数字先頭"
     if f["series"]:

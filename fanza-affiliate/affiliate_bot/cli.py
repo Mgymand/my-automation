@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import attention, bandit, bootstrap, failsafe, media, metrics, packages, patterns, planner, posted, products, reports, research, webui
+from . import attention, bandit, bootstrap, failsafe, launch, media, metrics, packages, patterns, planner, posted, products, reports, research, webui
 from .config import Settings, load_settings
 from .db import Database, loads
 from .dmm_client import DMMClient, DMMError
@@ -154,6 +154,12 @@ def cmd_export(settings: Settings, db: Database, args) -> None:
     out = Path(args.out) if args.out else _export_dir(settings)
     d = packages.export_day(pk, day, out, loads(db.get_setting("today_adjustments"), []))
     print(f"-> {d}/index.html, posts.txt, post*.txt")
+
+
+def cmd_launch_posts(settings: Settings, db: Database, args) -> None:
+    d = launch.export_launch(db, settings, Path(args.out) if args.out else _export_dir(settings))
+    print((d / "launch.md").read_text(encoding="utf-8"))
+    print(f"-> {d}")
 
 
 def cmd_posted(settings: Settings, db: Database, args) -> None:
@@ -341,6 +347,7 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("plan", help="本日の投稿パッケージ作成"); p.add_argument("--date"); p.add_argument("--keep", action="store_true", help="既存の planned を消さない"); p.set_defaults(fn=cmd_plan)
     p = sub.add_parser("today", help="今日人間が投稿すべき内容を表示"); p.add_argument("--date"); p.add_argument("--full", action="store_true", default=True); p.set_defaults(fn=cmd_today)
     p = sub.add_parser("export", help="投稿素材と文章をフォルダ/HTML へ出力"); p.add_argument("--date"); p.add_argument("--out"); p.set_defaults(fn=cmd_export)
+    p = sub.add_parser("launch-posts", help="新規アカウントの設計と初期 10 投稿を出力"); p.add_argument("--out"); p.set_defaults(fn=cmd_launch_posts)
     p = sub.add_parser("posted", help="実際に投稿した Post を登録"); p.add_argument("--url", help="X の投稿 URL または Post ID"); p.add_argument("--post", help="POST 番号（省略時は予定時刻が最も近い未登録）")
     p.add_argument("--date"); p.add_argument("--text", help="実際の本文（予定と違う場合）"); p.add_argument("--time", help="実際の投稿時刻"); p.add_argument("--media", help="実際の素材")
     p.add_argument("--skip", action="store_true", help="投稿しなかった POST を skipped にする"); p.add_argument("--reason"); p.set_defaults(fn=cmd_posted)

@@ -73,6 +73,23 @@ SEED_PATTERNS: list[dict] = [
          hook="シリーズ名＋『第◯弾』『最新作』", body_structure="シリーズの位置づけ / 今作の違い / 客観情報",
          cta_structure="シリーズ一覧へ", media_type="image", ideal_length=80, ideal_hours=[20, 21, 22],
          target_genre="シリーズもの", target_actress_type="シリーズ常連"),
+    # ---- 2026-09 公開調査（docs/ACCOUNT_RESEARCH.md）で確認した型 ----
+    dict(pattern_id="P16_sale_alert", pattern_name="セール速報型", category="セール速報型",
+         hook="1行目に『割引率 or 価格』＋『期限（◯/◯ ◯:59まで）』。絵文字は先頭 1 つまで", body_structure="割引・期限 / 対象の特徴（女優・ジャンル・尺）/ 現在価格→通常価格",
+         cta_structure="『期限内に』『リプ欄から』", media_type="image", ideal_length=80, ideal_hours=[9, 12, 21, 22],
+         target_genre="セール対象全般", target_actress_type="不問"),
+    dict(pattern_id="P17_bargain", pattern_name="激安・価格訴求型", category="激安・価格訴求型",
+         hook="『10円』『100円』『300円→210円』など具体的な価格を先頭に", body_structure="価格 / 何が買えるか（本数・尺・レビュー）/ 期限",
+         cta_structure="『全部買っても◯円』『今だけ』", media_type="image", ideal_length=70, ideal_hours=[9, 12, 21],
+         target_genre="10円・100円・50%OFF 対象", target_actress_type="不問"),
+    dict(pattern_id="P18_roundup", pattern_name="まとめ型", category="まとめ型",
+         hook="『今週の◯◯ 5本』『安い順に5本』『レビューの多い順』など集計の切り口を先頭に", body_structure="切り口 / 3〜5 本を 1 行ずつ（価格・レビュー等の数字付き）/ 保存を促す一言",
+         cta_structure="『保存推奨』『詳細はリプ欄』", media_type="image", ideal_length=130, ideal_hours=[11, 17, 20],
+         target_genre="ジャンル横断", target_actress_type="不問"),
+    dict(pattern_id="P19_persona", pattern_name="キャラクター人格型", category="キャラクター人格型",
+         hook="固定の語り口（一人称・口癖・挨拶）で始め、本日のおすすめを『案内人』として紹介", body_structure="挨拶＋人格 / 今日の 1 本と選んだ理由 / 客観情報",
+         cta_structure="『気になったらリプ欄』『明日も来てね』", media_type="image", ideal_length=100, ideal_hours=[7, 12, 22],
+         target_genre="不問（アカウントの人格が軸）", target_actress_type="不問"),
 ]
 
 ANGLE_TO_PATTERN = {  # 5 案の訴求軸 → 既定パターン

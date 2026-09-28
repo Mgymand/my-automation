@@ -245,3 +245,47 @@ def test_slot_reason_recorded_and_research_prior(db, settings):
                 "VALUES(?,?,?,?,?,?,?,?,?,?)", (f"r{i}", 500, "t", f"2026-09-2{i % 8}T13:00:00+00:00", "2026-09-28T00:00:00+00:00", 10000, 20, 5.0, "短文型", "{}"))
     prior = planner.research_slot_prior(db, settings.timezone)
     assert prior.get("21-24") == 1.0        # 13:00 UTC = 22:00 JST
+
+
+def test_new_pattern_types_and_research_rules(db, settings):
+    patterns.ensure_seed(db)
+    ids = {r["pattern_id"] for r in db.q("SELECT pattern_id FROM patterns")}
+    assert {"P16_sale_alert", "P17_bargain", "P18_roundup", "P19_persona"} <= ids
+    f = research.text_features("50%OFF｜300円→150円\n人妻ドラマの一本\n9/30 23:59まで\nリプ欄から", {})
+    assert research.rule_category(f)[0] == "セール速報型" and f["deadline"] and f["cta_position"] == "tail"
+    f = research.text_features("100円で買える。\nタイトル\nジャンル", {})
+    assert research.rule_category(f)[0] == "激安・価格訴求型"
+    f = research.text_features("今週のFANZA、安い順に5本\n1. …\n2. …", {})
+    assert research.rule_category(f)[0] == "まとめ型"
+    f = research.text_features("おはよう。今日の1本はこれ。\n理由は…", {})
+    assert research.rule_category(f)[0] == "キャラクター人格型"
+    assert len(research.DEFAULT_QUERIES) >= 8
+
+
+def test_launch_posts_use_only_facts(db, settings):
+    from affiliate_bot import launch
+    _seed(db, settings)
+    posts = launch.build_launch_posts(db, settings)
+    assert len(posts) == 10 and len({p["key"] for p in posts}) == 10
+    assert all("PR" in p["text"] for p in posts)
+    for p in posts:
+        if p["product_id"]:
+            prod = db.one("SELECT price, discount_rate FROM products WHERE content_id=?", (p["product_id"],))
+            if "OFF" in p["text"] and p["key"] == "sale_alert":
+                assert float(prod["discount_rate"]) >= 0.3
+    keys = {p["key"]: p for p in posts}
+    assert keys["video"]["media"] and keys["video"]["media"].endswith(".mp4")
+    assert "10円" not in keys["bargain"]["text"]          # 捏造しない（demo に 10円商品は無い）
+    d = launch.export_launch(db, settings, settings.data_dir / "exports")
+    assert (d / "launch.md").exists() and (d / "post01_intro.txt").exists()
+    md = (d / "launch.md").read_text(encoding="utf-8")
+    assert launch.ACCOUNT["name"] in md and "アイコン生成プロンプト" in md
+
+
+def test_default_slot_prior_used_without_research(db, settings):
+    patterns.ensure_seed(db)
+    products.upsert_products(db, demo_products("FANZA"), 0.2)
+    products.rescore_all(db)
+    planner.plan_day(db, settings, None, day_jst=datetime(2030, 1, 1, tzinfo=timezone.utc), rng=random.Random(11))
+    pk = planner.today_packages(db, settings, "2030-01-01")
+    assert all(any("既定重み" in n for n in p["notes"]) for p in pk)

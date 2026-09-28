@@ -14,6 +14,7 @@ AI とプログラムが行うのは、調査・商品選定・素材選定・�
 > 各投稿パッケージに規約上の注意（`HUMAN_POSTING_NOTICE`）を必ず添えます。
 
 - 設計: [docs/DESIGN.md](docs/DESIGN.md) / 規約: [docs/COMPLIANCE.md](docs/COMPLIANCE.md) / 調査: [docs/MARKET_RESEARCH.md](docs/MARKET_RESEARCH.md) / 移行: [docs/MIGRATION_PHASE3.md](docs/MIGRATION_PHASE3.md)
+- アカウント調査: [docs/ACCOUNT_RESEARCH.md](docs/ACCOUNT_RESEARCH.md) / 新規アカウント戦略: [docs/ACCOUNT_STRATEGY.md](docs/ACCOUNT_STRATEGY.md)（`launch-posts` で立ち上げセットを出力）
 
 ## 初回セットアップ（人間は認証・同意・課金・審査だけ）
 
@@ -49,6 +50,7 @@ python -m affiliate_bot ingest-conversions --csv 成果.csv           # FANZA �
 python -m affiliate_bot learn / report / weekly / status / attention / checks
 python -m affiliate_bot research --collect --analyze                # 公開投稿の調査（X READ）。--import-csv / --demo も可
 python -m affiliate_bot export                                      # exports/YYYY-MM-DD/index.html, posts.txt, postN.txt
+python -m affiliate_bot launch-posts                                # 新規アカウント設計＋初期 10 投稿（exports/launch/。実商品の事実のみ使用）
 python -m affiliate_bot loop                                        # 常駐（毎時 metrics、06:00 morning、月曜 07:00 research + weekly）
 ```
 
