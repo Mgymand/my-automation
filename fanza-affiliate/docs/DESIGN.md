@@ -193,7 +193,11 @@
 **Human Attention Queue**（`attention_queue`）: 通常運用では人間に報告しない。起票カテゴリは
 auth_expired / policy_change / account_warning / review_needed / billing_cap / metric_anomaly / tracking_failure /
 policy_undecidable / profit_negative / prod_outage の 10 種のみ。同一 dedupe_key の open 項目は再起票しない。
-通知は Slack Webhook（未設定なら stdout）。`attention --resolve ID` で解決。
+通知は Slack Webhook。送信成功時のみ notified_at を確定し、失敗時は次回再送する。Slack 未設定時は stdout に出すが、
+`NOTIFY_CONSOLE_DELIVERY=true`（人間がログを監視していると明示）でない限り「配送済み」にはしない。`attention --resolve ID` で解決。
+
+**Secret の保存先**: local / docker 実行では `.env`（600）を primary に外部ストアへ複製。Cloud Run / Vercel / GitHub Actions / Render では
+外部 Secret ストア（Secret Manager / Vercel env / GitHub Actions Secrets）を primary にし、`.env` へは書かない。
 
 **トラッキングの自動構築**: `TRACKING_SECRET` を生成し、署名付きペイロード（`/r/<payload>.<sig>`）で DB を持たない
 リダイレクトを Vercel Functions（`deploy/vercel-tracking`, 無料枠）または Cloud Run に bootstrap がデプロイする。
@@ -216,6 +220,6 @@ policy_undecidable / profit_negative / prod_outage の 10 種のみ。同一 ded
 | **合計** | | **約 ¥6,700〜7,900 / 月** |
 
 - 損益分岐: 平均報酬 ¥300/CV なら **月 25 CV**（1 日 0.8 CV）。CVR 2% なら 1,250 クリック/月、CTR 0.8% なら 156k 表示/月（≒1,040 表示/投稿）。
-- 価格は固定値ではなく設定値（`X_PRICE_*`）で、bootstrap と週次が公式ページと照合して DB に保存する（変更時は Attention Queue）。
+- 価格は固定値ではなく設定値（`X_PRICE_*`）。bootstrap と週次が公式ページと照合し、必須 5 項目が全件抽出できた場合のみ候補化、10% 以内の変動は自動適用、それ以上は候補として保存し人間確認（`pricing --apply`）まで旧価格で計算する。
 - 費用の 2/3 は「リンク付き投稿 $0.20」。週次レビューで **リンクリプを固定投稿／プロフィールへ集約する変種**（投稿費 $0.015 のみ）を A/B し、EPC が維持できればコストを 1/6 に圧縮できる。
 - AI 費は投稿数に線形。Fable は週 1 回に固定し、日次運用では呼ばない。

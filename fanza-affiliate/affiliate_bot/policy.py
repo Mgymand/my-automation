@@ -7,11 +7,12 @@ X 有料パートナーシップ方針（Paid Partnerships Policy）
 - 公式（日本語, 2026-09-28 取得・確認済）: https://help.x.com/ja/rules-and-policies/paid-partnerships
   「利用者が利益、インセンティブ、または報酬などを受け取れる可能性のあるアフィリエイトリンクや割引コードを含むポスト」は
   有料パートナーシップに該当し、明確な開示が必要。
-- 公式（英語）: https://help.x.com/en/rules-and-policies/paid-partnerships-policy
-  現行版は禁止カテゴリ（Prohibited categories）を列挙しており、その中に
-  「Adult and sexual products and services」「Adult entertainment」が含まれる。
-  ※ 本環境からは JS チャレンジにより自動取得できなかったため、複数の二次資料と運営者の確認に基づく。
-  `verify_policy()` は到達可能になった時点で本文を取得し、下記のキーフレーズの有無と本文ハッシュの変化を監視する。
+- 公式（英語, 2026-09-28 運営者が原文を確認済）: https://help.x.com/en/rules-and-policies/paid-partnerships-policy
+  affiliate links / discount codes による commission を Paid Partnership に含め、
+  Prohibited Industries に「Adult and sexual products and services」を含むことを一次情報で確認済み。
+  `verify_policy()` は本文のキーフレーズと本文ハッシュの変化を監視する。
+  直接取得（source=direct）のみを一次情報確認として扱い、Reader プロキシ経由（source=proxy）の取得は
+  参考情報として記録するだけで、台帳の確定・ハッシュ基準の更新には使わない。
 
 結論: FANZA 成人向け商品のアフィリエイト投稿は「禁止カテゴリの有料パートナーシップ」に該当するため、
       X への投稿は HARD BLOCK。センシティブメディアとして投稿可能なことと、有料パートナーシップとして宣伝可能なことは別。
@@ -92,12 +93,14 @@ def x_affiliate_hard_block(site: str, floor: str | None = None, genres: list[str
     return HardBlock(False, "", "")
 
 
-def _fetch_text(url: str, timeout: int = 30) -> str | None:
-    """公式ページ本文をテキスト化して返す。直接取得 → 失敗時は Reader 経由。取得不能なら None。"""
+def _fetch_text(url: str, timeout: int = 30, session=None) -> tuple[str, str] | None:
+    """公式ページ本文をテキスト化して (source, text) を返す。source は direct | proxy。取得不能なら None。
+    direct: X のサーバーから直接取得（一次情報）。proxy: Reader プロキシ経由（参考情報。台帳確定には使わない）。"""
     ua = {"User-Agent": "Mozilla/5.0 (compatible; affiliate-bot policy check)"}
-    for target in (url, f"https://r.jina.ai/{url}"):
+    s = session or requests
+    for source, target in (("direct", url), ("proxy", f"https://r.jina.ai/{url}")):
         try:
-            r = requests.get(target, headers=ua, timeout=timeout)
+            r = s.get(target, headers=ua, timeout=timeout)
         except requests.RequestException:
             continue
         if r.status_code != 200 or "Enable JavaScript and cookies" in r.text or "Just a moment" in r.text[:500]:
@@ -106,33 +109,39 @@ def _fetch_text(url: str, timeout: int = 30) -> str | None:
         t = re.sub(r"<[^>]+>", " ", t)
         t = re.sub(r"\s+", " ", t)
         if len(t) > 200:
-            return t
+            return source, t
     return None
 
 
-def verify_policy(db, keys: tuple[str, ...] = ("x_paid_partnerships_en", "x_paid_partnerships_ja")) -> dict:
+def verify_policy(db, keys: tuple[str, ...] = ("x_paid_partnerships_en", "x_paid_partnerships_ja"), session=None) -> dict:
     """公式ページを取得して、キーフレーズと本文ハッシュの変化を確認する。
-    戻り値: {key: {"status": ok|changed|phrase_missing|unreachable, ...}}
+    戻り値: {key: {"status": ok|changed|phrase_missing|unreachable|proxy_only, "source": direct|proxy, ...}}
+    - direct 取得のみが一次情報確認。ハッシュ基準（policy_hash:*）は direct のときだけ更新する
+    - proxy 取得は参考情報（policy_proxy_hash:*）として記録し、変化があっても「要確認」を促すだけで台帳は確定しない
     変化があれば events に記録し、呼び出し側（bootstrap / 週次）が Attention Queue へ起票する。
     """
     out: dict[str, dict] = {}
     for key in keys:
         url = OFFICIAL_URLS[key]
-        text = _fetch_text(url)
-        if text is None:
-            out[key] = {"status": "unreachable", "url": url}
+        got = _fetch_text(url, session=session)
+        if got is None:
+            out[key] = {"status": "unreachable", "url": url, "source": None}
             continue
+        source, text = got
         h = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
-        prev = db.get_setting(f"policy_hash:{key}")
         missing = [p for p in EXPECTED_PHRASES.get(key, []) if p.lower() not in text.lower()]
-        if missing:
-            status = "phrase_missing"
-        elif prev and prev != h:
-            status = "changed"
+        if source == "direct":
+            prev = db.get_setting(f"policy_hash:{key}")
+            status = "phrase_missing" if missing else ("changed" if prev and prev != h else "ok")
+            db.set_setting(f"policy_hash:{key}", h)
+            db.set_setting(f"policy_verified_direct_at:{key}", __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds"))
         else:
-            status = "ok"
-        if status != "ok":
-            db.log_event("warn", "policy_check", f"{key}: {status}", {"url": url, "missing": missing, "prev": prev, "now": h})
-        db.set_setting(f"policy_hash:{key}", h)
-        out[key] = {"status": status, "url": url, "hash": h, "missing": missing}
+            prev = db.get_setting(f"policy_proxy_hash:{key}")
+            # proxy は参考のみ。フレーズ欠落や変化は「人間が原文を確認」を促すが、台帳もハッシュ基準も確定しない
+            status = "proxy_only" if (not missing and (not prev or prev == h)) else ("phrase_missing" if missing else "changed")
+            db.set_setting(f"policy_proxy_hash:{key}", h)
+        if status not in ("ok", "proxy_only"):
+            db.log_event("warn", "policy_check", f"{key}: {status} (source={source})",
+                         {"url": url, "missing": missing, "prev": prev, "now": h, "source": source})
+        out[key] = {"status": status, "url": url, "hash": h, "missing": missing, "source": source}
     return out

@@ -1,7 +1,10 @@
 """API 価格の設定・検証。価格はコードに固定せず、環境変数 → DB（settings.x_pricing）の順で上書きできる。
 
-- X API 価格: docs.x.com/x-api/getting-started/pricing を取得して既知ラベルの数値を抽出し、
-  設定値と差があれば DB に保存して events / Attention Queue へ記録する（利益計算が古い価格で壊れないようにする）。
+- X API 価格: docs.x.com/x-api/getting-started/pricing を取得して既知ラベルの数値を抽出する（staged update）。
+  * 必須項目（post / post_url / read_post / owned_read / read_user）が全件抽出できた場合のみ候補化
+  * 現在値との最大変動率が AUTO_APPLY_MAX_CHANGE 以下なら自動適用（軽微なドリフト）
+  * それを超える場合は候補（settings.x_pricing_candidate）として保存し Attention Queue で人間確認。確認前は旧価格を使う
+  * 抽出失敗・誤マッチの疑い（負値や極端な値）は候補化しない
 - LLM 価格: `LLM_PRICING_JSON`（{"model": {"in":..,"out":..,"cache":..}} USD/1M tok）で上書き可能。
 """
 from __future__ import annotations
@@ -25,6 +28,11 @@ X_LABELS = {
     "owned_read": ["Owned Reads", "Owned read"],
     "read_user": ["Users"],
 }
+
+
+AUTO_APPLY_MAX_CHANGE = 0.10   # 10% 以内の変動は自動適用。それ以上は人間確認（旧価格を使い続ける）
+REQUIRED_FIELDS = ("post", "post_url", "read_post", "owned_read", "read_user")
+SANE_RANGE = (0.0001, 5.0)      # USD/req としてあり得る範囲（誤マッチ検出）
 
 
 @dataclass
@@ -64,8 +72,30 @@ def _extract_price(text: str, labels: list[str]) -> float | None:
     return None
 
 
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def evaluate_candidate(current: XPricing, found: dict) -> tuple[str, XPricing | None, dict]:
+    """抽出結果を評価する。戻り値: (status, candidate, changed)
+    status: unverified（必須項目不足/異常値）| ok（変化なし）| applied（軽微→自動適用）| staged（大きな変化→人間確認）"""
+    if any(found.get(k) is None for k in REQUIRED_FIELDS):
+        return "unverified", None, {}
+    if any(not (SANE_RANGE[0] <= float(found[k]) <= SANE_RANGE[1]) for k in REQUIRED_FIELDS):
+        return "unverified", None, {}
+    cand = XPricing(*(float(found[k]) for k in REQUIRED_FIELDS), "official_page")
+    changed = {k: (getattr(current, k), getattr(cand, k)) for k in REQUIRED_FIELDS
+               if abs(getattr(current, k) - getattr(cand, k)) > 1e-9}
+    if not changed:
+        return "ok", cand, {}
+    max_rel = max(abs(n - o) / o if o else 1.0 for o, n in changed.values())
+    return ("applied" if max_rel <= AUTO_APPLY_MAX_CHANGE else "staged"), cand, changed
+
+
 def verify_x_pricing(settings: Settings, db, session: requests.Session | None = None) -> dict:
-    """公式価格ページを取得して差分を検出する。取得・抽出できなければ現在値を維持し status=unverified。"""
+    """公式価格ページを取得して差分を検出する（staged update）。
+    取得・抽出できなければ現在値を維持し status=unverified。大きな変化は候補として保存し、人間確認まで旧価格を使う。"""
     s = session or requests.Session()
     current = x_pricing(settings, db)
     try:
@@ -77,17 +107,32 @@ def verify_x_pricing(settings: Settings, db, session: requests.Session | None = 
     except requests.RequestException as e:
         return {"status": "unverified", "reason": e.__class__.__name__, "pricing": current.as_dict()}
     found = {k: _extract_price(text, v) for k, v in X_LABELS.items()}
-    if found["post"] is None or found["post_url"] is None:
-        return {"status": "unverified", "reason": "ラベル抽出失敗（ページ構成変更の可能性）", "pricing": current.as_dict(), "found": found}
-    new = XPricing(found["post"], found["post_url"], found["read_post"] or current.read_post,
-                   found["owned_read"] or current.owned_read, found["read_user"] or current.read_user, "official_page")
-    changed = {k: (getattr(current, k), getattr(new, k)) for k in ("post", "post_url", "read_post", "owned_read", "read_user")
-               if abs(getattr(current, k) - getattr(new, k)) > 1e-9}
-    db.set_setting("x_pricing", json.dumps(new.as_dict()))
-    db.set_setting("x_pricing_verified_at", __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds"))
-    if changed:
-        db.log_event("warn", "x_pricing_changed", f"X API 価格の変更を検出: {changed}", {"changed": changed})
-    return {"status": "changed" if changed else "ok", "pricing": new.as_dict(), "changed": changed}
+    status, cand, changed = evaluate_candidate(current, found)
+    if status == "unverified":
+        db.log_event("info", "x_pricing_unverified", "価格ページから必須項目を抽出できず（旧価格を継続）", {"found": found})
+        return {"status": "unverified", "reason": "必須項目の抽出失敗または異常値（ページ構成変更の可能性）", "pricing": current.as_dict(), "found": found}
+    db.set_setting("x_pricing_verified_at", _now_iso())
+    if status == "ok":
+        return {"status": "ok", "pricing": current.as_dict(), "changed": {}}
+    if status == "applied":
+        db.set_setting("x_pricing", json.dumps(cand.as_dict()))
+        db.log_event("info", "x_pricing_applied", f"X API 価格の軽微な変更を自動適用: {changed}", {"changed": changed})
+        return {"status": "applied", "pricing": cand.as_dict(), "changed": changed}
+    db.set_setting("x_pricing_candidate", json.dumps({"pricing": cand.as_dict(), "changed": changed, "at": _now_iso()}))
+    db.log_event("warn", "x_pricing_staged", f"X API 価格の大きな変更を検出（人間確認まで旧価格を使用）: {changed}", {"changed": changed})
+    return {"status": "staged", "pricing": current.as_dict(), "candidate": cand.as_dict(), "changed": changed}
+
+
+def apply_candidate(db) -> XPricing | None:
+    """人間確認後に候補価格を適用する（`affiliate-bot pricing --apply`）。"""
+    raw = db.get_setting("x_pricing_candidate")
+    if not raw:
+        return None
+    d = json.loads(raw)["pricing"]
+    db.set_setting("x_pricing", json.dumps(d))
+    db.set_setting("x_pricing_candidate", "")
+    db.log_event("info", "x_pricing_applied", "候補価格を人間確認後に適用", d)
+    return XPricing(d["post"], d["post_url"], d["read_post"], d["owned_read"], d["read_user"], "official_page")
 
 
 def llm_pricing_overrides() -> dict:

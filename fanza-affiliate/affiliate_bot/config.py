@@ -87,6 +87,8 @@ class Settings:
     # --- 通知（Human Attention Queue）---
     slack_webhook_url: str = field(default_factory=lambda: _env("SLACK_WEBHOOK_URL", ""))
     notify_email: str = field(default_factory=lambda: _env("NOTIFY_EMAIL", ""))
+    # stdout/ログを人間が監視している環境でのみ true にする（Slack 未設定時、console 出力を「配送成功」とみなす）
+    notify_console_delivery: bool = field(default_factory=lambda: _flag("NOTIFY_CONSOLE_DELIVERY", False))
 
     # --- X API 価格（USD）。既定値は 2026-09 の公式 pay-per-use。DB の settings.x_pricing が優先される ---
     x_price_post_usd: float = field(default_factory=lambda: float(_env("X_PRICE_POST_USD", "0.015")))

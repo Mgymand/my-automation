@@ -184,6 +184,21 @@ def cmd_bootstrap(settings: Settings, db: Database, args) -> None:
     bootstrap.run(settings, db, io, network=not args.no_network, only=args.only.split(",") if args.only else None)
 
 
+def cmd_pricing(settings: Settings, db: Database, args) -> None:
+    from .pricing import apply_candidate, verify_x_pricing, x_pricing
+    if args.verify:
+        print(verify_x_pricing(settings, db))
+    if args.apply:
+        p = apply_candidate(db)
+        print("applied: " + str(p.as_dict()) if p else "候補はありません")
+        if p:
+            attention.resolve_by_category(db, "billing_cap")
+    print("current:", x_pricing(settings, db).as_dict())
+    cand = db.get_setting("x_pricing_candidate")
+    if cand:
+        print("candidate (未適用):", cand)
+
+
 def cmd_attention(settings: Settings, db: Database, args) -> None:
     if args.resolve:
         attention.resolve(db, int(args.resolve))
@@ -259,9 +274,10 @@ def weekly_maintenance(db: Database, settings: Settings) -> None:
                 attention.raise_item(db, "policy_change", f"規約ページの変更を検知: {k}", detail=str(v),
                                      action="一次情報を確認し policy.py / 運用を見直す", severity="critical")
         pv = verify_x_pricing(settings, db)
-        if pv["status"] == "changed":
-            attention.raise_item(db, "policy_change", "X API 価格の変更を検知", detail=str(pv["changed"]),
-                                 action="コスト見積を確認（計算は新価格で継続）")
+        if pv["status"] == "staged":
+            attention.raise_item(db, "billing_cap", "X API 価格の大きな変更を検知（人間確認まで旧価格で計算）",
+                                 detail=str(pv["changed"]), action="公式ページを確認し `affiliate-bot pricing --apply` で適用",
+                                 dedupe_key="x_pricing_staged")
     except Exception as e:  # noqa: BLE001
         db.log_event("warn", "weekly_maintenance_error", str(e))
 
@@ -289,6 +305,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--no-network", action="store_true", help="疎通確認・デプロイを行わない")
     p.add_argument("--only", help="実行するステップをカンマ区切りで限定（例: x,tracking）")
     p.set_defaults(fn=cmd_bootstrap)
+    p = sub.add_parser("pricing", help="X API 価格の確認/候補適用")
+    p.add_argument("--verify", action="store_true"); p.add_argument("--apply", action="store_true"); p.set_defaults(fn=cmd_pricing)
     p = sub.add_parser("attention", help="Human Attention Queue の表示/解決")
     p.add_argument("--resolve"); p.add_argument("--notify", action="store_true"); p.set_defaults(fn=cmd_attention)
     p = sub.add_parser("pause"); p.add_argument("--reason"); p.set_defaults(fn=cmd_pause)

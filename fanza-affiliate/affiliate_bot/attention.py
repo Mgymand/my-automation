@@ -83,23 +83,38 @@ def resolve_by_category(db: Database, category: str) -> int:
 
 
 def notify_pending(db: Database, settings: Settings, session: requests.Session | None = None) -> int:
-    """未通知の open 項目を通知する。Slack Webhook がなければ stdout（cron ログ）に出す。"""
+    """未通知の open 項目を通知する。
+
+    - Slack Webhook が設定されていれば送信し、**成功したときだけ** notified_at を確定する（失敗時は次回に再送）
+    - Slack がない環境では stdout に出すが、`NOTIFY_CONSOLE_DELIVERY=true`（人間が stdout/ログを監視していると明示した場合）
+      のときだけ「配送成功」とみなす。未設定なら notified_at は付けず、毎回再表示し続ける（重要通知が消えない）
+    戻り値: 配送が確定した件数
+    """
     ensure_schema(db)
     rows = db.q("SELECT * FROM attention_queue WHERE status='open' AND notified_at IS NULL ORDER BY id")
     if not rows:
         return 0
     lines = [f"[{r['severity']}] {r['category']}: {r['title']}" + (f"\n  → {r['action']}" if r['action'] else "") for r in rows]
     text = "【要対応】affiliate-bot\n" + "\n".join(lines)
-    sent = False
+    delivered = False
     if settings.slack_webhook_url:
         s = session or requests.Session()
         try:
             r = s.post(settings.slack_webhook_url, json={"text": text}, timeout=15)
-            sent = r.status_code < 300
-        except requests.RequestException:
-            sent = False
-    if not sent:
+            delivered = r.status_code < 300
+            if not delivered:
+                db.log_event("warn", "notify_failed", f"Slack HTTP {r.status_code}（次回再送）")
+        except requests.RequestException as e:
+            db.log_event("warn", "notify_failed", f"Slack {e.__class__.__name__}（次回再送）")
+    if not delivered:
         print(text)
+        delivered = settings.notify_console_delivery
+        if not delivered and not db.get_setting("notify_channel_warned"):
+            db.log_event("warn", "notify_channel_missing",
+                         "通知チャネル未確定: SLACK_WEBHOOK_URL を設定するか、stdout を監視している場合は NOTIFY_CONSOLE_DELIVERY=true")
+            db.set_setting("notify_channel_warned", "1")
+    if not delivered:
+        return 0
     now = utcnow()
     for r in rows:
         db.exec("UPDATE attention_queue SET notified_at=? WHERE id=?", (now, r["id"]))

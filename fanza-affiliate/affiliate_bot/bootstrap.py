@@ -103,25 +103,45 @@ class Ctx:
         self.settings = load_settings()
         self.settings.data_dir = data_dir
 
+    @property
+    def platform(self) -> str:
+        return self.db.get_setting("env_platform") or detect_platform()
+
+    @property
+    def local_env_allowed(self) -> bool:
+        """ローカル .env への永続書込みは local / docker 実行時のみ。クラウド（Cloud Run / Vercel / GitHub Actions / Render）では
+        外部 Secret ストアを primary にし、.env には書かない。"""
+        return self.platform in ("local", "docker")
+
     def save_secret(self, key: str, value: str, extra_stores: list | None = None) -> list[str]:
-        """ローカル .env に保存し、利用可能な外部ストアにも書く。保存先名のリストを返す。"""
+        """Secret を保存する。local 実行: .env(600) を primary に、外部ストアへ複製。
+        クラウド実行: 利用可能な外部ストアを primary にし、.env には書かない（プロセス環境にのみ反映）。
+        戻り値: 保存先名のリスト（空なら永続化できていない）。"""
         if self.readonly:
             os.environ[key] = value
             self.reload()
             return ["(check モード: 保存しない)"]
-        self.store.set(key, value)
-        saved = [self.store.name]
+        saved: list[str] = []
         for st in extra_stores or []:
             try:
                 if st.available() and st.set(key, value):
                     saved.append(st.name)
             except Exception:  # noqa: BLE001
                 pass
+        if self.local_env_allowed:
+            self.store.set(key, value)
+            saved.insert(0, self.store.name)
+        else:
+            os.environ[key] = value
+            if not saved:
+                self.db.log_event("warn", "secret_not_persisted",
+                                  f"{key}: クラウド実行のため .env には保存しません。外部 Secret ストアが利用できず永続化できていません")
         self.reload()
         return saved
 
     def set_env(self, key: str, value: str) -> None:
-        if self.readonly:
+        """非 Secret の設定値。クラウド実行では .env に書かずプロセス環境にのみ反映する。"""
+        if self.readonly or not self.local_env_allowed:
             os.environ[key] = value
         else:
             self.store.set(key, value)
@@ -212,12 +232,19 @@ def step_secrets_safety(ctx: Ctx) -> StepResult:
                 stores.append(st.name)
         except Exception:  # noqa: BLE001
             pass
-    d.append("外部 Secret ストア: " + (", ".join(stores) if stores else "なし（ローカル .env のみ）"))
+    d.append("外部 Secret ストア: " + (", ".join(stores) if stores else "なし"))
     ctx.db.set_setting("secret_stores", json.dumps(stores))
     if not ign:
         actions.append(f"{rel} を .gitignore に追加")
+    if ctx.local_env_allowed:
+        primary = "ローカル .env（600）" + (f" + 複製: {', '.join(stores)}" if stores else "")
+    elif stores:
+        primary = f"{stores[0]}（クラウド実行のため .env には書かない）"
+    else:
+        primary = "なし（クラウド実行で外部ストアが利用不可）"
+        actions.append("Secret Manager / Vercel env / GitHub Actions Secrets のいずれかを利用可能にする（gcloud / vercel / gh の認証）")
     status = BLOCKED if tracked else (ACTION if actions else READY)
-    return StepResult(status, "Secret はローカル .env（600）" + (f" + {', '.join(stores)}" if stores else ""), d, actions)
+    return StepResult(status, f"Secret の保存先: {primary}", d, actions)
 
 
 # ---------------------------------------------------------------- 4. DB
@@ -252,7 +279,7 @@ def step_compliance(ctx: Ctx) -> StepResult:
     if ctx.network:
         res = policy.verify_policy(ctx.db)
         for k, v in res.items():
-            d.append(f"{k}: {v['status']}")
+            d.append(f"{k}: {v['status']}" + (f"（source={v['source']}。proxy は参考のみ）" if v.get("source") == "proxy" else ""))
             if v["status"] in ("changed", "phrase_missing"):
                 attention.raise_item(ctx.db, "policy_change", f"規約ページの変更を検知: {k}", detail=json.dumps(v),
                                      action="一次情報を確認し policy.py を更新", severity="critical")
@@ -470,9 +497,10 @@ def step_x(ctx: Ctx) -> StepResult:
     # 価格の検証（固定値に依存しない）
     pv = verify_x_pricing(s, ctx.db)
     d.append(f"X API 価格: {pv['status']} " + json.dumps(pv["pricing"]))
-    if pv["status"] == "changed":
-        attention.raise_item(ctx.db, "policy_change", "X API 価格の変更を検知", detail=json.dumps(pv["changed"]),
-                             action="コスト見積を確認（利益計算は新価格で継続）")
+    if pv["status"] == "staged":
+        attention.raise_item(ctx.db, "billing_cap", "X API 価格の大きな変更を検知（人間確認まで旧価格で計算）",
+                             detail=json.dumps(pv["changed"]), action="公式ページを確認し `affiliate-bot pricing --apply` で適用",
+                             severity="warn", dedupe_key="x_pricing_staged")
     return StepResult(READY, f"疎通 OK（@{ctx.db.get_setting('x_username')}）/ 価格 {pv['status']}", d)
 
 
@@ -614,6 +642,10 @@ def step_deployment(ctx: Ctx) -> StepResult:
         ctx.io.say(f"  簡易:    {cmd}")
         if ctx.io.confirm("loop を常駐させましたか？（後で行う場合は n）"):
             ctx.db.set_setting("bot_deploy", json.dumps({"provider": "local_loop", "detail": "systemd/nohup", "at": utcnow()}))
+            if not ctx.settings.slack_webhook_url and not ctx.settings.notify_console_delivery:
+                ctx.io.say("通知チャネル: Slack Webhook が未設定です。要対応通知は stdout（loop.log）に出ます。")
+                if ctx.io.confirm("loop.log を人間が監視しますか？（y なら console 出力を配送成功とみなします。n なら Slack 設定まで通知は毎回再表示）"):
+                    ctx.set_env("NOTIFY_CONSOLE_DELIVERY", "true")
             return StepResult(READY, "ローカル/VPS で loop 常駐", d)
     actions.append("loop を常駐させる（systemd か nohup）か、gcloud 認証後に bootstrap で Cloud Run へ自動デプロイ")
     return StepResult(ACTION, "bot 本体の常駐先が未確定", d, actions)
