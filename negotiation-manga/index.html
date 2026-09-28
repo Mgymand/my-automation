@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>価格交渉マンガ</title>
+<meta name="description" content="社内マニュアル『心情・社会的意義からEvidenceにつなげる価格交渉』を、施設長と新人スタッフの掛け合いで描いた全11ページの学習マンガ。">
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+:root{
+  --ink:#111; --paper:#fff; --acc:#e8622a; --tone:#c9c9c9;
+  --f-dlg:'Shippori Antique B1','IPAGothic','Hiragino Sans','Noto Sans JP',sans-serif;
+  --f-ttl:'Dela Gothic One','IPAGothic','Hiragino Sans',sans-serif;
+  --f-cap:'Zen Kaku Gothic New','IPAGothic','Hiragino Sans','Noto Sans JP',sans-serif;
+  --f-hand:'Yusei Magic','IPAGothic',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#4a4a4a;color:var(--ink);font-family:var(--f-cap)}
+body{display:flex;flex-direction:column;align-items:center;gap:28px;padding:28px 0}
+@media print{
+  @page{size:800px 1131px;margin:0}
+  html,body{background:#fff;padding:0;gap:0;display:block}
+  .pg{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+  .pg:last-child{page-break-after:auto;break-after:auto}
+  .toolbar{display:none}
+}
+.toolbar{color:#fff;font-size:14px;text-align:center;max-width:800px;line-height:1.7;opacity:.85}
+.pg{position:relative;width:800px;height:1131px;background:var(--paper);box-shadow:0 12px 40px rgba(0,0,0,.45);overflow:hidden;flex:none}
+.grid{position:absolute;inset:30px 30px 44px 30px;display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.pno{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:var(--f-ttl);font-size:13px;letter-spacing:.1em}
+.pn{position:relative;border:3.5px solid var(--ink);background:#fff;overflow:hidden}
+.pn.noborder{border:none}
+/* backgrounds */
+.bg-tone{background:radial-gradient(circle,#000 1px,transparent 1.6px) 0 0/7px 7px #fff}
+.bg-tone-l{background:radial-gradient(circle,#000 .8px,transparent 1.3px) 0 0/9px 9px #fff}
+.bg-dark{background:radial-gradient(circle at 50% 40%,#fff 0,#fff 30%,transparent 75%),radial-gradient(circle,#000 1.3px,transparent 1.8px) 0 0/5px 5px #fff}
+.bg-black{background:#111;color:#fff}
+.bg-office{background:
+  linear-gradient(transparent 0 78%, #fff 78%),
+  repeating-linear-gradient(180deg,#fff 0 12px,#bdbdbd 12px 15px) 0 0/100% 100%;
+}
+.bg-office::before{content:'';position:absolute;left:0;right:0;top:78%;height:4px;background:#111}
+.bg-office::after{content:'';position:absolute;left:0;right:0;top:calc(78% + 4px);bottom:0;background:radial-gradient(circle,#000 1px,transparent 1.5px) 0 0/8px 8px #fff}
+.bg-sky{background:linear-gradient(#fff,#ddd)}
+.fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* characters */
+.char{position:absolute;line-height:0;z-index:2}
+.char svg{width:100%;height:auto;overflow:visible}
+/* bubbles */
+.bb{position:absolute;background:#fff;border:3px solid var(--ink);border-radius:30px;padding:13px 17px;font-family:var(--f-dlg);font-size:16.5px;line-height:1.55;letter-spacing:.01em;z-index:5;
+  --tx:30px;--ty:40%;--sk:0deg}
+.bb b{color:var(--acc);font-weight:700}
+.bb .em{font-weight:700;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:4px}
+.bb.sm{font-size:14.5px;padding:10px 14px;border-radius:22px}
+.bb.lg{font-size:19px}
+.bb::after{content:'';position:absolute;width:40px;height:36px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'><path d='M0 0 L40 0 L12 34 Z' fill='white'/><path d='M3 2 L12 34 L37 2' fill='none' stroke='black' stroke-width='3' stroke-linejoin='round'/></svg>") no-repeat center/contain}
+.bb.t-b::after{left:var(--tx);bottom:-33px;transform:skewX(var(--sk))}
+.bb.t-t::after{left:var(--tx);top:-33px;transform:scaleY(-1) skewX(var(--sk))}
+.bb.t-l::after{top:var(--ty);left:-33px;transform:rotate(90deg) skewX(var(--sk))}
+.bb.t-r::after{top:var(--ty);right:-33px;transform:rotate(-90deg) skewX(var(--sk))}
+.bb.think{border-radius:50%;padding:18px 24px;text-align:center}
+.bb.think::after{width:14px;height:14px;background:#fff;border:3px solid #000;border-radius:50%;left:var(--tx);bottom:-24px;transform:none;box-shadow:-14px 16px 0 -2px #fff,-14px 16px 0 1px #000}
+.bb.shout{border:none;border-radius:0;background:#000;padding:5px;clip-path:polygon(50% 0%,61% 8%,75% 2%,80% 14%,96% 12%,92% 28%,100% 40%,92% 52%,100% 66%,90% 76%,94% 94%,78% 88%,66% 100%,54% 90%,40% 100%,30% 88%,14% 96%,16% 80%,0% 70%,8% 56%,0% 42%,10% 30%,4% 14%,20% 12%,26% 0%,38% 8%)}
+.bb.shout::after{display:none}
+.bb.shout>span{display:block;background:#fff;padding:22px 30px;clip-path:polygon(50% 0%,61% 8%,75% 2%,80% 14%,96% 12%,92% 28%,100% 40%,92% 52%,100% 66%,90% 76%,94% 94%,78% 88%,66% 100%,54% 90%,40% 100%,30% 88%,14% 96%,16% 80%,0% 70%,8% 56%,0% 42%,10% 30%,4% 14%,20% 12%,26% 0%,38% 8%);font-family:var(--f-ttl);font-size:20px;text-align:center;line-height:1.3}
+/* captions & boxes */
+.cap{position:absolute;background:#111;color:#fff;font-family:var(--f-cap);font-weight:700;font-size:14px;line-height:1.5;padding:8px 12px;z-index:6;letter-spacing:.02em}
+.cap.w{background:#fff;color:#111;border:3px solid #111}
+.cap b{color:#ffb28a}
+.cap.w b{color:var(--acc)}
+.ttl{position:absolute;left:-6px;top:-4px;background:#111;color:#fff;font-family:var(--f-ttl);font-size:15px;padding:6px 16px 6px 14px;z-index:7;transform:rotate(-1.5deg);letter-spacing:.05em}
+.ttl small{font-family:var(--f-cap);font-weight:700;font-size:12px;margin-left:8px;opacity:.85}
+.box{position:absolute;background:#fff;border:3px solid #111;padding:12px 14px;font-family:var(--f-cap);font-weight:700;font-size:14px;line-height:1.5;z-index:4;box-shadow:5px 5px 0 #111}
+.box h4{margin:0 0 5px;font-family:var(--f-cap);font-weight:900;font-size:14px;letter-spacing:.02em}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
+.box.acc{border-color:var(--acc);box-shadow:5px 5px 0 var(--acc)}
+.box.ng{border-color:#555;background:#f2f2f2;box-shadow:none}
+ul.lst{margin:0;padding:0;list-style:none}
+ul.lst li{padding-left:22px;position:relative;margin:2px 0}
+ul.lst li::before{content:'';position:absolute;left:0;top:5px;width:11px;height:11px;border:2.5px solid #111;background:#fff}
+ul.lst.chk li::before{content:'✓';border:none;top:-1px;font-weight:900;font-size:15px;color:var(--acc);width:auto;height:auto}
+ul.lst.x li::before{content:'✕';border:none;top:-1px;font-weight:900;font-size:14px;color:#555;width:auto;height:auto}
+.flow{display:flex;flex-direction:column;align-items:stretch;gap:0}
+.flow .fb{border:2.5px solid #111;background:#fff;padding:5px 10px;font-size:13.5px;font-weight:700;text-align:center;line-height:1.35}
+.flow .fb.hi{background:#111;color:#fff}
+.flow .fb.acc{background:var(--acc);color:#fff;border-color:var(--acc)}
+.flow .ar{height:14px;text-align:center;line-height:14px;font-size:14px;font-weight:900}
+.flow.h{flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:center}
+.flow.h .ar{width:16px;height:auto}
+.stack{position:absolute;display:flex;flex-direction:column;gap:8px;z-index:5}
+.stack .bb{position:relative}
+.hand{font-family:var(--f-hand)}
+.pill{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:700;margin-right:4px}
+.sfx{position:absolute;font-family:var(--f-ttl);z-index:6;color:#111;text-shadow:3px 3px 0 #fff,-3px -3px 0 #fff,3px -3px 0 #fff,-3px 3px 0 #fff,0 3px 0 #fff,3px 0 0 #fff,0 -3px 0 #fff,-3px 0 0 #fff}
+.num{position:absolute;left:-2px;top:-2px;width:26px;height:26px;background:#111;color:#fff;font-family:var(--f-ttl);font-size:13px;display:flex;align-items:center;justify-content:center;z-index:8}
+table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;font-weight:700}
+table.tbl th,table.tbl td{border:2px solid #111;padding:3px 8px;text-align:left}
+table.tbl th{background:#111;color:#fff;font-family:var(--f-ttl);font-weight:400;font-size:13px}
+table.tbl td.r{text-align:right}
+table.tbl tr.tot td{background:#f3e6df;color:#b34a1a}
+</style>
+</head>
+<body>
+<div class="toolbar">「心情・社会的意義からEvidenceにつなげる価格交渉」学習マンガ（全11ページ）／横書きなので左→右、上→下の順で読みます。ブラウザの印刷でPDF保存も可能です。</div>
+
+<!-- ============ P1 表紙 ============ -->
+<section class="pg" id="p1">
+  <div class="pn noborder" style="position:absolute;inset:0">
+    <svg class="fx" data-fx="speed" data-cx="400" data-cy="620" data-n="90"></svg>
+    <div style="position:absolute;left:0;right:0;top:92px;text-align:center;font-family:var(--f-cap);font-weight:900;font-size:17px;letter-spacing:.3em">新人営業のための 価格交渉マンガ</div>
+    <div style="position:absolute;left:-40px;right:-40px;top:140px;background:#111;color:#fff;transform:rotate(-3deg);padding:26px 0 22px;text-align:center">
+      <div style="font-family:var(--f-ttl);font-size:30px;letter-spacing:.06em;line-height:1.25">心情・社会的意義から</div>
+      <div style="font-family:var(--f-ttl);font-size:52px;letter-spacing:.02em;line-height:1.15;margin-top:6px"><span style="color:var(--acc)">Evidence</span>につなげる</div>
+      <div style="font-family:var(--f-ttl);font-size:64px;letter-spacing:.1em;line-height:1.1;margin-top:8px">価格交渉</div>
+    </div>
+    <div class="char" data-who="s" data-expr="smile" data-pose="point" style="left:30px;bottom:110px;width:400px"></div>
+    <div class="char" data-who="n" data-expr="determined" data-pose="fist" data-flip="1" style="right:30px;bottom:96px;width:390px"></div>
+    <div class="bb t-b lg" style="left:70px;top:520px;--tx:60px;--sk:-15deg;max-width:300px;font-weight:700">「安くしてください」は<br>交渉ではない。</div>
+    <div class="bb t-b lg" style="right:60px;top:520px;--tx:180px;--sk:15deg;max-width:300px;font-weight:700">じゃあ、どう伝えれば<br>いいんですか？</div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:96px;background:#111;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 40px">
+      <div style="font-family:var(--f-cap);font-weight:700;font-size:12px;line-height:1.6;width:300px">原作：社内マニュアル<br>『心情・社会的意義からEvidenceにつなげる価格交渉』</div>
+      <div style="font-family:var(--f-cap);font-weight:700;font-size:12px;line-height:1.6;text-align:right;width:400px">登場人物<br><span style="color:#ffb28a">施設長</span>（うさ耳・買取交渉のベテラン）／ <span style="color:#ffb28a">新人スタッフ</span>（くま耳・入社1年目）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ P2 基本的な考え方 ============ -->
+<section class="pg" id="p2">
+  <div class="grid" style="grid-template-rows:1.15fr 1fr .95fr 1.15fr">
+    <div class="pn bg-office" style="grid-area:1/1/2/8">
+      <div class="ttl">基本的な考え方</div>
+      <div class="char" data-who="n" data-expr="laugh" data-pose="note" style="right:-10px;bottom:-40px;width:250px"></div>
+      <div class="bb t-r" style="left:14px;top:48px;--ty:45%;max-width:250px">施設長！売出<b>680万円</b>の物件、<b>400万円</b>で買付を入れたいんです。<br>「安くしてください」ってお願いしてきます！</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:1/8/2/13">
+      <div class="char" data-who="s" data-expr="serious" data-pose="stop" style="left:-30px;bottom:-40px;width:260px"></div>
+      <div class="bb t-l" style="right:12px;top:22px;--ty:55%;max-width:150px">待った。<br>それは交渉じゃなくて、<span class="em">ただのお願い</span>だ。</div>
+    </div>
+    <div class="pn" style="grid-area:2/1/3/7">
+      <div class="char" data-who="n" data-expr="think" data-pose="chin" style="left:-20px;bottom:-60px;width:230px"></div>
+      <div class="bb t-l" style="right:10px;top:16px;--ty:40%;max-width:200px">じゃあ修繕費と工事費を全部並べて<br>「これだけかかるので400万です」と<b>数字で押します</b>！</div>
+    </div>
+    <div class="pn" style="grid-area:2/7/3/13">
+      <div class="char" data-who="s" data-expr="talk" data-pose="hands" data-flip="1" style="right:-20px;bottom:-60px;width:230px"></div>
+      <div class="bb t-r" style="left:10px;top:16px;--ty:40%;max-width:200px">それも順番が違う。<br>数字だけ先に出すと、売主には<b>「値切りの理由」</b>にしか聞こえない。</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:3/1/4/13">
+      <div class="char" data-who="s" data-expr="smile" data-pose="point" style="left:-10px;bottom:-90px;width:230px"></div>
+      <div class="bb t-l sm" style="left:200px;top:14px;--ty:50%;max-width:150px">価格の前に、まず<b>この5つ</b>を理解してもらう。</div>
+      <div class="box" style="right:12px;top:14px;bottom:14px;width:330px;display:flex;flex-direction:column;justify-content:center">
+        <ul class="lst chk" style="font-size:14px">
+          <li>なぜ<b>弊社</b>がこの物件を買いたいのか</li>
+          <li>購入後、この物件を<b>どう活用</b>したいのか</li>
+          <li><b>誰のため</b>の住居を作ろうとしているのか</li>
+          <li>なぜ弊社が<b>この事業</b>を行っているのか</li>
+          <li>売主様が売却することで、<b>何が実現</b>するのか</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pn" style="grid-area:4/1/5/13">
+      <div class="ttl">基本フロー<small>心情 → 金額 → Evidence の順番</small></div>
+      <div class="flow h" style="position:absolute;left:14px;right:14px;top:50px;gap:4px">
+        <div class="fb">売主を知る</div><div class="ar">▶</div>
+        <div class="fb">売主が大切に<br>していることを知る</div><div class="ar">▶</div>
+        <div class="fb">弊社の事業・<br>社会的意義を伝える</div><div class="ar">▶</div>
+        <div class="fb">物件の未来を<br>想像してもらう</div><div class="ar">▶</div>
+        <div class="fb hi">売主にもその未来に<br>参加してもらう</div>
+      </div>
+      <div class="flow h" style="position:absolute;left:14px;right:14px;top:150px;gap:4px">
+        <div class="fb">実現に必要な<br>条件を伝える</div><div class="ar">▶</div>
+        <div class="fb acc">Evidenceで<br>金額を裏付ける</div><div class="ar">▶</div>
+        <div class="fb">価格交渉</div><div class="ar">▶</div>
+        <div class="fb">相手の反応を聞き、<br>条件を詰める</div>
+      </div>
+      <div class="cap" style="right:12px;bottom:10px;font-size:13px">最後に、修繕費・工事費・物件状態・見積りなどの<b>客観的な根拠（Evidence）</b>で「なぜこの金額なのか」を説明する</div>
+    </div>
+  </div>
+  <div class="pno">2</div>
+</section>
+
+<!-- ============ P3 PHASE1 売主を知る ============ -->
+<section class="pg" id="p3">
+  <div class="grid" style="grid-template-rows:1fr 1.25fr 1.1fr 1.05fr">
+    <div class="pn bg-office" style="grid-area:1/1/2/13">
+      <div class="ttl">PHASE 1<small>まず売主を知る</small></div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="hands" style="left:0px;bottom:-70px;width:230px"></div>
+      <div class="bb t-l" style="left:230px;top:44px;--ty:45%;max-width:280px">価格を話す前に、まず<span class="em">売主を理解する</span>。<br>同じ680万円の物件でも、売主によって<b>響く話が全く違う</b>んだ。</div>
+      <div class="char" data-who="n" data-expr="normal" data-pose="note" data-flip="1" style="right:-24px;bottom:-90px;width:200px"></div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:2/1/3/13">
+      <div class="cap" style="left:12px;top:12px">たとえば、こんな３人の売主</div>
+      <div class="box" style="left:14px;top:54px;width:225px;bottom:14px"><svg viewBox="0 0 120 60" width="100%" data-icon="house-doc"></svg><h4 style="margin-top:6px">相続した家を<br>整理したい人</h4><div style="font-weight:500;font-size:13px">手続きを早く片付けたい。建物の行き先は気になる。</div></div>
+      <div class="box" style="left:255px;top:54px;width:225px;bottom:14px"><svg viewBox="0 0 120 60" width="100%" data-icon="house-family"></svg><h4 style="margin-top:6px">30年間家族で暮らした<br>家を手放す人</h4><div style="font-weight:500;font-size:13px">思い出がある。「壊されるのか」を心配している。</div></div>
+      <div class="box" style="left:496px;top:54px;width:225px;bottom:14px"><svg viewBox="0 0 120 60" width="100%" data-icon="house-cash"></svg><h4 style="margin-top:6px">とにかく早く<br>現金化したい人</h4><div style="font-weight:500;font-size:13px">スピードと確実性が最優先。話は短く、条件は明確に。</div></div>
+    </div>
+    <div class="pn" style="grid-area:3/1/4/7">
+      <div class="cap" style="left:0;top:0">元付け業者への確認（実際に使える質問）</div>
+      <div class="char" data-who="n" data-expr="talk" data-pose="phone" data-flip="1" style="right:-30px;bottom:-60px;width:210px"></div>
+      <div class="bb t-r sm" style="left:10px;top:40px;--ty:30%;max-width:200px">差し支えない範囲で、今回売却されることになった<b>背景</b>をお伺いすることは可能でしょうか？</div>
+      <div class="bb t-r sm" style="left:10px;top:150px;--ty:60%;max-width:180px">売主様としては、<b>いつ頃まで</b>の売却をご希望でしょうか？</div>
+    </div>
+    <div class="pn" style="grid-area:3/7/4/13">
+      <div class="cap" style="right:0;top:0;font-size:11.5px">他に：所有期間／現在の反響（問い合わせ・内見）</div>
+      <div class="stack" style="left:12px;right:12px;top:36px;bottom:10px;gap:6px">
+        <div class="bb sm">現時点で、<b>他に買付</b>などは入っていますでしょうか？</div>
+        <div class="bb sm" style="margin-left:14px">売却後の<b>建物の活用方法</b>について、売主様からご希望などはございますか？</div>
+        <div class="bb sm"><b>金額以外</b>で、売主様が買主に対して重視されていることはございますか？</div>
+      </div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:4/1/5/13">
+      <div class="char" data-who="s" data-expr="serious" data-pose="bust" style="left:-10px;bottom:-110px;width:220px"></div>
+      <div class="bb t-l" style="left:200px;top:18px;--ty:45%;max-width:300px">目的は<b>感情を利用すること</b>じゃない。<br>「この売主は<span class="em">何を大切にしていて</span>、どんな取引なら<span class="em">納得できるのか</span>」を理解することだ。</div>
+      <div class="box acc hand" style="right:14px;top:22px;width:200px;font-weight:400;font-size:13.5px;transform:rotate(1.5deg)">
+        <div style="font-size:12px;color:var(--acc)">新人メモ</div>
+        情報を取ったら…<br>「この売主には、<b style="color:var(--acc)">どの話</b>を伝えることが一番意味を持つのか？」を考える！
+      </div>
+    </div>
+  </div>
+  <div class="pno">3</div>
+</section>
+
+<!-- ============ P4 PHASE2 STEP1-2 ============ -->
+<section class="pg" id="p4">
+  <div class="grid" style="grid-template-rows:1.15fr 1.3fr 1fr 1.05fr">
+    <div class="pn bg-dark" style="grid-area:1/1/2/13">
+      <div class="ttl">PHASE 2<small>価格の前に「弊社に売る意味」を作る</small></div>
+      <div class="char" data-who="s" data-expr="determined" data-pose="point" style="left:20px;bottom:-80px;width:230px"></div>
+      <div class="bb t-l" style="left:240px;top:42px;--ty:50%;max-width:310px">ここが<span class="em">この交渉方法の中心</span>だ。いきなりEvidenceには入らない。まず<b>「なぜ弊社なのか？」</b>を作る。</div>
+      <div class="box" style="right:12px;top:44px;width:170px;font-size:11.5px;padding:6px 10px"><h4 style="font-size:12px">売主に理解してもらうこと</h4><ul class="lst" style="font-size:11.5px"><li>何をしている会社か</li><li>なぜ買いたいのか</li><li>買った後に何をするか</li><li>誰が利用するか</li><li>この売却で何が生まれるか</li></ul></div>
+    </div>
+    <div class="pn" style="grid-area:2/1/3/8">
+      <div class="ttl">STEP 1<small>物件の「未来」を売主に見せる</small></div>
+      <div class="flow h" style="position:absolute;left:12px;right:12px;top:46px;gap:3px">
+        <div class="fb" style="font-size:12px">現在の住宅<br>（古くなった家）</div><div class="ar">▶</div>
+        <div class="fb" style="font-size:12px">弊社が購入</div><div class="ar">▶</div>
+        <div class="fb" style="font-size:12px">既存建物を<br>活かして改修</div><div class="ar">▶</div>
+        <div class="fb" style="font-size:12px">内装・設備等<br>を整備</div>
+      </div>
+      <div class="flow h" style="position:absolute;left:12px;right:12px;top:104px;gap:3px">
+        <div class="fb" style="font-size:12px">シェアハウス等の<br>住居として再活用</div><div class="ar">▶</div>
+        <div class="fb" style="font-size:12px">新しい入居者<br>が入る</div><div class="ar">▶</div>
+        <div class="fb hi" style="font-size:12px">再び人が生活する<br>場所になる</div>
+      </div>
+      <svg viewBox="0 0 200 140" style="position:absolute;left:10px;bottom:6px;width:190px" data-icon="house-renew"></svg>
+      <div class="cap" style="left:214px;right:12px;bottom:10px;font-size:11.5px">「売却したら終わり」ではなく、「自分が売却した後、この家には<b>こういう未来がある</b>」というイメージを持ってもらう</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:2/8/3/13">
+      <div class="cap" style="left:0;top:0">判断基準を広げる</div>
+      <div class="box ng" style="left:14px;top:44px;right:14px;font-size:13px">
+        <div style="font-size:11px;color:#555;margin-bottom:2px">価格だけの比較</div>
+        A社 ＝ ○万円<br>B社 ＝ ○万円<br>弊社 ＝ ○万円
+      </div>
+      <div style="position:absolute;left:0;right:0;top:150px;text-align:center;font-family:var(--f-ttl);font-size:22px">▼</div>
+      <div class="box acc" style="left:14px;top:184px;right:14px;font-size:14px">
+        <div style="font-size:11px;color:var(--acc);margin-bottom:2px">ここまで広げる</div>
+        「<b>誰に売ったら</b>、この物件が<b>どうなるのか？</b>」
+      </div>
+    </div>
+    <div class="pn" style="grid-area:3/1/4/6">
+      <div class="char" data-who="n" data-expr="laugh" data-pose="fist" style="left:-20px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l" style="right:10px;top:18px;--ty:45%;max-width:170px">「<b>社会貢献</b>してます！」って言えばいいんですね！</div>
+    </div>
+    <div class="pn" style="grid-area:3/6/4/13">
+      <div class="ttl">STEP 2<small>社会的意義を具体的に伝える</small></div>
+      <div class="char" data-who="s" data-expr="serious" data-pose="cross" data-flip="1" style="right:-10px;bottom:-70px;width:220px"></div>
+      <div class="bb t-r" style="left:12px;top:48px;--ty:40%;max-width:250px">それだけでは<span class="em">ほとんど意味がない</span>。<br><b>誰を助け</b>、<b>どんな課題</b>を解決し、この物件が<b>どんな役割</b>を持つのか。営業担当自身が理解して話す。</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:4/1/5/13">
+      <div class="cap" style="left:0;top:0">例：実際の事業内容として該当するなら</div>
+      <div class="box acc" style="left:14px;top:44px;width:290px;font-size:14.5px;line-height:1.6">一般的な賃貸住宅を借りることが難しい方にも、<b>生活できる住居を提供する</b>。<div style="font-size:12px;font-weight:500;color:#555;margin-top:4px">という社会的意義がある</div></div>
+      <div class="flow" style="position:absolute;left:330px;top:44px;width:400px">
+        <div class="flow h" style="gap:4px">
+          <div class="fb">空き家・活用されて<br>いない住宅</div><div class="ar">▶</div><div class="fb">弊社が購入</div><div class="ar">▶</div><div class="fb">改修・内装・<br>設備投資</div>
+        </div>
+        <div class="ar" style="text-align:right;padding-right:40px">▼</div>
+        <div class="flow h" style="gap:4px">
+          <div class="fb hi">新しい生活の<br>場所になる</div><div class="ar">◀</div><div class="fb">住居を必要と<br>している人が入居</div><div class="ar">◀</div><div class="fb">住居として再生</div>
+        </div>
+      </div>
+      <div class="cap w" style="left:14px;bottom:10px;font-size:12.5px">「事業」を<b>ストーリー</b>として話せるようにしておく</div>
+    </div>
+  </div>
+  <div class="pno">4</div>
+</section>
+
+<!-- ============ P5 STEP3-4 ============ -->
+<section class="pg" id="p5">
+  <div class="grid" style="grid-template-rows:1.2fr 1fr 1.15fr 1.1fr">
+    <div class="pn bg-tone-l" style="grid-area:1/1/2/13">
+      <div class="ttl">STEP 3<small>「誰のためなのか」をイメージしてもらう</small></div>
+      <div class="cap w" style="right:12px;top:10px;font-size:12px">施設長の実演（元付け・売主への話し方）</div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="hands" style="left:-6px;bottom:-60px;width:240px"></div>
+      <div class="stack" style="left:232px;right:14px;top:44px;bottom:12px">
+        <div class="bb t-l sm" style="--ty:40%">例えば、ご自身の<b>ご両親</b>や<b>身近な方</b>が年齢を重ねて、住む場所を探さなければならなくなったとします。</div>
+        <div class="bb t-l sm" style="--ty:40%">その時に、条件などの問題で一般的な賃貸住宅を借りることが難しく、住める場所の選択肢が少なかったら、ご本人だけではなく<b>ご家族も困る</b>と思います。弊社では、そういった方々にも<b>生活できる場所の選択肢</b>を作っていきたいと考えております。</div>
+      </div>
+    </div>
+    <div class="pn" style="grid-area:2/1/3/6">
+      <div class="char" data-who="n" data-expr="worried" data-pose="chin" style="left:-24px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l sm" style="right:10px;top:16px;--ty:45%;max-width:170px">「<b>かわいそうだから安くして</b>」…って言うんじゃないんですね。</div>
+    </div>
+    <div class="pn" style="grid-area:2/6/3/13">
+      <div class="char" data-who="s" data-expr="normal" data-pose="point" data-flip="1" style="right:-10px;bottom:-70px;width:220px"></div>
+      <div class="bb t-r sm" style="left:10px;top:14px;--ty:35%;max-width:250px">違う。「実際に<b>こういう課題</b>があり、弊社はこの物件で<b>こういう価値</b>を作ろうとしている」と理解してもらうんだ。</div>
+      <div class="cap" style="left:10px;bottom:10px;font-size:12px;max-width:260px">相手の家族構成や事情を<b>勝手に決めつけない</b>。「例えば」「もし身近な方が」と、想像してもらうための例として使う</div>
+    </div>
+    <div class="pn bg-dark" style="grid-area:3/1/4/13">
+      <div class="ttl">STEP 4<small>売主を「その取り組みの参加者」にする</small></div>
+      <div class="char" data-who="s" data-expr="determined" data-pose="point" style="left:0;bottom:-80px;width:220px"></div>
+      <div class="bb t-l" style="left:210px;top:48px;--ty:50%;max-width:230px">ここが重要だ。弊社が物件を探すだけでは<b>住居は生まれない</b>。この流れ全体があって<span class="em">初めて実現する</span>。</div>
+      <div class="flow" style="position:absolute;right:14px;top:48px;width:230px">
+        <div class="fb acc">売主が物件を売却する</div><div class="ar">▼</div>
+        <div class="fb">弊社が購入する</div><div class="ar">▼</div>
+        <div class="fb">弊社が改修費・内装費を負担する</div><div class="ar">▼</div>
+        <div class="fb">住居として再生する</div><div class="ar">▼</div>
+        <div class="fb hi">必要としている人に提供する</div>
+      </div>
+    </div>
+    <div class="pn" style="grid-area:4/1/5/13">
+      <div class="cap" style="left:0;top:0">実際のトーク</div>
+      <div class="char" data-who="s" data-expr="smile" data-pose="hands" data-flip="1" style="right:-10px;bottom:-90px;width:210px"></div>
+      <div class="bb t-r sm" style="left:12px;top:40px;--ty:40%;max-width:330px">弊社だけでこの取り組みを実現できるわけではなく、物件をお譲りいただく<b>売主様がいて初めて実現できる</b>ものだと考えております。</div>
+      <div class="bb t-r sm" style="left:30px;top:130px;--ty:50%;max-width:330px">もし今回弊社にお譲りいただけるのであれば、売主様にも<b>この取り組みにご協力いただく形</b>で、こちらの建物をもう一度人が生活する場所として活用していければと考えております。</div>
+      <div class="box acc" style="left:380px;top:44px;width:150px;font-size:13px;text-align:center;line-height:1.5"><span style="color:#555;text-decoration:line-through">「弊社の事業」</span><br><span style="font-family:var(--f-ttl);font-size:18px">▼</span><br>「<b>売主様と一緒に</b><br>実現すること」<br>へ変えていく</div>
+    </div>
+  </div>
+  <div class="pno">5</div>
+</section>
+
+<!-- ============ P6 STEP5-7 ============ -->
+<section class="pg" id="p6">
+  <div class="grid" style="grid-template-rows:1.3fr 1fr 1.5fr 1fr">
+    <div class="pn" style="grid-area:1/1/2/6">
+      <div class="char" data-who="n" data-expr="worried" data-pose="hands" style="left:-24px;bottom:-70px;width:210px"></div>
+      <div class="bb t-l sm" style="right:10px;top:16px;--ty:45%;max-width:170px">でも「じゃあ<b>別の物件でもいい</b>ですよね？」って言われたら…</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:1/6/2/13">
+      <div class="ttl">STEP 5<small>「なぜこの物件なのか」を伝える</small></div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="point" data-flip="1" style="right:-40px;bottom:-80px;width:190px"></div>
+      <div class="bb t-r sm" style="left:12px;top:44px;--ty:45%;max-width:300px">だから、<b>なぜこの物件を本当に買いたいのか</b>を事実で伝える。</div>
+      <div class="box" style="left:12px;top:118px;width:262px;font-size:11px;padding:6px 8px"><div class="pills"><span class="pill">既存建物を活用できる</span><span class="pill">間取りが運営方法に合う</span><span class="pill">必要な面積がある</span><span class="pill">立地が事業に適している</span><span class="pill">活かせる特徴がある</span></div></div>
+    </div>
+    <div class="pn" style="grid-area:2/1/3/13">
+      <div class="cap" style="left:0;top:0">実際のトーク</div>
+      <div class="char" data-who="s" data-expr="smile" data-pose="tablet" style="left:-4px;bottom:-60px;width:230px"></div>
+      <div class="bb t-l sm" style="left:220px;top:44px;--ty:45%;max-width:500px">弊社でも多数の物件を確認しておりますが、こちらについては<b>既存建物を活かしながら再活用できる可能性がある</b>と考えており、具体的に購入を検討しております。</div>
+      <div class="box" style="left:230px;bottom:12px;width:490px;font-size:13px;display:flex;gap:14px;align-items:center;padding:8px 12px">
+        <div class="ng" style="border:2px solid #555;background:#f2f2f2;padding:6px 10px;color:#555">「安い物件なら<br>何でもいい会社」</div>
+        <div style="font-family:var(--f-ttl);font-size:20px">▶</div>
+        <div style="border:2px solid var(--acc);padding:6px 10px;color:#b34a1a">「この物件を見た上で、<br><b>本当に使いたい</b>と考えている買主」</div>
+      </div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:3/1/4/13">
+      <div class="ttl">STEP 6<small>会社だけでなく「自分」も売る</small></div>
+      <div class="char" data-who="s" data-expr="serious" data-pose="cross" data-flip="1" style="right:-10px;bottom:-60px;width:230px"></div>
+      <div class="bb t-r" style="left:290px;top:50px;--ty:45%;max-width:240px">最終的には「<b>この担当者に任せて大丈夫か</b>」も見られている。</div>
+      <div class="box" style="left:14px;top:48px;width:260px;font-size:12px;padding:6px 12px">
+        <h4 style="font-size:13px">売主が見ているのは…</h4>
+        <ul class="lst" style="font-size:12px"><li>本当に買うのか？</li><li>約束を守るのか？</li><li>連絡はちゃんと返ってくるのか？</li><li>途中で話が変わらないか？</li><li>不動産や事業を理解しているか？</li><li>最後まで責任を持って対応するか？</li></ul>
+      </div>
+      <div class="box acc" style="left:290px;top:156px;width:270px;font-size:11.5px;padding:5px 10px">
+        <h4 style="font-size:13px">信頼を作る行動</h4>
+        <div class="pills"><span class="pill">レスポンスを早く</span><span class="pill">期限を守る</span><span class="pill">適当に答えない</span><span class="pill">物件を理解してから話す</span><span class="pill">自社事業を説明できる</span><span class="pill">根拠を持って話す</span><span class="pill">最後まで対応する</span></div>
+      </div>
+      <div class="cap" style="left:14px;bottom:10px;font-size:12.5px;width:260px">「自分を売る」＝好かれることではない。<br>「<b>この人なら安心して取引できる</b>」と思ってもらうこと。</div>
+    </div>
+    <div class="pn" style="grid-area:4/1/5/13">
+      <div class="ttl">STEP 7<small>言葉だけではなく「見せる」</small></div>
+      <div class="char" data-who="n" data-expr="smile" data-pose="tablet" style="left:-6px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l sm" style="left:210px;top:48px;--ty:45%;max-width:215px">口頭だけですと分かりづらい部分もあるかと思いますので、弊社が実際に行っている事業について、<b>ホームページと事業資料</b>も共有させていただきます。</div>
+      <div class="box" style="right:12px;top:46px;width:290px;font-size:12px;padding:6px 10px"><h4 style="font-size:13px">共有する資料</h4><div class="pills"><span class="pill">会社ホームページ</span><span class="pill">事業紹介ページ</span><span class="pill">パンフレット</span><span class="pill">実際の運営物件</span><span class="pill">Before / After</span><span class="pill">実際の改修事例</span><span class="pill">事業実績</span></div></div>
+      <div class="cap" style="right:12px;bottom:10px;font-size:11.5px;max-width:290px">「営業マンが良いことを言っている」<br>→「<b>この会社は実際にこういうことをやっている</b>」へ</div>
+    </div>
+  </div>
+  <div class="pno">6</div>
+</section>
+
+<!-- ============ P7 PHASE3-4 ============ -->
+<section class="pg" id="p7">
+  <div class="grid" style="grid-template-rows:1.1fr 1.6fr .95fr 1fr">
+    <div class="pn bg-dark" style="grid-area:1/1/2/13">
+      <div class="ttl">PHASE 3<small>「実現するためにはこの金額が必要」とつなげる</small></div>
+      <div class="char" data-who="s" data-expr="determined" data-pose="point" style="left:10px;bottom:-80px;width:220px"></div>
+      <div class="bb t-l sm" style="left:230px;top:46px;--ty:50%;max-width:270px">社会的意義を話して終わりじゃない。次は「それを実現するためには<b>何が必要なのか？</b>」へ話を進める。</div>
+      <div class="box" style="right:12px;top:46px;width:230px;font-size:12px;padding:6px 10px"><h4 style="font-size:13px">購入後にも発生する費用</h4><div class="pills"><span class="pill">内装費</span><span class="pill">修繕費</span><span class="pill">設備費</span><span class="pill">水回り工事</span><span class="pill">安全面の工事</span><span class="pill">シェアハウス運営のための工事</span></div></div>
+      <div class="cap w" style="left:230px;bottom:8px;font-size:11px;max-width:270px">安く買うこと自体が目的ではなく、<b>購入後に必要な投資まで含めて事業を成立させる</b>必要がある</div>
+    </div>
+    <div class="pn" style="grid-area:2/1/3/13">
+      <div class="ttl">STEP 8<small>「協力してほしい」を価格交渉につなげる</small></div>
+      <div class="cap w" style="right:12px;top:10px;font-size:11.5px">例：本当に400万円が事業として成立する購入可能価格であれば</div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="phone" style="left:-6px;bottom:-40px;width:230px"></div>
+      <div class="stack" style="left:224px;right:14px;top:46px;bottom:12px">
+        <div class="bb t-l sm" style="--ty:40%">弊社としては、ぜひこちらの物件を購入して、先ほどお話しした形で活用していきたいと考えております。ただ、購入して終わりではなく、その後に<b>内装・設備・修繕等にもかなりの費用</b>をかける必要があります。</div>
+        <div class="bb t-l sm" style="--ty:40%">弊社としてもできる限り費用を負担し、この事業を成立させたいと考えておりますが、今回の計画を実現するためには、購入価格についても<b>売主様にご協力いただく必要</b>があります。弊社で収支を確認した結果、<b>400万円</b>であれば購入後の改修まで含めて、この計画を進めることが可能です。</div>
+        <div class="bb t-l sm" style="--ty:50%">大きな価格のご相談になることは承知しておりますが、ぜひ売主様にも今回の取り組みに<b>ご協力いただけないか</b>、一度ご相談いただけますでしょうか。</div>
+      </div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:3/1/4/13">
+      <div class="cap" style="left:0;top:0">言い方の構造</div>
+      <div class="box ng" style="left:14px;top:46px;width:200px;font-size:14px;text-align:center"><span class="pill" style="background:#555">NG</span><br>「400万円に<br>してください。」</div>
+      <div style="position:absolute;left:224px;top:80px;font-family:var(--f-ttl);font-size:26px">▶</div>
+      <div class="box acc" style="left:262px;top:40px;width:300px;font-size:13.5px"><span class="pill" style="background:var(--acc)">OK</span><br>「<b>この未来を実現したい</b>。そのために400万円という条件が必要です。<b>一緒に成立させて</b>いただけませんか？」</div>
+      <div class="char" data-who="n" data-expr="surprised" data-pose="note" data-flip="1" style="right:-30px;bottom:-90px;width:190px"></div>
+    </div>
+    <div class="pn" style="grid-area:4/1/5/13">
+      <div class="ttl">PHASE 4<small>ここからEvidenceに入る</small></div>
+      <div class="char" data-who="s" data-expr="serious" data-pose="hands" style="left:0;bottom:-100px;width:200px"></div>
+      <div class="bb t-l sm" style="left:196px;top:46px;--ty:45%;max-width:200px">ただし「良いことをしているから安くしてほしい」だけでは<b>価格交渉として弱い</b>。ここで<b>Evidence</b>を使う。</div>
+      <div class="flow" style="position:absolute;right:14px;top:46px;width:280px">
+        <div class="fb"><div style="font-size:11px;font-weight:500">Why cooperate with us?</div>心情・社会的意義</div>
+        <div class="ar">▼</div>
+        <div class="fb acc"><div style="font-size:11px;font-weight:500">Why do we actually need this price?</div>Evidence（根拠）</div>
+      </div>
+      <div class="cap" style="right:14px;bottom:10px;font-size:12px">この２つを<b>つなげる</b></div>
+    </div>
+  </div>
+  <div class="pno">7</div>
+</section>
+
+<!-- ============ P8 PHASE5 ============ -->
+<section class="pg" id="p8">
+  <div class="grid" style="grid-template-rows:1.25fr 1.45fr .9fr 1fr">
+    <div class="pn bg-sky" style="grid-area:1/1/2/7">
+      <div class="ttl">現地確認</div>
+      <svg class="fx" data-fx="house-bg"></svg>
+      <div class="char" data-who="n" data-expr="serious" data-pose="camera" style="left:-10px;bottom:-60px;width:220px"></div>
+      <div class="sfx" style="right:22px;top:60px;font-size:22px;transform:rotate(-10deg)">カシャッ</div>
+      <div class="bb think sm" style="right:8px;top:110px;--tx:20px;max-width:150px">雨漏りの跡…<br>給湯器も交換だな</div>
+    </div>
+    <div class="pn" style="grid-area:1/7/2/13">
+      <div class="cap" style="left:0;top:0">Evidenceとして確認するもの</div>
+      <div class="box" style="left:12px;top:40px;right:12px;font-size:12px;padding:8px 10px">
+        <ul class="lst chk" style="columns:2;font-size:12px"><li>雨漏り</li><li>屋根・外壁</li><li>基礎・傾き</li><li>床・壁・天井</li><li>水回り</li><li>給排水</li><li>給湯器</li><li>設備交換</li><li>電気・ガス</li><li>残置物</li><li>内装工事</li><li>シェアハウス化工事</li></ul>
+      </div>
+      <div class="box acc" style="left:12px;right:12px;bottom:12px;font-size:12px;padding:8px 10px"><h4 style="font-size:13px">可能な限り残すもの</h4><div style="display:flex;flex-wrap:wrap;gap:4px"><span class="pill">写真</span><span class="pill">動画</span><span class="pill">寸法</span><span class="pill">見積書</span><span class="pill">業者確認</span><span class="pill">実際の工事費</span></div></div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:2/1/3/13">
+      <div class="ttl">PHASE 5<small>Evidenceを金額に変える</small></div>
+      <div class="box" style="left:14px;top:48px;width:330px;padding:0;overflow:hidden">
+        <table class="tbl">
+          <tr><th>売出価格</th><th colspan="2" style="text-align:right">680万円</th></tr>
+          <tr><td>雨漏り修繕</td><td class="r" colspan="2">○万円</td></tr>
+          <tr><td>水回り工事</td><td class="r" colspan="2">○万円</td></tr>
+          <tr><td>設備交換</td><td class="r" colspan="2">○万円</td></tr>
+          <tr><td>内装工事</td><td class="r" colspan="2">○万円</td></tr>
+          <tr><td>シェアハウス化工事</td><td class="r" colspan="2">○万円</td></tr>
+          <tr><td>その他</td><td class="r" colspan="2">○万円</td></tr>
+          <tr class="tot"><td>必要費用 合計</td><td class="r" colspan="2">○万円</td></tr>
+        </table>
+      </div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="point" data-flip="1" style="right:-16px;bottom:-70px;width:200px"></div>
+      <div class="stack" style="left:360px;width:210px;top:48px;bottom:12px">
+        <div class="bb t-r sm" style="--ty:35%">現地を確認したところ、○○・○○・○○について<b>対応が必要</b>になると考えております。</div>
+        <div class="bb t-r sm" style="--ty:40%">加えて、今回の用途で運営するための内装・設備工事も必要です。それらを含めると購入後に<b>○○万円程度の追加投資</b>が必要になる見込みです。</div>
+      </div>
+    </div>
+    <div class="pn bg-dark" style="grid-area:3/1/4/13">
+      <div class="char" data-who="s" data-expr="serious" data-pose="stop" style="left:-10px;bottom:-90px;width:220px"></div>
+      <div class="bb shout" style="left:200px;top:22px;width:230px"><span>絶対に順番を<br>逆にしない！</span></div>
+      <div class="box ng" style="right:14px;top:30px;width:270px;font-size:13px"><span class="pill" style="background:#555">NG</span> 「400万円で買いたい」<br><span style="font-family:var(--f-ttl)">▼</span><br>400万円にするための<b>理由を後から作る</b><div style="font-size:11.5px;color:#555;margin-top:4px">これはしない。</div></div>
+    </div>
+    <div class="pn" style="grid-area:4/1/5/13">
+      <div class="cap" style="left:0;top:0">正しい順番</div>
+      <div class="flow h" style="position:absolute;left:14px;right:14px;top:44px;gap:3px">
+        <div class="fb">実現したい事業・<br>活用方法</div><div class="ar">▶</div>
+        <div class="fb">物件を確認</div><div class="ar">▶</div>
+        <div class="fb">必要な修繕・<br>内装・設備を確認</div><div class="ar">▶</div>
+        <div class="fb">費用を算出</div><div class="ar">▶</div>
+        <div class="fb">事業収支を確認</div><div class="ar">▶</div>
+        <div class="fb acc">購入可能価格<br>を決定</div><div class="ar">▶</div>
+        <div class="fb hi">その価格を<br>売主に説明</div>
+      </div>
+      <div class="char" data-who="n" data-expr="smile" data-pose="note" style="left:0;bottom:-120px;width:180px"></div>
+      <div class="bb t-l sm" style="left:170px;top:150px;--ty:45%;max-width:250px">金額が先じゃなくて、<b>最後に出てくる</b>んですね。</div>
+      <div class="bb sm" style="left:440px;top:150px;max-width:220px">そう。だから<b>説明できる</b>。</div>
+    </div>
+  </div>
+  <div class="pno">8</div>
+</section>
+
+<!-- ============ P9 PHASE6 一連のトーク ============ -->
+<section class="pg" id="p9">
+  <div class="grid" style="grid-template-rows:1fr">
+    <div class="pn bg-office" style="grid-area:1/1/2/13">
+      <div class="ttl">PHASE 6<small>一連の価格交渉トーク（一本のストーリーとして話す）</small></div>
+      <div class="char" data-who="s" data-expr="talk" data-pose="phone" data-flip="1" style="right:-10px;bottom:330px;width:300px"></div>
+      <div class="char" data-who="n" data-expr="smile" data-pose="note" style="right:50px;bottom:-50px;width:210px"></div>
+      <div class="stack" style="left:16px;top:50px;width:420px;bottom:12px;gap:9px">
+      <div class="bb sm"><span class="pill">1</span>弊社としては、今回の物件について<b>非常に前向きに購入を検討</b>しております。</div>
+      <div class="bb sm"><span class="pill">2</span>弊社では、既存住宅を購入して必要な改修を行い、<b>もう一度人が生活できる住居</b>として活用していく事業を行っております。</div>
+      <div class="bb sm"><span class="pill">3</span>一般的な賃貸住宅を借りることが難しい方などにも、生活できる場所の<b>選択肢を作っていきたい</b>と考えており、そのための住居を増やしていくことも弊社の事業の一つです。</div>
+      <div class="bb sm"><span class="pill">4</span>例えば、自分たちの両親や身近な人が年齢を重ね、住む場所を探さなければならなくなった時に、条件によって借りられる場所がなかなか見つからなかったら、<b>ご本人だけでなくご家族も困る</b>と思います。弊社では、そういった方々にも住める場所の選択肢を作っていきたいと考えております。</div>
+      <div class="bb sm"><span class="pill">5</span>今回の物件についても、単純に購入して建物を取り壊すのではなく、<b>既存建物を活かして</b>必要な改修を行い、もう一度人が生活する場所として活用していきたいと考えております。</div>
+      <div class="bb sm"><span class="pill">6</span>弊社だけでこういった取り組みを実現できるわけではなく、<b>売主様がいて初めて実現できる</b>ことですので、もし今回お話を進めさせていただけるのであれば、売主様にもこの取り組みにご協力いただければと考えております。</div>
+      <div class="bb sm t-r"><span class="pill">7</span>一方で、実際にこの計画を実現するためには、物件購入後に○○・○○の修繕に加えて、内装・設備工事などにも費用が必要となります。現地の状態や必要な工事を確認し、収支を検討した結果、購入後の改修まで含めてこの事業を成立させるためには、<b>購入価格400万円であれば進めることが可能</b>という判断になっております。</div>
+      <div class="bb sm"><span class="pill">8</span>売出価格680万円から大きく離れることは承知しております。ただ、弊社としても購入後の改修・運営まで<b>責任を持って行い</b>、この建物をもう一度人が生活する場所として活用していきたいと考えております。</div>
+      <div class="bb sm" style="border-color:var(--acc);border-width:3.5px"><span class="pill" style="background:var(--acc)">9</span>大変恐縮ではございますが、今回の活用方法や事業の考え方、また物件の現状と必要工事についても含めて売主様へお伝えいただき、<b>400万円で一度ご相談いただくことは可能でしょうか</b>。</div>
+      </div>
+      <div class="box acc hand" style="right:16px;top:52px;width:250px;font-weight:400;font-size:13px;transform:rotate(2deg)"><div style="font-size:12px;color:var(--acc)">新人メモ</div>共感→未来→社会的意義→参加→信頼→コスト→Evidence→価格…<br><b style="color:var(--acc)">全部が一本の話</b>になってる！</div>
+    </div>
+  </div>
+  <div class="pno">9</div>
+</section>
+
+<!-- ============ P10 PHASE7-8 ============ -->
+<section class="pg" id="p10">
+  <div class="grid" style="grid-template-rows:1fr 1.15fr 1.25fr 1fr">
+    <div class="pn" style="grid-area:1/1/2/6">
+      <svg class="fx" data-fx="speed" data-cx="120" data-cy="140" data-n="50"></svg>
+      <div class="char" data-who="n" data-expr="laugh" data-pose="fist" style="left:-20px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l" style="right:10px;top:14px;--ty:45%;max-width:170px">施設長！<b>熱く演じれば</b>伝わりますよね！</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:1/6/2/13">
+      <div class="ttl">PHASE 7<small>「演じる」のではなく「伝え方を磨く」</small></div>
+      <div class="char" data-who="s" data-expr="smile" data-pose="hands" data-flip="1" style="right:-10px;bottom:-70px;width:200px"></div>
+      <div class="bb t-r sm" style="left:12px;top:46px;--ty:45%;max-width:220px">伝え方は磨いていい。営業には<b>パフォーマンスの要素</b>がある。</div>
+      <div class="box" style="left:12px;top:140px;width:230px;font-size:11.5px;padding:5px 8px"><div style="display:flex;flex-wrap:wrap;gap:3px"><span class="pill">声の強弱</span><span class="pill">間</span><span class="pill">話す順番</span><span class="pill">具体例</span><span class="pill">想像してもらう質問</span><span class="pill">自分自身の熱量</span></div></div>
+    </div>
+    <div class="pn bg-dark" style="grid-area:2/1/3/13">
+      <div class="char" data-who="s" data-expr="serious" data-pose="stop" style="left:-10px;bottom:-70px;width:230px"></div>
+      <div class="bb t-l lg" style="left:210px;top:26px;--ty:45%;max-width:250px">ただし、演出していいのは<span class="em">「伝え方」</span>。<br><b>事実を演出してはいけない</b>。</div>
+      <div class="box ng" style="right:12px;top:20px;width:270px;font-size:12.5px"><h4 style="font-size:13px;color:#555">こういったことはしない</h4><ul class="lst x" style="font-size:12.5px"><li>存在しない入居者を作る</li><li>存在しない社会問題を作る</li><li>嘘の工事費を伝える</li><li>本当は500万円まで買えるのに「400万円じゃないと絶対に成立しません」と<b>虚偽の限界価格</b>を伝える</li></ul></div>
+      <div class="cap" style="left:210px;bottom:12px;font-size:13px;max-width:330px">事実は変えず、事実を<b>最も伝わる形</b>で伝える。<br>これが営業としてのパフォーマンス。</div>
+    </div>
+    <div class="pn" style="grid-area:3/1/4/13">
+      <div class="ttl">PHASE 8<small>言葉だけでなく「証拠」を見せる</small></div>
+      <div class="char" data-who="n" data-expr="determined" data-pose="tablet" style="left:-6px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l sm" style="left:210px;top:48px;--ty:45%;max-width:230px">価格のEvidenceだけじゃなく、<b>社会的意義にもEvidence</b>を持つ、ですね！</div>
+      <div class="box" style="right:12px;top:48px;width:250px;font-size:12px;padding:8px 10px"><h4 style="font-size:13px">社会的意義のEvidence</h4><ul class="lst chk" style="columns:2;font-size:12px"><li>会社HP</li><li>事業紹介資料</li><li>パンフレット</li><li>運営物件</li><li>入居対象・サービス内容</li><li>Before / After</li><li>改修事例</li><li>実績</li></ul></div>
+      <div class="box acc" style="left:210px;top:170px;width:200px;text-align:center;font-weight:900;font-size:15px;line-height:1.6">社会的意義にもEvidence<br><span style="color:var(--acc);font-size:20px">＋</span><br>価格にもEvidence</div>
+      <div class="cap" style="right:12px;bottom:10px;font-size:12px;max-width:290px">「良い話をする営業マン」ではなく<br>「<b>実際にこの事業をやっていて、その上でこの価格を提示している会社</b>」になる</div>
+    </div>
+    <div class="pn bg-tone-l" style="grid-area:4/1/5/13">
+      <div class="cap" style="left:0;top:0">この交渉方法の４本柱</div>
+      <div style="position:absolute;left:14px;right:14px;top:44px;bottom:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <div class="box" style="position:static;padding:8px 10px;font-size:11.5px"><h4 style="font-size:13px">① 心情・社会的意義</h4>売主を知る→事業を伝える→誰を助けているか伝える→物件の未来を見せる→売主にも参加してもらう</div>
+        <div class="box acc" style="position:static;padding:8px 10px;font-size:11.5px"><h4 style="font-size:13px">② Evidence</h4>物件状態→必要な修繕→内装・設備→必要投資額→事業収支→購入可能価格</div>
+        <div class="box" style="position:static;padding:8px 10px;font-size:11.5px"><h4 style="font-size:13px">③ 信頼・購入意思</h4>本当に購入したい→事業を説明できる→資料・実績を見せられる→条件が合えば買付→契約・決済まで責任を持つ</div>
+        <div class="box" style="position:static;padding:8px 10px;font-size:11.5px;background:#111;color:#fff;box-shadow:5px 5px 0 var(--acc)"><h4 style="font-size:13px">④ 協力をお願いする</h4>弊社が実現したい未来＋売主様の協力＋購入後の投資＝<b style="color:#ffb28a">この物件を新しい住居として再生する</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="pno">10</div>
+</section>
+
+<!-- ============ P11 まとめ ============ -->
+<section class="pg" id="p11">
+  <div class="grid" style="grid-template-rows:1.25fr 1.25fr 1.15fr">
+    <div class="pn" style="grid-area:1/1/2/13">
+      <div class="ttl">新人が一番覚えるべきこと</div>
+      <div class="char" data-who="s" data-expr="smile" data-pose="point" style="left:-6px;bottom:-60px;width:230px"></div>
+      <div style="position:absolute;left:230px;right:14px;top:48px;display:flex;flex-direction:column;gap:5px">
+        <div class="box" style="position:static;padding:4px 12px;font-size:13px"><span class="pill">心情</span>「<b>なぜ弊社に売るのか</b>」を作る</div>
+        <div class="box" style="position:static;padding:4px 12px;font-size:13px"><span class="pill">社会的意義</span>「<b>売却した先に何が生まれるのか</b>」を作る</div>
+        <div class="box" style="position:static;padding:4px 12px;font-size:13px"><span class="pill">売主参加型のストーリー</span>「<b>なぜ協力するのか</b>」を作る</div>
+        <div class="box acc" style="position:static;padding:4px 12px;font-size:13px"><span class="pill" style="background:var(--acc)">Evidence</span>「<b>なぜこの金額なのか</b>」を作る</div>
+        <div class="box" style="position:static;padding:4px 12px;font-size:13px"><span class="pill">購入意思</span>「<b>なぜこの買主を信用するのか</b>」を作る</div>
+      </div>
+      <div class="flow h" style="position:absolute;left:232px;right:14px;bottom:50px;gap:2px"><div class="fb" style="font-size:12px;padding:3px 8px">共感</div><div class="ar" style="width:12px">▶</div><div class="fb" style="font-size:12px;padding:3px 8px">未来</div><div class="ar" style="width:12px">▶</div><div class="fb" style="font-size:12px;padding:3px 8px">社会的意義</div><div class="ar" style="width:12px">▶</div><div class="fb" style="font-size:12px;padding:3px 8px">参加</div><div class="ar" style="width:12px">▶</div><div class="fb" style="font-size:12px;padding:3px 8px">信頼</div><div class="ar" style="width:12px">▶</div></div>
+      <div class="flow h" style="position:absolute;left:232px;right:14px;bottom:12px;gap:2px"><div class="fb" style="font-size:12px;padding:3px 8px">現実的なコスト</div><div class="ar" style="width:12px">▶</div><div class="fb acc" style="font-size:12px;padding:3px 8px">Evidence</div><div class="ar" style="width:12px">▶</div><div class="fb" style="font-size:12px;padding:3px 8px">必要な購入価格</div><div class="ar" style="width:12px">▶</div><div class="fb hi" style="font-size:12px;padding:3px 8px">価格交渉</div></div>
+    </div>
+    <div class="pn bg-dark" style="grid-area:2/1/3/7">
+      <div class="char" data-who="s" data-expr="determined" data-pose="cross" style="left:-44px;bottom:-60px;width:220px"></div>
+      <div class="bb t-l" style="right:10px;top:18px;--ty:45%;max-width:215px">このマニュアルで一番大事なのは、<br>「<b>安く買うために良い話を作る</b>」<br>んじゃない、ということだ。</div>
+    </div>
+    <div class="pn bg-dark" style="grid-area:2/7/3/13">
+      <div class="char" data-who="n" data-expr="determined" data-pose="fist" data-flip="1" style="right:-16px;bottom:-60px;width:230px"></div>
+      <div class="bb t-r" style="left:10px;top:18px;--ty:45%;max-width:190px">「<b>本当に実現したいこと</b>を伝え、その実現に必要な価格を<b>Evidence</b>で説明し、<b>協力をお願いする</b>」…ですね！</div>
+    </div>
+    <div class="pn bg-office" style="grid-area:3/1/4/13">
+      <div class="char" data-who="n" data-expr="talk" data-pose="phone" style="left:30px;bottom:-40px;width:260px"></div>
+      <div class="char" data-who="s" data-expr="smile" data-pose="cross" data-flip="1" style="right:-10px;bottom:-60px;width:250px"></div>
+      <div class="bb t-l sm" style="left:270px;top:40px;--ty:40%;max-width:250px">お世話になります。今回の物件について、<b>非常に前向きに</b>購入を検討しておりまして…</div>
+      <div class="bb think sm" style="left:300px;top:150px;--tx:150px;max-width:210px">順番と根拠。<br>これなら任せられる。</div>
+      <div style="position:absolute;right:20px;bottom:14px;font-family:var(--f-ttl);font-size:26px;background:#111;color:#fff;padding:6px 20px;z-index:9">おわり</div>
+    </div>
+  </div>
+  <div class="pno">11</div>
+</section>
+
+<script>
+/* ===================== キャラクター描画エンジン（SVGベクター・フルカラー） ===================== */
+/* s=施設長（うさ耳・ネイビースーツ）, n=新人スタッフ（くま耳・エプロン）, w=スタッフ（おおかみ耳・エプロン／差し替え用） */
+const CH = {
+  s: { line:'#2a211d', skin:'#fbe3d2', hair:'#1f1a1a', hairHi:'#605454', ears:'rabbit', outfit:'suit',  blush:false, iris:'#4a3128', suit:'#2d3558', suitHi:'#3d4770' },
+  n: { line:'#2a211d', skin:'#fbe3d2', hair:'#25201f', hairHi:'#6a5e5c', ears:'bear',   outfit:'apron', blush:true,  iris:'#5a3a2a', polo:'#b9dcc1', poloHi:'#d7ecd9' },
+  w: { line:'#2a211d', skin:'#fbe3d2', hair:'#a8907a', hairHi:'#d9c6b0', ears:'wolf',   outfit:'apron', blush:true,  iris:'#5a3a2a', polo:'#c5e0d0', poloHi:'#e0efe6', longHair:true },
+};
+const LN = '#2a211d';
+const L = (d,w=2.6,c=LN)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const F = (d,f,c=LN,w=2.6)=>`<path d="${d}" fill="${f}" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"/>`;
+
+function eyes(expr, who){
+  const cfg = CH[who];
+  const eye = (cx, open=1, pr=5.5, dx=0, dy=0, half=false)=>{
+    const ry = 8.5*open, rx = 11;
+    let s = `<ellipse cx="${cx}" cy="104" rx="${rx}" ry="${ry}" fill="#fff" stroke="${LN}" stroke-width="1.8"/>`;
+    s += `<circle cx="${cx+dx}" cy="${105+dy}" r="${pr+1.5}" fill="${cfg.iris}"/>`;
+    s += `<circle cx="${cx+dx}" cy="${105+dy}" r="${pr-1.5}" fill="#1a1210"/>`;
+    s += `<circle cx="${cx-3+dx}" cy="${101+dy}" r="2.2" fill="#fff"/><circle cx="${cx+3+dx}" cy="${108+dy}" r="1.2" fill="#fff"/>`;
+    if(half){ s += `<rect x="${cx-13}" y="91" width="26" height="10" fill="${cfg.skin}"/>`+L(`M${cx-11} 101 L${cx+11} 101`,3.4); }
+    else s += L(`M${cx-11} 100 Q${cx} 90.5 ${cx+11} 100`,3.6);
+    return s;
+  };
+  const closed = (cx)=> L(`M${cx-11} 106 Q${cx} 95 ${cx+11} 106`,3.4);
+  let brow, e, mouth, extra='';
+  switch(expr){
+    case 'smile':  brow=[88,86,86,88]; e=closed(103)+closed(137); mouth=L('M110 138 Q120 150 130 138',2.8); break;
+    case 'laugh':  brow=[86,84,84,86]; e=closed(103)+closed(137); mouth=F('M106 136 Q120 162 134 136 Z','#7a2f2f'); extra=`<path d="M108 137 Q120 146 132 137 L132 139 Q120 142 108 139 Z" fill="#fff"/>`; break;
+    case 'talk':   brow=[88,87,87,88]; e=eye(103)+eye(137); mouth=F('M110 138 Q120 154 130 138 Z','#7a2f2f'); break;
+    case 'surprised': brow=[80,78,78,80]; e=eye(103,1.35,4)+eye(137,1.35,4); mouth=`<ellipse cx="120" cy="143" rx="6" ry="8" fill="#7a2f2f" stroke="${LN}" stroke-width="1.5"/>`; break;
+    case 'worried': brow=[91,84,84,91]; e=eye(103,1,5)+eye(137,1,5); mouth=L('M110 143 Q115 137 120 143 T130 143',2.8); extra=F('M172 76 C166 88 164 94 172 98 C180 94 178 88 172 76 Z','#bfe4ff'); break;
+    case 'serious': brow=[90,92,92,90]; e=eye(103,1,5.5,0,0,true)+eye(137,1,5.5,0,0,true); mouth=L('M111 142 L129 142',2.8); break;
+    case 'think':  brow=[88,86,82,86]; e=eye(103,1,5,3,-3)+eye(137,1,5,3,-3); mouth=L('M113 143 Q120 139 127 143',2.8); break;
+    case 'determined': brow=[84,91,91,84]; e=eye(103)+eye(137); mouth=L('M110 140 Q120 149 130 140',2.8); break;
+    case 'pout':   brow=[86,90,90,86]; e=eye(103,.9,5,-2,1)+eye(137,.9,5,-2,1); mouth=L('M112 144 Q120 140 128 144',2.8); break;
+    default:       brow=[88,88,88,88]; e=eye(103)+eye(137); mouth=L('M113 141 Q120 145 127 141',2.8);
+  }
+  const brows = L(`M90 ${brow[0]} L114 ${brow[1]}`,3.4,cfg.hair)+L(`M126 ${brow[2]} L150 ${brow[3]}`,3.4,cfg.hair);
+  const nose = L('M122 118 Q127 126 119 129',1.8);
+  const blush = cfg.blush ? `<ellipse cx="92" cy="126" rx="9" ry="5" fill="#f3a9a0" opacity=".55"/><ellipse cx="148" cy="126" rx="9" ry="5" fill="#f3a9a0" opacity=".55"/>` : '';
+  return blush + e + brows + nose + mouth + extra;
+}
+
+function ears(who){
+  const c = CH[who];
+  if(c.ears==='rabbit'){
+    return F('M92 36 C76 4 78 -46 96 -66 C112 -50 122 -2 118 32 Z', c.hair) + F('M98 26 C90 0 92 -34 98 -50 C106 -36 111 -2 110 24 Z', '#e9b6c1', 'none')
+         + F('M148 36 C164 4 162 -46 144 -66 C128 -50 118 -2 122 32 Z', c.hair) + F('M142 26 C150 0 148 -34 142 -50 C134 -36 129 -2 130 24 Z', '#e9b6c1', 'none');
+  }
+  if(c.ears==='bear'){
+    return `<circle cx="78" cy="42" r="19" fill="#7b5b45" stroke="${LN}" stroke-width="2.6"/><circle cx="78" cy="44" r="10" fill="#e9b6c1"/>
+            <circle cx="162" cy="42" r="19" fill="#7b5b45" stroke="${LN}" stroke-width="2.6"/><circle cx="162" cy="44" r="10" fill="#e9b6c1"/>`;
+  }
+  return F('M68 62 L74 -18 L118 34 Z','#8c7b6b') + F('M78 50 L80 4 L106 36 Z','#dccdbf','none')
+       + F('M172 62 L166 -18 L122 34 Z','#8c7b6b') + F('M162 50 L160 4 L134 36 Z','#dccdbf','none');
+}
+
+function hairBack(who){
+  const c = CH[who];
+  if(!c.longHair) return '';
+  return F('M62 104 C56 40 88 12 120 12 C152 12 184 40 178 104 L186 196 C176 184 166 200 156 186 C150 176 154 150 158 120 L82 120 C86 150 90 176 84 186 C74 200 64 184 54 196 Z', c.hair);
+}
+function hair(who){
+  const c = CH[who];
+  const hi = (d)=>L(d,3,c.hairHi);
+  if(who==='s'){
+    return F('M74 96 C66 42 84 22 104 18 C110 10 118 12 122 16 C130 10 140 14 144 20 C164 26 174 46 166 96 C160 80 156 68 146 64 C136 60 130 74 118 70 C104 66 96 74 90 86 C84 92 78 96 74 96 Z', c.hair)
+      + F('M74 94 L70 124 L86 100 Z', c.hair) + F('M166 94 L170 124 L154 100 Z', c.hair)
+      + hi('M96 40 C108 30 128 28 142 34') + hi('M90 52 C94 46 100 42 106 40');
+  }
+  if(who==='n'){
+    return F('M72 92 C68 42 82 22 100 16 C104 8 112 8 116 14 C124 6 134 8 138 16 C156 20 172 44 168 92 C166 78 160 66 152 62 C144 58 136 66 128 66 C118 66 112 60 104 62 C94 64 84 74 78 84 C75 88 73 92 72 92 Z', c.hair)
+      + F('M72 90 L70 118 L84 98 Z', c.hair) + F('M168 90 L170 118 L156 98 Z', c.hair)
+      + hi('M98 36 C110 28 124 26 138 30') + hi('M92 50 C96 44 100 40 104 38');
+  }
+  return F('M70 96 C66 44 88 18 120 18 C152 18 174 44 170 96 C164 80 158 66 150 64 C140 60 134 72 124 70 C112 68 104 60 96 66 C86 72 80 82 76 90 Z', c.hair)
+      + F('M70 92 L62 146 L84 108 Z', c.hair) + F('M170 92 L178 146 L156 108 Z', c.hair)
+      + hi('M98 38 C110 30 126 28 140 34');
+}
+
+function outfit(who, flip){
+  const c = CH[who];
+  const tf = (cx)=> flip ? ` transform="translate(${2*cx},0) scale(-1,1)"` : '';
+  let s = `<rect x="106" y="150" width="28" height="44" fill="${c.skin}" stroke="${LN}" stroke-width="2.6"/>`;
+  if(c.outfit==='suit'){
+    s += F('M84 194 C84 176 100 170 120 170 C140 170 156 176 156 194 L164 340 L76 340 Z','#fff');           // Tシャツ
+    s += L('M100 178 Q120 198 140 178',2.4);                                                                   // クルーネック
+    s += F('M120 340 L4 340 L6 300 C12 228 35 190 90 178 L114 202 L108 340 Z', c.suit);                         // ジャケット左
+    s += F('M120 340 L236 340 L234 300 C228 228 205 190 150 178 L126 202 L132 340 Z', c.suit);                  // ジャケット右
+    s += L('M90 178 L112 190 L108 340',2,c.suitHi) + L('M150 178 L128 190 L132 340',2,c.suitHi);              // ラペル
+    s += L('M108 182 C112 210 116 232 118 252',3.6,'#2f5aa8') + L('M132 182 C128 210 124 232 122 252',3.6,'#2f5aa8'); // ストラップ
+    s += `<rect x="113" y="250" width="14" height="20" rx="2" fill="#333" stroke="${LN}" stroke-width="1.6"/>`;    // パス
+    s += `<rect x="146" y="222" width="34" height="18" rx="2" fill="#fff" stroke="${LN}" stroke-width="2"/><text x="163" y="235" font-size="9" font-weight="700" text-anchor="middle" font-family="sans-serif" fill="#222"${tf(163)}>施設長</text><circle cx="176" cy="226" r="2" fill="#4caf50"/>`;
+    s += L('M150 214 L182 214',2.2,c.suitHi);
+    return s;
+  }
+  // ポロシャツ＋エプロン
+  s += F('M120 340 L4 340 L6 300 C12 228 35 190 90 178 L120 196 L150 178 C205 190 228 228 234 300 L236 340 Z', c.polo);
+  s += F('M104 172 L120 196 L136 172 L128 164 L120 176 L112 164 Z', c.poloHi);
+  s += L('M120 196 L120 214',2) + `<circle cx="120" cy="206" r="1.8" fill="${LN}"/>`;
+  // エプロン
+  s += L('M100 202 C96 190 92 184 84 180',9,LN) + L('M100 202 C96 190 92 184 84 180',5.5,'#fff');
+  s += L('M140 202 C144 190 148 184 156 180',9,LN) + L('M140 202 C144 190 148 184 156 180',5.5,'#fff');
+  s += F('M96 202 L144 202 L156 340 L84 340 Z','#fdfdfd');
+  s += `<rect x="124" y="218" width="30" height="18" rx="2" fill="#fff" stroke="#7fb08a" stroke-width="2"/><text x="139" y="226" font-size="5.2" font-weight="700" text-anchor="middle" font-family="sans-serif" fill="#333"${tf(139)}>いつも</text><text x="139" y="233" font-size="5.2" font-weight="700" text-anchor="middle" font-family="sans-serif" fill="#333"${tf(139)}>ありがとう</text><circle cx="150" cy="222" r="2" fill="#e88a8a"/>`;
+  // 肉球ワッペン
+  s += `<g fill="#8fb79a" opacity=".9"><circle cx="102" cy="262" r="5"/><circle cx="96" cy="254" r="2.2"/><circle cx="101" cy="251" r="2.2"/><circle cx="107" cy="252" r="2.2"/><circle cx="110" cy="257" r="2"/></g>`;
+  return s;
+}
+
+function arm(d, who){ const c=CH[who]; const col = c.outfit==='suit'? c.suit : c.skin; return L(d,30,LN) + L(d,23,col); }
+function sleeve(x,y,who){ const c=CH[who]; return c.outfit==='suit' ? '' : `<circle cx="${x}" cy="${y}" r="20" fill="${c.polo}" stroke="${LN}" stroke-width="2.6"/>`; }
+const hand = (x,y,who,r=13)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${CH[who].skin}" stroke="${LN}" stroke-width="2.6"/>`;
+const skinL = (who)=>CH[who].skin;
+
+function pose(p, who){
+  let f='';
+  switch(p){
+    case 'point':
+      f = arm('M56 214 L30 196 L22 168',who) + sleeve(56,214,who) + hand(20,160,who) + L('M14 150 L6 128',9,LN) + L('M14 150 L6 128',5,skinL(who)) + L('M8 158 L12 170',2.2); break;
+    case 'phone':
+      f = arm('M186 214 L200 178 L176 134',who) + sleeve(186,214,who) + hand(170,128,who)
+        + `<rect x="154" y="90" width="18" height="44" rx="4" fill="#1b1b1b" stroke="${LN}" stroke-width="2" transform="rotate(-8 163 112)"/><rect x="158" y="96" width="10" height="30" fill="#8fd3ff" transform="rotate(-8 163 112)"/>`; break;
+    case 'note':
+      f = arm('M56 214 L74 262 L100 254',who) + arm('M184 214 L166 262 L140 254',who) + sleeve(56,214,who) + sleeve(184,214,who)
+        + `<rect x="82" y="236" width="76" height="56" rx="3" fill="#fff" stroke="${LN}" stroke-width="2.6"/>` + L('M92 250 L148 250 M92 262 L148 262 M92 274 L132 274',2,'#999')
+        + hand(100,258,who,12) + hand(140,258,who,12) + L('M146 250 L162 226',4,LN) + L('M146 250 L162 226',2,'#fff'); break;
+    case 'tablet':
+      f = arm('M56 214 L74 268 L100 262',who) + arm('M184 214 L166 268 L140 262',who) + sleeve(56,214,who) + sleeve(184,214,who)
+        + `<rect x="74" y="230" width="92" height="66" rx="5" fill="#1b1b1b" stroke="${LN}" stroke-width="2.6"/><rect x="80" y="236" width="80" height="54" fill="#fff"/>`
+        + L('M88 246 L132 246 M88 256 L152 256 M88 266 L152 266 M88 276 L120 276',2.2,'#bbb') + `<rect x="88" y="244" width="30" height="20" fill="#e8622a" opacity=".85"/>`
+        + hand(98,270,who,12) + hand(142,270,who,12); break;
+    case 'camera':
+      f = arm('M56 214 L72 262 L98 242',who) + arm('M184 214 L168 262 L142 242',who) + sleeve(56,214,who) + sleeve(184,214,who)
+        + `<rect x="92" y="212" width="56" height="40" rx="5" fill="#1b1b1b" stroke="${LN}" stroke-width="2.6"/><circle cx="120" cy="232" r="13" fill="#444" stroke="#fff" stroke-width="2.4"/><circle cx="120" cy="232" r="6" fill="#8fd3ff"/><rect x="98" y="206" width="14" height="8" fill="#1b1b1b"/>`
+        + hand(96,246,who,12) + hand(144,246,who,12); break;
+    case 'fist':
+      f = arm('M56 214 L34 186 L58 150',who) + sleeve(56,214,who) + hand(62,144,who,14) + L('M52 140 L70 136 M53 148 L71 146',2.2); break;
+    case 'stop':
+      f = arm('M186 214 L204 176 L184 144',who) + sleeve(186,214,who) + `<ellipse cx="180" cy="132" rx="14" ry="18" fill="${skinL(who)}" stroke="${LN}" stroke-width="2.6"/>` + L('M172 118 L172 128 M180 114 L180 126 M188 118 L188 128',2.2); break;
+    case 'hands':
+      f = arm('M56 214 L70 262 L100 250',who) + sleeve(56,214,who) + `<ellipse cx="104" cy="248" rx="16" ry="11" fill="${skinL(who)}" stroke="${LN}" stroke-width="2.6"/>` + L('M96 240 L100 236 M104 238 L106 234 M112 240 L116 236',2); break;
+    case 'chin':
+      f = arm('M186 214 L192 186 L152 158',who) + sleeve(186,214,who) + hand(146,156,who,13) + L('M138 150 L140 162',2); break;
+    case 'cross':
+      f = arm('M56 214 L96 268 L164 262',who) + arm('M184 214 L144 268 L76 262',who) + sleeve(56,214,who) + sleeve(184,214,who); break;
+    default: f='';
+  }
+  return f;
+}
+
+function face(who){
+  const c = CH[who];
+  return `<ellipse cx="80" cy="110" rx="7" ry="11" fill="${c.skin}" stroke="${LN}" stroke-width="2.6"/><ellipse cx="160" cy="110" rx="7" ry="11" fill="${c.skin}" stroke="${LN}" stroke-width="2.6"/>`
+    + F('M80 78 C80 42 98 28 120 28 C142 28 160 42 160 78 L160 112 C160 142 144 166 120 168 C96 166 80 142 80 112 Z', c.skin)
+    + L('M108 172 Q120 180 132 172',2,'#d9b8a4');
+}
+
+function charSVG(who, expr, p, flip){
+  const inner = hairBack(who) + outfit(who, flip) + ears(who) + face(who) + hair(who) + eyes(expr, who) + pose(p, who);
+  const t = flip ? ' transform="translate(240,0) scale(-1,1)"' : '';
+  return `<svg viewBox="0 -70 240 410" xmlns="http://www.w3.org/2000/svg"><g${t}>${inner}</g></svg>`;
+}
+
+document.querySelectorAll('.char').forEach(el=>{
+  el.innerHTML = charSVG(el.dataset.who||'s', el.dataset.expr||'normal', el.dataset.pose||'bust', !!el.dataset.flip);
+});
+
+/* ===================== 背景エフェクト・アイコン ===================== */
+document.querySelectorAll('svg[data-fx]').forEach(svg=>{
+  const r = svg.parentElement.getBoundingClientRect();
+  const W = Math.round(r.width), H = Math.round(r.height);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if(svg.dataset.fx==='speed'){
+    const cx=+svg.dataset.cx, cy=+svg.dataset.cy, n=+svg.dataset.n||60; let s='';
+    for(let i=0;i<n;i++){
+      const a = (i/n)*Math.PI*2 + (i%3)*0.02;
+      const R = Math.hypot(W,H);
+      const r0 = 120 + (i%5)*40, x0=cx+Math.cos(a)*r0, y0=cy+Math.sin(a)*r0, x1=cx+Math.cos(a)*R, y1=cy+Math.sin(a)*R;
+      s += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#111" stroke-width="${1+(i%4)*0.8}" opacity=".85"/>`;
+    }
+    svg.innerHTML = s;
+  }
+  if(svg.dataset.fx==='house-bg'){
+    svg.innerHTML = `<g stroke="#111" stroke-width="3" fill="#fff" stroke-linejoin="round">
+      <path d="M${W*0.35} ${H*0.9} L${W*0.35} ${H*0.42} L${W*0.62} ${H*0.16} L${W*0.9} ${H*0.42} L${W*0.9} ${H*0.9} Z"/>
+      <path d="M${W*0.3} ${H*0.44} L${W*0.62} ${H*0.12} L${W*0.95} ${H*0.44}" fill="none" stroke-width="5"/>
+      <rect x="${W*0.44}" y="${H*0.52}" width="${W*0.12}" height="${H*0.14}"/>
+      <rect x="${W*0.68}" y="${H*0.52}" width="${W*0.12}" height="${H*0.14}"/>
+      <rect x="${W*0.57}" y="${H*0.7}" width="${W*0.1}" height="${H*0.2}"/>
+      <path d="M${W*0.5} ${H*0.46} L${W*0.62} ${H*0.6} L${W*0.7} ${H*0.5}" fill="none" stroke-width="2" stroke-dasharray="4 3"/>
+    </g>
+    <g fill="#111"><circle cx="${W*0.66}" cy="${H*0.3}" r="6"/><circle cx="${W*0.7}" cy="${H*0.34}" r="4"/></g>
+    <path d="M0 ${H*0.9} L${W} ${H*0.9}" stroke="#111" stroke-width="3"/>`;
+  }
+});
+const ICONS = {
+  'house-doc': `<g stroke="#111" stroke-width="2.5" fill="#fff" stroke-linejoin="round"><path d="M14 52 L14 28 L34 12 L54 28 L54 52 Z"/><rect x="28" y="36" width="12" height="16"/><rect x="72" y="14" width="34" height="40"/><path d="M78 24 L100 24 M78 32 L100 32 M78 40 L94 40" stroke-width="2"/></g>`,
+  'house-family': `<g stroke="#111" stroke-width="2.5" fill="#fff" stroke-linejoin="round"><path d="M10 54 L10 28 L32 10 L54 28 L54 54 Z"/><rect x="26" y="38" width="12" height="16"/><circle cx="76" cy="26" r="7"/><path d="M66 54 C66 40 86 40 86 54 Z"/><circle cx="98" cy="30" r="5.5"/><path d="M90 54 C90 44 106 44 106 54 Z"/></g><text x="30" y="8" font-size="8" font-weight="900" text-anchor="middle" font-family="sans-serif">30年</text>`,
+  'house-cash': `<g stroke="#111" stroke-width="2.5" fill="#fff" stroke-linejoin="round"><path d="M14 54 L14 28 L34 12 L54 28 L54 54 Z"/><rect x="28" y="38" width="12" height="16"/><path d="M60 30 L70 30" stroke-width="3"/><path d="M66 24 L72 30 L66 36" fill="none"/><rect x="76" y="20" width="34" height="22" rx="3"/><circle cx="93" cy="31" r="6"/></g>`,
+  'house-renew': `<g stroke="#111" stroke-width="2.5" fill="#fff" stroke-linejoin="round">
+      <path d="M10 120 L10 70 L45 40 L80 70 L80 120 Z" fill="#e6e6e6"/><rect x="36" y="88" width="18" height="32" fill="#bbb"/><path d="M20 76 L30 86 M60 78 L72 90" stroke-dasharray="3 3"/>
+      <path d="M92 80 L112 80 M104 72 L114 80 L104 88" fill="none" stroke-width="3"/>
+      <path d="M120 120 L120 70 L155 40 L190 70 L190 120 Z"/><rect x="146" y="88" width="18" height="32" fill="#e8622a"/><rect x="128" y="78" width="12" height="12"/><rect x="170" y="78" width="12" height="12"/>
+      <circle cx="132" cy="132" r="5"/><circle cx="150" cy="132" r="5"/><circle cx="168" cy="132" r="5"/></g>
+      <text x="45" y="32" font-size="9" font-weight="900" text-anchor="middle" font-family="sans-serif">現在</text><text x="155" y="32" font-size="9" font-weight="900" text-anchor="middle" font-family="sans-serif">再活用</text>`
+};
+document.querySelectorAll('svg[data-icon]').forEach(s=>{ s.innerHTML = ICONS[s.dataset.icon]||''; });
+
+/* はみ出し自動調整：コマからはみ出す吹き出し・ボックスは文字を段階的に縮める */
+function fitAll(){
+  document.querySelectorAll('.pn').forEach(pn=>{
+    const pr=pn.getBoundingClientRect();
+    pn.querySelectorAll('.stack').forEach(st=>{
+      let guard=0;
+      while(st.scrollHeight>st.clientHeight+1 && guard++<40){
+        st.querySelectorAll('.bb').forEach(b=>{ b.style.fontSize=(parseFloat(getComputedStyle(b).fontSize)-0.5)+'px'; });
+      }
+    });
+    pn.querySelectorAll('.bb:not(.stack .bb),.box').forEach(el=>{
+      let guard=0;
+      while(el.getBoundingClientRect().bottom>pr.bottom-4 && parseFloat(getComputedStyle(el).fontSize)>10.5 && guard++<20){
+        el.style.fontSize=(parseFloat(getComputedStyle(el).fontSize)-0.5)+'px';
+      }
+    });
+  });
+}
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); else fitAll();
+window.__fit = fitAll;
+
+/* 収まりチェック用（レンダリング検証時にコンソールへ） */
+window.__overflow = ()=>{
+  const out=[];
+  document.querySelectorAll('.pn').forEach(pn=>{
+    const pr=pn.getBoundingClientRect();
+    pn.querySelectorAll('.bb,.box,.cap').forEach(el=>{
+      const r=el.getBoundingClientRect();
+      if(r.bottom>pr.bottom+1||r.right>pr.right+1||r.left<pr.left-1||r.top<pr.top-1) out.push({page:pn.closest('.pg').id, text:el.textContent.slice(0,24), over:{b:Math.round(r.bottom-pr.bottom), r:Math.round(r.right-pr.right)}});
+    });
+  });
+  return out;
+};
+</script>
+</body>
+</html>
