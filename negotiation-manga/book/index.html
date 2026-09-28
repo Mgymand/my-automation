@@ -51,6 +51,15 @@ input[type=range]{width:min(360px,50vw);accent-color:var(--acc)}
 .toc{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:100%}
 .toc button{padding:4px 9px;font-size:12px;border-radius:999px}
 .toc button.cur{background:var(--acc);border-color:var(--acc);color:#1a0e07}
+.strip{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;direction:rtl;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.strip::-webkit-scrollbar{display:none}
+.strip .slide{flex:0 0 100%;height:100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always}
+.strip .slide img{height:100%;width:auto;max-width:100%;object-fit:contain;display:block;box-shadow:0 10px 40px rgba(0,0,0,.45);background:var(--paper);border-radius:2px}
+.stage.slide .tap{display:none}
+.seg{display:inline-flex;border:1px solid var(--uiline);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:8px 12px}
+.seg button+button{border-left:1px solid var(--uiline)}
+.seg button.on{background:var(--acc);color:#1a0e07}
 @media (max-width:640px){header .hint{display:none}.toc{display:none}.pageno{min-width:80px}}
 @media (prefers-reduced-motion:reduce){.leaf,.book{transition-duration:.01s}}
 </style>
@@ -58,9 +67,10 @@ input[type=range]{width:min(360px,50vw);accent-color:var(--acc)}
 <body>
 <header>
   <h1>心情・社会的意義から<b>Evidence</b>につなげる価格交渉　<span style="font-weight:500;color:var(--muted)">学習マンガ</span></h1>
-  <div class="hint">ページをクリック／← キー／右スワイプでめくる。「見開き」ボタンで2ページ表示に切替</div>
+  <div class="hint">横にスワイプ（またはページの左側をクリック／← キー）で次のページへ。表示は下のボタンで切替</div>
 </header>
 <div class="stage" id="stage">
+  <div class="strip" id="strip" hidden></div>
   <div class="book" id="book"><div class="half left"></div><div class="half right"></div><div class="spine"></div></div>
   <div class="tap l" id="tapL" title="次のページ"></div>
   <div class="tap r" id="tapR" title="前のページ"></div>
@@ -71,19 +81,35 @@ input[type=range]{width:min(360px,50vw);accent-color:var(--acc)}
   <button id="btnPrev">前のページ ▶</button>
   <input type="range" id="slider" min="0" max="1" value="0" aria-label="ページ">
   <button id="btnFirst" title="表紙へ">表紙</button>
-  <button id="btnMode" title="見開き／単ページの切替">見開き</button>
+  <span class="seg" role="group" aria-label="表示方法">
+    <button data-mode="slide" title="横にスライドして読む">スライド</button>
+    <button data-mode="single" title="1ページずつめくる">片開き</button>
+    <button data-mode="spread" title="2ページ見開きでめくる">見開き</button>
+  </span>
   <button id="btnFull" title="全画面">全画面</button>
 </footer>
 <nav class="toc" id="toc" aria-label="目次"></nav>
 <script>
 const PAGES = Array.from({length:14},(_,i)=>`pages/${String(i+1).padStart(2,'0')}.jpg`);
 const TOC = [[0,'表紙'],[1,'基本'],[2,'PHASE1'],[3,'PHASE2'],[4,'STEP3-4'],[5,'STEP5-7'],[6,'PHASE3-4'],[7,'PHASE5'],[8,'PHASE6'],[10,'PHASE7-8'],[11,'まとめ'],[12,'奥付']];
-const book=document.getElementById('book'), stage=document.getElementById('stage');
-let mode = 'spread', leaves=[], state=0, maxState=0, animating=false;
-let forcedMode=null, lastSwipe=0, animTimer=null;
+const book=document.getElementById('book'), stage=document.getElementById('stage'), strip=document.getElementById('strip');
+let mode='slide', leaves=[], state=0, maxState=0, animating=false, lastSwipe=0, animTimer=null, suppressObs=false;
+const isFlip=()=>mode!=='slide';
 
-function pickMode(){ if(forcedMode) return forcedMode; return 'single'; }
+/* ---------- スライド表示 ---------- */
+PAGES.forEach((src,i)=>{ const d=document.createElement('div'); d.className='slide'; d.dataset.i=i; const im=new Image(); im.src=src; im.alt=`ページ ${i+1}`; im.decoding='async'; im.draggable=false; d.appendChild(im); strip.appendChild(d); });
+const obs=new IntersectionObserver(es=>{ if(mode!=='slide'||suppressObs) return; es.forEach(e=>{ if(e.isIntersecting){ state=+e.target.dataset.i; updateUI(); } }); },{root:strip,threshold:.6});
+strip.querySelectorAll('.slide').forEach(el=>obs.observe(el));
+let sdown=null, dragging=false, dragStartX=0, dragStartScroll=0;
+strip.addEventListener('pointerdown',e=>{ sdown=[e.clientX,e.clientY]; if(e.pointerType==='mouse'){ dragging=true; dragStartX=e.clientX; dragStartScroll=strip.scrollLeft; strip.style.scrollSnapType='none'; strip.style.scrollBehavior='auto'; } });
+strip.addEventListener('pointermove',e=>{ if(dragging){ strip.scrollLeft = dragStartScroll - (e.clientX-dragStartX); } });
+const endDrag=(e)=>{ if(!dragging) return; dragging=false; strip.style.scrollSnapType=''; strip.style.scrollBehavior=''; const dx=e.clientX-dragStartX; if(Math.abs(dx)>40){ lastSwipe=Date.now(); go(dx>0? state+1 : state-1); } else { go(state); strip.children[state].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); } };
+strip.addEventListener('pointerup',endDrag); strip.addEventListener('pointercancel',endDrag); strip.addEventListener('pointerleave',e=>{ if(dragging) endDrag(e); });
+strip.addEventListener('click',e=>{ if(!sdown) return; const moved=Math.hypot(e.clientX-sdown[0],e.clientY-sdown[1])>12; sdown=null; if(moved||recentSwipe()) return; const r=stage.getBoundingClientRect(); const rel=(e.clientX-r.left)/r.width; if(rel<0.5) next(); else prev(); });
+let wheelLock=0;
+strip.addEventListener('wheel',e=>{ if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ e.preventDefault(); const now=Date.now(); if(now-wheelLock<500) return; wheelLock=now; if(e.deltaY>0) next(); else prev(); } },{passive:false});
 
+/* ---------- めくり表示 ---------- */
 function buildLeaves(){
   leaves.forEach(l=>l.el.remove()); leaves=[];
   const mk=(front, back)=>{
@@ -98,93 +124,98 @@ function buildLeaves(){
     return {el, front, back};
   };
   if(mode==='spread'){
-    leaves.push(mk(0,null));                       // 表紙（裏は見返し）
-    for(let k=1;k<=6;k++) leaves.push(mk(2*k-1, 2*k));   // 2-3, 4-5, ... 12-13
-    leaves.push(mk(13,null));                      // 裏表紙
-    maxState = 7;
+    leaves.push(mk(0,null));
+    for(let k=1;k<=6;k++) leaves.push(mk(2*k-1, 2*k));
+    leaves.push(mk(13,null));
+    maxState=7;
   } else {
     for(let i=0;i<PAGES.length;i++) leaves.push(mk(i,null));
-    maxState = PAGES.length-1;
+    maxState=PAGES.length-1;
   }
   book.classList.toggle('single', mode==='single'); stage.classList.toggle('single', mode==='single');
 }
-function zsort(){
-  const n=leaves.length;
-  leaves.forEach((l,i)=>{ l.el.style.zIndex = i<state ? (10+i) : (10+n-i); });
+function zsort(){ const n=leaves.length; leaves.forEach((l,i)=>{ l.el.style.zIndex = i<state ? (10+i) : (10+n-i); }); }
+function stateForPage(p){
+  if(mode!=='spread') return p;
+  if(p===0) return 0;
+  for(let s=1;s<=maxState;s++){ const r=leaves[s-1].back, l=leaves[s]?leaves[s].front:null; if(l===p||r===p) return s; }
+  return maxState;
 }
+function currentPage(){ if(mode!=='spread') return state; if(state===0) return 0; return leaves[state]?leaves[state].front:leaves[state-1].back; }
 function pageLabel(){
+  const name=(p)=>p==null?'':(p===12?'奥付':p===13?'裏表紙':`P${p+1}`);
   if(mode==='spread'){
     if(state===0) return '表紙';
-    const r=leaves[state-1].back, l=leaves[state] ? leaves[state].front : null;
-    const name=(p)=>p==null?'':(p===12?'奥付':p===13?'裏表紙':`P${p+1}`);
+    const r=leaves[state-1].back, l=leaves[state]?leaves[state].front:null;
     return [name(r),name(l)].filter(Boolean).join(' – ')+` ／ 全${PAGES.length}p`;
   }
-  const p=state; return (p===12?'奥付':p===13?'裏表紙':`P${p+1}`)+` ／ 全${PAGES.length}p`;
+  return (state===0?'表紙':name(state))+` ／ 全${PAGES.length}p`;
 }
-function render(){
-  leaves.forEach((l,i)=>l.el.classList.toggle('flipped', i<state));
-  zsort();
-  book.classList.toggle('closed', state===0 && mode==='spread');
+function updateUI(){
   document.getElementById('pageno').textContent=pageLabel();
-  const s=document.getElementById('slider'); s.max=maxState; s.value=state;
+  const sl=document.getElementById('slider'); sl.max=maxState; sl.value=state;
   document.getElementById('btnNext').disabled = state>=maxState;
   document.getElementById('btnPrev').disabled = state<=0;
-  const cur = mode==='spread' ? (state===0?0:(leaves[state]?leaves[state].front:leaves[state-1].back)) : state;
-  document.querySelectorAll('#toc button').forEach(b=>{ const p=+b.dataset.p; const nxt=+b.dataset.next; b.classList.toggle('cur', cur>=p && cur<nxt); });
+  const cur=currentPage();
+  document.querySelectorAll('#toc button').forEach(b=>{ const p=+b.dataset.p, nxt=+b.dataset.next; b.classList.toggle('cur', cur>=p && cur<nxt); });
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
+}
+function render(){
+  if(isFlip()){ leaves.forEach((l,i)=>l.el.classList.toggle('flipped', i<state)); zsort(); book.classList.toggle('closed', state===0 && mode==='spread'); }
+  updateUI();
 }
 function go(target){
   target=Math.max(0,Math.min(maxState,target));
   if(target===state) return;
+  if(mode==='slide'){ state=target; suppressObs=true; strip.children[target].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'}); setTimeout(()=>{suppressObs=false;},700); updateUI(); return; }
   const step = target>state ? 1 : -1;
   const leaf = step>0 ? leaves[state] : leaves[state-1];
   if(Math.abs(target-state)===1 && leaf){ leaf.el.classList.add('flipping'); animating=true; clearTimeout(animTimer); animTimer=setTimeout(()=>{animating=false; leaf.el.classList.remove('flipping'); zsort();},1100); }
   state=target; render();
-  if(Math.abs(target-(state-step))!==1){ animating=false; }
 }
 const recentSwipe=()=>Date.now()-lastSwipe<450;
 const next=()=>{ if(!animating) go(state+1); };
 const prev=()=>{ if(!animating) go(state-1); };
-function stateForPage(p){
-  if(mode==='single') return p;
-  if(p===0) return 0;
-  for(let s=1;s<=maxState;s++){ const l=leaves[s-1].back, r=leaves[s]?leaves[s].front:null; if(l===p||r===p) return s; }
-  return maxState;
-}
-function currentPage(){ if(mode==='single') return state; if(state===0) return 0; return leaves[state]?leaves[state].front:leaves[state-1].back; }
 
 function size(){
   const rect=stage.getBoundingClientRect();
   const pad=4, availW=rect.width-pad*2, availH=rect.height-pad*2;
+  if(!isFlip()) return;
   let pw = mode==='spread' ? Math.min(availW/2, availH*2/3) : Math.min(availW, availH*2/3);
   pw=Math.floor(pw); const ph=Math.floor(pw*1.5);
   book.style.width=(mode==='spread'?pw*2:pw)+'px'; book.style.height=ph+'px';
   leaves.forEach(l=>{ l.el.style.left='0'; l.el.style.width= mode==='single' ? '100%' : '50%'; });
 }
-function rebuild(){
-  const p=currentPage(); mode=pickMode(); buildLeaves(); state=stateForPage(p); size(); render();
-  document.getElementById('btnMode').textContent = mode==='spread' ? '単ページ' : '見開き';
+function setMode(m){
+  const p=currentPage(); mode=m;
+  stage.classList.toggle('slide', mode==='slide');
+  if(mode==='slide'){
+    leaves.forEach(l=>l.el.remove()); leaves=[]; book.hidden=true; strip.hidden=false;
+    maxState=PAGES.length-1; state=p; suppressObs=true; strip.children[state].scrollIntoView({behavior:'instant',inline:'center',block:'nearest'}); setTimeout(()=>{suppressObs=false;},300); updateUI();
+  } else {
+    strip.hidden=true; book.hidden=false; buildLeaves(); state=stateForPage(p); size(); render();
+  }
+  try{ localStorage.setItem('manga-mode', mode); }catch(e){}
 }
-// TOC
+/* ---------- 操作 ---------- */
 const toc=document.getElementById('toc');
 TOC.forEach(([p,name],i)=>{ const b=document.createElement('button'); b.textContent=name; b.dataset.p=p; b.dataset.next=TOC[i+1]?TOC[i+1][0]:99; b.addEventListener('click',()=>{ if(animating) return; go(stateForPage(p)); }); toc.appendChild(b); });
-// controls
 document.getElementById('btnNext').addEventListener('click',next);
 document.getElementById('btnPrev').addEventListener('click',prev);
 document.getElementById('btnFirst').addEventListener('click',()=>{ if(!animating) go(0); });
 document.getElementById('tapL').addEventListener('click',()=>{ if(!recentSwipe()) next(); });
 document.getElementById('tapR').addEventListener('click',()=>{ if(!recentSwipe()) prev(); });
 document.getElementById('slider').addEventListener('input',e=>{ go(+e.target.value); });
-document.getElementById('btnMode').addEventListener('click',()=>{ forcedMode = mode==='spread'?'single':'spread'; rebuild(); });
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 document.getElementById('btnFull').addEventListener('click',async()=>{ try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }catch(e){} });
 document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();} else if(e.key==='ArrowRight'||e.key==='PageUp'){e.preventDefault();prev();} else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(maxState);} });
-// swipe
 let sx=null, sy=null;
-stage.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; });
+stage.addEventListener('pointerdown',e=>{ if(mode==='slide') return; sx=e.clientX; sy=e.clientY; });
 stage.addEventListener('pointerup',e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=sy=null; if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.3){ lastSwipe=Date.now(); if(dx>0) next(); else prev(); } });
-window.addEventListener('resize',()=>{ const m=pickMode(); if(m!==mode) rebuild(); else size(); });
-// preload
+window.addEventListener('resize',()=>{ if(isFlip()) size(); else { suppressObs=true; strip.children[state].scrollIntoView({behavior:'instant',inline:'center',block:'nearest'}); setTimeout(()=>{suppressObs=false;},300); } });
 PAGES.forEach(p=>{ const i=new Image(); i.src=p; });
-rebuild();
+let saved=null; try{ saved=localStorage.getItem('manga-mode'); }catch(e){}
+setMode(['slide','single','spread'].includes(saved)?saved:'slide');
 </script>
 
 </body>
