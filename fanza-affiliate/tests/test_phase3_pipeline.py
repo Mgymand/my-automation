@@ -230,3 +230,18 @@ def test_dry_run_x_client_and_milestones(db, settings):
     assert metrics.ingest_x_metrics(db, settings, FakeX(), now) == 1
     assert metrics.due_milestones(db, settings.metric_milestones_hours, now) == []
     assert db.one("SELECT milestone_hours, source FROM post_metrics")["milestone_hours"] == 24
+
+
+def test_slot_reason_recorded_and_research_prior(db, settings):
+    _seed(db, settings)
+    prior = planner.research_slot_prior(db, settings.timezone)
+    assert prior == {}                      # 調査 6 件では事前分布を作らない（データ不足）
+    planner.plan_day(db, settings, None, day_jst=datetime(2030, 1, 1, tzinfo=timezone.utc), rng=random.Random(9))
+    pk = planner.today_packages(db, settings, "2030-01-01")
+    assert all(any(n.startswith("時間帯 ") and "選択" in n for n in p["notes"]) for p in pk)
+    # 調査データが十分なら JST 時刻分布からボーナスが付く
+    for i in range(12):
+        db.exec("INSERT INTO research_posts(x_post_id,author_followers,text,created_at,captured_at,views,views_per_follower,outlier_score,category,features) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?)", (f"r{i}", 500, "t", f"2026-09-2{i % 8}T13:00:00+00:00", "2026-09-28T00:00:00+00:00", 10000, 20, 5.0, "短文型", "{}"))
+    prior = planner.research_slot_prior(db, settings.timezone)
+    assert prior.get("21-24") == 1.0        # 13:00 UTC = 22:00 JST

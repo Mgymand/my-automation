@@ -50,6 +50,27 @@ def cmd_status(settings: Settings, db: Database, args) -> None:
         print(f"{k}: {db.get_setting(k) or '-'}")
     items = attention.open_items(db)
     print("要対応: " + (f"{len(items)} 件（attention で表示）" if items else "なし"))
+    print_costs(settings, db)
+
+
+def print_costs(settings: Settings, db: Database) -> None:
+    """実使用量ベースのコスト（直近 24h と全期間の 1 日平均）と 30 日換算。README の推定ではなく costs 台帳から。"""
+    now = datetime.now(timezone.utc)
+    d1 = (now - timedelta(hours=24)).isoformat(timespec="seconds")
+    first = db.one("SELECT MIN(ts) t FROM costs")
+    days = 1.0
+    if first and first["t"]:
+        days = max(1.0, (now - datetime.fromisoformat(first["t"])).total_seconds() / 86400)
+    print("== 実コスト（costs 台帳）==")
+    for kind in ("ai", "x_api", "dmm_api"):
+        last24 = db.cost_between(d1, now.isoformat(timespec="seconds"), kind)
+        total = db.cost_between("0000", now.isoformat(timespec="seconds"), kind)
+        per_day = total / days
+        print(f"{kind:8s} 直近24h {last24:7.1f}円 / 1日平均 {per_day:7.1f}円 / 30日換算 {per_day * 30:8.0f}円")
+    infra = settings.infra_cost_month_jpy + settings.other_cost_month_jpy
+    print(f"infra    月額設定 {infra:.0f}円")
+    for r in db.q("SELECT model, SUM(input_tokens) i, SUM(output_tokens) o, SUM(amount_jpy) jpy, COUNT(*) n FROM costs WHERE kind='ai' GROUP BY model"):
+        print(f"  {r['model']}: {r['n']} 回, in {r['i']:,} / out {r['o']:,} tok, {r['jpy']:.1f}円")
 
 
 def cmd_fetch_products(settings: Settings, db: Database, args) -> None:

@@ -44,6 +44,24 @@ def _slot_time(slot: str, day0: datetime, rng: random.Random, used: list[datetim
     return day0.replace(hour=a, minute=0)
 
 
+def research_slot_prior(db: Database, tz_name: str) -> dict[str, float]:
+    """公開調査の外れ値投稿の投稿時刻（JST）分布から、時間帯ごとの事前ボーナス（0..1）を作る。データが無ければ空。"""
+    rows = db.q("SELECT created_at, outlier_score FROM research_posts WHERE created_at IS NOT NULL AND views>0 ORDER BY outlier_score DESC LIMIT 200")
+    if len(rows) < 10:
+        return {}
+    tz = ZoneInfo(tz_name)
+    weights: dict[str, float] = {}
+    for r in rows:
+        try:
+            h = datetime.fromisoformat(str(r["created_at"]).replace("Z", "+00:00")).astimezone(tz).hour
+        except ValueError:
+            continue
+        slot = bandit.hour_slot(h)
+        weights[slot] = weights.get(slot, 0.0) + float(r["outlier_score"] or 0)
+    mx = max(weights.values(), default=0) or 1.0
+    return {k: round(v / mx, 3) for k, v in weights.items()}
+
+
 def suggest_posts_per_day(db: Database, current: int) -> tuple[int, str]:
     """投稿数 × 投稿あたり利益の実績から翌日の投稿数を提案（±1 の範囲で保守的に）。"""
     rows = db.q("""SELECT day, COUNT(*) n,
@@ -88,6 +106,8 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     n_posts, why = suggest_posts_per_day(db, settings.posts_per_day)
     db.set_setting("suggested_posts_per_day", dumps({"n": n_posts, "why": why}))
     slots = [f"{a:02d}-{b:02d}" for a, b in bandit.SLOTS if a >= 9]     # 深夜 0-9 時は既定で除外（人間が投稿できる時間）
+    slot_prior = research_slot_prior(db, settings.timezone)              # 固定時刻の決め打ちはしない。調査 → バンディットの順で根拠を持つ
+    slot_arms = bandit.get_arms(db, "hour_slot")
     pat_bonus = {p["pattern_id"]: float(p.get("confidence") or 0.2) + 0.2 * float(p.get("trend_score") or 0) for p in pats}
     recent = recent_post_texts(db)
     used_times: list[datetime] = []
@@ -102,7 +122,14 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
             db.log_event("warn", "plan_short", f"{seq - 1} 件で候補が尽きました")
             break
         media.register_official_assets(db, prod)
-        slot = bandit.choose(db, "hour_slot", slots, rng)
+        slot = bandit.choose(db, "hour_slot", slots, rng, prior_bonus=slot_prior or None)
+        n_obs = slot_arms.get(slot, (1, 1, 0))[2]
+        if n_obs >= 5:
+            slot_reason = f"時間帯 {slot}: 自分の投稿実績（{n_obs} 件）のバンディット推定で選択"
+        elif slot_prior:
+            slot_reason = f"時間帯 {slot}: 公開調査の外れ値投稿の JST 時刻分布（ボーナス {slot_prior.get(slot, 0):.2f}）と探索で選択（自分の実績 {n_obs} 件）"
+        else:
+            slot_reason = f"時間帯 {slot}: 調査データ不足のため安全な既定枠（9〜24 時）から探索で選択（自分の実績 {n_obs} 件）"
         cids = generate_for_product(db, llm, prod, recent)
         scored = []
         texts = []
@@ -139,7 +166,7 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
                   + (f"レビュー {prod.get('review_avg')}（{prod.get('review_count')}件）。" if prod.get("review_avg") else ""))
         sim = research.similar_success(db, pat.get("category") or "", prod.get("genres"))
         notes = [HUMAN_POSTING_NOTICE, "本文はそのままコピー。素材は下記の公式 URL からのみ（改変・切り抜き・テロップ不可）。",
-                 "リンクはリプ欄に。18 歳未満閲覧不可の注意を添える。"]
+                 "リンクはリプ欄に。18 歳未満閲覧不可の注意を添える。", slot_reason]
         if s.reasons:
             notes.append("注意: " + "; ".join(s.reasons))
         priority = "高" if seq <= 2 else ("中" if seq <= 4 else "低")
