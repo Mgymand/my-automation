@@ -37,8 +37,8 @@ python3 negotiation-manga/render.py --check   # --check で吹き出しのはみ
 | パス | 内容 |
 | --- | --- |
 | `book/index.html` | 本のようにページをめくれるビューア（右綴じ、見開き／単ページ自動切替、キーボード・スワイプ対応） |
-| `book/pages/01〜14.jpg` | 表紙・本編11ページ（PHASE 6 は2枚）・奥付・裏表紙 |
-| `book/negotiation-manga-book.pdf` | 配布用 PDF（13ページ） |
+| `book/pages/01〜12.jpg` | 表紙・本編11ページ（PHASE 6 は2枚） |
+| `book/negotiation-manga-book.pdf` | 配布用 PDF（12ページ） |
 | `generated/` | ChatGPT 生成の元画像と、吹き出し文字の打ち直し用 spec（`retext.py` 参照） |
 | `characters/unified_sheet.png` | 3人のキャラ統一設定画（ChatGPT に添付する「正」の参照画像） |
 | `prompts/chatgpt-prompts.md` | ChatGPT 用のページ別プロンプト |

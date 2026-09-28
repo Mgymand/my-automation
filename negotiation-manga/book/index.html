@@ -90,8 +90,8 @@ input[type=range]{width:min(360px,50vw);accent-color:var(--acc)}
 </footer>
 <nav class="toc" id="toc" aria-label="目次"></nav>
 <script>
-const PAGES = Array.from({length:14},(_,i)=>`pages/${String(i+1).padStart(2,'0')}.jpg`);
-const TOC = [[0,'表紙'],[1,'基本'],[2,'PHASE1'],[3,'PHASE2'],[4,'STEP3-4'],[5,'STEP5-7'],[6,'PHASE3-4'],[7,'PHASE5'],[8,'PHASE6'],[10,'PHASE7-8'],[11,'まとめ'],[12,'奥付']];
+const PAGES = Array.from({length:12},(_,i)=>`pages/${String(i+1).padStart(2,'0')}.jpg`);
+const TOC = [[0,'表紙'],[1,'基本'],[2,'PHASE1'],[3,'PHASE2'],[4,'STEP3-4'],[5,'STEP5-7'],[6,'PHASE3-4'],[7,'PHASE5'],[8,'PHASE6'],[10,'PHASE7-8'],[11,'まとめ']];
 const book=document.getElementById('book'), stage=document.getElementById('stage'), strip=document.getElementById('strip');
 let mode='slide', leaves=[], state=0, maxState=0, animating=false, lastSwipe=0, animTimer=null, suppressObs=false;
 const isFlip=()=>mode!=='slide';
@@ -125,9 +125,9 @@ function buildLeaves(){
   };
   if(mode==='spread'){
     leaves.push(mk(0,null));
-    for(let k=1;k<=6;k++) leaves.push(mk(2*k-1, 2*k));
-    leaves.push(mk(13,null));
-    maxState=7;
+    for(let k=1;k<=5;k++) leaves.push(mk(2*k-1, 2*k));
+    leaves.push(mk(11,null));
+    maxState=6;
   } else {
     for(let i=0;i<PAGES.length;i++) leaves.push(mk(i,null));
     maxState=PAGES.length-1;
@@ -143,7 +143,7 @@ function stateForPage(p){
 }
 function currentPage(){ if(mode!=='spread') return state; if(state===0) return 0; return leaves[state]?leaves[state].front:leaves[state-1].back; }
 function pageLabel(){
-  const name=(p)=>p==null?'':(p===12?'奥付':p===13?'裏表紙':`P${p+1}`);
+  const name=(p)=>p==null?'':`P${p+1}`;
   if(mode==='spread'){
     if(state===0) return '表紙';
     const r=leaves[state-1].back, l=leaves[state]?leaves[state].front:null;
