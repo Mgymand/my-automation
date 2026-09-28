@@ -37,6 +37,7 @@ header .hint{font-size:12px;color:var(--muted);white-space:nowrap}
 .book.single .spine,.book.single .half.right{display:none}
 .stage .tap{position:absolute;top:0;height:100%;width:50%;cursor:pointer;z-index:3000}
 .stage .tap.l{left:0}.stage .tap.r{right:0}
+.stage.single .tap.l{width:80%}.stage.single .tap.r{width:20%}
 .book.closed{transform:translateX(25%)}
 .book.single.closed{transform:none}
 footer{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:13px}
@@ -57,7 +58,7 @@ input[type=range]{width:min(360px,50vw);accent-color:var(--acc)}
 <body>
 <header>
   <h1>心情・社会的意義から<b>Evidence</b>につなげる価格交渉　<span style="font-weight:500;color:var(--muted)">学習マンガ</span></h1>
-  <div class="hint">左ページをクリック／← キー／右スワイプでめくる（右綴じ：右ページ→左ページの順に読む）</div>
+  <div class="hint">ページをクリック／← キー／右スワイプでめくる。「見開き」ボタンで2ページ表示に切替</div>
 </header>
 <div class="stage" id="stage">
   <div class="book" id="book"><div class="half left"></div><div class="half right"></div><div class="spine"></div></div>
@@ -81,7 +82,7 @@ const book=document.getElementById('book'), stage=document.getElementById('stage
 let mode = 'spread', leaves=[], state=0, maxState=0, animating=false;
 let forcedMode=null, lastSwipe=0, animTimer=null;
 
-function pickMode(){ if(forcedMode) return forcedMode; return (window.innerWidth < 720 || window.innerWidth < window.innerHeight*0.95) ? 'single' : 'spread'; }
+function pickMode(){ if(forcedMode) return forcedMode; return 'single'; }
 
 function buildLeaves(){
   leaves.forEach(l=>l.el.remove()); leaves=[];
@@ -105,7 +106,7 @@ function buildLeaves(){
     for(let i=0;i<PAGES.length;i++) leaves.push(mk(i,null));
     maxState = PAGES.length-1;
   }
-  book.classList.toggle('single', mode==='single');
+  book.classList.toggle('single', mode==='single'); stage.classList.toggle('single', mode==='single');
 }
 function zsort(){
   const n=leaves.length;
@@ -153,7 +154,7 @@ function currentPage(){ if(mode==='single') return state; if(state===0) return 0
 
 function size(){
   const rect=stage.getBoundingClientRect();
-  const pad=8, availW=rect.width-pad*2, availH=rect.height-pad*2;
+  const pad=4, availW=rect.width-pad*2, availH=rect.height-pad*2;
   let pw = mode==='spread' ? Math.min(availW/2, availH*2/3) : Math.min(availW, availH*2/3);
   pw=Math.floor(pw); const ph=Math.floor(pw*1.5);
   book.style.width=(mode==='spread'?pw*2:pw)+'px'; book.style.height=ph+'px';
