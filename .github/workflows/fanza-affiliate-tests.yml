@@ -1,0 +1,34 @@
+name: fanza-affiliate tests
+
+on:
+  push:
+    paths: ["fanza-affiliate/**"]
+  pull_request:
+    paths: ["fanza-affiliate/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fanza-affiliate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q tests
+      - name: dry-run pipeline
+        env:
+          DRY_RUN: "true"
+          DMM_SITE: DMM.com
+          DMM_MEDIA_REGISTERED: "true"
+          TRACKING_BASE_URL: https://t.example.com
+          DATA_DIR: /tmp/affdata
+        run: |
+          python -m affiliate_bot init
+          python -m affiliate_bot fetch-products --demo
+          python -m affiliate_bot plan
+          python -m affiliate_bot publish --force-now
+          python -m affiliate_bot report --no-llm --out /tmp/affdata/report.md

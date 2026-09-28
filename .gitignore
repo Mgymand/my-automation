@@ -11,3 +11,8 @@ mago-love/data/*.json
 !mago-love/data/kanto_municipalities.json
 mago-love/data/uploads/
 mago-love/data/.secret_key
+
+# fanza-affiliate の実データ・レポート（コミットしない）
+fanza-affiliate/data/
+fanza-affiliate/reports/
+fanza-affiliate/.env
