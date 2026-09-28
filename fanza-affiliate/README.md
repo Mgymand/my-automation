@@ -1,85 +1,91 @@
-# DMM/FANZA アフィリエイト × X 自動運用（営業利益最適化）
+# FANZA アフィリエイト 手動投稿アシスト（AI 編集部・リサーチ部・分析部）
 
-X（旧 Twitter）公式 API だけを使って DMM/FANZA の商品を紹介し、
-「表示 → 興味 → リンククリック → 遷移 → 購入 → 報酬」のファネル全体を投稿単位で計測、
-**営業利益（売上 − AI 費 − API 費 − インフラ費）** を目的関数に探索・活用で配分を最適化するシステムです。
+X への投稿は **人間が行います**。このシステムは投稿しません。
+AI とプログラムが行うのは、調査・商品選定・素材選定・投稿文作成・投稿計画・効果測定・学習・改善です。
+人間の毎日の作業は次の 3 つだけです。
 
-- 設計書: [docs/DESIGN.md](docs/DESIGN.md)（アーキテクチャ / スキーマ / モデル配分 / 日次・週次 / KPI / トラッキング / A/B / フェイルセーフ / コスト）
-- 規約・法令確認: [docs/COMPLIANCE.md](docs/COMPLIANCE.md) ← **運用前に必読。人間のチェックリストあり**
-- 市場調査: [docs/MARKET_RESEARCH.md](docs/MARKET_RESEARCH.md)
+1. Claude が作った **今日の投稿セット**（`today` または Web UI）を見る
+2. 本文をコピーし、指定の公式素材を添付して **X に手動投稿**
+3. 投稿 URL を **`posted --url`** または Web UI の「投稿済み」で登録
 
-## 最重要: 成人向け商品の X 投稿は HARD BLOCK
+> 成人向け商品の X **自動投稿**は `affiliate_bot/policy.py` の HARD BLOCK（X 有料パートナーシップ方針の禁止カテゴリ）として維持しており、
+> 投稿権限を持つコード自体が存在しません（`x_client.py` は Bearer Token の READ ONLY）。自動リプ・中間リダイレクト・
+> 環境変数や「了承」で解除する仕組みも置いていません。X への投稿の可否は投稿者本人の判断と責任であり、
+> 各投稿パッケージに規約上の注意（`HUMAN_POSTING_NOTICE`）を必ず添えます。
 
-X の有料パートナーシップ方針（公式。日本語版は自動取得、英語版は 2026-09-28 に運営者が原文確認）は、
-**アフィリエイトリンクや割引コードによる commission を有料パートナーシップ**に含め、
-Prohibited Industries に **「Adult and sexual products and services」** を挙げています。
-したがって FANZA の成人向け商品のアフィリエイト投稿は「禁止カテゴリの有料パートナーシップ」に該当し、
-本システムは `affiliate_bot/policy.py` の台帳に基づき **設定では解除できないハードブロック** として扱います
-（センシティブメディアとして投稿できることと、有料パートナーシップとして宣伝できることは別です）。
-運用対象は **DMM.com の一般商品**（動画・電子書籍・PC ゲーム等）です。
+- 設計: [docs/DESIGN.md](docs/DESIGN.md) / 規約: [docs/COMPLIANCE.md](docs/COMPLIANCE.md) / 調査: [docs/MARKET_RESEARCH.md](docs/MARKET_RESEARCH.md) / 移行: [docs/MIGRATION_PHASE3.md](docs/MIGRATION_PHASE3.md)
 
-## セットアップは 1 コマンド（AI 主導）
+## 初回セットアップ（人間は認証・同意・課金・審査だけ）
 
 ```bash
 cd fanza-affiliate
+pip install -r requirements.txt
 python -m affiliate_bot bootstrap
 ```
 
-`bootstrap` は対話型の初期設定エージェントです。環境・Git・Python・依存・DB・環境変数・DMM・X・Anthropic・
-トラッキング・デプロイ・Secret・コンプライアンス・DRY_RUN を自動判定し、不足分だけを順に埋めます。
-人間が行うのは **ログイン／2FA／規約同意／課金／API Secret のコピー／審査申請** のような本人操作だけで、
-画面には `★ここだけ人間★` として管理画面 URL・押すメニュー・設定値・コピーする値を提示します。
+`bootstrap` が環境・依存・DB・Secret・コンプライアンス・Anthropic・FANZA API・X READ・常駐を自動判定し、不足分だけを
+`★ここだけ人間★` として案内します（管理画面 URL・押すメニュー・コピーする値）。Secret は `getpass` で入力し画面に出しません。
 
-- Secret は `getpass` で入力（画面に出ない）→ `.env`（600, gitignore 済）と利用可能な外部ストア（Google Secret Manager / Vercel env / GitHub Actions）に保存 → 即座に疎通確認（DMM: FloorList, X: `GET /2/users/me`, Anthropic: Models API + 1 トークン）→ 成功したら次工程へ
-- Anthropic は Sonnet / Opus / Fable の利用可能性を確認し、使えないモデルは自動で代替へルーティング（運用は止めない）
-- DMM の媒体登録に必要な媒体名・URL・説明・運営内容は AI が生成（`data/dmm_media_application.md`）。申請だけ本人操作
-- X Developer の App 設定（OAuth 1.0a / Read and write / Callback / Website URL）と発行手順を提示し、4 つのキーを疎通確認
-- トラッキング URL は人間に用意させず、Vercel（無料）→ Cloud Run の順に自動デプロイ（HTTPS / リダイレクト / healthz / 環境変数まで）。どちらも無ければ直リンク運用を選択可能
-- 最終画面は **READY / ACTION REQUIRED / BLOCKED** の 3 状態。全項目 READY のときだけ DRY_RUN=false へ移行でき、その際も **「本番運用開始」の明示入力を 1 回だけ** 要求します。以後の日次運用に人間確認はありません
-- 途中で終了しても再実行すれば続きから再開します。`--check` は質問せず現状判定のみ、`--no-network` は疎通・デプロイを省略
+| 人間が用意するもの | どこで |
+|---|---|
+| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys（課金残高） |
+| `DMM_API_ID` / `DMM_AFFILIATE_ID`（末尾 -990〜-999） | affiliate.dmm.com → API（規約同意）。媒体登録の申請文は AI が生成、申請は本人 |
+| `X_BEARER_TOKEN`（任意・READ ONLY） | developer.x.com → App → Keys and tokens → Bearer Token。投稿権限は不要。無ければ指標は CSV/手入力 |
+| `X_USERNAME`（任意） | 自分の X ユーザー名（自分の投稿の指標取得に使用） |
 
-## 運用中に人間へ届くもの（Human Attention Queue）
-
-通常運用では報告しません。次の場合だけ Slack（`SLACK_WEBHOOK_URL`）または stdout に通知します:
-API 認証失効 / 規約・価格変更の検知 / アカウント警告 / 審査対応 / 課金上限 / 異常な CTR・CVR / トラッキング障害 /
-ポリシー判定不能 / 利益が一定期間マイナス / 本番環境障害。`python -m affiliate_bot attention` で一覧・解決。
-
-## 日次の使い方（cron でも `loop` でも可）
+## 毎日の流れ
 
 ```bash
-python -m affiliate_bot fetch-products            # DMM から候補取得 + ERPI 推定（認証なしなら --demo）
-python -m affiliate_bot plan                      # 本日の投稿計画（時間帯・パターンはバンディット）
-python -m affiliate_bot publish                   # 予定時刻を過ぎた投稿を公開（DRY_RUN=true ならログのみ）
-python -m affiliate_bot ingest-metrics            # X の指標を取込
-python -m affiliate_bot ingest-conversions --csv 成果.csv   # DMM 管理画面の成果 CSV を投稿へ帰属
-python -m affiliate_bot learn                     # バンディット・パターン DB を更新
-python -m affiliate_bot checks --network          # 自動停止ルール
-python -m affiliate_bot report                    # 毎朝の日次レポート（Opus 5.5）
-python -m affiliate_bot weekly                    # 週次レビュー（Fable 5.1、7 日に 1 回のみ）
-python -m affiliate_bot research --collect --analyze   # 初回市場調査（X 検索 API、有料）
-python -m affiliate_bot serve-tracking            # 投稿単位トラッキング用リダイレクト
-python -m affiliate_bot loop                      # 上記を 1 プロセスで常駐実行（要対応時のみ通知）
-python -m affiliate_bot attention                 # Human Attention Queue の表示 / --resolve ID
-python -m affiliate_bot pause --reason "..." / resume
+python -m affiliate_bot morning     # 06:00 に loop が自動実行（fetch-products → learn → report → plan → export）
+python -m affiliate_bot today       # 今日の投稿セット（時刻表 → POST 1..5 のパッケージ → 本日の調整）
+python -m affiliate_bot serve       # スマホ向け Web UI（本文コピー / 素材 / Affiliate URL / 投稿済み）
+python -m affiliate_bot posted --url "https://x.com/…/status/…"   # 投稿後に登録（Post ID を自動解析。--post N で番号指定）
+python -m affiliate_bot posted --url … --text "実際の本文" --time … --media …   # 予定と違う内容で投稿した場合
+python -m affiliate_bot posted --skip --post 5 --reason "…"        # 投稿しなかった
+python -m affiliate_bot metrics                                     # X 読取があれば 24h/72h 時点の指標を自動取得
+python -m affiliate_bot metrics --manual POST_ID views likes reposts replies bookmarks   # 手入力 fallback
+python -m affiliate_bot metrics --csv metrics.csv                   # CSV fallback（x_post_id,views,likes,…）
+python -m affiliate_bot ingest-conversions --csv 成果.csv           # FANZA 管理画面の成果 CSV（商品×時間帯で確率帰属）
+python -m affiliate_bot learn / report / weekly / status / attention / checks
+python -m affiliate_bot research --collect --analyze                # 公開投稿の調査（X READ）。--import-csv / --demo も可
+python -m affiliate_bot export                                      # exports/YYYY-MM-DD/index.html, posts.txt, postN.txt
+python -m affiliate_bot loop                                        # 常駐（毎時 metrics、06:00 morning、月曜 07:00 research + weekly）
 ```
 
-## 本人操作が必要な瞬間（bootstrap が案内）
+`today` の出力は、最上部に時刻表（`11:30 POST 1` …）、次に各投稿の完成パッケージ
+（推奨投稿時刻 / 優先度 / 商品名 / 女優 / ジャンル / 価格 / 割引 / FANZA URL / Affiliate URL / 使用 Pattern / 選定理由 / 投稿本文 /
+使用推奨素材（URL・タイプ・権利状態）/ 期待値 / 類似成功投稿 / 投稿時の注意 / 必要時のみ代替案）、最後に本日の調整（3〜5 行）です。
 
-| 場面 | 本人操作 |
-|---|---|
-| Anthropic | Console でキー作成（ログイン・課金）→ 貼り付け |
-| DMM | アカウント作成・API ID 発行（規約同意）→ 貼り付け。媒体登録の審査申請（文面は AI が生成） |
-| X | Developer 登録・クレジット購入・App の権限設定・キー発行（2FA）→ 貼り付け |
-| Vercel（任意） | トークン発行 → 貼り付け（以後のデプロイは自動） |
-| 本番移行 | 全項目 READY 後に「本番運用開始」と入力（1 回だけ） |
+## AI が自動で行うこと
+
+- **調査**: 公開 X 投稿（READ）を継続収集し、文章ではなく構造（フック・本文構成・CTA・メディア・長さ・時間帯・女優/ジャンル）を特徴化。
+  `views_per_follower` / `views_per_hour` / `engagement_rate` / `likes_per_1k_views` / `reposts_per_1k_views` で小規模アカウントの外れ値を優先し、15 カテゴリ + α に分類して Pattern DB（Trend Score / Last Seen）を更新
+- **商品選定**: FANZA API から商品情報を取得し、Expected Affiliate Value（予測 Views × CTR × CVR × 報酬 × Competition / Novelty / Discount / Actress・Genre Momentum / Historical EPC / Pattern Compatibility）で選ぶ。単純ランキング順は使わない。実測が増えるほど競合情報の重みを下げ自分の CV・EPC の重みを上げる
+- **生成**: 1 商品につき 5 案（極短文 / 女優 / シチュエーション / レビュー / 価格・割引）。source_pattern_id と similarity_score を保存し、既存投稿と似すぎれば自動で書き直す。最良案 1 つを AI が選び、必要時のみ代替 1〜2 案
+- **素材**: DMM 公式素材（サンプル画像・動画・パッケージ）のみ候補化し、source_url / source_type / rights_status / product_id を保存。他者投稿からの転載は行わない。AI 生成素材はタイトルカード等の補助デザインに限定
+- **計測**: 投稿後 24h / 72h（設定で 6h / 7d 追加）の Views・Likes・Reposts・Replies・Bookmarks。FANZA 成果 CSV は商品×時間窓 → 商品×日付 → channel の順に確率帰属し、`attribution_confidence`（high / medium / low）を保存
+- **学習**: Revenue / Engagement / Views の 3 シグナルを Conversion データ量に応じて合成し、Thompson Sampling（時間帯・パターン・ジャンル・メディア）と Pattern DB を更新。翌日の商品・文章・時間帯に反映
+- **レポート**: 毎朝、昨日の売上・報酬・Views・最良/最低投稿・CTR 推定・CV・EPC・投稿あたり利益と、AI の判断（分かったこと / 増やす / 減らす / 試す / 本日の調整）
+- **週次**: Fable 5.1 が 7 日 / 30 日 / 全期間を比較し、来週増やす・減らす・試すもの、削除・追加する Pattern、投稿数を決定
+
+## 人間が呼ばれる場合だけ（Human Attention Queue）
+
+FANZA API 認証失効 / X READ 認証失効 / 規約変更 / 素材権利が判断できない / 商品情報の不整合 / 成果 CSV 取込失敗 /
+7 日以上データ取得不能 / 利益が一定期間マイナス / 本番システム障害。Slack Webhook（`SLACK_WEBHOOK_URL`）または stdout。
+
+## モデル配分とコスト
+
+| 役割 | モデル | 頻度 |
+|---|---|---|
+| 投稿候補生成・書き直し・競合投稿の抽象化・媒体登録文 | Sonnet 5 | 日次（商品数 × 1 回） |
+| 日次分析・調整判断 | Opus 5.5 | 毎朝 1 回 |
+| 週次戦略レビュー（増減・Pattern 追加削除・投稿数） | Fable 5.1 | 週 1 回のみ |
+| 集計・EAV・類似度・スコア・バンディット・帰属・時刻計算 | Python / SQL | 常時（LLM 不使用） |
+
+月額の目安（5 投稿/日）: AI ¥400〜600（Sonnet ¥150 / Opus ¥160 / Fable ¥180）、X READ $3〜10（調査 400 件 + 指標 300 件）、インフラ ¥0〜1,500。
 
 ## テスト
 
 ```bash
 python -m pytest -q tests
 ```
-
-## デプロイ
-
-`Dockerfile` を Cloud Run（Job または常駐 Service）／Render Worker に載せ、`/var/data` に永続ディスクを割り当てる。
-このリポジトリの他プロジェクトと同じ手順（[docs/deploy-cloudrun.md](../docs/deploy-cloudrun.md)）で構築できる。

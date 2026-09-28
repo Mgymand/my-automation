@@ -16,3 +16,4 @@ mago-love/data/.secret_key
 fanza-affiliate/data/
 fanza-affiliate/reports/
 fanza-affiliate/.env
+fanza-affiliate/exports/

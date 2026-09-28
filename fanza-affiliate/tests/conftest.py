@@ -13,10 +13,9 @@ from affiliate_bot.db import Database  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def _isolate_env(tmp_path):
-    """各テストで os.environ を復元し、DATA_DIR をテスト用ディレクトリに向ける。"""
     saved = dict(os.environ)
     for k in list(os.environ):
-        if k.startswith(("DMM_", "X_", "ANTHROPIC_", "TRACKING_", "DRY_RUN", "SENSITIVE_", "SLACK_", "VERCEL_", "DATA_DIR", "POSTS_")):
+        if k.startswith(("DMM_", "X_", "ANTHROPIC_", "SLACK_", "DATA_DIR", "POSTS_", "NOTIFY_", "WEB_", "METRIC_")):
             del os.environ[k]
     os.environ["DATA_DIR"] = str(tmp_path)
     yield
@@ -26,12 +25,9 @@ def _isolate_env(tmp_path):
 
 @pytest.fixture
 def settings(tmp_path):
-    os.environ["DRY_RUN"] = "true"
     s = Settings()
     s.data_dir = tmp_path
-    s.dry_run = True
     s.dmm_media_registered = True
-    s.tracking_base_url = "https://t.example.com"
     s.anthropic_api_key = ""
     s.posts_per_day = 4
     return s

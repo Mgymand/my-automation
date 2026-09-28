@@ -1,7 +1,7 @@
 """API 価格の設定・検証。価格はコードに固定せず、環境変数 → DB（settings.x_pricing）の順で上書きできる。
 
-- X API 価格: docs.x.com/x-api/getting-started/pricing を取得して既知ラベルの数値を抽出する（staged update）。
-  * 必須項目（post / post_url / read_post / owned_read / read_user）が全件抽出できた場合のみ候補化
+- X API 読取価格: docs.x.com/x-api/getting-started/pricing を取得して既知ラベルの数値を抽出する（staged update）。
+  * 必須項目（read_post / owned_read / read_user）が全件抽出できた場合のみ候補化
   * 現在値との最大変動率が AUTO_APPLY_MAX_CHANGE 以下なら自動適用（軽微なドリフト）
   * それを超える場合は候補（settings.x_pricing_candidate）として保存し Attention Queue で人間確認。確認前は旧価格を使う
   * 抽出失敗・誤マッチの疑い（負値や極端な値）は候補化しない
@@ -22,8 +22,6 @@ X_PRICING_URL = "https://docs.x.com/x-api/getting-started/pricing"
 
 # ページ上のラベル → 設定キー。ラベル表記が変わると抽出できないため、その場合は「未検証」として扱う
 X_LABELS = {
-    "post": ["Post creation", "Create Post", "Post create"],
-    "post_url": ["Post with URL", "Post containing a link", "with link"],
     "read_post": ["Posts", "Post read"],
     "owned_read": ["Owned Reads", "Owned read"],
     "read_user": ["Users"],
@@ -31,34 +29,30 @@ X_LABELS = {
 
 
 AUTO_APPLY_MAX_CHANGE = 0.10   # 10% 以内の変動は自動適用。それ以上は人間確認（旧価格を使い続ける）
-REQUIRED_FIELDS = ("post", "post_url", "read_post", "owned_read", "read_user")
+REQUIRED_FIELDS = ("read_post", "owned_read", "read_user")
 SANE_RANGE = (0.0001, 5.0)      # USD/req としてあり得る範囲（誤マッチ検出）
 
 
 @dataclass
 class XPricing:
-    post: float
-    post_url: float
+    """X API 読取価格（USD）。Phase 3 では書込を行わないため投稿価格は持たない。"""
     read_post: float
     owned_read: float
     read_user: float
     source: str = "env"
 
     def as_dict(self) -> dict:
-        return {"post": self.post, "post_url": self.post_url, "read_post": self.read_post,
-                "owned_read": self.owned_read, "read_user": self.read_user, "source": self.source}
+        return {"read_post": self.read_post, "owned_read": self.owned_read, "read_user": self.read_user, "source": self.source}
 
 
 def x_pricing(settings: Settings, db=None) -> XPricing:
-    p = XPricing(settings.x_price_post_usd, settings.x_price_post_url_usd, settings.x_price_read_post_usd,
-                 settings.x_price_owned_read_usd, settings.x_price_read_user_usd, "env")
+    p = XPricing(settings.x_price_read_post_usd, settings.x_price_owned_read_usd, settings.x_price_read_user_usd, "env")
     if db is not None:
         raw = db.get_setting("x_pricing")
         if raw:
             try:
                 d = json.loads(raw)
-                return XPricing(float(d["post"]), float(d["post_url"]), float(d["read_post"]),
-                                float(d["owned_read"]), float(d["read_user"]), d.get("source", "db"))
+                return XPricing(float(d["read_post"]), float(d["owned_read"]), float(d["read_user"]), d.get("source", "db"))
             except (ValueError, KeyError, TypeError):
                 pass
     return p
@@ -132,7 +126,7 @@ def apply_candidate(db) -> XPricing | None:
     db.set_setting("x_pricing", json.dumps(d))
     db.set_setting("x_pricing_candidate", "")
     db.log_event("info", "x_pricing_applied", "候補価格を人間確認後に適用", d)
-    return XPricing(d["post"], d["post_url"], d["read_post"], d["owned_read"], d["read_user"], "official_page")
+    return XPricing(d["read_post"], d["owned_read"], d["read_user"], "official_page")
 
 
 def llm_pricing_overrides() -> dict:

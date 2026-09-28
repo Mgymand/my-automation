@@ -1,5 +1,9 @@
 # 規約・法令・API 仕様の確認結果（2026-09-28 時点）
 
+> **Phase 3 の前提**: X への投稿は人間が行う。システムは投稿権限を持たない（`x_client.py` は READ ONLY、`publisher.py` は削除済み）。
+> 成人向け商品の X 自動投稿は `policy.py` の HARD BLOCK として維持し、設定・了承で解除する仕組みは存在しない。
+> 人間が投稿する際の規約上の注意は各投稿パッケージに `HUMAN_POSTING_NOTICE` として添付する（投稿可否は投稿者本人の判断と責任）。
+
 > 本システムの設計前提。X ヘルプセンターは自動取得を拒否する（JS チャレンジ）ため、英語版有料パートナーシップ方針は
 > **2026-09-28 に運営者がブラウザで原文を確認**した（affiliate links / discount codes による commission が Paid Partnership に含まれ、
 > Prohibited Industries に「Adult and sexual products and services」が含まれることを一次情報で確認済み）。
