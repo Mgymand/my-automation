@@ -264,6 +264,142 @@
   ]
  },
  {
+  "no": 17,
+  "excel_name": "居宅介護支援事業所 ばんどう",
+  "name": "居宅介護支援事業所ばんどう",
+  "corp": "合同会社ばんどう",
+  "postal": "306-0052",
+  "address1": "茨城県古河市大山498-4",
+  "address2": "",
+  "phone": "0280-48-3486",
+  "copies": 10,
+  "confidence": "中",
+  "notes": "住所・電話は公表システム法人情報欄＋古河市公式一覧(2026/7/1)で一致。ただし居宅介護支援の単独公表ページが現在閲覧不可。運営状況を電話確認推奨。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_001_kihon=true&JigyosyoCd=0870401239-00&ServiceCd=110",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 18,
+  "excel_name": "居宅介護支援事業所 ファミリー",
+  "name": "居宅介護支援事業所ファミリー",
+  "corp": "株式会社アイ・コーポレーション",
+  "postal": "306-0002",
+  "address1": "茨城県古河市三杉町2-10-8",
+  "address2": "",
+  "phone": "0280-31-1330",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "正式名称はスペースなし。法人本店（静町）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401502-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 19,
+  "excel_name": "イースケア居宅介護支援事業所",
+  "name": "イースケア居宅介護支援事業所",
+  "corp": "合同会社嘉邦",
+  "postal": "306-0041",
+  "address1": "茨城県古河市鴻巣642番地3",
+  "address2": "",
+  "phone": "0280-23-3853",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "公表システム・古河市公式一覧で一致。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401692-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 20,
+  "excel_name": "居宅介護支援センター きずな",
+  "name": "居宅介護支援センターきずな",
+  "corp": "合同会社Lien de famille",
+  "postal": "306-0025",
+  "address1": "茨城県古河市原町9-53",
+  "address2": "コンフォート古河401",
+  "phone": "0280-23-5993",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "正式名称はスペースなし。法人本店（けやき平）とは別住所。マンション名・部屋番号必須。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401809-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 21,
+  "excel_name": "居宅介護支援事業所 愛和苑",
+  "name": "居宅介護支援事業所 愛和苑",
+  "corp": "社会福祉法人愛和会",
+  "postal": "306-0221",
+  "address1": "茨城県古河市駒羽根320-1",
+  "address2": "",
+  "phone": "0280-93-0234",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "特養愛和苑併設・電話共通。法人公式サイトでも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400546-00&ServiceCd=430",
+   "http://www.ai-wa-kai.com/aiwaen/"
+  ]
+ },
+ {
+  "no": 22,
+  "excel_name": "つぐみ居宅介護支援事業所総和",
+  "name": "つぐみ居宅介護支援事業所総和",
+  "corp": "合同会社緒心",
+  "postal": "306-0233",
+  "address1": "茨城県古河市西牛谷411-15",
+  "address2": "セントラルアパートメント202",
+  "phone": "0280-33-6440",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "別法人(合同会社Rフィールド)の「つぐみ居宅介護支援事業所」(南間中橋)とは別。法人本店（下大野）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401957-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 23,
+  "excel_name": "介護保険支援センター青嵐荘(総和)",
+  "name": "介護保険支援センター青嵐荘（総和）",
+  "corp": "社会福祉法人芳香会",
+  "postal": "306-0233",
+  "address1": "茨城県古河市西牛谷852-4",
+  "address2": "タウンハウスMITA 105号室",
+  "phone": "0280-98-0030",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "法人公式サイト・古河市公式一覧で一致。古い住所（東牛谷456-6）が地図サイトに残っているが現行は西牛谷852-4。",
+  "sources": [
+   "https://www.houkoukai.or.jp/jigyou/consultation/index.php?p=kaigohoken-seiran",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 24,
+  "excel_name": "古河市地域包括支援センター総和",
+  "name": "古河市地域包括支援センター総和",
+  "corp": "",
+  "postal": "306-0201",
+  "address1": "茨城県古河市上大野1889-1",
+  "address2": "特別養護老人ホーム希望の森内",
+  "phone": "0280-23-5661",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "委託先は社会福祉法人愛和会。愛称「高齢者サポートセンター総和」。茨城県一覧(R8.4.1)・古河市公式で一致。",
+  "sources": [
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/5/1685.html",
+   "https://www.pref.ibaraki.jp/hokenfukushi/chofuku/shichoson/kaigo/hokatsu/documents/houkatusentar8.pdf"
+  ]
+ },
+ {
   "no": 25,
   "excel_name": "総和中央病院 居宅介護支援事業所",
   "name": "総和中央病院 居宅介護支援事業所",
