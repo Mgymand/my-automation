@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """角形A4号封筒用 宛名帯（ラベル）PDF 生成スクリプト
 
-A4 用紙 1 枚に 210mm x 99mm の帯を 3 枚配置し、点線で切り取って封筒に貼る想定。
+A4 用紙 1 枚に 210mm x 約74mm の帯を 4 枚配置し、点線で切り取って封筒に貼る想定。
 入力: addresses.json（送付先一覧） / 出力: labels.pdf
 """
 import json
@@ -20,10 +20,10 @@ FONT = "IPAGothic"
 pdfmetrics.registerFont(TTFont(FONT, FONT_PATH))
 
 PAGE_W, PAGE_H = A4          # 210 x 297 mm
-LABEL_H = 99 * mm            # 帯の高さ (297 / 3)
-LABELS_PER_PAGE = 3
+LABELS_PER_PAGE = 4
+LABEL_H = PAGE_H / LABELS_PER_PAGE   # 帯の高さ (297 / 4 ≈ 74.25mm)
 PAD_X = 12 * mm              # 帯内の左右余白
-PAD_Y = 9 * mm               # 帯内の上下余白
+PAD_Y = 6 * mm               # 帯内の上下余白
 NAME_SIZE = 20               # 宛名の文字サイズ（全件共通）
 
 
@@ -75,18 +75,18 @@ def layout_label(entry, width, name_size):
         if part:
             addr_size = fit_size(part, [14, 13, 12], width)
             for line in wrap(part, addr_size, width):
-                rows.append((addr_size, 0, line, 4 * mm if first else 1.5 * mm, "left"))
+                rows.append((addr_size, 0, line, 3 * mm if first else 1.5 * mm, "left"))
                 first = False
     if entry.get("corp"):
-        rows.append((13, 4 * mm, entry["corp"], 6 * mm, "left"))
+        rows.append((13, 4 * mm, entry["corp"], 5 * mm, "left"))
     suffix = "　御中"
     name_width = width - 4 * mm
     if pdfmetrics.stringWidth(entry["name"] + suffix, FONT, name_size) <= name_width:
-        rows.append((name_size, 4 * mm, entry["name"] + suffix, 4 * mm, "left"))
+        rows.append((name_size, 4 * mm, entry["name"] + suffix, 3 * mm, "left"))
     else:
         # 長い宛名は名称を1行（必要なら折返し）にし、「御中」を次行に右寄せ
         for i, line in enumerate(wrap(entry["name"], name_size, name_width)):
-            rows.append((name_size, 4 * mm, line, 4 * mm if i == 0 else 2 * mm, "left"))
+            rows.append((name_size, 4 * mm, line, 3 * mm if i == 0 else 2 * mm, "left"))
         rows.append((name_size, 0, "御中", 2 * mm, "right"))
     return rows
 
@@ -99,7 +99,7 @@ def draw_label(c, entry, top_y, name_size):
     rows = layout_label(entry, width, name_size)
     total = sum(size + gap for size, _, _, gap, _ in rows)
     # 帯内で上下中央（やや上寄せ）
-    y = top_y - (LABEL_H - total) / 2 + 2 * mm
+    y = top_y - (LABEL_H - total) / 2
     for size, indent, text, gap, align in rows:
         y -= gap + size
         c.setFont(FONT, size)
