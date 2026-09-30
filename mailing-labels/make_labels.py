@@ -24,6 +24,7 @@ LABEL_H = 99 * mm            # 帯の高さ (297 / 3)
 LABELS_PER_PAGE = 3
 PAD_X = 12 * mm              # 帯内の左右余白
 PAD_Y = 9 * mm               # 帯内の上下余白
+NAME_SIZE = 20               # 宛名の文字サイズ（全件共通）
 
 
 def wrap(text, font_size, max_width):
@@ -64,54 +65,55 @@ def fit_size(text, sizes, max_width):
     return sizes[-1]
 
 
-def layout_label(entry, width):
-    """描画する行を (font_size, indent, text, gap_before) のリストで返す"""
+def layout_label(entry, width, name_size):
+    """描画する行を (font_size, indent, text, gap_before, align) のリストで返す"""
     rows = []
-    rows.append((18, 0, f"〒 {entry['postal']}", 0))
+    # 郵便番号（右上）
+    rows.append((18, 0, f"〒 {entry['postal']}", 0, "right"))
     first = True
     for part in [entry["address1"], entry.get("address2", "")]:
         if part:
             addr_size = fit_size(part, [14, 13, 12], width)
             for line in wrap(part, addr_size, width):
-                rows.append((addr_size, 0, line, 5 * mm if first else 1.5 * mm))
+                rows.append((addr_size, 0, line, 4 * mm if first else 1.5 * mm, "left"))
                 first = False
     if entry.get("corp"):
-        rows.append((13, 4 * mm, entry["corp"], 6 * mm))
+        rows.append((13, 4 * mm, entry["corp"], 6 * mm, "left"))
     suffix = "　御中"
-    name_size = fit_size(entry["name"] + suffix, [24, 22, 20, 18, 17], width - 4 * mm)
-    lines = wrap(entry["name"], name_size,
-                 width - 4 * mm - pdfmetrics.stringWidth(suffix, FONT, name_size))
-    for i, line in enumerate(lines):
-        rows.append((name_size, 4 * mm, line + (suffix if i == len(lines) - 1 else ""),
-                     4 * mm if i == 0 else 2 * mm))
+    name_width = width - 4 * mm
+    if pdfmetrics.stringWidth(entry["name"] + suffix, FONT, name_size) <= name_width:
+        rows.append((name_size, 4 * mm, entry["name"] + suffix, 4 * mm, "left"))
+    else:
+        # 長い宛名は名称を1行（必要なら折返し）にし、「御中」を次行に右寄せ
+        for i, line in enumerate(wrap(entry["name"], name_size, name_width)):
+            rows.append((name_size, 4 * mm, line, 4 * mm if i == 0 else 2 * mm, "left"))
+        rows.append((name_size, 0, "御中", 2 * mm, "right"))
     return rows
 
 
-def draw_label(c, entry, index, top_y):
+def draw_label(c, entry, top_y, name_size):
     """top_y: 帯の上端のY座標"""
     left = PAD_X
     right = PAGE_W - PAD_X
     width = right - left
-    rows = layout_label(entry, width)
-    total = sum(size + gap for size, _, _, gap in rows)
+    rows = layout_label(entry, width, name_size)
+    total = sum(size + gap for size, _, _, gap, _ in rows)
     # 帯内で上下中央（やや上寄せ）
     y = top_y - (LABEL_H - total) / 2 + 2 * mm
-    for size, indent, text, gap in rows:
+    for size, indent, text, gap, align in rows:
         y -= gap + size
         c.setFont(FONT, size)
-        c.drawString(left + indent, y, text)
-
-    # 通し番号（部数一覧との突合用・小さく右下）
-    c.setFont(FONT, 7)
-    c.setFillGray(0.5)
-    c.drawRightString(right, top_y - LABEL_H + 4 * mm, f"No.{index:02d}")
-    c.setFillGray(0)
+        if align == "right":
+            c.drawRightString(right, y, text)
+        else:
+            c.drawString(left + indent, y, text)
 
 
 def main(src="addresses.json", out="labels.pdf"):
     entries = json.loads((HERE / src).read_text(encoding="utf-8"))
     c = canvas.Canvas(str(HERE / out), pagesize=A4)
     c.setTitle("角A4封筒 宛名帯")
+    name_size = NAME_SIZE
     for i, entry in enumerate(entries):
         slot = i % LABELS_PER_PAGE
         if slot == 0 and i > 0:
@@ -119,7 +121,7 @@ def main(src="addresses.json", out="labels.pdf"):
         if slot == 0:
             draw_cut_lines(c)
         top_y = PAGE_H - slot * LABEL_H
-        draw_label(c, entry, entry.get("no", i + 1), top_y)
+        draw_label(c, entry, top_y, name_size)
     c.save()
     print(f"{len(entries)} 件 -> {out} ({(len(entries) + LABELS_PER_PAGE - 1) // LABELS_PER_PAGE} ページ)")
 
