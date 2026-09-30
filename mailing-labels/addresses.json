@@ -1,0 +1,538 @@
+[
+ {
+  "no": 1,
+  "excel_name": "三俣・樋遣川・大越 利根いこいの里",
+  "name": "三俣・樋遣川・大越高齢者相談センター利根いこいの里",
+  "corp": "社会福祉法人潤青会",
+  "postal": "347-0001",
+  "address1": "埼玉県加須市大越1933",
+  "address2": "介護老人福祉施設 利根いこいの里内",
+  "phone": "0480-53-6557",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "Excel名は略称。加須市公式表記「三俣・樋遣川・大越高齢者相談センター利根いこいの里」を採用。電話一致。",
+  "sources": [
+   "https://www.city.kazo.lg.jp/iryo_hukushi/koreishashien/1/33423.html",
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800028-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 2,
+  "excel_name": "北川辺高齢者相談センター加須清輝苑",
+  "name": "北川辺高齢者相談センター加須清輝苑",
+  "corp": "社会福祉法人宏和会",
+  "postal": "349-1204",
+  "address1": "埼玉県加須市陽光台2丁目883番地78",
+  "address2": "加須清輝苑内",
+  "phone": "0280-23-1133",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "Excelに電話なし。市公式・法人公式で住所一致。電話は法人公式の0280-23-1133。",
+  "sources": [
+   "https://www.city.kazo.lg.jp/iryo_hukushi/koreishashien/1/33423.html",
+   "https://sw-kouwakai.or.jp/service/kazo_consultationcenter"
+  ]
+ },
+ {
+  "no": 3,
+  "excel_name": "アイ・ケアプランセンター",
+  "name": "アイ・ケアプランセンター",
+  "corp": "合同会社アイ・ケアプランセンター",
+  "postal": "347-0031",
+  "address1": "埼玉県加須市南町2-13",
+  "address2": "",
+  "phone": "0480-30-6161(FAX) / TEL 090-1834-9799",
+  "copies": 30,
+  "confidence": "高",
+  "notes": "Excelの0480-30-6161は公表システム上FAX番号。電話は090-1834-9799。住所は公表システムで確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173801455-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 4,
+  "excel_name": "愛の泉居宅介護支援事業",
+  "name": "愛の泉居宅介護支援事業",
+  "corp": "社会福祉法人愛の泉",
+  "postal": "347-0022",
+  "address1": "埼玉県加須市水深811-2",
+  "address2": "",
+  "phone": "0480-66-4129",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "正式名称は「事業所」ではなく「事業」（Excel表記で正しい）。特養愛泉苑(水深869-2)とは番地が異なる。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800069-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 5,
+  "excel_name": "北埼玉医師会居宅介護支援事業所",
+  "name": "北埼玉医師会居宅介護支援事業所",
+  "corp": "一般社団法人北埼玉医師会",
+  "postal": "347-0043",
+  "address1": "埼玉県加須市馬内441番地",
+  "address2": "",
+  "phone": "0480-63-2345",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "地図サイトには旧称「北埼玉郡市医師会」表記あり。公表システムは「北埼玉医師会」。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800051-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 6,
+  "excel_name": "ＳＯＭＰＯケア 加須 居宅介護支援",
+  "name": "ＳＯＭＰＯケア 加須 居宅介護支援",
+  "corp": "ＳＯＭＰＯケア株式会社",
+  "postal": "347-0009",
+  "address1": "埼玉県加須市三俣1-2-7",
+  "address2": "国分貸店舗",
+  "phone": "0480-63-4015",
+  "copies": 30,
+  "confidence": "高",
+  "notes": "建物名「国分貸店舗」を含める。SOMPOケア公式でも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173801356-00&ServiceCd=430",
+   "https://www.sompocare.com/service/zaitaku/kaigoshien/Z000290"
+  ]
+ },
+ {
+  "no": 7,
+  "excel_name": "利根いこいの里居宅介護支援センター",
+  "name": "利根いこいの里居宅介護支援センター",
+  "corp": "社会福祉法人潤青会",
+  "postal": "347-0001",
+  "address1": "埼玉県加須市大越1933",
+  "address2": "",
+  "phone": "0480-69-1531",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "No.1と同一住所・同一法人（電話は別）。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800028-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 8,
+  "excel_name": "ケアプランセンター オレンジ",
+  "name": "ケアプランセンター オレンジ",
+  "corp": "株式会社ワンライフ",
+  "postal": "347-0031",
+  "address1": "埼玉県加須市南町6-15",
+  "address2": "",
+  "phone": "0480-53-7288",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "2025年4月開設の新規事業所。No.3と同じ南町。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173801711-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 9,
+  "excel_name": "居宅介護支援事業所 ハッピーハウス",
+  "name": "居宅介護支援事業所 ハッピーハウス",
+  "corp": "特定非営利活動法人ハッピーハウス",
+  "postal": "347-0044",
+  "address1": "埼玉県加須市礼羽468-1",
+  "address2": "",
+  "phone": "0480-31-9847",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "法人本部は礼羽456-1で番地が異なる。公表システムの事業所所在地468-1を採用。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173801489-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 10,
+  "excel_name": "なかよし居宅介護支援事業所",
+  "name": "なかよし居宅介護支援事業所",
+  "corp": "特定非営利活動法人ほっとかないでネットワーク",
+  "postal": "349-1211",
+  "address1": "埼玉県加須市飯積1904番地1",
+  "address2": "",
+  "phone": "0280-61-2301",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "所在地は古河市ではなく埼玉県加須市（旧北川辺町）。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800721-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 11,
+  "excel_name": "ケアサポート ひばりの里",
+  "name": "ケアサポート ひばりの里",
+  "corp": "特定非営利活動法人ひばりの里ネットワーク",
+  "postal": "349-1212",
+  "address1": "埼玉県加須市麦倉2116番地2",
+  "address2": "デイサービスセンター麦倉ひばりの里内",
+  "phone": "0280-33-6600",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "所在地は埼玉県加須市（旧北川辺町）。法人本部（加須市久下）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173800911-00&ServiceCd=430"
+  ]
+ },
+ {
+  "no": 12,
+  "excel_name": "ケアステーション すてっぷ",
+  "name": "ケアステーション すてっぷ",
+  "corp": "社会福祉法人敬愛会",
+  "postal": "349-1153",
+  "address1": "埼玉県加須市新川通181番地3",
+  "address2": "",
+  "phone": "0480-78-1651",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "法人公式サイトでも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/11/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=1173600063-00&ServiceCd=430",
+   "https://keiaikai-j.jp/step/"
+  ]
+ },
+ {
+  "no": 13,
+  "excel_name": "愛光園 居宅介護支援事業所",
+  "name": "愛光園 居宅介護支援事業所",
+  "corp": "社会福祉法人愛光会",
+  "postal": "306-0044",
+  "address1": "茨城県古河市新久田250-4",
+  "address2": "",
+  "phone": "0280-48-6944",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "特養愛光園と同一住所。古河市公式一覧でも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400025-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 14,
+  "excel_name": "居宅介護支援センター 平成園",
+  "name": "居宅介護支援センター 平成園",
+  "corp": "医療法人慈政会",
+  "postal": "306-0012",
+  "address1": "茨城県古河市旭町一丁目17番39号",
+  "address2": "",
+  "phone": "0280-23-4767",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "老健平成園と同一住所。法人本部（東本町）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400108-00&ServiceCd=430",
+   "https://www.heiseien.jp/facility/index.html"
+  ]
+ },
+ {
+  "no": 15,
+  "excel_name": "古河社協介護ステーション居宅介護支援事業所",
+  "name": "古河社協介護ステーション居宅介護支援事業所",
+  "corp": "社会福祉法人古河市社会福祉協議会",
+  "postal": "306-0044",
+  "address1": "茨城県古河市新久田271番地1",
+  "address2": "古河福祉の森会館",
+  "phone": "0280-47-0150",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "建物名「古河福祉の森会館」を併記。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400413-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 16,
+  "excel_name": "ニチイケアセンター古河",
+  "name": "ニチイケアセンター古河",
+  "corp": "株式会社ニチイ学館",
+  "postal": "306-0016",
+  "address1": "茨城県古河市古河643-1",
+  "address2": "",
+  "phone": "0280-30-5152",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "同住所に訪問介護等も併設。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400694-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 17,
+  "excel_name": "居宅介護支援事業所 ばんどう",
+  "name": "居宅介護支援事業所ばんどう",
+  "corp": "合同会社ばんどう",
+  "postal": "306-0052",
+  "address1": "茨城県古河市大山498-4",
+  "address2": "",
+  "phone": "0280-48-3486",
+  "copies": 10,
+  "confidence": "中",
+  "notes": "住所・電話は公表システム法人情報欄＋古河市公式一覧(2026/7/1)で一致。ただし居宅介護支援の単独公表ページが現在閲覧不可。運営状況を電話確認推奨。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_001_kihon=true&JigyosyoCd=0870401239-00&ServiceCd=110",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 18,
+  "excel_name": "居宅介護支援事業所 ファミリー",
+  "name": "居宅介護支援事業所ファミリー",
+  "corp": "株式会社アイ・コーポレーション",
+  "postal": "306-0002",
+  "address1": "茨城県古河市三杉町2-10-8",
+  "address2": "",
+  "phone": "0280-31-1330",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "正式名称はスペースなし。法人本店（静町）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401502-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 19,
+  "excel_name": "イースケア居宅介護支援事業所",
+  "name": "イースケア居宅介護支援事業所",
+  "corp": "合同会社嘉邦",
+  "postal": "306-0041",
+  "address1": "茨城県古河市鴻巣642番地3",
+  "address2": "",
+  "phone": "0280-23-3853",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "公表システム・古河市公式一覧で一致。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401692-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 20,
+  "excel_name": "居宅介護支援センター きずな",
+  "name": "居宅介護支援センターきずな",
+  "corp": "合同会社Lien de famille",
+  "postal": "306-0025",
+  "address1": "茨城県古河市原町9-53",
+  "address2": "コンフォート古河401",
+  "phone": "0280-23-5993",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "正式名称はスペースなし。法人本店（けやき平）とは別住所。マンション名・部屋番号必須。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401809-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 21,
+  "excel_name": "居宅介護支援事業所 愛和苑",
+  "name": "居宅介護支援事業所 愛和苑",
+  "corp": "社会福祉法人愛和会",
+  "postal": "306-0221",
+  "address1": "茨城県古河市駒羽根320-1",
+  "address2": "",
+  "phone": "0280-93-0234",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "特養愛和苑併設・電話共通。法人公式サイトでも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400546-00&ServiceCd=430",
+   "http://www.ai-wa-kai.com/aiwaen/"
+  ]
+ },
+ {
+  "no": 22,
+  "excel_name": "つぐみ居宅介護支援事業所総和",
+  "name": "つぐみ居宅介護支援事業所総和",
+  "corp": "合同会社緒心",
+  "postal": "306-0233",
+  "address1": "茨城県古河市西牛谷411-15",
+  "address2": "セントラルアパートメント202",
+  "phone": "0280-33-6440",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "別法人(合同会社Rフィールド)の「つぐみ居宅介護支援事業所」(南間中橋)とは別。法人本店（下大野）とは別住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401957-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 23,
+  "excel_name": "介護保険支援センター青嵐荘(総和)",
+  "name": "介護保険支援センター青嵐荘（総和）",
+  "corp": "社会福祉法人芳香会",
+  "postal": "306-0233",
+  "address1": "茨城県古河市西牛谷852-4",
+  "address2": "タウンハウスMITA 105号室",
+  "phone": "0280-98-0030",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "法人公式サイト・古河市公式一覧で一致。古い住所（東牛谷456-6）が地図サイトに残っているが現行は西牛谷852-4。",
+  "sources": [
+   "https://www.houkoukai.or.jp/jigyou/consultation/index.php?p=kaigohoken-seiran",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 24,
+  "excel_name": "古河市地域包括支援センター総和",
+  "name": "古河市地域包括支援センター総和",
+  "corp": "",
+  "postal": "306-0201",
+  "address1": "茨城県古河市上大野1889-1",
+  "address2": "特別養護老人ホーム希望の森内",
+  "phone": "0280-23-5661",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "委託先は社会福祉法人愛和会。愛称「高齢者サポートセンター総和」。茨城県一覧(R8.4.1)・古河市公式で一致。",
+  "sources": [
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/5/1685.html",
+   "https://www.pref.ibaraki.jp/hokenfukushi/chofuku/shichoson/kaigo/hokatsu/documents/houkatusentar8.pdf"
+  ]
+ },
+ {
+  "no": 25,
+  "excel_name": "総和中央病院 居宅介護支援事業所",
+  "name": "総和中央病院 居宅介護支援事業所",
+  "corp": "医療法人仁寿会",
+  "postal": "306-0221",
+  "address1": "茨城県古河市駒羽根825-1",
+  "address2": "",
+  "phone": "0280-91-1256",
+  "copies": 20,
+  "confidence": "高",
+  "notes": "公表システム・古河市公式一覧で一致。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0874300031-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 26,
+  "excel_name": "あずみ苑古河",
+  "name": "あずみ苑古河",
+  "corp": "株式会社アズ・ライフケア",
+  "postal": "306-0126",
+  "address1": "茨城県古河市諸川1393-2",
+  "address2": "",
+  "phone": "0280-75-1433",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "居宅介護支援事業所の登録名は「あずみ苑古河」のみ（接尾なし）。デイ・ショートと同一住所・電話。公式サイトでも確認。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400561-00&ServiceCd=430",
+   "https://www.azumien.jp/search/koga/"
+  ]
+ },
+ {
+  "no": 27,
+  "excel_name": "けやきの舎居宅介護支援事業所",
+  "name": "けやきの舎居宅介護支援事業所",
+  "corp": "社会医療法人友志会",
+  "postal": "306-0125",
+  "address1": "茨城県古河市仁連601",
+  "address2": "",
+  "phone": "0280-77-3335",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "公表システム・古河市公式一覧で一致。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870400637-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 28,
+  "excel_name": "居宅介護支援事業所 きぼう",
+  "name": "居宅介護支援事業所 きぼう",
+  "corp": "株式会社きぼう",
+  "postal": "306-0126",
+  "address1": "茨城県古河市諸川1307-25",
+  "address2": "",
+  "phone": "0280-75-0707",
+  "copies": 10,
+  "confidence": "中",
+  "notes": "古河市公式一覧(2026/7/1更新)で名称・住所・電話一致。ただし公表システムの詳細ページが現在閲覧不可（未公表/取下げの可能性）。郵便番号306-0126は諸川の郵便番号として整合。運営状況を電話確認推奨。",
+  "sources": [
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html",
+   "https://r-guide.jp/care_office/79076/"
+  ]
+ },
+ {
+  "no": 29,
+  "excel_name": "ケアプランセンター四季の郷",
+  "name": "ケアプランセンター 四季の郷",
+  "corp": "社会福祉法人さしま福祉会",
+  "postal": "306-0107",
+  "address1": "茨城県古河市東間中橋198",
+  "address2": "",
+  "phone": "0280-33-3311",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "登録名は「ケアプランセンター 四季の郷」（スペースあり）。特養四季の郷と同一建物。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0870401247-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 30,
+  "excel_name": "みどりの里指定居宅介護支援事業所",
+  "name": "みどりの里指定居宅介護支援事業所",
+  "corp": "社会福祉法人三和みつなみ会",
+  "postal": "306-0112",
+  "address1": "茨城県古河市東山田4796-2",
+  "address2": "",
+  "phone": "0280-78-1123",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "特養・ケアハウスみどりの里と同一住所。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0874300304-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 31,
+  "excel_name": "居宅介護支援センターみどりの丘",
+  "name": "居宅介護支援センターみどりの丘",
+  "corp": "社会福祉法人三和みつなみ会",
+  "postal": "306-0101",
+  "address1": "茨城県古河市尾崎3373",
+  "address2": "",
+  "phone": "0280-75-0770",
+  "copies": 10,
+  "confidence": "高",
+  "notes": "デイサービスセンターみどりの丘と同一敷地。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0874301021-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ },
+ {
+  "no": 32,
+  "excel_name": "ライフサポートふくろう居宅介護支援事業所",
+  "name": "ライフサポートふくろう居宅介護支援事業所",
+  "corp": "有限会社魁星舎",
+  "postal": "306-0101",
+  "address1": "茨城県古河市尾崎2630番地13",
+  "address2": "",
+  "phone": "0280-75-1335",
+  "copies": 30,
+  "confidence": "高",
+  "notes": "公表システムで住所・電話一致。",
+  "sources": [
+   "https://www.kaigokensaku.mhlw.go.jp/08/index.php?action_kouhyou_detail_023_kihon=true&JigyosyoCd=0874301039-00&ServiceCd=430",
+   "https://www.city.ibaraki-koga.lg.jp/soshiki/koureikaigo/ippan/4/12356.html"
+  ]
+ }
+]
