@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>フェースシート（LIME HOUSE 入居相談用）</title>
+<style>
+  @page { size: A4; margin: 9mm 11mm 9mm 11mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "游ゴシック", "Yu Gothic", "YuGothic", "ＭＳ ゴシック", "MS Gothic", "IPAexGothic", "IPAGothic", sans-serif;
+    font-size: 8.5pt; line-height: 1.3; color: #000;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .sec { display: flex; align-items: center; margin: 0 0 1.5mm 0; }
+  .sec .num { background: #000; color: #fff; font-weight: bold; font-size: 15pt; line-height: 1; padding: 1.2mm 1.6mm; }
+  .sec h1 { font-size: 13.5pt; font-weight: bold; margin: 0 0 0 1.8mm; letter-spacing: 0.02em; }
+  .sec .right { margin-left: auto; font-size: 8pt; }
+
+  .topline { display: flex; align-items: center; font-size: 8.5pt; margin: 0 0 1mm 10mm; }
+  .topline .sep { border-left: 1px solid #000; height: 4mm; margin: 0 4mm; }
+
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  table.frm { border: 1.4pt solid #000; }
+  table.frm td, table.frm th { border: 0.6pt solid #000; padding: 0.8mm 1.4mm; vertical-align: middle; font-weight: normal; text-align: left; }
+  td.l { background: #d9d9d9; text-align: center !important; font-weight: bold; letter-spacing: 0.05em; }
+  td.l.s { font-size: 6.5pt; letter-spacing: 0; font-weight: normal; line-height: 1.15; }
+  td.c { text-align: center !important; }
+  td.sub { background: #efefef; text-align: center !important; font-size: 7.5pt; }
+  .k { display: inline-block; min-width: 7mm; }
+  .sp { display: inline-block; width: 6mm; }
+  .sp2 { display: inline-block; width: 12mm; }
+  .cir { display: inline-block; border: 1px solid #000; border-radius: 50%; width: 4.2mm; height: 4.2mm; line-height: 4mm; text-align: center; }
+  .cir2 { display: inline-block; border: 1px solid #000; border-radius: 50%; padding: 0 1.2mm; height: 4.2mm; line-height: 4mm; text-align: center; }
+  .tel::before { content: "☎"; margin-right: 1mm; }
+  .cell2 { display: flex; justify-content: space-between; align-items: center; }
+  .v { font-size: 9pt; }
+  .small { font-size: 7pt; }
+
+  .two { display: flex; gap: 3mm; margin: 2mm 0; }
+  .two .col { flex: 1; }
+  .two h2 { font-size: 9pt; font-weight: bold; margin: 0 0 0.8mm 0; }
+  .box { border: 1.2pt solid #000; padding: 0.5mm 1.5mm; }
+  .box .ln { border-bottom: 0.5pt dotted #777; height: 5.2mm; line-height: 5.2mm; }
+  .box .ln.first { border-bottom: 0.5pt dotted #777; }
+  .box .ln:last-child { border-bottom: none; }
+
+  .foot { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1.5mm; font-size: 8.5pt; }
+  .foot .u { border-bottom: 1px solid #000; }
+  .credit { font-size: 6.5pt; text-align: right; }
+  .pageno { text-align: center; font-size: 8pt; margin-top: 1.5mm; }
+  .mb { margin-bottom: 1.6mm; }
+  .mt { margin-top: 2mm; }
+  .note { font-size: 7.5pt; margin: 1mm 0; }
+  .chk { line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ===================== PAGE 1 : フェースシート ===================== -->
+<div class="page">
+  <div class="sec"><span class="num">1</span><h1>フェースシート</h1><span class="right">住宅型有料老人ホーム LIME HOUSE　入居相談用</span></div>
+  <div class="topline">
+    <span>令和 <span class="k">８</span>年 <span class="k">10</span>月 <span class="k">８</span>日相談受付</span>
+    <span class="sep"></span>
+    <span>訪問・<span class="cir2">電話</span>・来所・その他（<span class="sp2"></span>）</span>
+    <span style="margin-left:6mm">初回相談受付者　イワモト</span>
+  </div>
+
+  <table class="frm">
+    <colgroup><col style="width:12%"><col style="width:40%"><col style="width:8%"><col style="width:6%"><col style="width:34%"></colgroup>
+    <tr style="height:9mm">
+      <td class="l">本人氏名</td>
+      <td><span class="small">ながの　たきち</span><br><span class="v">長野　太吉</span></td>
+      <td class="c"><span class="cir">男</span>・女</td>
+      <td class="l s">年齢</td>
+      <td class="small"><span class="small">Ｍ・Ｔ・<span class="cir">Ｓ</span></span>　17年 ６月 27日生れ（84歳）</td>
+    </tr>
+    <tr style="height:9mm">
+      <td class="l">住　　所</td>
+      <td colspan="3" style="vertical-align:top; border-right:0.6pt solid #000">〒</td>
+      <td><div class="tel"></div><div>携帯</div></td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l" rowspan="2">緊急連絡先</td>
+      <td colspan="2">氏名</td>
+      <td colspan="2">男・女　年齢（<span class="sp"></span>歳）　本人との続柄（<span class="sp2"></span>）</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td colspan="2">住所</td>
+      <td colspan="2"><div class="tel"></div><div>携帯</div></td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l" rowspan="2">相 談 者</td>
+      <td colspan="2">氏名　<span class="v">宮﨑　佐保</span>（みずほの里居宅介護支援　介護支援専門員）</td>
+      <td colspan="2">男・女　年齢（<span class="sp"></span>歳）　続柄（担当ケアマネジャー）</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td colspan="2">住所</td>
+      <td colspan="2"><div class="tel">0840-61-2228</div><div>携帯</div></td>
+    </tr>
+    <tr style="height:7mm">
+      <td class="l s">相談経路<br>（紹介者）</td>
+      <td colspan="4">みずほの里居宅介護支援　宮﨑　佐保 様　（電話にて相談後、メールにて基本情報受領）</td>
+    </tr>
+    <tr style="height:5.5mm">
+      <td class="l s">居宅サービス計画<br>作成依頼の届出</td>
+      <td colspan="4">届出年月日　<span class="sp2"></span>年 <span class="sp"></span>月 <span class="sp"></span>日　　※現在の担当：みずほの里居宅介護支援（継続）</td>
+    </tr>
+  </table>
+
+  <div class="two">
+    <div class="col">
+      <h2>■相談内容（主訴／本人・家族の希望・困っていることや不安、思い）</h2>
+      <div class="box">
+        <div class="ln">（本人）</div>
+        <div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div>
+        <div class="ln">（介護者・家族）</div>
+        <div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div>
+      </div>
+    </div>
+    <div class="col">
+      <h2>■これまでの生活の経過（主な生活史）</h2>
+      <div class="box">
+        <div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div>
+        <div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div>
+      </div>
+    </div>
+  </div>
+
+  <table class="frm">
+    <colgroup><col style="width:12%"><col style="width:13.5%"><col style="width:30%"><col style="width:11%"><col style="width:8%"><col style="width:25.5%"></colgroup>
+    <tr style="height:6.5mm">
+      <td class="l">介護保険</td>
+      <td class="c small">利用者負担割合</td>
+      <td>□1割　□2割　□3割</td>
+      <td class="c" style="font-size:6.5pt">後期高齢者医療<br>保険（75歳以上）</td>
+      <td class="c" style="font-size:6.5pt">一部負担金</td>
+      <td class="small">□1割負担　□2割負担　□3割負担</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l s">高額介護<br>サービス費該当</td>
+      <td class="c">利用者負担</td>
+      <td colspan="4">（□第5段階　□第4段階　□第3段階　□第2段階　□第1段階）</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l" rowspan="2">要介護認定</td>
+      <td class="c">済　➡</td>
+      <td colspan="2">非該当・要支援 1・2　要介護 1・<span class="cir">2</span>・3・4・5</td>
+      <td class="c small">認定期間</td>
+      <td class="small">令和6年11月1日 ～ 令和10年10月30日</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="c small">未(見込み) ➡</td>
+      <td colspan="2">非該当・要支援 1・2　要介護 1・2・3・4・5</td>
+      <td class="c small">認定日</td>
+      <td><span class="sp2"></span>年 <span class="sp"></span>月 <span class="sp"></span>日</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l">身障手帳</td>
+      <td>□有　□無</td>
+      <td>等　級　　　　種　　　　級</td>
+      <td class="c">交付日</td>
+      <td colspan="2"><span class="sp2"></span>年 <span class="sp"></span>月</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l">療育手帳</td>
+      <td>□有　□無</td>
+      <td>程　度</td>
+      <td class="c">交付日</td>
+      <td colspan="2"><span class="sp2"></span>年 <span class="sp"></span>月</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l s">精神障害者<br>保健福祉手帳</td>
+      <td>□有　□無</td>
+      <td>等　級　　　　　　　級</td>
+      <td class="c">交付日</td>
+      <td colspan="2"><span class="sp2"></span>年 <span class="sp"></span>月</td>
+    </tr>
+    <tr style="height:7mm">
+      <td class="l s">障害福祉サービス<br>受給者証の有無</td>
+      <td>□有　□無</td>
+      <td class="small">自立支援医療受給者証の有無　□有　□無</td>
+      <td colspan="3">障害支援区分→（<span class="sp2"></span><span class="sp2"></span>）</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="l" rowspan="2">日常生活自立度</td>
+      <td class="c small">障害高齢者</td>
+      <td class="small">自立・J1・J2・A1・A2・B1・B2・C1・C2</td>
+      <td style="font-size:6.5pt" rowspan="2">判定者<br>（機関名　　　　）</td>
+      <td class="c small" rowspan="2">判定日</td>
+      <td><span class="sp2"></span>年 <span class="sp"></span>月 <span class="sp"></span>日</td>
+    </tr>
+    <tr style="height:6.5mm">
+      <td class="c small">認 知 症</td>
+      <td class="small">自立・Ⅰ・Ⅱa・Ⅱb・Ⅲa・Ⅲb・Ⅳ・M</td>
+      <td><span class="sp2"></span>年 <span class="sp"></span>月 <span class="sp"></span>日</td>
+    </tr>
+  </table>
+
+  <div class="foot">
+    <span class="u" style="white-space:nowrap">アセスメント実施日（初回）　　　年　　月　　日　（更新）　　　年　　月　　日</span>
+    <span class="credit" style="white-space:nowrap">（全社協・在宅版ケアプラン作成方法検討委員会作成様式に準拠）</span>
+  </div>
+  <div class="pageno">－ 1 －</div>
+</div>
+
+<!-- ===================== PAGE 2 : 本人の健康状態・受診等の状況 ===================== -->
+<div class="page">
+  <div class="sec"><span class="num">2</span><h1>本人の健康状態・受診等の状況</h1><span class="right">長野　太吉 様</span></div>
+
+  <table class="frm mb">
+    <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+    <tr>
+      <td class="sub">既往歴・現症（必要に応じ「主治医意見書」を転記）</td>
+      <td class="sub">医療処置・医療的ケアの状況（該当に☑）</td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top; padding:1mm 1.5mm">
+        <div class="small">※要介護状態に関係がある既往歴および現症</div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="border-bottom:0.5pt dotted #777;height:5mm"></div>
+        <div class="ln" style="height:5mm"></div>
+        <table class="frm" style="border:0.6pt solid #000; margin-top:1mm">
+          <tr style="height:6mm"><td class="l" style="width:20%">身　長</td><td style="width:30%" class="c">　　　　cm</td><td class="l" style="width:20%">体　重</td><td class="c">　　　　kg</td></tr>
+          <tr style="height:7mm"><td class="l">歯の状況</td><td colspan="3">□歯あり　□歯なし　□総入れ歯　□局部義歯<br><span class="small">口腔ケア：□自立　□一部介助　□全介助</span></td></tr>
+        </table>
+      </td>
+      <td style="vertical-align:top; padding:1mm 1.5mm" class="chk">
+        □インシュリン注射（□自己注射 可　□自己注射 不可）<br>
+        □人工透析（週<span class="sp"></span>回／通院先：<span class="sp2"></span><span class="sp2"></span>）<br>
+        □たん吸引（□口腔内　□鼻腔内　□気管カニューレ内）<br>
+        □胃ろう　□鼻腔経管栄養　□尿バルーン・カテーテル<br>
+        □在宅酸素　□点滴　□人工肛門（ストーマ）<br>
+        □褥瘡（部位：<span class="sp2"></span>／ステージ：<span class="sp"></span>）<br>
+        □服薬管理（□自己管理可　□要声かけ　□要全介助）<br>
+        □その他（<span class="sp2"></span><span class="sp2"></span><span class="sp2"></span>）<br>
+        <span class="small">※インシュリンは自己注射可能な方のみ。医療処置は訪問看護で対応</span>
+      </td>
+    </tr>
+  </table>
+
+  <table class="frm mb">
+    <tr><td class="sub" style="text-align:left !important">【特記事項】（病気やけがで、障害等に関わる事項、改善の可能性等）</td></tr>
+    <tr style="height:16mm"><td style="vertical-align:top"></td></tr>
+  </table>
+  <div class="note">主治医からの指導・助言事項、視力障害、聴力障害、麻痺、関節の動き、褥瘡、その他皮膚疾患（以上要介護認定項目）、外傷、内部障害、言語障害、動悸・息切れ、便秘、尿失禁、便失禁、摂食嚥下障害、口腔（炎症・痛み・出血・口臭・不良義歯等）に留意のこと。</div>
+
+  <table class="frm mb">
+    <colgroup><col style="width:7%"><col style="width:11%"><col style="width:20.5%"><col style="width:20.5%"><col style="width:20.5%"><col style="width:20.5%"></colgroup>
+    <tr><td class="sub" colspan="6" style="text-align:left !important">現在の受診状況（歯科含む）</td></tr>
+    <tr style="height:6.5mm"><td class="l" colspan="2">病　　名</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l" colspan="2">薬の有無</td><td>□有　□無</td><td>□有　□無</td><td>□有　□無</td><td>□有　□無</td></tr>
+    <tr style="height:6mm"><td class="l s" rowspan="3">受診状況</td><td class="l s">発症時期</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:9mm"><td class="l s">受診頻度</td><td class="small">□定期（週・月　回）<br>□不定期</td><td class="small">□定期（週・月　回）<br>□不定期</td><td class="small">□定期（週・月　回）<br>□不定期</td><td class="small">□定期（週・月　回）<br>□不定期</td></tr>
+    <tr style="height:6mm"><td class="l s">受診方法</td><td>□通院　□往診</td><td>□通院　□往診</td><td>□通院　□往診</td><td>□通院　□往診</td></tr>
+    <tr style="height:6mm"><td class="l s" rowspan="4">受診病院</td><td class="l s">医療機関</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">診療科</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">主治医</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">連絡先</td><td class="tel"></td><td class="tel"></td><td class="tel"></td><td class="tel"></td></tr>
+    <tr style="height:7mm"><td class="l s" colspan="2">受診方法<br>留意点等</td><td colspan="4"></td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:22%"><col style="width:78%"></colgroup>
+    <tr style="height:6.5mm"><td class="l s">往診可能な医療機関</td><td>□無　□有（<span class="sp2"></span><span class="sp2"></span><span class="sp2"></span><span class="sp2"></span>）　<span class="tel"></span></td></tr>
+    <tr style="height:6.5mm"><td class="l s">緊急入院できる医療機関</td><td>□無　□有（<span class="sp2"></span><span class="sp2"></span><span class="sp2"></span><span class="sp2"></span>）　<span class="tel"></span></td></tr>
+    <tr style="height:6.5mm"><td class="l s">相談・処方を受けている薬局<br>（かかりつけ薬局）</td><td>□無　□有（<span class="sp2"></span><span class="sp2"></span><span class="sp2"></span><span class="sp2"></span>）　<span class="tel"></span></td></tr>
+    <tr style="height:6.5mm"><td class="l s">アレルギー・禁忌</td><td></td></tr>
+    <tr style="height:6.5mm"><td class="l s">感染症の有無</td><td>□無　□有（<span class="sp2"></span><span class="sp2"></span>）　検査実施日：<span class="sp2"></span>年 <span class="sp"></span>月 <span class="sp"></span>日　<span class="small">※感染症のある方は原則受け入れ不可</span></td></tr>
+  </table>
+
+  <table class="frm">
+    <tr><td class="sub" style="text-align:left !important">【特記、生活上配慮すべき課題など】</td></tr>
+    <tr style="height:14mm"><td style="vertical-align:top"></td></tr>
+  </table>
+  <div class="pageno">－ 2 －</div>
+</div>
+
+<!-- ===================== PAGE 3 : 入居相談確認事項（LIME HOUSE 独自項目） ===================== -->
+<div class="page">
+  <div class="sec"><span class="num">3</span><h1>入居相談確認事項（LIME HOUSE 独自項目）</h1><span class="right">長野　太吉 様</span></div>
+
+  <table class="frm mb">
+    <colgroup><col style="width:15%"><col style="width:38%"><col style="width:14%"><col style="width:33%"></colgroup>
+    <tr><td class="sub" colspan="4" style="text-align:left !important">■生活保護・経済状況　<span class="small">※当施設は基本的に生活保護受給中の方を対象としております</span></td></tr>
+    <tr style="height:6mm"><td class="l s">生活保護</td><td colspan="3">□受給中　□申請中　□申請予定　□受給なし　　扶助：□介護扶助　□医療扶助</td></tr>
+    <tr style="height:6mm"><td class="l s">担当福祉事務所</td><td></td><td class="l s">担当ケースワーカー</td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">福祉事務所 連絡先</td><td class="tel"></td><td class="l s">年金等収入（月額）</td><td></td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:16%"><col style="width:20%"><col style="width:10%"><col style="width:20%"><col style="width:34%"></colgroup>
+    <tr><td class="sub" colspan="5" style="text-align:left !important">■身元引受人・身元保証人・ご家族　<span class="small">※不明・不在の場合でもご相談可能です</span></td></tr>
+    <tr style="height:5.5mm"><td class="l s">区分</td><td class="l s">氏名</td><td class="l s">続柄</td><td class="l s">電話番号</td><td class="l s">住所・備考</td></tr>
+    <tr style="height:6mm"><td class="l s">身元引受人</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">身元保証人</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">キーパーソン</td><td></td><td></td><td></td><td></td></tr>
+    <tr style="height:6mm"><td class="l s">状況</td><td colspan="4" class="small">□いる　□不明　□不在　　成年後見制度：□利用あり（後見人：<span class="sp2"></span><span class="sp2"></span>）　□利用なし</td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:15%"><col style="width:38%"><col style="width:14%"><col style="width:33%"></colgroup>
+    <tr><td class="sub" colspan="4" style="text-align:left !important">■認知症・精神面・特定疾患の状況</td></tr>
+    <tr style="height:6mm"><td class="l s">認知症</td><td colspan="3">□なし　□あり（診断名：<span class="sp2"></span><span class="sp2"></span>／診断時期：<span class="sp2"></span>）<span class="small">　※前頭側頭型・ピック病、統合失調症・双極性障害は受け入れ不可</span></td></tr>
+    <tr style="height:6mm"><td class="l s">周辺症状（BPSD）</td><td colspan="3">□なし　□夜間不穏　□徘徊　□帰宅願望　□暴言・暴力　□介護拒否　□その他（<span class="sp2"></span>）</td></tr>
+    <tr style="height:6mm"><td class="l s">精神疾患の既往</td><td>□なし　□あり（<span class="sp2"></span><span class="sp2"></span>）</td><td class="l s">希死念慮</td><td>□なし　□あり</td></tr>
+    <tr style="height:6mm"><td class="l s">パーキンソン病</td><td>□なし　□あり（ヤール Ⅰ・Ⅱ・Ⅲ・Ⅳ・Ⅴ）</td><td class="l s">服薬時間の厳守</td><td>□不要　□必要（ウェアリングオフあり）</td></tr>
+    <tr style="height:6mm"><td class="l s">がん・末期がん</td><td>□なし　□あり（部位：<span class="sp2"></span><span class="sp2"></span>）</td><td class="l s">ACP（急変時の方針）</td><td>□文書合意済　□未　□相談中</td></tr>
+    <tr style="height:6mm"><td class="l s">狭心症・心疾患</td><td>□なし　□あり（ニトロ □自己管理可　□不可）</td><td class="l s">うつ病</td><td>□なし　□あり</td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:16%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:57%"></colgroup>
+    <tr><td class="sub" colspan="5" style="text-align:left !important">■ADL・生活状況</td></tr>
+    <tr style="height:5.5mm"><td class="l s">項目</td><td class="l s">自立</td><td class="l s">一部介助</td><td class="l s">全介助</td><td class="l s">備考（介助内容・使用用具など）</td></tr>
+    <tr style="height:5.5mm"><td class="l s">食事</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td class="small">形態：□常食 □軟菜 □きざみ □ミキサー □とろみ　嚥下：□問題なし □むせあり</td></tr>
+    <tr style="height:5.5mm"><td class="l s">排泄</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td class="small">□トイレ □ポータブル □リハビリパンツ □おむつ　失禁：□なし □あり</td></tr>
+    <tr style="height:5.5mm"><td class="l s">入浴</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td></td></tr>
+    <tr style="height:5.5mm"><td class="l s">移動</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td class="small">□独歩 □杖 □歩行器 □車いす □ベッド上　麻痺・拘縮：□なし □あり（<span class="sp2"></span>）</td></tr>
+    <tr style="height:5.5mm"><td class="l s">移乗</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td></td></tr>
+    <tr style="height:5.5mm"><td class="l s">更衣・整容</td><td class="c">□</td><td class="c">□</td><td class="c">□</td><td></td></tr>
+    <tr style="height:5.5mm"><td class="l s">意思疎通</td><td colspan="3" class="c">□可　□一部可　□困難</td><td class="small">視力：□良 □不良（眼鏡）　聴力：□良 □不良（補聴器）　睡眠・夜間：</td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:16%"><col style="width:84%"></colgroup>
+    <tr><td class="sub" colspan="2" style="text-align:left !important">■生活状況・ご意向</td></tr>
+    <tr style="height:6mm"><td class="l s">現在の居所</td><td>□自宅　□入院中　□他施設　（名称：<span class="sp2"></span><span class="sp2"></span><span class="sp2"></span>）　入居希望時期：<span class="sp2"></span><span class="sp2"></span></td></tr>
+    <tr style="height:7.5mm"><td class="l s">利用中のサービス</td><td style="vertical-align:top"></td></tr>
+    <tr style="height:7.5mm"><td class="l s">本人の意向</td><td style="vertical-align:top"></td></tr>
+    <tr style="height:7.5mm"><td class="l s">家族の意向</td><td style="vertical-align:top"></td></tr>
+    <tr style="height:6mm"><td class="l s">訪問介護の希望</td><td class="small">□LIME HOUSE グループの訪問介護を利用　□他事業所を利用（事業所名：<span class="sp2"></span><span class="sp2"></span>）　□未定</td></tr>
+  </table>
+
+  <table class="frm mb">
+    <colgroup><col style="width:15%"><col style="width:38%"><col style="width:14%"><col style="width:33%"></colgroup>
+    <tr><td class="sub" colspan="4" style="text-align:left !important">■記入者</td></tr>
+    <tr style="height:6mm"><td class="l s">記入日</td><td>令和<span class="sp"></span>年 <span class="sp"></span>月 <span class="sp"></span>日</td><td class="l s">記入者（所属・氏名）</td><td>みずほの里居宅介護支援　宮﨑　佐保</td></tr>
+  </table>
+
+  <table class="frm">
+    <colgroup><col style="width:15%"><col style="width:38%"><col style="width:14%"><col style="width:33%"></colgroup>
+    <tr><td class="sub" colspan="4" style="text-align:left !important">■施設記入欄　<span class="small">※ケアマネジャー様はご記入不要です</span></td></tr>
+    <tr style="height:6mm"><td class="l s">受付日・受付者</td><td></td><td class="l s">事前検討結果</td><td class="small">□受入可 □条件付き可 □要面談 □受入不可</td></tr>
+    <tr style="height:6mm"><td class="l s">面談・見学予定日</td><td></td><td class="l s">備考</td><td></td></tr>
+  </table>
+  <div class="pageno">－ 3 －</div>
+</div>
+
+</body>
+</html>
