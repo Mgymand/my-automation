@@ -1,0 +1,156 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Montserrat:wght@500;600;700&family=Shippori+Mincho:wght@700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#888;font-family:"Zen Kaku Gothic New",sans-serif}
+.sq{width:1080px;height:1080px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.wide{width:1600px;height:400px;display:flex;align-items:center;justify-content:center;gap:48px;position:relative}
+.navy{background:#1E3A8A}.white{background:#fff}.none{background:transparent}
+.jp{font-family:"Zen Kaku Gothic New";font-weight:900;letter-spacing:.06em;line-height:1}
+.en{font-family:"Montserrat";font-weight:600;letter-spacing:.42em;line-height:1}
+.tag{font-family:"Zen Kaku Gothic New";font-weight:700;letter-spacing:.18em;line-height:1}
+.c-w{color:#fff}.c-n{color:#1E3A8A}.c-g{color:#E5C06B}
+.mincho{font-family:"Shippori Mincho";font-weight:800;letter-spacing:.12em;line-height:1}
+</style></head><body>
+
+<!-- MARK: gate + rising sun -->
+<svg id="markdef" width="0" height="0" style="position:absolute">
+ <defs>
+  
+  <symbol id="mark" viewBox="0 0 200 200">
+   <clipPath id="cp"><rect x="0" y="0" width="200" height="160"/></clipPath>
+   <circle cx="100" cy="160" r="40" fill="#E5C06B" clip-path="url(#cp)"/>
+   <rect x="36" y="156" width="128" height="12" rx="6" fill="currentColor"/>
+   <rect x="44" y="52" width="20" height="112" rx="4" fill="currentColor"/>
+   <rect x="136" y="52" width="20" height="112" rx="4" fill="currentColor"/>
+   <rect x="30" y="40" width="140" height="20" rx="6" fill="currentColor"/>
+  </symbol>
+  
+  <symbol id="door" viewBox="0 0 200 200">
+   <!-- light through the opening -->
+   <rect x="64" y="58" width="76" height="112" fill="#E5C06B"/>
+   <!-- frame -->
+   <path d="M44 174 V48 a10 10 0 0 1 10 -10 H150 a10 10 0 0 1 10 10 V174 H140 V58 H64 V174 Z" fill="currentColor"/>
+   <!-- door leaf swung open outward (left) -->
+   <path d="M64 58 L26 40 V190 L64 174 Z" fill="currentColor"/>
+   <circle cx="54" cy="118" r="5" fill="#E5C06B"/>
+   <!-- threshold -->
+   <rect x="20" y="170" width="160" height="12" rx="6" fill="currentColor"/>
+  </symbol>
+
+  <symbol id="kmono" viewBox="0 0 200 200">
+   <rect x="16" y="16" width="168" height="168" rx="40" fill="currentColor"/>
+   <!-- K as gate pillar + open path -->
+   <rect x="58" y="48" width="22" height="104" rx="4" fill="#fff"/>
+   <path d="M80 100 L132 48 H156 L104 100 L156 152 H132 Z" fill="#fff"/>
+   <circle cx="150" cy="150" r="14" fill="#E5C06B"/>
+  </symbol>
+
+ </defs>
+</svg>
+
+<!-- A: square, navy, mark + カドデ + KADODE -->
+<div id="A" class="sq navy">
+  <svg width="440" height="440" class="c-w" style="color:#fff"><use href="#mark"/></svg>
+  <div class="jp c-w" style="font-size:190px;margin-top:40px">カドデ</div>
+  <div class="en c-g" style="font-size:54px;margin-top:34px;padding-left:.42em">KADODE</div>
+</div>
+
+<!-- B: square, white, navy text -->
+<div id="B" class="sq white">
+  <svg width="440" height="440" style="color:#1E3A8A"><use href="#mark"/></svg>
+  <div class="jp c-n" style="font-size:190px;margin-top:40px">カドデ</div>
+  <div class="en c-g" style="font-size:54px;margin-top:34px;padding-left:.42em;color:#B8912F">KADODE</div>
+</div>
+
+<!-- C: square navy, mark large with text inside circle badge -->
+<div id="C" class="sq navy">
+  <div style="width:900px;height:900px;border:14px solid #E5C06B;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <svg width="360" height="360" style="color:#fff"><use href="#mark"/></svg>
+    <div class="jp c-w" style="font-size:150px;margin-top:20px">カドデ</div>
+    <div class="en c-g" style="font-size:40px;margin-top:26px;padding-left:.42em">KADODE</div>
+  </div>
+</div>
+
+<!-- D: square white, mincho (和・上質) -->
+<div id="D" class="sq white">
+  <svg width="420" height="420" style="color:#1E3A8A"><use href="#mark"/></svg>
+  <div class="mincho c-n" style="font-size:200px;margin-top:36px">カドデ</div>
+  <div class="en" style="font-size:50px;margin-top:30px;padding-left:.42em;color:#B8912F">KADODE</div>
+</div>
+
+
+<div id="E" class="sq navy">
+  <svg width="440" height="440" style="color:#fff"><use href="#door"/></svg>
+  <div class="jp c-w" style="font-size:190px;margin-top:40px">カドデ</div>
+  <div class="en c-g" style="font-size:54px;margin-top:34px;padding-left:.42em">KADODE</div>
+</div>
+<div id="E2" class="sq white">
+  <svg width="440" height="440" style="color:#1E3A8A"><use href="#door"/></svg>
+  <div class="jp c-n" style="font-size:190px;margin-top:40px">カドデ</div>
+  <div class="en" style="font-size:54px;margin-top:34px;padding-left:.42em;color:#B8912F">KADODE</div>
+</div>
+<div id="F" class="sq white">
+  <svg width="420" height="420" style="color:#1E3A8A"><use href="#kmono"/></svg>
+  <div class="jp c-n" style="font-size:190px;margin-top:40px">カドデ</div>
+  <div class="en" style="font-size:54px;margin-top:34px;padding-left:.42em;color:#B8912F">KADODE</div>
+</div>
+<div id="H4" class="wide white">
+  <svg width="300" height="300" style="color:#1E3A8A"><use href="#door"/></svg>
+  <div style="display:flex;flex-direction:column;align-items:flex-start">
+    <div class="jp c-n" style="font-size:190px">カドデ</div>
+    <div style="display:flex;align-items:baseline;gap:40px;margin-top:22px">
+      <div class="en" style="font-size:46px;color:#B8912F">KADODE</div>
+      <div class="tag c-n" style="font-size:34px">独立・開業の物件相談窓口</div>
+    </div>
+  </div>
+</div>
+
+<div id="H5" class="wide white">
+  <svg width="300" height="300" style="color:#1E3A8A"><use href="#kmono"/></svg>
+  <div style="display:flex;flex-direction:column;align-items:flex-start">
+    <div class="jp c-n" style="font-size:190px">カドデ</div>
+    <div style="display:flex;align-items:baseline;gap:40px;margin-top:22px">
+      <div class="en" style="font-size:46px;color:#B8912F">KADODE</div>
+      <div class="tag c-n" style="font-size:34px">独立・開業の物件相談窓口</div>
+    </div>
+  </div>
+</div>
+<!-- H1: wide, white bg, navy -->
+<div id="H1" class="wide white">
+  <svg width="300" height="300" style="color:#1E3A8A"><use href="#mark"/></svg>
+  <div style="display:flex;flex-direction:column;align-items:flex-start">
+    <div class="jp c-n" style="font-size:190px">カドデ</div>
+    <div style="display:flex;align-items:baseline;gap:40px;margin-top:22px">
+      <div class="en" style="font-size:46px;color:#B8912F">KADODE</div>
+      <div class="tag c-n" style="font-size:34px">独立・開業の物件相談窓口</div>
+    </div>
+  </div>
+</div>
+
+<!-- H2: wide, navy bg, white -->
+<div id="H2" class="wide navy">
+  <svg width="300" height="300" style="color:#fff"><use href="#mark"/></svg>
+  <div style="display:flex;flex-direction:column;align-items:flex-start">
+    <div class="jp c-w" style="font-size:190px">カドデ</div>
+    <div style="display:flex;align-items:baseline;gap:40px;margin-top:22px">
+      <div class="en c-g" style="font-size:46px">KADODE</div>
+      <div class="tag c-w" style="font-size:34px">独立・開業の物件相談窓口</div>
+    </div>
+  </div>
+</div>
+
+<!-- H3: wide transparent, navy (for site header) -->
+<div id="H3" class="wide none">
+  <svg width="300" height="300" style="color:#1E3A8A"><use href="#mark"/></svg>
+  <div style="display:flex;flex-direction:column;align-items:flex-start">
+    <div class="jp c-n" style="font-size:190px">カドデ</div>
+    <div class="en" style="font-size:46px;color:#B8912F;margin-top:22px">KADODE</div>
+  </div>
+</div>
+
+<!-- M: mark only transparent -->
+<div id="M" style="width:1080px;height:1080px;display:flex;align-items:center;justify-content:center;background:transparent">
+  <svg width="900" height="900" style="color:#1E3A8A"><use href="#mark"/></svg>
+</div>
+</body></html>
