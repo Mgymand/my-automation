@@ -11,3 +11,5 @@ mago-love/data/*.json
 !mago-love/data/kanto_municipalities.json
 mago-love/data/uploads/
 mago-love/data/.secret_key
+# 宛名帯: 個人宛の住所データ・PDF はコミットしない
+mailing-labels/private/

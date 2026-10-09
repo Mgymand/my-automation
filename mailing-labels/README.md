@@ -25,3 +25,12 @@ python3 make_checklist.py   # 送付先確認一覧.xlsx を生成
 帯は `送付先確認一覧.xlsx` の No 順（1 ページ目の上から No.1, 2, 3, 4 …）に並んでいます。帯自体には番号を印字していません。
 
 住所を修正する場合は `addresses.json` を編集して再生成してください。
+
+## 敬称と個人宛の帯
+
+各エントリの `honorific` で敬称を指定できます（省略時は「御中」。個人宛は `"honorific": "様"`）。
+個人宛の住所データは `private/` に置き、Git には含めません（`.gitignore` 済み）。
+
+```bash
+python3 make_labels.py private/individuals.json private/labels_individuals.pdf
+```

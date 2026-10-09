@@ -79,7 +79,8 @@ def layout_label(entry, width, name_size):
                 first = False
     if entry.get("corp"):
         rows.append((13, 4 * mm, entry["corp"], 5 * mm, "left"))
-    suffix = "　御中"
+    honorific = entry.get("honorific", "御中")   # 法人・事業所は「御中」、個人は「様」
+    suffix = "　" + honorific
     name_width = width - 4 * mm
     if pdfmetrics.stringWidth(entry["name"] + suffix, FONT, name_size) <= name_width:
         rows.append((name_size, 4 * mm, entry["name"] + suffix, 3 * mm, "left"))
@@ -87,7 +88,7 @@ def layout_label(entry, width, name_size):
         # 長い宛名は名称を1行（必要なら折返し）にし、「御中」を次行に右寄せ
         for i, line in enumerate(wrap(entry["name"], name_size, name_width)):
             rows.append((name_size, 4 * mm, line, 3 * mm if i == 0 else 2 * mm, "left"))
-        rows.append((name_size, 0, "御中", 2 * mm, "right"))
+        rows.append((name_size, 0, honorific, 2 * mm, "right"))
     return rows
 
 
@@ -111,6 +112,7 @@ def draw_label(c, entry, top_y, name_size):
 
 def main(src="addresses.json", out="labels.pdf"):
     entries = json.loads((HERE / src).read_text(encoding="utf-8"))
+    (HERE / out).parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(HERE / out), pagesize=A4)
     c.setTitle("角A4封筒 宛名帯")
     name_size = NAME_SIZE
