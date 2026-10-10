@@ -151,7 +151,7 @@
 | 項目 | 記入内容 |
 | --- | --- |
 | SNS連携の希望 | ☑ インスタ連携　☑ その他（LINE公式アカウント）　□ フェイスブック　□ X　□ 今の所希望なし |
-| Instagram URL | https://www.instagram.com/kadode_madoguchi/（開設中・ユーザー名 kadode_madoguchi） |
+| Instagram URL | https://www.instagram.com/kadode_madoguchi/ |
 | Facebook URL | なし |
 | X（Twitter）URL | なし（転用する場合は記入） |
 | YouTube URL | なし |

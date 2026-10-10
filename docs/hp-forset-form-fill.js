@@ -77,7 +77,7 @@
     "field_f1eeee8": "https://site-five-blush-72.vercel.app （住まいの修理マッチング 公式サイト）",
     "field_5a62b65": "https://my-automation-seven.vercel.app （住まいの修理コラム・ブログ）",
     "field_f75a5db": "https://www.zehitomo.com/profile/%E5%B2%A9%E6%9C%AC-%E8%B3%A2%E4%BC%B8-v15BjMo3R/pro （ゼヒトモ プロフィール：岩本 賢伸）",
-    "field_facfe31": "https://www.instagram.com/kadode_madoguchi/（開設中・ユーザー名 kadode_madoguchi）",  // ← Instagram のURLを入れてください（既存アカウントを転用）
+    "field_facfe31": "https://www.instagram.com/kadode_madoguchi/",  // ← Instagram のURLを入れてください（既存アカウントを転用）
     "field_49b6b97": "なし",
     "field_e6f412a": "なし",
     "field_3eb2f82": "なし",

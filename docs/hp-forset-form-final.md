@@ -121,7 +121,7 @@ https://www.zehitomo.com/profile/%E5%B2%A9%E6%9C%AC-%E8%B3%A2%E4%BC%B8-v15BjMo3R
 ☑ その他ブログなど（LINE公式アカウント）
 
 **Instagram URL**
-https://www.instagram.com/kadode_madoguchi/（開設中。ユーザー名 kadode_madoguchi）
+https://www.instagram.com/kadode_madoguchi/
 
 **Facebook URL**
 なし
