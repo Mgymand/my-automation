@@ -1,0 +1,326 @@
+<title>KADODE 公式LINE構築</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=Noto+Sans+JP:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* Layout: one reading column; sticky chip bar for sections; copy blocks are the working surface */
+:root{--bg:#F5F7FC;--surface:#FFFFFF;--ink:#0A1E5C;--muted:#55628A;--line:#D9E1F5;--accent:#2F6BFF;--warm:#F0772B;--code:#EEF2FC;
+--f-display:"Zen Kaku Gothic New","Noto Sans JP",system-ui,sans-serif;--f-body:"Noto Sans JP",system-ui,sans-serif;--f-mono:"Archivo","Noto Sans JP",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1230;--surface:#121B42;--ink:#E7ECFF;--muted:#A3AED6;--line:#26315F;--accent:#7FA2FF;--warm:#FF9655;--code:#18224F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1230;--surface:#121B42;--ink:#E7ECFF;--muted:#A3AED6;--line:#26315F;--accent:#7FA2FF;--warm:#FF9655;--code:#18224F;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+header.top{padding-block:28px 12px}
+.eyebrow{font-family:var(--f-mono);font-weight:800;letter-spacing:.28em;font-size:12px;color:var(--warm)}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(24px,6vw,34px);line-height:1.3;margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px}
+.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 0;background:var(--bg);border-bottom:1px solid var(--line);scrollbar-width:none}
+.toc a{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px}
+.toc a:focus-visible,.cb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section{padding-block:22px 6px;border-bottom:1px solid var(--line);scroll-margin-top:60px}
+h2{font-family:var(--f-display);font-weight:900;font-size:21px;line-height:1.4;margin:0 0 10px;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:700;font-size:17px;margin:22px 0 8px;color:var(--ink)}
+p{margin:8px 0}ul,ol{padding-left:1.3em;margin:8px 0}li{margin:3px 0}
+a{color:var(--accent);word-break:break-all}
+strong{color:var(--ink)}
+code.k{font-family:var(--f-body);font-size:.92em;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:1px 6px;cursor:pointer;white-space:nowrap}
+.fname{display:inline-block;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.copy{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:10px 0 14px}
+.copy pre{margin:0;padding:14px 14px 40px;white-space:pre-wrap;word-break:break-word;font-family:var(--f-body);font-size:14px;line-height:1.7;color:var(--ink)}
+.cb{position:absolute;right:8px;bottom:8px;font:700 13px var(--f-body);color:#fff;background:var(--warm);border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
+.cb.done{background:var(--accent)}
+.cnt{position:absolute;left:14px;bottom:12px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;margin:10px 0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;font-size:13.5px;min-width:100%}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:700;color:var(--muted);white-space:nowrap;background:var(--code)}
+td[data-copy]{cursor:pointer;min-width:8.5em;max-width:17em}
+td:first-child{min-width:0}
+td img{width:150px;max-width:none;border-radius:6px;display:block}
+.note{color:var(--muted);font-size:14px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.gal figure{margin:0;min-width:0}.gal img{border-radius:8px;border:1px solid var(--line);display:block;width:100%}
+.gal figure.rm{grid-column:1/-1}
+.gal figcaption{font-size:12px;color:var(--muted);margin-top:4px;word-break:break-all}
+.gal.cards{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:13px;font-weight:700;padding:8px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+<div class="wrap"><header class="top"><div class="eyebrow">LINE OFFICIAL ACCOUNT</div><h1>開業物件の窓口 KADODE 公式LINE構築</h1><p class="sub">@835ukcta の設定内容と素材です。グレーの枠は「コピー」で、表のマスはタップでコピーできます。</p></header>
+<nav class="toc"><a href="#assets">画像素材</a><a href="#s1">全体の流れ</a><a href="#s2">作業チェックリスト</a><a href="#s3">1. 基本設定</a><a href="#s4">2. 応答設定</a><a href="#s5">3. カードタイプメッセージ</a><a href="#s6">4. あいさつメッセージ</a><a href="#s7">5. 応答メッセージ</a><a href="#s8">6. リッチメニュー</a><a href="#s9">7. チャット定型文</a><a href="#s10">8. メッセージ配信</a><a href="#s11">9. 動作確認</a><a href="#s12">10. HP・SNS側でやること</a><a href="#s13">素材一覧</a></nav><section id="assets"><h2>画像素材</h2><p class="note">画像を長押しすると、スマホの写真に保存できます。保存した画像をLINE公式アカウントアプリで選んでください。</p><div class="gal"><figure class="sq"><img src="images/profile-icon-1080.png" alt="プロフィール画像"><figcaption>プロフィール画像</figcaption></figure><figure class="cv"><img src="images/profile-cover-1080x878.png" alt="プロフィール背景"><figcaption>プロフィール背景</figcaption></figure><figure class="rm"><img src="images/richmenu-2500x1686.png" alt="リッチメニュー"><figcaption>リッチメニュー</figcaption></figure></div><h3>業種カード（13枚）</h3><div class="gal cards"><figure><img loading="lazy" src="images/cards/card-01-salon.png" alt="card-01-salon.png"><figcaption>card-01-salon.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-02-clinic.png" alt="card-02-clinic.png"><figcaption>card-02-clinic.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-03-restaurant.png" alt="card-03-restaurant.png"><figcaption>card-03-restaurant.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-04-office.png" alt="card-04-office.png"><figcaption>card-04-office.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-05-others.png" alt="card-05-others.png"><figcaption>card-05-others.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-06-residence.png" alt="card-06-residence.png"><figcaption>card-06-residence.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-07-gym.png" alt="card-07-gym.png"><figcaption>card-07-gym.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-08-treatment.png" alt="card-08-treatment.png"><figcaption>card-08-treatment.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-09-care.png" alt="card-09-care.png"><figcaption>card-09-care.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-10-school.png" alt="card-10-school.png"><figcaption>card-10-school.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-11-pet.png" alt="card-11-pet.png"><figcaption>card-11-pet.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-12-reuse.png" alt="card-12-reuse.png"><figcaption>card-12-reuse.png</figcaption></figure><figure><img loading="lazy" src="images/cards/card-13-stay.png" alt="card-13-stay.png"><figcaption>card-13-stay.png</figcaption></figure></div></section><ul><li>アカウント：開業物件の窓口 KADODE（@835ukcta）</li><li>友だち追加URL：<a href="https://lin.ee/SgQ8UQI" target="_blank" rel="noopener">https://lin.ee/SgQ8UQI</a></li><li>HP：<a href="https://gymandmanman.com/（公開前はパスワード保護中。公開後にLINE内のリンクが開けるようになります" target="_blank" rel="noopener">https://gymandmanman.com/（公開前はパスワード保護中。公開後にLINE内のリンクが開けるようになります</a>）</li><li>作業はすべて「LINE公式アカウント」アプリ、またはPCの管理画面（<a href="https://manager.line.biz/" target="_blank" rel="noopener">https://manager.line.biz/</a>）で行います。</li><li>画面の表記は時期によって少し変わることがあります。</li></ul><section id="s1"><h2>全体の流れ（友だち追加から相談まで）</h2><ol><li>友だち追加すると「あいさつメッセージ」と「開業ナビ一覧カード」が届く。</li><li>カードの「このナビで相談」を押すと、業種名（例：サロン開業ナビ）が自動で送信される。</li><li>その業種名に「応答メッセージ」が反応し、業種別のヒアリング項目が届く。</li><li>お客様が項目を埋めて送信 → 岩本さんがチャットで個別に返信する。</li><li>画面下の「リッチメニュー」からも、いつでも業種選択・来店予約・電話・HPに進める。</li></ol><p>あいさつメッセージと応答メッセージは、無料メッセージ（月200通）の通数に数えられません。月200通を使うのは「メッセージ配信」だけです。</p></section><section id="s2"><h2>作業チェックリスト（上から順に）</h2><div class="tw"><table><thead><tr><th>#</th><th>作業</th><th>場所</th><th>使う素材</th></tr></thead><tbody><tr><td data-copy>1</td><td data-copy>プロフィール画像</td><td data-copy>ホーム → 設定 → アカウント設定</td><td data-copy><span class="fname">images/profile-icon-1080.png</span></td></tr><tr><td data-copy>2</td><td data-copy>ステータスメッセージ</td><td data-copy>同上</td><td data-copy>下記「1. 基本設定」</td></tr><tr><td data-copy>3</td><td data-copy>背景画像・プロフィールページ</td><td data-copy>ホーム → プロフィール</td><td data-copy><span class="fname">images/profile-cover-1080x878.png</span></td></tr><tr><td data-copy>4</td><td data-copy>応答設定</td><td data-copy>ホーム → 設定 → 応答設定</td><td data-copy>下記「2. 応答設定」</td></tr><tr><td data-copy>5</td><td data-copy>カードタイプメッセージ2本</td><td data-copy>ホーム → カードタイプメッセージ</td><td data-copy>images/cards/ の13枚</td></tr><tr><td data-copy>6</td><td data-copy>あいさつメッセージ</td><td data-copy>ホーム → あいさつメッセージ</td><td data-copy>下記「4」</td></tr><tr><td data-copy>7</td><td data-copy>応答メッセージ18本</td><td data-copy>ホーム → 応答メッセージ</td><td data-copy>下記「5」</td></tr><tr><td data-copy>8</td><td data-copy>リッチメニュー</td><td data-copy>ホーム → リッチメニュー</td><td data-copy><span class="fname">images/richmenu-2500x1686.png</span></td></tr><tr><td data-copy>9</td><td data-copy>チャット定型文</td><td data-copy>チャット → 定型文</td><td data-copy>下記「7」</td></tr><tr><td data-copy>10</td><td data-copy>自分のLINEで友だち追加して動作確認</td><td data-copy>—</td><td data-copy>下記「9」</td></tr></tbody></table></div><p>カードタイプメッセージ（5）を先に作ると、あいさつメッセージ（6）と応答メッセージ（7）でそのまま選べます。</p></section><section id="s3"><h2>1. 基本設定</h2><p><strong>アカウント名</strong>：開業物件の窓口　KADODE（設定済み・変更不要）</p><p><strong>ステータスメッセージ</strong>（20文字以内）</p><div class="copy"><pre>開業の物件探しから内装・手続きまで無料相談</pre><button type="button" class="cb">コピー</button><span class="cnt">21文字</span></div><p><strong>プロフィール画像</strong>：<span class="fname">images/profile-icon-1080.png</span>（丸く切り抜かれても文字が欠けない配置です）</p><p><strong>背景画像</strong>：<span class="fname">images/profile-cover-1080x878.png</span></p><p><strong>プロフィールページに追加する情報</strong>（「プロフィール」→「基本情報」など）</p><div class="copy"><pre>住所：〒150-0002 東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階（渋谷相談窓口・来訪は事前予約制）
+電話番号：090-1386-7439
+営業時間：10:00〜19:00
+ウェブサイト：https://gymandmanman.com/</pre><button type="button" class="cb">コピー</button><span class="cnt">123文字</span></div><p><strong>紹介文</strong>（プロフィールの「紹介文」や「あいさつ」欄がある場合）</p><div class="copy"><pre>独立・開業・移転・2号店など、新しく事業を始める方のための店舗・事業用物件の相談窓口です。物件探しから内装・設備、許認可・各種手続き、開業準備まで、代表の岩本が窓口となってサポートします。東京を中心に全国対応。
+※物件のご紹介・媒介・契約等は提携する宅地建物取引業者が行います。</pre><button type="button" class="cb">コピー</button><span class="cnt">139文字</span></div><p><strong>認証済アカウントの申請（おすすめ・無料）</strong>：設定 → 認証済アカウントを申請。審査に通るとLINE内検索に表示され、バッジが付きます。個人事業でも申請できます。</p></section><section id="s4"><h2>2. 応答設定</h2><ul><li>「チャット」：オン（岩本さんが手動で返信するため）</li><li>「応答メッセージ」：オン（キーワードに自動で返すため）</li><li>応答方法を選ぶ画面がある場合は「手動チャット＋応答メッセージ」を選ぶ</li><li>「あいさつメッセージ」：オン</li><li>応答時間：10:00〜19:00（HPの電話受付時間に合わせています）</li></ul><p>キーワードに一致しないメッセージには自動返信せず、チャットで岩本さんが返信する運用です。</p></section><section id="s5"><h2>3. カードタイプメッセージ（2本）</h2><p>種類はどちらも「プロダクト」を選びます。各カードのボタン1は「テキスト」タイプにして、送信テキストを表の文言と<strong>一字一句同じ</strong>にしてください。応答メッセージのキーワードと一致させるためです。</p><p>「テキスト」タイプが選べない場合は、ボタン1を「URL」にして各HPページへ飛ばします。その場合も、リッチメニューと業種名の送信で自動応答は動きます。</p><h3>3-1. 「開業ナビ一覧」（カード6枚）</h3><p>管理用タイトル：<code class="k" data-copy>開業ナビ一覧</code></p><div class="tw"><table><thead><tr><th>#</th><th>画像</th><th>タイトル</th><th>説明文</th><th>ボタン1（テキスト）</th><th>ボタン2（URL）</th></tr></thead><tbody><tr><td data-copy>1</td><td><img loading="lazy" src="images/cards/card-01-salon.png" alt="card-01-salon.png"><span class="fname">card-01-salon.png</span></td><td data-copy>サロン開業ナビ</td><td data-copy>美容室・エステ・ネイル・アイサロン・まつエク・メンズ美容の物件探しから内装・届出まで</td><td data-copy>ラベル「このナビで相談」／送信「サロン開業ナビ」</td><td data-copy>ラベル「HPで詳しく見る」／<a href="https://gymandmanman.com/salon/" target="_blank" rel="noopener">https://gymandmanman.com/salon/</a></td></tr><tr><td data-copy>2</td><td><img loading="lazy" src="images/cards/card-02-clinic.png" alt="card-02-clinic.png"><span class="fname">card-02-clinic.png</span></td><td data-copy>クリニック開業ナビ</td><td data-copy>医院・歯科・美容クリニック・調剤薬局・医療モールの物件探しから内装・手続きまで</td><td data-copy>送信「クリニック開業ナビ」</td><td data-copy><a href="https://gymandmanman.com/clinic/" target="_blank" rel="noopener">https://gymandmanman.com/clinic/</a></td></tr><tr><td data-copy>3</td><td><img loading="lazy" src="images/cards/card-03-restaurant.png" alt="card-03-restaurant.png"><span class="fname">card-03-restaurant.png</span></td><td data-copy>飲食店開業ナビ</td><td data-copy>カフェ・ラーメン・居酒屋・焼肉・テイクアウト。居抜き・スケルトンの設備確認から</td><td data-copy>送信「飲食店開業ナビ」</td><td data-copy><a href="https://gymandmanman.com/restaurant/" target="_blank" rel="noopener">https://gymandmanman.com/restaurant/</a></td></tr><tr><td data-copy>4</td><td><img loading="lazy" src="images/cards/card-04-office.png" alt="card-04-office.png"><span class="fname">card-04-office.png</span></td><td data-copy>オフィス開設・移転ナビ</td><td data-copy>起業・スタートアップ・士業の事務所開設や移転。人数とこれからの事業に合う物件を</td><td data-copy>送信「オフィス開設・移転ナビ」</td><td data-copy><a href="https://gymandmanman.com/office/" target="_blank" rel="noopener">https://gymandmanman.com/office/</a></td></tr><tr><td data-copy>5</td><td><img loading="lazy" src="images/cards/card-05-others.png" alt="card-05-others.png"><span class="fname">card-05-others.png</span></td><td data-copy>その他の業種の開業</td><td data-copy>ジム・治療院・福祉介護・学習塾・ペット・買取・宿泊など業種別にご相談</td><td data-copy>送信「その他の業種」</td><td data-copy><a href="https://gymandmanman.com/others/" target="_blank" rel="noopener">https://gymandmanman.com/others/</a></td></tr><tr><td data-copy>6</td><td><img loading="lazy" src="images/cards/card-06-residence.png" alt="card-06-residence.png"><span class="fname">card-06-residence.png</span></td><td data-copy>住まい探し</td><td data-copy>自宅サロン・マンションサロン・開業に伴う住み替え・一般のお部屋探しも</td><td data-copy>送信「住まい探し」</td><td data-copy><a href="https://gymandmanman.com/residence/" target="_blank" rel="noopener">https://gymandmanman.com/residence/</a></td></tr></tbody></table></div><p>ボタンのラベルは全カード共通で「このナビで相談」「HPで詳しく見る」です。</p><h3>3-2. 「その他の業種」（カード7枚）</h3><p>管理用タイトル：<code class="k" data-copy>その他の業種一覧</code></p><div class="tw"><table><thead><tr><th>#</th><th>画像</th><th>タイトル</th><th>説明文</th><th>ボタン1 送信テキスト</th></tr></thead><tbody><tr><td data-copy>1</td><td><img loading="lazy" src="images/cards/card-07-gym.png" alt="card-07-gym.png"><span class="fname">card-07-gym.png</span></td><td data-copy>ジム・ピラティス開業ナビ</td><td data-copy>パーソナルジム・24時間ジム・ピラティス・ヨガ。広さ・床・電気・空調から確認</td><td data-copy>ジム・ピラティス開業ナビ</td></tr><tr><td data-copy>2</td><td><img loading="lazy" src="images/cards/card-08-treatment.png" alt="card-08-treatment.png"><span class="fname">card-08-treatment.png</span></td><td data-copy>治療院開業ナビ</td><td data-copy>整骨院・整体院・鍼灸院・リラクゼーション。通いやすさと施術しやすさで探す</td><td data-copy>治療院開業ナビ</td></tr><tr><td data-copy>3</td><td><img loading="lazy" src="images/cards/card-09-care.png" alt="card-09-care.png"><span class="fname">card-09-care.png</span></td><td data-copy>福祉・介護開業ナビ</td><td data-copy>放課後等デイ・児童発達支援・訪問看護・グループホーム・デイサービスなど</td><td data-copy>福祉・介護開業ナビ</td></tr><tr><td data-copy>4</td><td><img loading="lazy" src="images/cards/card-10-school.png" alt="card-10-school.png"><span class="fname">card-10-school.png</span></td><td data-copy>学習塾開業ナビ</td><td data-copy>学習塾・個別指導・プログラミング・英会話・学童。教室のスタイルに合う物件を</td><td data-copy>学習塾開業ナビ</td></tr><tr><td data-copy>5</td><td><img loading="lazy" src="images/cards/card-11-pet.png" alt="card-11-pet.png"><span class="fname">card-11-pet.png</span></td><td data-copy>ペットショップ開業ナビ</td><td data-copy>トリミング・動物病院・ペットホテル・用品店。利用可否と給排水・換気を確認</td><td data-copy>ペットショップ開業ナビ</td></tr><tr><td data-copy>6</td><td><img loading="lazy" src="images/cards/card-12-reuse.png" alt="card-12-reuse.png"><span class="fname">card-12-reuse.png</span></td><td data-copy>買取・リユース開業ナビ</td><td data-copy>買取専門店・ブランド買取・古着・リユース・リペア。小さな区画からでも</td><td data-copy>買取・リユース開業ナビ</td></tr><tr><td data-copy>7</td><td><img loading="lazy" src="images/cards/card-13-stay.png" alt="card-13-stay.png"><span class="fname">card-13-stay.png</span></td><td data-copy>宿泊・インバウンド開業ナビ</td><td data-copy>民泊・簡易宿所・ゲストハウス・訪日客向け店舗。使える物件かを事前に確認</td><td data-copy>宿泊・インバウンド開業ナビ</td></tr></tbody></table></div><p>ボタン2はすべて「HPで詳しく見る」／ <a href="https://gymandmanman.com/others/" target="_blank" rel="noopener">https://gymandmanman.com/others/</a></p></section><section id="s6"><h2>4. あいさつメッセージ（友だち追加時）</h2><p>吹き出し1：テキスト（「友だちの表示名」を挿入する場合は、本文先頭の {Nickname} の位置で挿入ボタンを使ってください）</p><div class="copy"><pre>{Nickname}さん、友だち追加ありがとうございます！
+開業物件の窓口 KADODE です。
+
+独立・開業・移転・2号店など、新しく事業を始める方のための店舗・事業用物件の相談窓口です。
+物件探しから内装・設備、許認可や各種手続き、開業準備まで、代表の岩本が窓口となってサポートします。ご相談は無料です。
+
+▼どの分野の開業ナビをご希望ですか？
+このあと届くカードから選ぶか、業種名をそのまま送ってください。
+
+・サロン開業ナビ
+・クリニック開業ナビ
+・飲食店開業ナビ
+・オフィス開設・移転ナビ
+・その他の業種（ジム・治療院・福祉介護・学習塾・ペット・買取・宿泊）
+・住まい探し（自宅サロン・お部屋探し）
+
+「まだ決まっていない」段階でも大丈夫です。お気軽にメッセージください。</pre><button type="button" class="cb">コピー</button><span class="cnt">341文字</span></div><p>吹き出し2：カードタイプメッセージ「開業ナビ一覧」</p></section><section id="s7"><h2>5. 応答メッセージ（キーワード自動返信・18本）</h2><p>すべて「キーワード応答」をオンにして、表のキーワードを登録します。キーワードは完全一致です。</p><p>共通で文末に入れる一文（各テンプレートに含めてあります）：「いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。」</p><h3>5-1. 業種を選ぶ</h3><p>キーワード：<code class="k" data-copy>開業ナビを選ぶ</code> <code class="k" data-copy>業種を選ぶ</code> <code class="k" data-copy>開業ナビ</code></p><p>吹き出し1：</p><div class="copy"><pre>どの分野の開業ナビをご希望ですか？
+下のカードから選んでください。一覧にない業種は「その他の業種」からどうぞ。</pre><button type="button" class="cb">コピー</button><span class="cnt">55文字</span></div><p>吹き出し2：カードタイプメッセージ「開業ナビ一覧」</p><h3>5-2. サロン開業ナビ</h3><p>キーワード：<code class="k" data-copy>サロン開業ナビ</code> <code class="k" data-copy>サロン</code> <code class="k" data-copy>美容室</code> <code class="k" data-copy>エステ</code> <code class="k" data-copy>ネイル</code></p><div class="copy"><pre>【サロン開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①サロンの種類（美容室／エステ／ネイル／アイ・まつエク／メンズ美容／その他）：
+②新規開業・移転・2号店：
+③希望エリア（駅名など）：
+④広さ・席数（例：15坪、セット面3）：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦居抜き／スケルトン／どちらでも：
+⑧シャンプー台など水まわり：必要／不要
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/salon/</pre><button type="button" class="cb">コピー</button><span class="cnt">347文字</span></div><h3>5-3. クリニック開業ナビ</h3><p>キーワード：<code class="k" data-copy>クリニック開業ナビ</code> <code class="k" data-copy>クリニック</code> <code class="k" data-copy>歯科</code> <code class="k" data-copy>調剤薬局</code></p><div class="copy"><pre>【クリニック開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（医院／歯科／美容クリニック／調剤薬局／その他）と診療科：
+②新規開業・移転・分院：
+③希望エリア（駅名など）：
+④広さ（坪）・診察室やユニットの数：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦医療モール：希望する／しない／どちらでも
+⑧導入予定の主な設備（X線・CTなど）：
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/clinic/</pre><button type="button" class="cb">コピー</button><span class="cnt">345文字</span></div><h3>5-4. 飲食店開業ナビ</h3><p>キーワード：<code class="k" data-copy>飲食店開業ナビ</code> <code class="k" data-copy>飲食店</code> <code class="k" data-copy>カフェ</code> <code class="k" data-copy>居酒屋</code> <code class="k" data-copy>ラーメン</code></p><div class="copy"><pre>【飲食店開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（カフェ／ラーメン／居酒屋／焼肉／テイクアウト／その他）：
+②新規開業・移転・2号店：
+③希望エリア（駅名など）：
+④広さ・席数（例：15坪、20席）：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦居抜き／スケルトン／どちらでも：
+⑧営業時間（深夜営業の有無）：
+⑨内装・厨房工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/restaurant/</pre><button type="button" class="cb">コピー</button><span class="cnt">342文字</span></div><h3>5-5. オフィス開設・移転ナビ</h3><p>キーワード：<code class="k" data-copy>オフィス開設・移転ナビ</code> <code class="k" data-copy>オフィス</code> <code class="k" data-copy>事務所</code> <code class="k" data-copy>オフィス移転</code></p><div class="copy"><pre>【オフィス開設・移転ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①新規開設・移転・増床：
+②業種（起業／スタートアップ／士業／その他）：
+③利用人数（今と1〜2年後）：
+④希望エリア（駅名など）：
+⑤広さ（坪）：
+⑥家賃の上限（月額）・初期費用の目安：
+⑦入居したい時期：
+⑧来客の有無・会議室の要否：
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/office/</pre><button type="button" class="cb">コピー</button><span class="cnt">323文字</span></div><h3>5-6. その他の業種</h3><p>キーワード：<code class="k" data-copy>その他の業種</code> <code class="k" data-copy>その他</code></p><p>吹き出し1：</p><div class="copy"><pre>その他の業種の開業ナビです。
+下のカードから近い業種を選んでください。
+一覧にない業種の方は「一覧にない業種」と送っていただくか、始めたい事業をそのままお送りください。</pre><button type="button" class="cb">コピー</button><span class="cnt">84文字</span></div><p>吹き出し2：カードタイプメッセージ「その他の業種一覧」</p><h3>5-7. ジム・ピラティス開業ナビ</h3><p>キーワード：<code class="k" data-copy>ジム・ピラティス開業ナビ</code> <code class="k" data-copy>ジム</code> <code class="k" data-copy>ピラティス</code> <code class="k" data-copy>パーソナルジム</code></p><div class="copy"><pre>【ジム・ピラティス開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（パーソナル／24時間ジム／ピラティス／ヨガ／その他）：
+②新規開業・移転・2号店：
+③希望エリア（駅名など）：
+④広さ（坪）：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦マシンなど重量物の有無：
+⑧シャワー・更衣室：必要／不要
+⑨営業時間（24時間営業の有無）：
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">323文字</span></div><h3>5-8. 治療院開業ナビ</h3><p>キーワード：<code class="k" data-copy>治療院開業ナビ</code> <code class="k" data-copy>整骨院</code> <code class="k" data-copy>整体院</code> <code class="k" data-copy>鍼灸院</code></p><div class="copy"><pre>【治療院開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（整骨院／整体院／鍼灸院／リラクゼーション／その他）：
+②新規開業・移転・分院：
+③希望エリア（駅名など）：
+④広さ（坪）・施術ベッドの数：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦1階路面／2階以上／どちらでも：
+⑧保険施術の予定：あり／なし
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">328文字</span></div><h3>5-9. 福祉・介護開業ナビ</h3><p>キーワード：<code class="k" data-copy>福祉・介護開業ナビ</code> <code class="k" data-copy>福祉</code> <code class="k" data-copy>介護</code> <code class="k" data-copy>放課後等デイ</code> <code class="k" data-copy>訪問看護</code></p><div class="copy"><pre>【福祉・介護開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①事業の種類（放課後等デイ／児童発達支援／訪問看護／グループホーム／デイサービス／老人ホーム／その他）：
+②新規開設・移転・2拠点目：
+③希望エリア（市区町村）：
+④定員・必要な広さや間取り：
+⑤家賃の上限（月額）：
+⑥開設したい時期（指定申請の予定）：
+⑦建物の希望（店舗・事務所／戸建て／マンション）：
+⑧内装・改修工事の相談：する／しない／未定
+⑨お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">358文字</span></div><h3>5-10. 学習塾開業ナビ</h3><p>キーワード：<code class="k" data-copy>学習塾開業ナビ</code> <code class="k" data-copy>学習塾</code> <code class="k" data-copy>塾</code> <code class="k" data-copy>英会話</code> <code class="k" data-copy>プログラミング教室</code></p><div class="copy"><pre>【学習塾開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①教室の種類（学習塾／個別指導／プログラミング／英会話／学童／その他）：
+②新規開校・移転・2教室目：
+③希望エリア（駅名・学区など）：
+④広さ（坪）・教室数・席数：
+⑤家賃の上限（月額）：
+⑥開校したい時期：
+⑦対象（小学生／中学生／高校生／社会人）：
+⑧主な授業時間帯：
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">337文字</span></div><h3>5-11. ペットショップ開業ナビ</h3><p>キーワード：<code class="k" data-copy>ペットショップ開業ナビ</code> <code class="k" data-copy>ペット</code> <code class="k" data-copy>トリミング</code> <code class="k" data-copy>動物病院</code> <code class="k" data-copy>ペットホテル</code></p><div class="copy"><pre>【ペットショップ開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（トリミング／動物病院／ペットホテル／用品店／その他）：
+②新規開業・移転・2号店：
+③希望エリア（駅名など）：
+④広さ（坪）：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦トリミング台・バスタブなど水まわり：必要／不要
+⑧動物取扱業の登録：済み／予定／不要
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">337文字</span></div><h3>5-12. 買取・リユース開業ナビ</h3><p>キーワード：<code class="k" data-copy>買取・リユース開業ナビ</code> <code class="k" data-copy>買取</code> <code class="k" data-copy>リユース</code> <code class="k" data-copy>古着</code></p><div class="copy"><pre>【買取・リユース開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①業態（買取専門店／ブランド買取／古着店／リユース／リペア／その他）：
+②新規開業・移転・2号店：
+③希望エリア（駅名など）：
+④広さ（坪）：
+⑤家賃の上限（月額）：
+⑥開業したい時期：
+⑦1階路面／2階以上／どちらでも：
+⑧古物商許可：取得済み／申請予定
+⑨内装工事の相談：する／しない／未定
+⑩お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">332文字</span></div><h3>5-13. 宿泊・インバウンド開業ナビ</h3><p>キーワード：<code class="k" data-copy>宿泊・インバウンド開業ナビ</code> <code class="k" data-copy>民泊</code> <code class="k" data-copy>簡易宿所</code> <code class="k" data-copy>ゲストハウス</code></p><div class="copy"><pre>【宿泊・インバウンド開業ナビ】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①形態（民泊／簡易宿所／ゲストハウス／訪日客向け店舗／その他）：
+②新規開業・追加の物件：
+③希望エリア（駅名など）：
+④部屋数・定員の目安：
+⑤家賃の上限（月額）：
+⑥運営を始めたい時期：
+⑦建物の希望（戸建て／マンション一室／一棟）：
+⑧改修・内装工事の相談：する／しない／未定
+⑨お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/others/</pre><button type="button" class="cb">コピー</button><span class="cnt">328文字</span></div><h3>5-14. 住まい探し</h3><p>キーワード：<code class="k" data-copy>住まい探し</code> <code class="k" data-copy>お部屋探し</code> <code class="k" data-copy>自宅サロン</code> <code class="k" data-copy>マンションサロン</code></p><div class="copy"><pre>【住まい探し】ありがとうございます。
+分かる範囲で下の項目を埋めて、そのまま送信してください（未定は「未定」でOKです）。
+
+①目的（自宅サロン／マンションサロン／開業に伴う住み替え／スタッフの住まい／一般のお部屋探し）：
+②希望エリア（駅名など）：
+③家賃の上限（月額）：
+④間取り・広さ：
+⑤入居したい時期：
+⑥サロン利用の場合：来客の頻度・施術内容：
+⑦入居人数：
+⑧お名前・お電話番号：
+
+確認後、代表の岩本よりご連絡します。
+いただいた内容は、お部屋探しのため提携不動産会社に共有する場合があります。
+詳しくはこちら▶ https://gymandmanman.com/residence/</pre><button type="button" class="cb">コピー</button><span class="cnt">300文字</span></div><h3>5-15. 無料相談</h3><p>キーワード：<code class="k" data-copy>無料相談したい</code> <code class="k" data-copy>相談したい</code> <code class="k" data-copy>無料相談</code> <code class="k" data-copy>一覧にない業種</code></p><div class="copy"><pre>ご相談ありがとうございます。
+「何から始めればいいか分からない」段階でも大丈夫です。分かる範囲で教えてください。
+
+①始めたい事業・業種：
+②新規開業・移転・2号店：
+③希望エリア：
+④家賃の上限（月額）・予算：
+⑤開業したい時期：
+⑥いま一番困っていること：
+⑦お名前・お電話番号：
+
+業種が決まっている方は「開業ナビを選ぶ」と送ると、業種別の項目が届きます。
+いただいた内容は、物件探しのため提携不動産会社・施工会社に共有する場合があります。</pre><button type="button" class="cb">コピー</button><span class="cnt">223文字</span></div><h3>5-16. まだ決まっていない</h3><p>キーワード：<code class="k" data-copy>まだ決まっていない</code> <code class="k" data-copy>未定</code> <code class="k" data-copy>迷っている</code></p><div class="copy"><pre>まだ決まっていなくても大丈夫です。
+「独立したい」「こんな業種に興味がある」というお話からご一緒に整理します。
+
+・やってみたいこと
+・考えているエリア
+・ご予算の目安
+・いつ頃までに始めたいか
+
+このうち一つだけでも構いません。お気軽にお送りください。
+直接話したい方は「来店予約」または「電話で相談」と送ってください。</pre><button type="button" class="cb">コピー</button><span class="cnt">161文字</span></div><h3>5-17. 来店予約</h3><p>キーワード：<code class="k" data-copy>来店予約</code> <code class="k" data-copy>予約</code> <code class="k" data-copy>来店相談</code></p><div class="copy"><pre>渋谷相談窓口での対面相談は事前予約制です。
+下の項目を埋めて送信してください。
+
+①ご希望日時（第1希望）：
+②ご希望日時（第2希望）：
+③ご来店人数：
+④ご相談の種類（サロン／クリニック／飲食店／オフィス／その他の業種／住まい探し／未定）：
+⑤ご相談内容（簡単で大丈夫です）：
+⑥お名前・お電話番号：
+
+【渋谷相談窓口】
+〒150-0002 東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階
+予約フォームはこちら▶ https://gymandmanman.com/contact/#visit
+日時を確認して、岩本よりご連絡します。</pre><button type="button" class="cb">コピー</button><span class="cnt">268文字</span></div><h3>5-18. 電話で相談</h3><p>キーワード：<code class="k" data-copy>電話で相談</code> <code class="k" data-copy>電話</code></p><div class="copy"><pre>お電話でのご相談はこちらです。
+090-1386-7439（受付 10:00〜19:00）
+
+代表の岩本が対応します。
+お電話の際は「LINEを見て」とお伝えください。
+出られない場合は折り返しますので、LINEでお名前だけお送りいただけると確実です。</pre><button type="button" class="cb">コピー</button><span class="cnt">126文字</span></div></section><section id="s8"><h2>6. リッチメニュー</h2><ul><li>画像：<span class="fname">images/richmenu-2500x1686.png</span>（2500×1686、6分割）</li><li>テンプレート：大きいサイズの「6分割」（3列×2段）</li><li>タイトル（管理用）：<code class="k" data-copy>メインメニュー</code></li><li>メニューバーのテキスト：<code class="k" data-copy>業種選択・無料相談はこちら</code>（14文字まで。入らない場合は <code class="k" data-copy>メニュー</code>）</li><li>メニューのデフォルト表示：表示する</li><li>表示期間：今日から最長（例：2036年まで）</li></ul><div class="tw"><table><thead><tr><th>位置</th><th>表示</th><th>タイプ</th><th>設定内容</th></tr></thead><tbody><tr><td data-copy>A 上段左</td><td data-copy>開業ナビを選ぶ</td><td data-copy>テキスト</td><td data-copy>開業ナビを選ぶ</td></tr><tr><td data-copy>B 上段中</td><td data-copy>LINEで無料相談</td><td data-copy>テキスト</td><td data-copy>無料相談したい</td></tr><tr><td data-copy>C 上段右</td><td data-copy>来店予約</td><td data-copy>テキスト</td><td data-copy>来店予約</td></tr><tr><td data-copy>D 下段左</td><td data-copy>住まい探し</td><td data-copy>テキスト</td><td data-copy>住まい探し</td></tr><tr><td data-copy>E 下段中</td><td data-copy>電話で相談</td><td data-copy>テキスト</td><td data-copy>電話で相談</td></tr><tr><td data-copy>F 下段右</td><td data-copy>ホームページ</td><td data-copy>リンク</td><td data-copy><a href="https://gymandmanman.com/" target="_blank" rel="noopener">https://gymandmanman.com/</a></td></tr></tbody></table></div><p>テキストは応答メッセージのキーワードと一字一句同じにしてください。</p></section><section id="s9"><h2>7. チャット定型文（手動返信用）</h2><p>チャット → 定型文 に登録すると、ワンタップで呼び出せます。</p><p><strong>① 初回の返信</strong></p><div class="copy"><pre>ご連絡ありがとうございます。開業物件の窓口 KADODEの岩本です。
+内容を拝見しました。いくつか確認させてください。</pre><button type="button" class="cb">コピー</button><span class="cnt">59文字</span></div><p><strong>② ヒアリング受領・探索開始</strong></p><div class="copy"><pre>詳しく教えていただきありがとうございます。
+いただいた条件をもとに、提携不動産会社と連携して物件を探し始めます。
+候補が見つかり次第、こちらのLINEでご連絡します。</pre><button type="button" class="cb">コピー</button><span class="cnt">83文字</span></div><p><strong>③ 物件のご紹介・契約の流れ（宅建業の説明）</strong></p><div class="copy"><pre>物件のご案内・条件交渉・重要事項説明・ご契約は、提携する宅地建物取引業者が行います。
+KADODEは開業の相談窓口として、物件探しから内装・各種手続きまでの全体をサポートします。
+担当の不動産会社をご紹介してよろしいでしょうか。</pre><button type="button" class="cb">コピー</button><span class="cnt">114文字</span></div><p><strong>④ 来店予約の確定</strong></p><div class="copy"><pre>ご予約ありがとうございます。下記の日時でお待ちしております。
+日時：
+場所：東京都渋谷区渋谷1-2-5 MFPR渋谷ビル8階（渋谷相談窓口）
+ご都合が変わった場合は、こちらのLINEでお知らせください。</pre><button type="button" class="cb">コピー</button><span class="cnt">101文字</span></div><p><strong>⑤ 返信がない方へのフォロー（1週間後）</strong></p><div class="copy"><pre>その後いかがでしょうか。
+条件が変わった、少し先になりそう、といった内容でも大丈夫です。
+新しい物件が出たときにご連絡してよろしければ、「希望」とだけお送りください。</pre><button type="button" class="cb">コピー</button><span class="cnt">83文字</span></div><p><strong>⑥ 内装・手続きの相談へのつなぎ</strong></p><div class="copy"><pre>内装・設備工事については、店舗施工の経験がある提携施工会社をご紹介できます。
+許認可や申請が必要な手続きは、内容に応じて専門家と連携します。
+進め方をご説明しますので、ご都合のよい日時を教えてください。</pre><button type="button" class="cb">コピー</button><span class="cnt">101文字</span></div><p><strong>⑦ 開業後のお礼・ご紹介のお願い</strong></p><div class="copy"><pre>ご開業おめでとうございます！
+お店づくりに関われたこと、とても嬉しく思います。
+もし周りに開業や移転を考えている方がいらっしゃれば、このLINEをご紹介いただけると幸いです。</pre><button type="button" class="cb">コピー</button><span class="cnt">87文字</span></div></section><section id="s10"><h2>8. メッセージ配信（月200通の使い方）</h2><p>通数は「友だちの人数 × 配信回数」で数えます。友だち100人なら月2回までが目安です。</p><div class="tw"><table><thead><tr><th>時期</th><th>内容</th><th>形式</th></tr></thead><tbody><tr><td data-copy>毎月上旬</td><td data-copy>開業準備のチェックポイント（電気容量・給排水・排気・用途など、HPの確認ポイントを1つずつ）</td><td data-copy>テキスト＋画像</td></tr><tr><td data-copy>毎月下旬</td><td data-copy>業種別のよくある相談・開業までの流れ</td><td data-copy>カードタイプ</td></tr><tr><td data-copy>随時</td><td data-copy>来店相談の空き日程のお知らせ</td><td data-copy>テキスト</td></tr></tbody></table></div><p>個別の物件情報を広告として配信する場合は、提携する宅地建物取引業者の名称・免許番号など、法令で必要な表示をそろえてから配信してください。</p></section><section id="s11"><h2>9. 動作確認（設定後に必ず）</h2><ol><li>自分のLINEで <a href="https://lin.ee/SgQ8UQI" target="_blank" rel="noopener">https://lin.ee/SgQ8UQI</a> から友だち追加する（追加済みなら一度ブロック→解除で、あいさつメッセージが届きます）。</li><li>あいさつメッセージとカード6枚が届くか確認する。</li><li>各カードの「このナビで相談」を押して、業種別の項目が返ってくるか確認する。</li><li>「その他の業種」→ 7枚のカード → 各ナビの返信を確認する。</li><li>リッチメニューの6つのボタンをすべて押して確認する。</li><li>動かないものは、送信テキストとキーワードが一字一句同じか（「・」や全角・半角）を見直す。</li></ol></section><section id="s12"><h2>10. HP・SNS側でやること</h2><ul><li><strong>HPのLINEボタンがまだLINEにつながっていません。</strong> ヘッダーの「LINE問合せ」、お問い合わせページの「LINE相談へ」「友だち追加する」などが、ページ内の移動のままです。フォーセット様に、リンク先を <a href="https://lin.ee/SgQ8UQI" target="_blank" rel="noopener">https://lin.ee/SgQ8UQI</a> にすることと、QRコード画像の差し替えを依頼してください。</li><li>InstagramのプロフィールリンクをこのLINE（<a href="https://lin.ee/SgQ8UQI" target="_blank" rel="noopener">https://lin.ee/SgQ8UQI</a>）に変更する。</li><li>業種ページごとに流入元を分けて計測したい場合は、管理画面の「友だちを増やす」→「友だち追加ガイド」で経路別のURLを作り、各ページのボタンに設定できます。</li></ul></section><section id="s13"><h2>素材一覧</h2><div class="tw"><table><thead><tr><th>ファイル</th><th>サイズ</th><th>用途</th></tr></thead><tbody><tr><td data-copy><span class="fname">images/profile-icon-1080.png</span></td><td data-copy>1080×1080</td><td data-copy>プロフィール画像</td></tr><tr><td data-copy><span class="fname">images/profile-cover-1080x878.png</span></td><td data-copy>1080×878</td><td data-copy>プロフィール背景</td></tr><tr><td data-copy><span class="fname">images/richmenu-2500x1686.png</span></td><td data-copy>2500×1686</td><td data-copy>リッチメニュー（6分割）</td></tr><tr><td data-copy>images/cards/card-01〜06</td><td data-copy>1040×689</td><td data-copy>カード「開業ナビ一覧」</td></tr><tr><td data-copy>images/cards/card-07〜13</td><td data-copy>1040×689</td><td data-copy>カード「その他の業種一覧」</td></tr></tbody></table></div></section></div><div class="toast" id="toast" role="status" aria-live="polite"></div><script>
+const toast=document.getElementById('toast');let tm;
+function show(m){toast.textContent=m;toast.classList.add('on');clearTimeout(tm);tm=setTimeout(()=>toast.classList.remove('on'),1400)}
+function sel(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)}
+async function copy(text,el){try{await navigator.clipboard.writeText(text);show('コピーしました')}catch(e){sel(el);show('選択しました。長押しでコピーしてください')}}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('.cb');if(b){const pre=b.parentElement.querySelector('pre');copy(pre.textContent,pre);b.textContent='コピー済み';b.classList.add('done');return}
+ if(e.target.closest('a'))return;
+ const c=e.target.closest('[data-copy]');if(c){copy(c.textContent.trim(),c)}
+});
+</script>
