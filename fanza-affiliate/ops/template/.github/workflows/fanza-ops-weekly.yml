@@ -31,6 +31,9 @@ jobs:
       DMM_MEDIA_REGISTERED: ${{ vars.DMM_MEDIA_REGISTERED || 'false' }}
       DMM_EXTRA_TARGETS: ${{ vars.DMM_EXTRA_TARGETS }}
       REPLICATION_MODE: ${{ vars.REPLICATION_MODE || 'strict' }}
+      TARGET_PRICE_MIN: ${{ vars.TARGET_PRICE_MIN || '500' }}
+      TARGET_PRICE_MAX: ${{ vars.TARGET_PRICE_MAX || '1000' }}
+      TARGET_PRICE_SHARE: ${{ vars.TARGET_PRICE_SHARE || '0.7' }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       DAILY_AI_BUDGET_JPY: ${{ vars.DAILY_AI_BUDGET_JPY || '300' }}
       X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}

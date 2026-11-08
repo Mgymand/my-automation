@@ -18,18 +18,14 @@ from .policy import HUMAN_POSTING_NOTICE
 ACCOUNT = {
     "name": "FANZA買い時メモ",
     "handle_candidates": ["fanza_kaidoki_memo", "kaidoki_memo", "fz_kaidoki"],
-    "bio": ("FANZA動画の「今買うと得な1本」を毎日メモ。50%OFF以上・100円/10円・新作の割引・レビュー多い掘り出し作品を、"
-            "価格と期限つきで紹介します｜18歳未満閲覧不可｜投稿にはPRを含みます"),
+    "bio": ("FANZAの人気作が500〜1000円で買えるタイミングを毎日メモ📝 セールで値下がりした人気作・レビューの多い作品・無料で立ち読みできる作品を、価格と期限つきで紹介｜リンクは各ポストのリプ欄｜18歳未満閲覧不可｜投稿にはPRを含みます"),
     "brand": {"primary": "#0F172A（濃紺）", "accent": "#F59E0B（琥珀）", "base": "#F8FAFC（オフホワイト）",
               "motif": "値札タグ＋しおり（メモ帳）", "text": "アイコンは文字なし。ヘッダーに『買い時メモ』の短い文字のみ", "character": "なし（人格は文体で表現）"},
     "icon_prompt": ("flat vector app icon, a minimalist price tag combined with a bookmark ribbon, navy background #0F172A, amber accent #F59E0B, "
                     "off-white shapes, rounded square, no text, no people, clean, high contrast, centered, 1024x1024"),
     "header_prompt": ("wide banner 1500x500, flat minimalist design, navy #0F172A background with subtle grid, amber #F59E0B price tag icons scattered lightly, "
                       "small off-white Japanese text '買い時メモ' at left, lots of negative space, no people, no photos, clean and trustworthy"),
-    "pinned_post": ("このアカウントは、FANZA動画の「今買うと得な1本」を毎日メモするアカウントです。\n"
-                    "・50%OFF以上、100円・10円セール、新作の割引を優先\n・レビューが多い/評価が高い掘り出し作品も拾います\n"
-                    "・価格と期限を必ず書きます（買い逃し防止）\n・毎日 夜を中心に 3〜5 件\n"
-                    "リンクは各投稿のリプ欄。18歳未満の方は閲覧・購入できません。投稿にはPRを含みます。【PR】"),
+    "pinned_post": ("FANZAの人気作が500〜1000円で買えるタイミングを毎日メモします📝\n・セールで値下がりした人気作\n・レビューが多い作品、無料で立ち読みできる作品\n・価格と期限を必ず書きます\n毎日夜を中心に3〜5件。リンクは各ポストのリプ欄。18歳未満閲覧不可【PR】"),
 }
 
 # 10 種類の構造テンプレート（文章ではなく構造。{} は DB の事実で埋める）

@@ -101,7 +101,7 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     patterns.ensure_seed(db)
     products.rescore_all(db)
     pats = patterns.active_patterns(db)
-    cands = products.top_candidates(db, limit=settings.posts_per_day * 4)
+    cands = products.top_candidates(db, limit=max(60, settings.posts_per_day * 12))
     if not cands:
         db.log_event("warn", "no_products", "商品候補がありません。fetch-products を実行してください")
         return []
@@ -121,8 +121,20 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
     used_angles: dict[str, int] = {}
     scheduled: list[int] = []
 
+    main_cands, rest_cands, main_quota = products.plan_order(cands, settings, n_posts)
+    main_used = 0
+
+    def _pick(pool: list[dict]) -> dict | None:
+        return next((c for c in pool if c["content_id"] not in used_products and used_genres.get((c["genres"] or ["-"])[0], 0) < 2), None)
+
     for seq in range(1, n_posts + 1):
-        prod = next((c for c in cands if c["content_id"] not in used_products and used_genres.get((c["genres"] or ["-"])[0], 0) < 2), None)
+        # 主力（価格帯内の人気作）で枠の 7 割（TARGET_PRICE_SHARE）を先に埋め、残りは EAV 順（安い作品は可、価格帯より高い作品は最後）
+        if main_used < main_quota:
+            prod = _pick(main_cands) or _pick(rest_cands)
+        else:
+            prod = _pick(sorted(main_cands + rest_cands, key=lambda c: (products.price_tier(c, settings) == 3, -float(c.get("eav") or 0))))
+        if prod is not None and products.price_tier(prod, settings) <= 1:
+            main_used += 1
         if prod is None:
             db.log_event("warn", "plan_short", f"{seq - 1} 件で候補が尽きました")
             break
@@ -174,7 +186,12 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
         when = _slot_time(slot, day0, rng, used_times, settings.min_post_interval_min)
         used_times.append(when)
         comp = prod.get("eav_components") or {}
-        reason = (f"EAV {prod['eav']:.3f}（予測表示 {comp.get('p_views')}・CTR {comp.get('p_ctr')}・CVR {comp.get('p_cvr')}・報酬 {comp.get('payout_jpy')}円）。"
+        tier = products.price_tier(prod, settings)
+        tier_label = {0: f"主力: {int(settings.target_price_min)}〜{int(settings.target_price_max)}円の人気作", 1: f"主力の価格帯（{int(settings.target_price_min)}〜{int(settings.target_price_max)}円）",
+                      2: "価格帯より安い作品（サブ）", 3: "価格帯より高い作品（候補不足時のみ）"}[tier]
+        reason = (f"{tier_label}"
+                  + (f"（ランキング {prod['rank_position']} 位）" if int(prod.get("rank_position") or 10_000) <= settings.popular_rank_max else "")
+                  + f"。EAV {prod['eav']:.3f}（予測表示 {comp.get('p_views')}・CTR {comp.get('p_ctr')}・CVR {comp.get('p_cvr')}・報酬 {comp.get('payout_jpy')}円）。"
                   f"新規性 {comp.get('novelty')}・競合 {comp.get('competition')}・女優勢い {comp.get('actress_momentum')}・ジャンル勢い {comp.get('genre_momentum')}。"
                   + (f"割引 {int(float(prod.get('discount_rate') or 0) * 100)}%。" if prod.get("discount_rate") else "")
                   + (f"レビュー {prod.get('review_avg')}（{prod.get('review_count')}件）。" if prod.get("review_avg") else ""))

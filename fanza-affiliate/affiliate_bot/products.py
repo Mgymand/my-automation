@@ -191,3 +191,27 @@ def check_consistency(db: Database) -> list[str]:
         if not r["affiliate_url"] or not r["url"]:
             issues.append(f"{r['content_id']}: URL 欠落")
     return issues
+
+
+def is_popular(prod: dict, rank_max: int = 100) -> bool:
+    """人気作品: FANZA ランキング上位（rank 順で取得した商品の順位）か、レビューが多く評価が高い作品。"""
+    rank = int(prod.get("rank_position") or 10_000)
+    rc, ravg = int(prod.get("review_count") or 0), float(prod.get("review_avg") or 0)
+    return rank <= rank_max or (rc >= 30 and ravg >= 4.0)
+
+
+def price_tier(prod: dict, settings) -> int:
+    """0: 主力（価格帯内の人気作）/ 1: 価格帯内 / 2: 価格帯より安い（可）/ 3: 価格帯より高い・価格不明（最後）。"""
+    price = float(prod.get("price") or 0)
+    if not price:
+        return 3
+    if settings.target_price_min <= price <= settings.target_price_max:
+        return 0 if is_popular(prod, settings.popular_rank_max) else 1
+    return 2 if price < settings.target_price_min else 3
+
+
+def plan_order(cands: list[dict], settings, n_posts: int) -> tuple[list[dict], list[dict], int]:
+    """(主力の候補, その他の候補, 主力で埋める件数)。どちらも EAV の高い順で、主力は人気作を先に並べる。"""
+    main = sorted([c for c in cands if price_tier(c, settings) <= 1], key=lambda c: (price_tier(c, settings), -float(c.get("eav") or 0)))
+    rest = sorted([c for c in cands if price_tier(c, settings) >= 2], key=lambda c: (price_tier(c, settings) == 3, -float(c.get("eav") or 0)))
+    return main, rest, math.ceil(n_posts * max(0.0, min(1.0, settings.target_price_share)))

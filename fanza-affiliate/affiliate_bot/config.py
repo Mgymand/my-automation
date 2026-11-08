@@ -51,6 +51,11 @@ class Settings:
     dmm_floor: str = field(default_factory=lambda: _env("DMM_FLOOR", "videoa"))
     # 追加で取得する売場（service:floor をカンマ区切り）。例: doujin:digital_doujin,ebook:comic（同人・コミックは無料立ち読みあり）
     dmm_extra_targets: str = field(default_factory=lambda: _env("DMM_EXTRA_TARGETS", ""))
+    # 主力の価格帯（現在価格。セールで下がった作品も含む）と、1 日の投稿に占める割合。低価格は可、上限超えは最後に回す
+    target_price_min: float = field(default_factory=lambda: float(_env("TARGET_PRICE_MIN", "500")))
+    target_price_max: float = field(default_factory=lambda: float(_env("TARGET_PRICE_MAX", "1000")))
+    target_price_share: float = field(default_factory=lambda: float(_env("TARGET_PRICE_SHARE", "0.7")))
+    popular_rank_max: int = field(default_factory=lambda: int(_env("POPULAR_RANK_MAX", "100")))     # FANZA ランキングの何位までを「人気」とするか
     dmm_payout_rate: float = field(default_factory=lambda: float(_env("DMM_PAYOUT_RATE", "0.20")))
     dmm_media_registered: bool = field(default_factory=lambda: _flag("DMM_MEDIA_REGISTERED", False))
 
