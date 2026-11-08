@@ -39,7 +39,7 @@ CONVENTIONS = {
     "詳細", "詳細は", "リプ欄", "リプ欄から", "リプ欄へ", "リプ欄に", "こちら", "こちらから", "チェック", "サンプル", "サンプル動画",
     "出演", "レビュー", "評価", "平均", "人気", "おすすめ", "今日の1本", "今夜の1本", "今日の一本", "今夜の一本", "値下げ", "値下がり",
     "価格", "通常", "定価", "現在", "OFF", "off", "オフ", "円", "位", "件", "本", "選", "作品", "ランキング", "本日の", "本日",
-    "まとめ", "安い順", "FANZA", "ファンザ", "動画", "単体", "さん", "ちゃん", "はこちら", "今すぐ", "ベスト", "総集編", "シリーズ", "最新作", "第", "弾", "広告", "PR",
+    "まとめ", "安い順", "FANZA", "ファンザ", "動画", "単体", "さん", "ちゃん", "はこちら", "今すぐ", "続きは", "続き", "無料", "サンプル画像", "ベスト", "総集編", "シリーズ", "最新作", "第", "弾", "広告", "PR",
     "で買える", "買える", "は", "が", "の", "に", "を", "も", "で", "と", "から", "より", "中", "込み", "税込",
 }
 GENERIC_TAGS = {"FANZA", "ファンザ", "PR", "広告", "セール", "FANZAセール", "新作", "AV", "AV女優"}
@@ -47,7 +47,8 @@ GENERIC_TAGS = {"FANZA", "ファンザ", "PR", "広告", "セール", "FANZAセ�
 CLAIMS = {
     "半額": "half", "50%OFF以上": "half", "期間限定": "limited", "今だけ": "limited", "セール中": "limited", "キャンペーン中": "limited",
     "本日まで": "today_end", "今日まで": "today_end", "本日終了": "today_end", "今日終了": "today_end", "本日配信": "new", "配信開始": "new",
-    "新作": "new", "新着": "new", "最安": "never", "最安値": "never", "過去最安": "never", "史上最安": "never", "独占": "never", "限定公開": "never",
+    "新作": "new", "新着": "new", "無料で立ち読み": "tachiyomi", "無料立ち読み": "tachiyomi", "立ち読み": "tachiyomi",
+    "無料で試し読み": "tachiyomi", "試し読み": "tachiyomi", "最安": "never", "最安値": "never", "過去最安": "never", "史上最安": "never", "独占": "never", "限定公開": "never",
 }
 HARD = {"PRICE", "LIST_PRICE", "DISC", "END_DATE", "END_TIME", "REL_DATE", "RANK", "RAVG", "RCOUNT", "DURATION", "COUNT", "NUM", "TIME", "TITLE"}
 SOFT = {"ACTRESS", "GENRE"}
@@ -58,21 +59,24 @@ NUM = r"(\d{1,3}(?:,\d{3})+|\d+)"
 SKELETON_SCHEMA = """
 CREATE TABLE IF NOT EXISTS skeletons (
   pattern_id TEXT PRIMARY KEY, skeleton TEXT NOT NULL, category TEXT, n_posts INTEGER, n_authors INTEGER,
-  perf REAL, reproducibility REAL, fidelity REAL DEFAULT 1, score REAL, media_type TEXT, link_in TEXT, hours_jst TEXT, avg_length INTEGER,
+  perf REAL, reproducibility REAL, fidelity REAL DEFAULT 1, score REAL, media_type TEXT, image_count INTEGER DEFAULT 1, link_in TEXT, hours_jst TEXT, avg_length INTEGER,
   example_ids TEXT, source TEXT, updated_at TEXT NOT NULL
 );
 """
 
 # 2026-09 の公開調査（docs/ACCOUNT_RESEARCH.md §7）で観測した型。調査データが無い間の初期値で、実データの骨格に順次置き換わる
-SEED_SKELETONS = [
-    ("⟦DISC⟧｜⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧／⟦ACTRESS⟧\n⟦END_DATE⟧ ⟦END_TIME⟧まで\n詳細はリプ欄", "セール速報型", 6, "image"),
-    ("⟦DISC⟧｜⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧／⟦ACTRESS⟧\n詳細はリプ欄", "セール速報型", 6, "image"),
-    ("⟦LIST_PRICE⟧→⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧\nリプ欄から", "激安・価格訴求型", 4, "image"),
-    ("⟦ACTRESS⟧\n⟦TITLE⟧\n⟦PRICE⟧｜⟦GENRE⟧\nリプ欄から", "女優訴求型", 3, "image"),
-    ("⟦REL_DATE⟧ ⟦CLAIM:配信開始⟧\n⟦TITLE⟧\n⟦ACTRESS⟧｜⟦GENRE⟧\n⟦PRICE⟧", "新作訴求型", 4, "image"),
-    ("レビュー⟦RCOUNT⟧・平均⟦RAVG⟧\n⟦TITLE⟧\n⟦GENRE⟧", "掘り出し物型", 2, "image"),
-    ("⟦TITLE⟧\nサンプル動画👇", "動画主導型", 2, "video"),
-    ("⟦TITLE⟧｜⟦GENRE⟧｜⟦PRICE⟧", "短文型", 2, "image"),
+SEED_SKELETONS = [   # (骨格, 型, 観測アカウント数, メディア, 画像枚数, 出所)
+    ("⟦DISC⟧｜⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧／⟦ACTRESS⟧\n⟦END_DATE⟧ ⟦END_TIME⟧まで\n詳細はリプ欄", "セール速報型", 6, "image", 1, "observed:2026-09"),
+    ("⟦DISC⟧｜⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧／⟦ACTRESS⟧\n詳細はリプ欄", "セール速報型", 6, "image", 1, "observed:2026-09"),
+    ("⟦LIST_PRICE⟧→⟦PRICE⟧\n⟦TITLE⟧\n⟦GENRE⟧\nリプ欄から", "激安・価格訴求型", 4, "image", 1, "observed:2026-09"),
+    ("⟦ACTRESS⟧\n⟦TITLE⟧\n⟦PRICE⟧｜⟦GENRE⟧\nリプ欄から", "女優訴求型", 3, "image", 1, "observed:2026-09"),
+    ("⟦REL_DATE⟧ ⟦CLAIM:配信開始⟧\n⟦TITLE⟧\n⟦ACTRESS⟧｜⟦GENRE⟧\n⟦PRICE⟧", "新作訴求型", 4, "image", 1, "observed:2026-09"),
+    ("レビュー⟦RCOUNT⟧・平均⟦RAVG⟧\n⟦TITLE⟧\n⟦GENRE⟧", "掘り出し物型", 2, "image", 1, "observed:2026-09"),
+    ("⟦TITLE⟧\nサンプル動画👇", "動画主導型", 2, "video", 1, "observed:2026-09"),
+    ("⟦TITLE⟧｜⟦GENRE⟧｜⟦PRICE⟧", "短文型", 2, "image", 1, "observed:2026-09"),
+    # 運営者の観測（2026-11）: 購入前に無料で見られる立ち読み / サンプル画像を複数枚添えて購買を促す投稿が多い
+    ("⟦TITLE⟧\n⟦CLAIM:無料で立ち読み⟧\n⟦PRICE⟧\n続きはリプ欄", "立ち読み画像型", 3, "image", 4, "observed:2026-11"),
+    ("⟦TITLE⟧\n⟦ACTRESS⟧｜⟦GENRE⟧\n⟦PRICE⟧\n続きはリプ欄", "サンプル画像型", 3, "image", 4, "observed:2026-11"),
 ]
 
 
@@ -81,6 +85,8 @@ def ensure_schema(db: Database) -> None:
     cols = {r["name"] for r in db.q("PRAGMA table_info(skeletons)")}
     if "fidelity" not in cols:
         db.exec("ALTER TABLE skeletons ADD COLUMN fidelity REAL DEFAULT 1")
+    if "image_count" not in cols:
+        db.exec("ALTER TABLE skeletons ADD COLUMN image_count INTEGER DEFAULT 1")
 
 
 # ---------------------------------------------------------------- 骨格の抽出
@@ -262,6 +268,7 @@ def rebuild(db: Database, limit: int = 400) -> dict:
         g["link"].append(p["link_in"])
         f = loads(r.get("features"), {})
         g["media"].append("video" if f.get("has_video") else ("image" if f.get("image_count") or f.get("media_types") else "none"))
+        g.setdefault("imgs", []).append(int(f.get("image_count") or 0))
         g["len"].append(int(f.get("length") or len(r["text"])))
         try:
             g["hours"].append(datetime.fromisoformat(str(r["created_at"]).replace("Z", "+00:00")).astimezone(TZ).hour)
@@ -276,7 +283,8 @@ def rebuild(db: Database, limit: int = 400) -> dict:
         if fid < 0.4:          # 半分以上が固有表現の投稿は「型」では再現できない（偶然要因・表現力で伸びたもの）
             continue
         _store(db, sk, cat, len(g["posts"]), len(g["authors"]), perf, repro, _mode(g["media"]), _mode(g["link"]),
-               sorted(set(g["hours"])), int(sum(g["len"]) / len(g["len"])), [r["x_post_id"] for r in g["posts"][:5]], "research", fid)
+               sorted(set(g["hours"])), int(sum(g["len"]) / len(g["len"])), [r["x_post_id"] for r in g["posts"][:5]], "research", fid,
+               image_count=max(1, min(4, sorted(g["imgs"])[len(g["imgs"]) // 2])))
         n += 1
     seeds = ensure_seeds(db)
     db.set_setting("replicate_rebuilt_at", utcnow())
@@ -286,9 +294,10 @@ def rebuild(db: Database, limit: int = 400) -> dict:
 def ensure_seeds(db: Database) -> int:
     ensure_schema(db)
     n = 0
-    for sk, cat, authors, media_type in SEED_SKELETONS:
+    for sk, cat, authors, media_type, images, src in SEED_SKELETONS:
         if not db.one("SELECT 1 FROM skeletons WHERE skeleton=?", (sk,)):
-            _store(db, sk, cat, authors, authors, 0.35, min(1.0, authors / MIN_COMMON_AUTHORS), media_type, "reply", [21, 22, 20], 70, [], "observed:2026-09")
+            _store(db, sk, cat, authors, authors, 0.35, min(1.0, authors / MIN_COMMON_AUTHORS), media_type, "reply", [21, 22, 20], 70, [], src,
+                   image_count=images)
             n += 1
     return n
 
@@ -298,18 +307,18 @@ def _mode(xs: list[str]) -> str:
 
 
 def _store(db: Database, sk: str, cat: str, n_posts: int, n_authors: int, perf: float, repro: float, media_type: str, link_in: str,
-           hours: list[int], avg_len: int, example_ids: list[str], source: str, fid: float = 1.0) -> str:
+           hours: list[int], avg_len: int, example_ids: list[str], source: str, fid: float = 1.0, image_count: int = 1) -> str:
     """スコア = 成果（外れ値スコアの相対値）×（0.5 + 0.5 × 再現性）× 忠実度。"""
     pid = "SK_" + hashlib.sha1(sk.encode("utf-8")).hexdigest()[:8]
     score = round(perf * (0.5 + 0.5 * repro) * fid, 4)
     db.exec("""INSERT INTO skeletons(pattern_id,skeleton,category,n_posts,n_authors,perf,reproducibility,fidelity,score,media_type,link_in,hours_jst,
-               avg_length,example_ids,source,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+               avg_length,example_ids,source,updated_at,image_count) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(pattern_id) DO UPDATE SET n_posts=excluded.n_posts, n_authors=excluded.n_authors, perf=excluded.perf,
                reproducibility=excluded.reproducibility, fidelity=excluded.fidelity, score=excluded.score, media_type=excluded.media_type,
                link_in=excluded.link_in, hours_jst=excluded.hours_jst, avg_length=excluded.avg_length, example_ids=excluded.example_ids,
-               updated_at=excluded.updated_at""",
+               updated_at=excluded.updated_at, image_count=excluded.image_count""",
             (pid, sk, cat, n_posts, n_authors, round(perf, 4), round(repro, 3), fid, score, media_type, link_in, dumps(hours), avg_len,
-             dumps(example_ids), source, utcnow()))
+             dumps(example_ids), source, utcnow(), int(image_count)))
     lines = sk.split("\n")
     add_pattern(db, {"pattern_id": pid, "pattern_name": f"再現: {cat}（{n_authors} アカウント）", "category": cat, "hook": lines[0],
                      "body_structure": " / ".join(lines), "cta_structure": lines[-1], "media_type": media_type, "ideal_length": avg_len,
@@ -350,6 +359,10 @@ def _facts(p: dict, now: datetime) -> dict:
     except ValueError:
         rel_d = None
     genres = [g for g in (p.get("genres") or []) if g and not find_ng_words(g)]
+    imgs = p.get("sample_image_urls") or []
+    imgs = loads(imgs, []) if isinstance(imgs, str) else imgs
+    # 「立ち読み」と言えるのは、無料立ち読みがある商品（API の tachiyomi）か、同人・電子書籍でサンプルページが 2 枚以上ある商品だけ
+    tachiyomi = bool(p.get("tachiyomi_url")) or (str(p.get("service") or "") in ("doujin", "ebook") and len(imgs) >= 2)
     return {
         "PRICE": f"{int(price):,}円" if price else None,
         "LIST_PRICE": f"{int(lst):,}円" if (lst and price and lst > price) else None,
@@ -362,7 +375,7 @@ def _facts(p: dict, now: datetime) -> dict:
         "TITLE": p.get("title"), "ACTRESS": list(p.get("actresses") or []), "GENRE": genres,
         "_claims": {"half": disc >= 0.5, "limited": bool(end and end > now) or disc >= 0.05,
                     "today_end": bool(end and now < end and end.date() == now.date()),
-                    "new": bool(rel_d and timedelta(0) <= (now.date() - rel_d) <= timedelta(days=7)), "never": False},
+                    "new": bool(rel_d and timedelta(0) <= (now.date() - rel_d) <= timedelta(days=7)), "tachiyomi": tachiyomi, "never": False},
     }
 
 
@@ -407,7 +420,10 @@ def render(skeleton: str, p: dict, now: datetime | None = None, max_len: int = 1
 
     out_lines, tmpl_lines = [], []
     for li, line in enumerate(skeleton.split("\n")):
+        whole = re.fullmatch(r"\s*⟦(ACTRESS|GENRE)⟧\s*", line)
         filled = SLOT.sub(sub, line)
+        if whole and "⟦DROP⟧" in filled:            # 1 行まるごとが出演者 / ジャンルの型（女優訴求など）で、その事実が無い
+            missing.append(whole.group(1))
         filled = re.sub(r"([／/｜|・、])?\s*⟦DROP⟧\s*([／/｜|・、])?", lambda m: m.group(1) if (m.group(1) and m.group(2)) else "", filled)
         filled = re.sub(r"^[／/｜|・、\s]+|[／/｜|・、\s]+$", "", filled)
         free_n = sum(int(x) for x in re.findall(r"⟦FREE:(\d+)⟧", filled))
@@ -502,4 +518,6 @@ def skeleton_for_pattern(db: Database, pattern_id: str) -> dict | None:
 def describe(sk: dict) -> str:
     who = f"{sk['n_authors']} アカウント・{sk['n_posts']} 投稿" if sk["source"] == "research" else "2026-09 の公開調査で観測した型"
     link = "本文末" if sk["link_in"] == "body" else "リプ欄"
-    return f"再現元の型: {sk['category']}（{who}、成果スコア {sk['score']:.2f}）。リンクの置き場所: {link}。メディア: {sk['media_type']}"
+    media_s = "動画" if sk["media_type"] == "video" else (f"画像 {sk.get('image_count') or 1} 枚" if sk["media_type"] == "image" else "なし")
+    who = "運営者の観測（2026-11）" if sk["source"] == "observed:2026-11" else who
+    return f"再現元の型: {sk['category']}（{who}、成果スコア {sk['score']:.2f}）。リンクの置き場所: {link}。メディア: {media_s}"

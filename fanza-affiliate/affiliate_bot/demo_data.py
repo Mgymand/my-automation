@@ -40,3 +40,19 @@ DEMO_RESEARCH_CSV = """x_post_id,followers,text,media_type,created_at,views,like
 1005,120000,"本日配信。",photo,2026-09-27T12:00:00+00:00,50000,300,20,4,50,0
 1006,700,"どっち派？\\n温泉 or オフィス\\n答えは後半で",video,2026-09-27T14:00:00+00:00,120000,900,110,40,260,30
 """
+
+
+def demo_doujin_products(site: str = "FANZA") -> list[Product]:
+    """同人（無料立ち読みあり）のドライラン用商品。DMM_EXTRA_TARGETS に doujin を入れたときだけ fetch-products --demo が使う。"""
+    cid = "d_demo901"
+    base = "https://doujin-assets.dmm.co.jp/digital/comic/" + cid
+    return [Product(
+        content_id=cid, site=site, service="doujin", floor="digital_doujin", title="サンプル同人H 放課後の図書室（全40ページ）",
+        url=f"https://www.dmm.co.jp/dc/doujin/-/detail/=/cid={cid}/",
+        affiliate_url=f"https://al.fanza.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F-%2Fdetail%2F%3D%2Fcid%3D{cid}%2F&af_id=demo-990&ch=api",
+        image_url=f"{base}/{cid}pl.jpg", sample_image_urls=[f"{base}/{cid}jp-{k:03d}.jpg" for k in range(1, 6)], sample_movie_url=None,
+        price=550, list_price=1100, release_date="2026-11-01", review_count=64, review_avg=4.7, actresses=[], genres=["学園もの", "コミック"],
+        maker="架空サークル", series=None, campaign=[], is_adult=(site == "FANZA"), raw={},
+        tachiyomi_url=f"https://www.dmm.co.jp/dc/doujin/-/tachiyomi/=/cid={cid}/",
+        tachiyomi_affiliate_url=f"https://al.fanza.co.jp/?lurl=https%3A%2F%2Fwww.dmm.co.jp%2Fdc%2Fdoujin%2F-%2Ftachiyomi%2F%3D%2Fcid%3D{cid}%2F&af_id=demo-990&ch=api",
+    )]

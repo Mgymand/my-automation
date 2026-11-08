@@ -60,7 +60,10 @@ def media_rights_ok(url: str | None) -> bool:
     if not url:
         return True
     host = urlparse(url).netloc.lower()
-    return any(host == h or host.endswith("." + h) for h in DMM_MEDIA_HOSTS)
+    if any(host == h or host.endswith("." + h) for h in DMM_MEDIA_HOSTS):
+        return True
+    # 同人・コミックのサンプル（立ち読み）画像は doujin-assets.dmm.co.jp 等の DMM 自社サブドメインから配信される
+    return urlparse(url).scheme == "https" and (host.endswith(".dmm.co.jp") or host.endswith(".dmm.com"))
 
 
 def check_text(text: str, media_url: str | None = None) -> PolicyResult:

@@ -148,6 +148,7 @@ GitHub の cron は混雑時に数分〜数十分遅れることがあります�
    | Variable | `DMM_MEDIA_REGISTERED` | 必須 | 媒体登録が承認されたら `true` |
    | Variable | `FANZA_CODE_REF` | — | PR がマージされるまでは `claude/practical-einstein-2yfee6`。以後は `main` か SHA |
    | Variable | `X_USERNAME` / `POSTS_PER_DAY` / `OPS_MENTION` / `DAILY_AI_BUDGET_JPY` | 任意 | 既定は「なし / 3 / リポジトリ所有者 / 300」 |
+   | Variable | `DMM_EXTRA_TARGETS` / `REPLICATION_MODE` | 任意 | 同人・コミックも扱うなら `doujin:digital_doujin,ebook:comic` / 既定 `strict`（docs/REPLICATION.md） |
 3. Actions タブで「FANZA 毎朝の投稿セット」を Run workflow で 1 回動かし、「📅 投稿セット」Issue ができることを確認します。
 4. スマホに GitHub Mobile を入れ、運用リポジトリを Watch（All Activity）にします。Discord を使う場合は、通知用チャンネルを年齢制限付きにしておくと安全です。
 

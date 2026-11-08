@@ -32,17 +32,18 @@ def upsert_products(db: Database, products: list[Product], payout_rate: float, r
         db.exec(
             """INSERT INTO products(content_id,site,service,floor,title,url,affiliate_url,image_url,sample_image_urls,
                sample_movie_url,price,list_price,discount_rate,release_date,review_count,review_avg,actresses,genres,
-               maker,series,campaign,rank_position,is_adult,payout_rate,raw,fetched_at)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+               maker,series,campaign,rank_position,is_adult,payout_rate,raw,fetched_at,tachiyomi_url,tachiyomi_affiliate_url)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(content_id) DO UPDATE SET title=excluded.title, url=excluded.url, affiliate_url=excluded.affiliate_url,
                image_url=excluded.image_url, sample_image_urls=excluded.sample_image_urls, sample_movie_url=excluded.sample_movie_url,
                price=excluded.price, list_price=excluded.list_price, discount_rate=excluded.discount_rate,
                review_count=excluded.review_count, review_avg=excluded.review_avg, campaign=excluded.campaign,
-               rank_position=excluded.rank_position, payout_rate=excluded.payout_rate, raw=excluded.raw, fetched_at=excluded.fetched_at""",
+               rank_position=excluded.rank_position, payout_rate=excluded.payout_rate, raw=excluded.raw, fetched_at=excluded.fetched_at,
+               tachiyomi_url=excluded.tachiyomi_url, tachiyomi_affiliate_url=excluded.tachiyomi_affiliate_url""",
             (p.content_id, p.site, p.service, p.floor, p.title, p.url, p.affiliate_url, p.image_url, dumps(p.sample_image_urls),
              p.sample_movie_url, p.price, p.list_price, p.discount_rate, p.release_date, p.review_count, p.review_avg,
              dumps(p.actresses), dumps(p.genres), p.maker, p.series, dumps(p.campaign), rank_offset + i + 1, int(p.is_adult),
-             payout_rate, dumps(p.raw), utcnow()),
+             payout_rate, dumps(p.raw), utcnow(), p.tachiyomi_url, p.tachiyomi_affiliate_url),
         )
         n += 1
     return n

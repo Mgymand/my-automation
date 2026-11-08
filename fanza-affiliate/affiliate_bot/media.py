@@ -60,5 +60,17 @@ def pick_asset(db: Database, pid: str, prefer: str = "image") -> dict | None:
     return None
 
 
+def pick_assets(db: Database, pid: str, prefer: str = "image", n: int = 1) -> list[dict]:
+    """推奨メディアの公式素材を最大 n 個（X は画像 4 枚まで）。動画は 1 本だけ。画像はサンプル（立ち読み）画像を先頭から順に。"""
+    first = pick_asset(db, pid, prefer)
+    if not first:
+        return []
+    if first["media_kind"] == "video" or n <= 1:
+        return [first]
+    rows = [dict(r) for r in db.q("SELECT * FROM media_assets WHERE product_id=? AND source_type='sample_image' AND rights_status='ok' ORDER BY id LIMIT ?",
+                                  (pid, min(n, 4)))]
+    return rows or [first]
+
+
 def assets_for(db: Database, pid: str) -> list[dict]:
     return [dict(r) for r in db.q("SELECT * FROM media_assets WHERE product_id=? ORDER BY source_type, id", (pid,))]

@@ -48,6 +48,8 @@ class Product:
     campaign: list[dict]
     is_adult: bool
     raw: dict
+    tachiyomi_url: str | None = None              # 無料立ち読み（同人・コミック等。API の tachiyomi）
+    tachiyomi_affiliate_url: str | None = None
 
     @property
     def discount_rate(self) -> float:
@@ -113,6 +115,8 @@ def parse_item(item: dict, site: str) -> Product:
         campaign=list(item.get("campaign") or []),
         is_adult=(site.upper() == ADULT_SITE),
         raw=item,
+        tachiyomi_url=(item.get("tachiyomi") or {}).get("URL") or None,
+        tachiyomi_affiliate_url=(item.get("tachiyomi") or {}).get("affiliateURL") or None,
     )
 
 

@@ -49,6 +49,8 @@ class Settings:
     dmm_site: str = field(default_factory=lambda: _env("DMM_SITE", "FANZA"))
     dmm_service: str = field(default_factory=lambda: _env("DMM_SERVICE", "digital"))
     dmm_floor: str = field(default_factory=lambda: _env("DMM_FLOOR", "videoa"))
+    # 追加で取得する売場（service:floor をカンマ区切り）。例: doujin:digital_doujin,ebook:comic（同人・コミックは無料立ち読みあり）
+    dmm_extra_targets: str = field(default_factory=lambda: _env("DMM_EXTRA_TARGETS", ""))
     dmm_payout_rate: float = field(default_factory=lambda: float(_env("DMM_PAYOUT_RATE", "0.20")))
     dmm_media_registered: bool = field(default_factory=lambda: _flag("DMM_MEDIA_REGISTERED", False))
 
@@ -111,6 +113,15 @@ class Settings:
 
     def x_read_available(self) -> bool:
         return bool(self.x_bearer_token)
+
+    def dmm_targets(self) -> list[tuple[str, str]]:
+        out = [(self.dmm_service, self.dmm_floor)]
+        for t in self.dmm_extra_targets.split(","):
+            if ":" in t:
+                sv, fl = (x.strip() for x in t.split(":", 1))
+                if sv and fl and (sv, fl) not in out:
+                    out.append((sv, fl))
+        return out
 
     def dmm_credentials_present(self) -> bool:
         return bool(self.dmm_api_id and self.dmm_affiliate_id)

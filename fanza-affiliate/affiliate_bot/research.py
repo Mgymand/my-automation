@@ -176,15 +176,16 @@ def collect(db: Database, x, usd_jpy: float, queries: list[str] | None = None, p
 
 
 def import_csv(db: Database, text: str) -> int:
-    """手動で集めた公開投稿データ。列: x_post_id, followers, text, media_type, created_at, views, likes, reposts, replies, bookmarks"""
+    """手動で集めた公開投稿データ。列: x_post_id, followers, text, media_type, created_at, views, likes, reposts, replies, bookmarks
+    （任意: image_count = 添付画像の枚数, author = アカウント名）"""
     n = 0
     for row in csv.DictReader(io.StringIO(text)):
         mt = (row.get("media_type") or "").strip()
-        post = {"x_post_id": row.get("x_post_id"), "author_followers": int(row.get("followers") or 0),
+        post = {"x_post_id": row.get("x_post_id"), "author_followers": int(row.get("followers") or 0), "author_username": row.get("author") or None,
                 "text": (row.get("text") or "").replace("\\n", "\n"),   # CSV 内の改行は \n 表記を許容
                 "created_at": row.get("created_at"), "views": int(row.get("views") or 0), "likes": int(row.get("likes") or 0),
                 "reposts": int(row.get("reposts") or 0), "replies": int(row.get("replies") or 0), "bookmarks": int(row.get("bookmarks") or 0),
-                "media_types": [mt] if mt else [], "image_count": 1 if mt == "photo" else 0, "has_video": mt == "video",
+                "media_types": [mt] if mt else [], "image_count": int(row.get("image_count") or (1 if mt == "photo" else 0)), "has_video": mt == "video",
                 "video_seconds": float(row.get("video_seconds") or 0)}
         if store_post(db, post, source="csv"):
             n += 1

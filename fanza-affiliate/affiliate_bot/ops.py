@@ -136,8 +136,10 @@ def render_daily_issue(packages: list[dict], day: str, report_md: str = "", adju
                 f"### POST {p['seq']} — {p['scheduled_local']}（優先度 {p.get('priority') or '-'}）" + ("　✅ 投稿済" if p.get("status") == "posted" else ""),
                 "**本文（コピーして投稿）**", _fence(p["text"]),
                 "**リプ欄に貼る Affiliate URL**", _fence(p.get("affiliate_url") or "-"),
-                f"- 素材: {('[DMM 公式素材を開く](' + p['media_source'] + ')') if p.get('media_source') else '（公式素材なし）'}"
-                f"（{'動画' if p.get('media_type') == 'video' else '画像' if p.get('media_type') == 'image' else 'なし'} / 権利: {'OK・DMM 公式' if p.get('media_source') else '要確認'}）",
+                *(["**無料立ち読みの Affiliate URL（立ち読みの型ではこちらを使う）**", _fence(p["tachiyomi_affiliate_url"])] if p.get("tachiyomi_affiliate_url") else []),
+                "- 素材: " + ("　".join(f"[{'動画' if p.get('media_type') == 'video' else '画像'} {i}]({u})" for i, u in enumerate(p.get("media_sources") or [], 1))
+                              or "（公式素材なし）")
+                + f"（{len(p.get('media_sources') or [])} 点・この順で添付 / 権利: {'OK・DMM 公式' if p.get('media_source') else '要確認'}）",
                 f"- 商品: {p.get('title')}｜{_price(p)}" + (f"｜{int(float(p['discount_rate']) * 100)}%OFF" if p.get("discount_rate") else ""),
                 f"- 女優: {'・'.join(p.get('actresses') or []) or '-'}｜ジャンル: {'・'.join((p.get('genres') or [])[:4]) or '-'}",
                 f"- Pattern: {p.get('pattern_id')}（{p.get('pattern_name') or ''}）/ 訴求軸 {p.get('angle')}",

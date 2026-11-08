@@ -139,6 +139,18 @@ class Database:
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.executescript(SCHEMA)
+        self._ensure_columns()
+
+    # 既存 DB に後から足した列（CREATE TABLE IF NOT EXISTS では追加されないため）
+    ADDED_COLUMNS = [("products", "tachiyomi_url", "TEXT"), ("products", "tachiyomi_affiliate_url", "TEXT"),
+                     ("posts", "media_sources", "TEXT")]
+
+    def _ensure_columns(self) -> None:
+        for table, col, typ in self.ADDED_COLUMNS:
+            cols = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            if col not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+        self.conn.commit()
 
     @contextmanager
     def tx(self) -> Iterator[sqlite3.Connection]:

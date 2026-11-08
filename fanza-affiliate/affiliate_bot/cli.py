@@ -76,8 +76,11 @@ def print_costs(settings: Settings, db: Database) -> None:
 def cmd_fetch_products(settings: Settings, db: Database, args) -> None:
     if not settings.dmm_credentials_present():
         if args.demo:
-            from .demo_data import demo_products
-            n = products.upsert_products(db, demo_products(settings.dmm_site), settings.dmm_payout_rate)
+            from .demo_data import demo_doujin_products, demo_products
+            items = demo_products(settings.dmm_site)
+            if any(sv == "doujin" for sv, _ in settings.dmm_targets()):
+                items += demo_doujin_products(settings.dmm_site)
+            n = products.upsert_products(db, items, settings.dmm_payout_rate)
             print(f"demo products upserted: {n}")
         else:
             print("DMM_API_ID / DMM_AFFILIATE_ID が未設定です（bootstrap で設定、または --demo）", file=sys.stderr)
@@ -85,10 +88,10 @@ def cmd_fetch_products(settings: Settings, db: Database, args) -> None:
     else:
         c = DMMClient(settings.dmm_api_id, settings.dmm_affiliate_id)
         total = 0
-        for sort in args.sorts.split(","):
+        for (service, floor), sort in [(t, srt) for t in settings.dmm_targets() for srt in args.sorts.split(",")]:
             for page in range(args.pages):
                 try:
-                    items = c.item_list(site=settings.dmm_site, service=settings.dmm_service, floor=settings.dmm_floor, sort=sort, hits=args.hits, offset=1 + page * args.hits)
+                    items = c.item_list(site=settings.dmm_site, service=service, floor=floor, sort=sort, hits=args.hits, offset=1 + page * args.hits)
                 except DMMError as e:
                     db.log_event("warn", "dmm_error", str(e))
                     if "401" in str(e) or "403" in str(e) or "api_id" in str(e).lower():

@@ -29,6 +29,8 @@ jobs:
       DMM_API_ID: ${{ secrets.DMM_API_ID }}
       DMM_AFFILIATE_ID: ${{ secrets.DMM_AFFILIATE_ID }}
       DMM_MEDIA_REGISTERED: ${{ vars.DMM_MEDIA_REGISTERED || 'false' }}
+      DMM_EXTRA_TARGETS: ${{ vars.DMM_EXTRA_TARGETS }}
+      REPLICATION_MODE: ${{ vars.REPLICATION_MODE || 'strict' }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       DAILY_AI_BUDGET_JPY: ${{ vars.DAILY_AI_BUDGET_JPY || '300' }}
       X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}

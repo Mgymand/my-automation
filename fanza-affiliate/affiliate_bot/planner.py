@@ -167,7 +167,10 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
             continue
         row, s = best
         pat = patterns.get_pattern(db, row["source_pattern_id"]) or {"pattern_id": row["source_pattern_id"], "category": "", "media_type": "image"}
-        asset = media.pick_asset(db, prod["content_id"], prefer=pat.get("media_type") or "image")
+        sk_media = replicate.skeleton_for_pattern(db, row["source_pattern_id"]) if row["angle"].startswith("R:") else None
+        assets = media.pick_assets(db, prod["content_id"], prefer=pat.get("media_type") or "image",
+                                   n=int((sk_media or {}).get("image_count") or 1))
+        asset = assets[0] if assets else None
         when = _slot_time(slot, day0, rng, used_times, settings.min_post_interval_min)
         used_times.append(when)
         comp = prod.get("eav_components") or {}
@@ -185,25 +188,30 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
             reason += f" {replicate.describe(sk)}。"
             link_note = ("この型の元投稿はリンクを本文末に置いて伸びている → Affiliate URL は本文の最後に貼る。" if sk["link_in"] == "body"
                          else "この型の元投稿はリンクをリプ欄に置いている → 投稿後すぐ自分の投稿にリプでリンクを貼る。")
+            if prod.get("tachiyomi_affiliate_url") and ("立ち読み" in sk["category"] or "立ち読み" in row["text"]):
+                link_note += "リンクは「無料立ち読み」の Affiliate URL（下記）を使う（購入前に読める → 購入率が上がる導線）。"
         else:
             sim = research.similar_success(db, pat.get("category") or "", prod.get("genres"))
             link_note = "リンクはリプ欄に。"
         notes = [HUMAN_POSTING_NOTICE, "本文はそのままコピー。素材は下記の公式 URL からのみ（改変・切り抜き・テロップ不可）。",
                  link_note + "18 歳未満閲覧不可の注意を添える。", slot_reason]
+        if len(assets) > 1:
+            notes.append(f"画像は公式サンプル（立ち読み）画像 {len(assets)} 枚を上から順に添付。投稿時に「センシティブな内容」を必ず設定。")
         if s.reasons:
             notes.append("注意: " + "; ".join(s.reasons))
         priority = "高" if seq <= 2 else ("中" if seq <= 4 else "低")
         cur = db.exec(
             """INSERT INTO posts(day,seq,candidate_id,account,product_id,pattern_id,genre,angle,priority,text,alternatives,media_asset_id,
-               media_type,media_source,reason,similar_post_id,similar_reason,notes,scheduled_at,slot_hour,predicted,status,created_at)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               media_type,media_source,reason,similar_post_id,similar_reason,notes,scheduled_at,slot_hour,predicted,status,created_at,media_sources)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (day_label, seq, row["id"], settings.x_account_name, prod["content_id"], row["source_pattern_id"], (prod["genres"] or [None])[0],
              row["angle"], priority, row["text"], dumps([{"angle": a[0]["angle"], "text": a[0]["text"], "total": a[1].total} for a in alts]),
              asset["id"] if asset else None, asset["media_kind"] if asset else "none", asset["source_url"] if asset else None,
              reason, sim["x_post_id"] if sim else None, sim["reason"] if sim else None, dumps(notes),
              when.astimezone(timezone.utc).isoformat(timespec="seconds"), when.hour,
              dumps({"views": s.expected_views, "ctr": s.p_ctr, "cvr": comp.get("p_cvr"), "revenue": s.expected_revenue_jpy,
-                    "engagement": s.p_engagement, "confidence": s.pattern_confidence}), "planned", utcnow()))
+                    "engagement": s.p_engagement, "confidence": s.pattern_confidence}), "planned", utcnow(),
+             dumps([a["source_url"] for a in assets])))
         db.exec("UPDATE candidates SET status='selected' WHERE id=?", (row["id"],))
         patterns.mark_used(db, row["source_pattern_id"])
         scheduled.append(cur.lastrowid)
@@ -225,6 +233,7 @@ def today_packages(db: Database, settings: Settings, day: str | None = None) -> 
     day = day or datetime.now(tz).strftime("%Y-%m-%d")
     out = []
     for r in db.q("SELECT p.*, pr.title, pr.actresses, pr.genres, pr.price, pr.list_price, pr.discount_rate, pr.url, pr.affiliate_url, pr.image_url, "
+                  "pr.tachiyomi_affiliate_url, "
                   "pt.pattern_name FROM posts p JOIN products pr ON pr.content_id=p.product_id LEFT JOIN patterns pt ON pt.pattern_id=p.pattern_id "
                   "WHERE p.day=? ORDER BY p.seq", (day,)):
         d = dict(r)
@@ -233,6 +242,7 @@ def today_packages(db: Database, settings: Settings, day: str | None = None) -> 
         d["alternatives"] = loads(d.get("alternatives"), [])
         d["notes"] = loads(d.get("notes"), [])
         d["predicted"] = loads(d.get("predicted"), {})
+        d["media_sources"] = loads(d.get("media_sources"), []) or ([d["media_source"]] if d.get("media_source") else [])
         d["scheduled_local"] = datetime.fromisoformat(d["scheduled_at"]).astimezone(tz).strftime("%H:%M")
         d["assets"] = media.assets_for(db, d["product_id"])
         out.append(d)
