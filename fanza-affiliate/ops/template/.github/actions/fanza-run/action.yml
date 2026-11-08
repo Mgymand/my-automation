@@ -12,13 +12,13 @@ runs:
   using: composite
   steps:
     - name: コードを取得（公開リポジトリ）
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: ${{ env.FANZA_CODE_REPO }}
         ref: ${{ env.FANZA_CODE_REF }}
         path: code
         persist-credentials: false
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.11"
         cache: pip
