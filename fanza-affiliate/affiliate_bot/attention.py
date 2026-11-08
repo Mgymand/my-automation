@@ -66,28 +66,20 @@ def resolve_by_category(db: Database, category: str) -> int:
 
 
 def notify_pending(db: Database, settings: Settings, session: requests.Session | None = None) -> int:
-    """Slack 成功時のみ配送確定。console は NOTIFY_CONSOLE_DELIVERY=true のときだけ配送成功とみなす。"""
+    """Discord / Slack のいずれかへの送信成功時のみ配送確定。console は NOTIFY_CONSOLE_DELIVERY=true のときだけ配送成功とみなす。"""
     ensure_schema(db)
     rows = db.q("SELECT * FROM attention_queue WHERE status='open' AND notified_at IS NULL ORDER BY id")
     if not rows:
         return 0
     text = "【要対応】affiliate-bot\n" + "\n".join(
         f"[{r['severity']}] {r['category']}: {r['title']}" + (f"\n  → {r['action']}" if r["action"] else "") for r in rows)
-    delivered = False
-    if settings.slack_webhook_url:
-        s = session or requests.Session()
-        try:
-            r = s.post(settings.slack_webhook_url, json={"text": text}, timeout=15)
-            delivered = r.status_code < 300
-            if not delivered:
-                db.log_event("warn", "notify_failed", f"Slack HTTP {r.status_code}（次回再送）")
-        except requests.RequestException as e:
-            db.log_event("warn", "notify_failed", f"Slack {e.__class__.__name__}（次回再送）")
+    from . import notify
+    delivered = notify.send(settings, text, session=session, db=db) if notify.channels(settings) else False
     if not delivered:
         print(text)
         delivered = settings.notify_console_delivery
         if not delivered and not db.get_setting("notify_channel_warned"):
-            db.log_event("warn", "notify_channel_missing", "SLACK_WEBHOOK_URL を設定するか、stdout を監視している場合は NOTIFY_CONSOLE_DELIVERY=true")
+            db.log_event("warn", "notify_channel_missing", "DISCORD_WEBHOOK_URL / SLACK_WEBHOOK_URL を設定するか、stdout を監視している場合は NOTIFY_CONSOLE_DELIVERY=true")
             db.set_setting("notify_channel_warned", "1")
     if not delivered:
         return 0

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import attention, bandit, bootstrap, failsafe, launch, media, metrics, packages, patterns, planner, posted, products, reports, research, webui
+from . import attention, bandit, bootstrap, failsafe, launch, media, metrics, notify, ops, packages, patterns, planner, posted, products, reports, research, webui
 from .config import Settings, load_settings
 from .db import Database, loads
 from .dmm_client import DMMClient, DMMError
@@ -274,7 +274,7 @@ def cmd_pricing(settings: Settings, db: Database, args) -> None:
     print("current:", x_pricing(settings, db).as_dict())
 
 
-def morning(settings: Settings, db: Database) -> None:
+def morning(settings: Settings, db: Database) -> str:
     """毎朝の自動処理: 商品更新 → 学習 → 検知 → レポート → 計画 → 出力 → 通知（要対応時のみ）。"""
     if settings.dmm_credentials_present():
         cmd_fetch_products(settings, db, argparse.Namespace(demo=False, sorts="rank,date", pages=1, hits=100))
@@ -288,6 +288,24 @@ def morning(settings: Settings, db: Database) -> None:
     out.write_text(md, encoding="utf-8")
     cmd_export(settings, db, argparse.Namespace(date=None, out=None))
     attention.notify_pending(db, settings)
+    return md
+
+
+def weekly_job(settings: Settings, db: Database) -> str:
+    """毎週: 公開投稿の調査 → 規約ページ確認 → 週次レビュー（Fable）。"""
+    x = _x(settings, db)
+    if not isinstance(x, DryRunXClient):
+        research.collect(db, x, settings.usd_jpy)
+    research.analyze(db, _llm(settings, db))
+    from . import policy
+    for k, v in policy.verify_policy(db).items():
+        if v["status"] in ("changed", "phrase_missing"):
+            attention.raise_item(db, "policy_change", f"規約ページの変更を検知: {k}", detail=str(v), action="一次情報を確認", severity="critical")
+    md = reports.weekly_review(db, settings, _llm(settings, db))
+    out = settings.data_dir.parent / "reports" / f"weekly-{datetime.now().strftime('%Y-%m-%d')}.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(md, encoding="utf-8")
+    return md
 
 
 def cmd_morning(settings: Settings, db: Database, args) -> None:
@@ -314,15 +332,7 @@ def cmd_loop(settings: Settings, db: Database, args) -> None:
                 morning(settings, db)
                 last_daily = now
             if now.weekday() == 0 and now.hour == 7 and (last_weekly is None or (now - last_weekly) > timedelta(days=6)):
-                x = _x(settings, db)
-                if not isinstance(x, DryRunXClient):
-                    research.collect(db, x, settings.usd_jpy)
-                research.analyze(db, _llm(settings, db))
-                from . import policy
-                for k, v in policy.verify_policy(db).items():
-                    if v["status"] in ("changed", "phrase_missing"):
-                        attention.raise_item(db, "policy_change", f"規約ページの変更を検知: {k}", detail=str(v), action="一次情報を確認", severity="critical")
-                reports.weekly_review(db, settings, _llm(settings, db))
+                weekly_job(settings, db)
                 last_weekly = now
             errors = 0
         except Exception as e:  # noqa: BLE001
@@ -333,6 +343,66 @@ def cmd_loop(settings: Settings, db: Database, args) -> None:
                                      action="events を確認して原因を解決", severity="critical", dedupe_key="loop_error_streak")
                 attention.notify_pending(db, settings)
         time.sleep(60)
+
+
+def cmd_ops(settings: Settings, db: Database, args) -> None:
+    """GitHub Actions から呼ぶ運用ジョブ（private の運用リポジトリで実行）。"""
+    gh = ops.GitHub.from_settings(settings)
+    if gh.dry_run:
+        print("[ops] GITHUB_TOKEN / GITHUB_REPOSITORY 未設定のため dry-run（GitHub へは書き込みません）")
+    day = datetime.now(ZoneInfo(settings.timezone)).strftime("%Y-%m-%d")
+    a = args.action
+    if a == "morning":
+        md = morning(settings, db)
+        n = ops.publish_daily_issue(db, settings, gh, day, report_md=md)
+        print(f"daily issue: #{n}" if n else "本日の投稿セットなし（商品データ未取得の可能性。要対応 Issue を確認）")
+        print("attention:", ops.sync_attention(db, settings, gh))
+        text = ops.digest_text(db, settings, gh, day)
+        if notify.channels(settings):
+            notify.send(settings, text, db=db)
+        print(text)
+    elif a == "hourly":
+        x = _x(settings, db)
+        if not isinstance(x, DryRunXClient):
+            try:
+                print(f"metrics rows: {metrics.ingest_x_metrics(db, settings, x)}")
+                attention.resolve_by_category(db, "x_read_auth")
+            except Exception as e:  # noqa: BLE001
+                from .x_client import XError
+                if isinstance(e, XError) and e.is_auth:
+                    attention.raise_item(db, "x_read_auth", f"X READ API 認証失敗 {e.status}", detail=e.body[:200], action="Bearer Token を再生成して Secrets を更新")
+                else:
+                    db.log_event("warn", "metrics_failed", f"{e.__class__.__name__}: {e}")
+        print(f"comments: {ops.sync_comments(db, settings, gh, x=None if isinstance(x, DryRunXClient) else x)}")
+        print(f"reminders: {ops.remind(db, settings, gh)}")
+        print("attention:", ops.sync_attention(db, settings, gh))
+    elif a == "weekly":
+        md = weekly_job(settings, db)
+        res = gh.create_issue(f"📈 週次レビュー {datetime.now(ZoneInfo(settings.timezone)).strftime('%G-W%V')}", md, [ops.LABEL_WEEKLY])
+        print(f"weekly issue: #{res['number']}")
+        print("attention:", ops.sync_attention(db, settings, gh))
+        if notify.channels(settings):
+            notify.send(settings, f"📈 週次レビューを作成しました → {gh.issue_url(int(res['number']))}", db=db)
+    elif a == "sync-comments":
+        x = _x(settings, db)
+        print(f"comments: {ops.sync_comments(db, settings, gh, issue=args.issue, x=None if isinstance(x, DryRunXClient) else x)}")
+    elif a == "issue-closed":
+        print("resolved" if args.issue and ops.issue_closed(db, int(args.issue)) else "not an attention issue")
+    elif a == "inbox":
+        d = Path(args.dir)
+        results = ops.ingest_inbox(db, settings, d) if d.exists() else []
+        for f, r in results:
+            print(f"{f.name}: {r}")
+        if results:
+            metrics.learn(db)
+            n = ops._issue_for_day(db, day)
+            if n:
+                gh.comment(n, "📥 受信箱の取込結果\n" + "\n".join(f"- {f.name}: {r}" for f, r in results))
+            print("attention:", ops.sync_attention(db, settings, gh))
+        if args.list_file:
+            Path(args.list_file).write_text("\n".join(str(f) for f, r in results if not r.startswith("失敗")), encoding="utf-8")
+    elif a == "digest":
+        print(ops.digest_text(db, settings, gh, day))
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -361,6 +431,10 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("serve", help="スマホ向け Web UI"); p.add_argument("--port"); p.set_defaults(fn=cmd_serve)
     p = sub.add_parser("pricing", help="X API 価格の確認/候補適用"); p.add_argument("--verify", action="store_true"); p.add_argument("--apply", action="store_true"); p.set_defaults(fn=cmd_pricing)
     sub.add_parser("morning", help="毎朝の一括処理（fetch → learn → report → plan → export）").set_defaults(fn=cmd_morning)
+    p = sub.add_parser("ops", help="GitHub Actions 運用ジョブ（日次 Issue / コメント取込 / リマインド / 要対応 Issue / 受信箱）")
+    p.add_argument("action", choices=["morning", "hourly", "weekly", "sync-comments", "issue-closed", "inbox", "digest"])
+    p.add_argument("--issue", type=int); p.add_argument("--dir", default="inbox"); p.add_argument("--list-file", help="取込に成功したファイルの一覧を書き出す")
+    p.set_defaults(fn=cmd_ops)
     p = sub.add_parser("loop", help="常駐"); p.add_argument("--every", type=int, default=60); p.set_defaults(fn=cmd_loop)
     args = ap.parse_args(argv)
     settings = load_settings()

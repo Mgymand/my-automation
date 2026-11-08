@@ -40,3 +40,14 @@ jobs:
           python -m affiliate_bot attention
           python -m affiliate_bot bootstrap --check --no-network
           python -m affiliate_bot status
+      - name: dry run (ops layer, no GitHub token)
+        env:
+          DATA_DIR: /tmp/affops
+          DMM_MEDIA_REGISTERED: "true"
+        run: |
+          bash -n scripts/ops_state.sh
+          python -m affiliate_bot fetch-products --demo
+          python -m affiliate_bot ops morning
+          python -m affiliate_bot ops hourly
+          python -m affiliate_bot ops weekly
+          python -m affiliate_bot ops digest

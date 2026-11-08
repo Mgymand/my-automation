@@ -15,7 +15,7 @@ from affiliate_bot.db import Database  # noqa: E402
 def _isolate_env(tmp_path):
     saved = dict(os.environ)
     for k in list(os.environ):
-        if k.startswith(("DMM_", "X_", "ANTHROPIC_", "SLACK_", "DATA_DIR", "POSTS_", "NOTIFY_", "WEB_", "METRIC_")):
+        if k.startswith(("DMM_", "X_", "ANTHROPIC_", "SLACK_", "DATA_DIR", "POSTS_", "NOTIFY_", "WEB_", "METRIC_", "DISCORD_", "GITHUB_TOKEN", "GITHUB_REPOSITORY", "OPS_")):
             del os.environ[k]
     os.environ["DATA_DIR"] = str(tmp_path)
     yield

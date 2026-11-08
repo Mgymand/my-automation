@@ -74,6 +74,15 @@ class Settings:
 
     # --- 通知（Human Attention Queue）---
     slack_webhook_url: str = field(default_factory=lambda: _env("SLACK_WEBHOOK_URL", ""))
+    discord_webhook_url: str = field(default_factory=lambda: _env("DISCORD_WEBHOOK_URL", ""))
+
+    # --- 運用自動化（GitHub Actions + Issues。private の運用リポジトリで動かす）---
+    github_token: str = field(default_factory=lambda: _env("GITHUB_TOKEN", ""))
+    github_repository: str = field(default_factory=lambda: _env("GITHUB_REPOSITORY", ""))     # owner/name（運用リポジトリ）
+    github_api_url: str = field(default_factory=lambda: _env("GITHUB_API_URL", "https://api.github.com"))
+    github_server_url: str = field(default_factory=lambda: _env("GITHUB_SERVER_URL", "https://github.com"))
+    ops_mention: str = field(default_factory=lambda: _env("OPS_MENTION", ""))                 # リマインドで @ メンションする GitHub ユーザー
+    ops_remind_lead_min: int = field(default_factory=lambda: int(_env("OPS_REMIND_LEAD_MIN", "75")))
     notify_console_delivery: bool = field(default_factory=lambda: _flag("NOTIFY_CONSOLE_DELIVERY", False))
 
     # --- X API 読取価格（USD）。既定は 2026-09 の公式 pay-per-use。DB の settings.x_pricing が優先 ---
