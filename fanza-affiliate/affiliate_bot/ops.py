@@ -413,7 +413,11 @@ def ingest_inbox(db: Database, settings: Settings, directory: Path) -> list[tupl
         lines = [ln for ln in text.splitlines() if ln.strip()]
         head = lines[0].lower() if lines else ""
         try:
-            if "views" in head and ("x_post_id" in head or "post_id" in head or "tweet" in head):
+            if "followers" in head and "text" in head:
+                from . import replicate, research
+                kind, n = "調査 CSV（他アカウントの公開投稿）", research.import_csv(db, text)
+                replicate.rebuild(db)
+            elif "views" in head and ("x_post_id" in head or "post_id" in head or "tweet" in head):
                 kind, n = "指標 CSV", metrics.ingest_metrics_csv(db, text)
             else:
                 kind, n = "成果 CSV", metrics.ingest_conversions_csv(db, settings, text)

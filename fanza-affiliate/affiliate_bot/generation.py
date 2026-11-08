@@ -1,6 +1,7 @@
-"""投稿候補の生成（1 商品につき最低 5 案）。
+"""投稿候補の生成。
 
-A: 極短文 / B: 女優訴求 / C: シチュエーション訴求 / D: レビュー訴求 / E: 価格・割引訴求
+R: 再現案（既存の勝ち投稿の型を事実で埋めたもの。replicate.py。REPLICATION_MODE=strict なら最優先）
+A: 極短文 / B: 女優訴求 / C: シチュエーション訴求 / D: レビュー訴求 / E: 価格・割引訴求（自前の 5 案。型が使えない時の予備）
 - LLM（Sonnet 5）が使えればパターンの「構造」だけを渡して生成。使えなければ決定論的テンプレート
 - 他者の投稿文は渡さない（構造のみ）。存在しない事実・レビュー・評価を作らない。クリックベイト禁止。PR 表記必須
 - 各案に source_pattern_id / similarity_score を保存。既存投稿・他候補と似すぎる案は自動で書き直す
@@ -129,9 +130,21 @@ def rewrite_if_similar(llm: LLMRouter | None, cand: Candidate, corpus: list[str]
     return cand, sim, rewrites
 
 
+def replica_candidates(db: Database, llm: LLMRouter | None, p: dict, recent_texts: list[str], k: int = 3) -> list[Candidate]:
+    """既存の勝ち投稿の型（骨格）を自分の商品の事実で埋めた案。自分の直近投稿と似すぎるものは使わない（同じ型の連投を避ける）。"""
+    from . import replicate
+    out = []
+    for c in replicate.candidates_for(db, llm, p, recent_texts, k=k):
+        if max_similarity(c["text"], recent_texts) >= SIMILARITY_REWRITE:
+            continue
+        out.append(Candidate(f"R:{c['pattern_id']}", c["text"], f"再現:{c['category']}", c["pattern_id"],
+                             "replica+llm" if (llm is not None and llm.enabled) else "replica"))
+    return out
+
+
 def generate_for_product(db: Database, llm: LLMRouter | None, p: dict, recent_texts: list[str],
-                         pattern_override: dict[str, str] | None = None) -> list[int]:
-    """5 案を生成・類似チェックして DB に保存。candidate id を返す。"""
+                         pattern_override: dict[str, str] | None = None, mode: str = "strict") -> list[int]:
+    """再現案（mode が off 以外）+ 自前の 5 案を生成・類似チェックして DB に保存。candidate id を返す。"""
     pattern_ids = dict(ANGLE_TO_PATTERN)
     if pattern_override:
         pattern_ids.update(pattern_override)
@@ -146,7 +159,15 @@ def generate_for_product(db: Database, llm: LLMRouter | None, p: dict, recent_te
     have = {c.angle for c in cands}
     if len(have) < 5:
         cands += [c for c in template_candidates(p, pattern_ids) if c.angle not in have]
+    replicas = replica_candidates(db, llm, p, recent_texts) if mode != "off" else []
     ids = []
+    for c in replicas:
+        sim = max_similarity(c.text, recent_texts)
+        cur = db.exec(
+            "INSERT INTO candidates(product_id,source_pattern_id,angle,text,hook_type,similarity_score,rewrite_count,status,model,created_at) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (p["content_id"], c.source_pattern_id, c.angle, c.text, c.hook_type, round(sim, 3), 0, "new", c.model, utcnow()))
+        ids.append(cur.lastrowid)
     # 類似度は「既存の投稿」に対してのみ測る（同一商品の 5 案同士は当然似るため比較しない。案同士の差は訴求軸で担保）
     corpus = list(recent_texts)
     for c in cands:

@@ -69,6 +69,9 @@ class Settings:
     usd_jpy: float = field(default_factory=lambda: float(_env("USD_JPY", "150")))
     daily_ai_budget_jpy: float = field(default_factory=lambda: float(_env("DAILY_AI_BUDGET_JPY", "300")))
 
+    # --- 生成方針: strict = 既存の勝ち投稿の型を最優先で再現（自前の訴求軸は型が使えない時の予備）/ mixed / off ---
+    replication_mode: str = field(default_factory=lambda: _env("REPLICATION_MODE", "strict").lower())
+
     # --- 帰属 ---
     attribution_window_hours: int = field(default_factory=lambda: int(_env("ATTRIBUTION_WINDOW_HOURS", "72")))
 

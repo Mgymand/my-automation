@@ -12,7 +12,7 @@ import random
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import bandit, media, patterns, products, research
+from . import bandit, media, patterns, products, replicate, research
 from .config import Settings
 from .db import Database, dumps, loads, utcnow
 from .generation import generate_for_product
@@ -135,7 +135,7 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
             slot_reason = f"時間帯 {slot}: 公開調査の外れ値投稿の JST 時刻分布（ボーナス {slot_prior.get(slot, 0):.2f}）と探索で選択（自分の実績 {n_obs} 件）"
         else:
             slot_reason = f"時間帯 {slot}: 2026-09 公開調査の既定重み（夜 21-24 が最大、次に 18-21・昼）と探索で選択（自分の実績 {n_obs} 件）"
-        cids = generate_for_product(db, llm, prod, recent)
+        cids = generate_for_product(db, llm, prod, recent, mode=settings.replication_mode)
         scored = []
         texts = []
         for cid in cids:
@@ -151,9 +151,15 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
         for row, s in scored:
             if row["source_pattern_id"] == chosen_pid and s.decision == "accept":
                 s.total = round(s.total * 1.15, 4)
-            # 同じ訴求軸ばかりにならないよう、当日 2 回以上使った訴求軸は減点（多様性）
+            # 同じ訴求軸（再現案は同じ型）ばかりにならないよう、当日 2 回以上使ったものは減点（多様性）
             if used_angles.get(row["angle"], 0) >= 2:
                 s.total = round(s.total * 0.7, 4)
+        # 模倣優先: 実績のある型を再現した案が採用可能なら、自前の訴求軸の案は予備に回す
+        if any(r["angle"].startswith("R:") and sc.decision == "accept" for r, sc in scored):
+            factor = {"strict": 0.3, "mixed": 0.8}.get(settings.replication_mode, 1.0)
+            for r, sc in scored:
+                if not r["angle"].startswith("R:"):
+                    sc.total = round(sc.total * factor, 4)
         best, alts = choose_best(scored)
         if best is None:
             db.log_event("warn", "no_accept", f"{prod['content_id']} の候補が採用されず", {"reasons": [x[1].reasons for x in scored]})
@@ -169,9 +175,21 @@ def plan_day(db: Database, settings: Settings, llm: LLMRouter | None, day_jst: d
                   f"新規性 {comp.get('novelty')}・競合 {comp.get('competition')}・女優勢い {comp.get('actress_momentum')}・ジャンル勢い {comp.get('genre_momentum')}。"
                   + (f"割引 {int(float(prod.get('discount_rate') or 0) * 100)}%。" if prod.get("discount_rate") else "")
                   + (f"レビュー {prod.get('review_avg')}（{prod.get('review_count')}件）。" if prod.get("review_avg") else ""))
-        sim = research.similar_success(db, pat.get("category") or "", prod.get("genres"))
+        sk = replicate.skeleton_for_pattern(db, row["source_pattern_id"]) if row["angle"].startswith("R:") else None
+        if sk:
+            ex = loads(sk["example_ids"], [])
+            if ex:
+                sim = {"x_post_id": ex[0], "reason": replicate.describe(sk)}
+            else:            # 観測由来の初期型は元投稿 ID を持たない → 同じ型の調査投稿で最も伸びたものを参考に示す
+                sim = research.similar_success(db, sk["category"], prod.get("genres")) or {"x_post_id": None, "reason": replicate.describe(sk)}
+            reason += f" {replicate.describe(sk)}。"
+            link_note = ("この型の元投稿はリンクを本文末に置いて伸びている → Affiliate URL は本文の最後に貼る。" if sk["link_in"] == "body"
+                         else "この型の元投稿はリンクをリプ欄に置いている → 投稿後すぐ自分の投稿にリプでリンクを貼る。")
+        else:
+            sim = research.similar_success(db, pat.get("category") or "", prod.get("genres"))
+            link_note = "リンクはリプ欄に。"
         notes = [HUMAN_POSTING_NOTICE, "本文はそのままコピー。素材は下記の公式 URL からのみ（改変・切り抜き・テロップ不可）。",
-                 "リンクはリプ欄に。18 歳未満閲覧不可の注意を添える。", slot_reason]
+                 link_note + "18 歳未満閲覧不可の注意を添える。", slot_reason]
         if s.reasons:
             notes.append("注意: " + "; ".join(s.reasons))
         priority = "高" if seq <= 2 else ("中" if seq <= 4 else "低")

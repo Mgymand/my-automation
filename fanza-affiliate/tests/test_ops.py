@@ -175,8 +175,12 @@ def test_inbox_detects_csv_types(db, settings, tmp_path):
     (inbox / "conv.csv").write_text(f"日時,商品ID,報酬,注文ID\n2030-01-01 13:00:00,{pid['product_id']},196,o-1\n", encoding="cp932")
     (inbox / "metrics.csv").write_text("x_post_id,views,likes,reposts,replies,bookmarks\n1900000000000000001,900,5,1,0,1\n", encoding="utf-8")
     (inbox / "bad.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+    (inbox / "research.csv").write_text('x_post_id,followers,text,media_type,created_at,views,likes,reposts,replies,bookmarks\n'
+                                        '9001,700,"50%OFF｜1,980円\\n「作品の名前です」\\n詳細はリプ欄",photo,2026-11-01T13:00:00+00:00,30000,300,40,3,90\n',
+                                        encoding="utf-8")
     res = {f.name: r for f, r in ops.ingest_inbox(db, settings, inbox)}
     assert res["conv.csv"].startswith("成果 CSV: 1") and res["metrics.csv"].startswith("指標 CSV: 1")
+    assert res["research.csv"].startswith("調査 CSV") and db.one("SELECT 1 FROM skeletons WHERE source='research'")
     assert res["bad.csv"].startswith("失敗") and any(i["category"] == "csv_ingest_failed" for i in attention.open_items(db))
 
 

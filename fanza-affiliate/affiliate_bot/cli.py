@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import attention, bandit, bootstrap, failsafe, launch, media, metrics, notify, ops, packages, patterns, planner, posted, products, reports, research, webui
+from . import attention, bandit, bootstrap, failsafe, launch, media, metrics, notify, ops, packages, patterns, planner, posted, products, replicate, reports, research, webui
 from .config import Settings, load_settings
 from .db import Database, loads
 from .dmm_client import DMMClient, DMMError
@@ -122,6 +122,28 @@ def cmd_research(settings: Settings, db: Database, args) -> None:
         print(json.dumps(research.analyze(db, _llm(settings, db)), ensure_ascii=False, indent=1))
     for r in research.top_outliers(db, 5):
         print(f"  {r['x_post_id']} [{r['category']}] followers {r['author_followers']:,} views {r['views']:,} vpf {r['views_per_follower']:.1f} er {r['engagement_rate']:.3f}")
+
+
+def cmd_replicate(settings: Settings, db: Database, args) -> None:
+    """既存の勝ち投稿の型（骨格）の再構築・一覧・試し埋め。"""
+    if args.rebuild or not (args.list or args.preview):
+        print(json.dumps(replicate.rebuild(db), ensure_ascii=False))
+    print(f"生成方針: REPLICATION_MODE={settings.replication_mode}")
+    for sk in replicate.top_skeletons(db, args.limit):
+        print(f"\n{sk['pattern_id']} [{sk['category']}] score {sk['score']:.3f}（成果 {sk['perf']:.2f} / 再現性 {sk['reproducibility']:.2f} / "
+              f"忠実度 {sk.get('fidelity') or 1:.2f}）{sk['n_authors']} アカウント・{sk['n_posts']} 投稿・リンク {sk['link_in']}・{sk['media_type']}・{sk['source']}")
+        print("  " + sk["skeleton"].replace("\n", "\n  "))
+    if args.preview:
+        prod = db.one("SELECT * FROM products WHERE content_id=?", (args.preview,))
+        if not prod:
+            print(f"商品 {args.preview} がありません")
+            return
+        p = dict(prod)
+        for k in ("genres", "actresses", "campaign"):
+            p[k] = loads(p.get(k), [])
+        print(f"\n== {p['title']} に使える型 ==")
+        for c in replicate.candidates_for(db, None, p, [], k=5):
+            print(f"\n[{c['pattern_id']} {c['category']}] 元投稿との類似度 {c['source_similarity']}\n{c['text']}")
 
 
 def cmd_plan(settings: Settings, db: Database, args) -> None:
@@ -414,6 +436,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--import-csv"); p.add_argument("--demo", action="store_true"); p.add_argument("--query"); p.add_argument("--per-query", type=int, default=100); p.set_defaults(fn=cmd_research)
     p = sub.add_parser("fetch-products", help="FANZA 商品取得と EAV 推定"); p.add_argument("--sorts", default="rank,date"); p.add_argument("--pages", type=int, default=1)
     p.add_argument("--hits", type=int, default=100); p.add_argument("--demo", action="store_true"); p.set_defaults(fn=cmd_fetch_products)
+    p = sub.add_parser("replicate", help="既存の勝ち投稿の型（骨格）を再構築・一覧・試し埋め")
+    p.add_argument("--rebuild", action="store_true"); p.add_argument("--list", action="store_true"); p.add_argument("--preview", metavar="CONTENT_ID")
+    p.add_argument("--limit", type=int, default=10); p.set_defaults(fn=cmd_replicate)
     p = sub.add_parser("plan", help="本日の投稿パッケージ作成"); p.add_argument("--date"); p.add_argument("--keep", action="store_true", help="既存の planned を消さない"); p.set_defaults(fn=cmd_plan)
     p = sub.add_parser("today", help="今日人間が投稿すべき内容を表示"); p.add_argument("--date"); p.add_argument("--full", action="store_true", default=True); p.set_defaults(fn=cmd_today)
     p = sub.add_parser("export", help="投稿素材と文章をフォルダ/HTML へ出力"); p.add_argument("--date"); p.add_argument("--out"); p.set_defaults(fn=cmd_export)

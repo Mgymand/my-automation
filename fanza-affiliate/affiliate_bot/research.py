@@ -246,6 +246,8 @@ def analyze(db: Database, llm: LLMRouter | None, top_n: int = 40) -> dict:
         except LLMUnavailable as e:
             db.log_event("warn", "research_llm_skip", str(e))
     db.set_setting("last_research_analyze_at", utcnow())
+    from . import replicate          # 調査結果から「再現する型（骨格）」を作り直す（循環 import を避けて関数内で読む）
+    summary["_replicate"] = replicate.rebuild(db)
     return {"analyzed": len(rows), "by_category": summary}
 
 

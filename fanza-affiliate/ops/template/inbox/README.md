@@ -6,6 +6,7 @@
 |---|---|---|
 | FANZA アフィリエイト管理画面の成果 CSV（日時 / 商品ID / 報酬 / 注文ID） | 既定 | 成果（投稿への確率帰属つき） |
 | 指標 CSV（`x_post_id,views,likes,…` のヘッダー） | 1 行目に `views` と `x_post_id` | 投稿指標 |
+| 調査 CSV（伸びている他アカウントの公開投稿。`x_post_id,followers,text,media_type,created_at,views,likes,reposts,replies,bookmarks`） | 1 行目に `followers` と `text` | 再現する「型」の元データ（X READ が無い場合の代わり） |
 
 - 取り込みに成功したファイルは自動で削除されます（データは状態ブランチの DB に保存済み）
 - 失敗したファイルは残り、「⚠️ 要対応: CSV 取込失敗」Issue が作られます。直して再アップロードしてください

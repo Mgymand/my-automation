@@ -14,6 +14,7 @@ AI とプログラムが行うのは、調査・商品選定・素材選定・�
 > 各投稿パッケージに規約上の注意（`HUMAN_POSTING_NOTICE`）を必ず添えます。
 
 - 設計: [docs/DESIGN.md](docs/DESIGN.md) / 規約: [docs/COMPLIANCE.md](docs/COMPLIANCE.md) / 調査: [docs/MARKET_RESEARCH.md](docs/MARKET_RESEARCH.md) / 移行: [docs/MIGRATION_PHASE3.md](docs/MIGRATION_PHASE3.md)
+- **模倣優先（既存の勝ち投稿の型を再現）: [docs/REPLICATION.md](docs/REPLICATION.md)** — 既定 `REPLICATION_MODE=strict`。文章・画像はコピーせず、形式・数字の置き方・定型句・リンク位置・メディア・時刻を再現
 - **無人運用（AI 運用本部）: [docs/AUTOMATION.md](docs/AUTOMATION.md)** — GitHub Actions + Issues で、人間は「投稿して URL をコメント」と週 1 回の CSV アップロードだけ
 - アカウント調査: [docs/ACCOUNT_RESEARCH.md](docs/ACCOUNT_RESEARCH.md) / 新規アカウント戦略: [docs/ACCOUNT_STRATEGY.md](docs/ACCOUNT_STRATEGY.md)（`launch-posts` で立ち上げセットを出力）
 
@@ -52,6 +53,7 @@ python -m affiliate_bot learn / report / weekly / status / attention / checks
 python -m affiliate_bot research --collect --analyze                # 公開投稿の調査（X READ）。--import-csv / --demo も可
 python -m affiliate_bot export                                      # exports/YYYY-MM-DD/index.html, posts.txt, postN.txt
 python -m affiliate_bot launch-posts                                # 新規アカウント設計＋初期 10 投稿（exports/launch/。実商品の事実のみ使用）
+python -m affiliate_bot replicate [--preview CONTENT_ID]             # 再現する型（骨格）の再構築・一覧・試し埋め
 python -m affiliate_bot ops morning|hourly|weekly                  # GitHub Actions 用の運用ジョブ（docs/AUTOMATION.md。トークン無しなら dry-run）
 python -m affiliate_bot loop                                        # 常駐（毎時 metrics、06:00 morning、月曜 07:00 research + weekly）
 ```

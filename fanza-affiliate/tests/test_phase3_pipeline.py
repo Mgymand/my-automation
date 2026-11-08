@@ -81,7 +81,9 @@ def test_generation_five_angles_and_similarity(db, settings):
     prod = products.top_candidates(db, limit=1)[0]
     ids = generate_for_product(db, None, prod, recent_texts=["サンプル作品G シリーズ第3弾。企画・シリーズ。【PR】"])
     rows = [dict(db.one("SELECT * FROM candidates WHERE id=?", (i,))) for i in ids]
-    assert {r["angle"] for r in rows} == {"A_short", "B_actress", "C_situation", "D_review", "E_price"}
+    own = {r["angle"] for r in rows if not r["angle"].startswith("R:")}
+    assert own == {"A_short", "B_actress", "C_situation", "D_review", "E_price"}          # 自前の 5 案（予備）
+    assert any(r["angle"].startswith("R:") and r["model"] == "replica" for r in rows)      # 既存の勝ち型の再現案
     assert all(r["source_pattern_id"] and "PR" in r["text"] for r in rows)
     short = next(r for r in rows if r["angle"] == "A_short")
     assert short["rewrite_count"] >= 1 and short["similarity_score"] < 0.8   # 既存投稿と同文 → 書き直し
@@ -95,7 +97,9 @@ def test_generation_with_fake_llm(db, settings):
     settings.anthropic_api_key = "x"
     llm = LLMRouter(settings, db, client=fake)
     ids = generate_for_product(db, llm, prod, [])
-    assert len(ids) == 5 and db.one("SELECT model FROM candidates WHERE id=?", (ids[0],))["model"] == settings.model_sonnet
+    own = [dict(db.one("SELECT angle, model FROM candidates WHERE id=?", (i,))) for i in ids]
+    own = [r for r in own if not r["angle"].startswith("R:")]
+    assert len(own) == 5 and all(r["model"] == settings.model_sonnet for r in own)
     assert db.one("SELECT SUM(amount_jpy) s FROM costs WHERE kind='ai'")["s"] > 0
 
 
