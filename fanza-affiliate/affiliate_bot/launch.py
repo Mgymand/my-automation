@@ -16,16 +16,21 @@ from .db import Database, loads
 from .policy import HUMAN_POSTING_NOTICE
 
 ACCOUNT = {
-    "name": "FANZA買い時メモ",
-    "handle_candidates": ["fanza_kaidoki_memo", "kaidoki_memo", "fz_kaidoki"],
-    "bio": ("FANZAの人気作が500〜1000円で買えるタイミングを毎日メモ📝 セールで値下がりした人気作・レビューの多い作品・無料で立ち読みできる作品を、価格と期限つきで紹介｜リンクは各ポストのリプ欄｜18歳未満閲覧不可｜投稿にはPRを含みます"),
-    "brand": {"primary": "#0F172A（濃紺）", "accent": "#F59E0B（琥珀）", "base": "#F8FAFC（オフホワイト）",
-              "motif": "値札タグ＋しおり（メモ帳）", "text": "アイコンは文字なし。ヘッダーに『買い時メモ』の短い文字のみ", "character": "なし（人格は文体で表現）"},
-    "icon_prompt": ("flat vector app icon, a minimalist price tag combined with a bookmark ribbon, navy background #0F172A, amber accent #F59E0B, "
-                    "off-white shapes, rounded square, no text, no people, clean, high contrast, centered, 1024x1024"),
-    "header_prompt": ("wide banner 1500x500, flat minimalist design, navy #0F172A background with subtle grid, amber #F59E0B price tag icons scattered lightly, "
-                      "small off-white Japanese text '買い時メモ' at left, lots of negative space, no people, no photos, clean and trustworthy"),
-    "pinned_post": ("FANZAの人気作が500〜1000円で買えるタイミングを毎日メモします📝\n・セールで値下がりした人気作\n・レビューが多い作品、無料で立ち読みできる作品\n・価格と期限を必ず書きます\n毎日夜を中心に3〜5件。リンクは各ポストのリプ欄。18歳未満閲覧不可【PR】"),
+    # 2026-11-11: 業者感を薄くする方針（人格型。名前＋ひとこと、一人称のゆるい文体）。他アカウントの名前・キャラクターは使わない
+    "name": "なつめ｜安くなったら呟く人",
+    "name_alternatives": ["しずく🌙夜のお買い物メモ", "ひなた｜セールだけ見てる人"],
+    "handle_candidates": ["natsume_yasui", "natsume_yoru", "natsume_memo"],
+    "bio": ("FANZAの人気作が500〜1000円まで下がったら、ゆるく呟いてます。セールで値下がりしたやつ、レビュー多めのやつ、"
+            "無料で立ち読みできるやつが中心。リンクはリプに置いてます🔗 18歳未満は見ないでね／アフィリエイト（PR）含みます"),
+    "brand": {"primary": "#1E293B（夜の紺）", "accent": "#FBBF24（月の黄）", "base": "#FFF7ED（生成り）",
+              "motif": "三日月とマグカップ（夜にくつろぐ人）", "text": "アイコン・ヘッダーとも文字なし", "character": "なつめ（性別・年齢を出さない一人称。業者感を出さない）"},
+    "icon_prompt": ("soft hand-drawn illustration, a small crescent moon resting on a warm coffee mug, deep navy background #1E293B, "
+                    "warm yellow #FBBF24 moon, cream #FFF7ED steam, cozy and calm, rounded square, no text, no people, 1024x1024"),
+    "header_prompt": ("wide banner 1500x500, soft hand-drawn night sky in deep navy #1E293B with a few small stars and a crescent moon in warm yellow "
+                      "#FBBF24 at right, cozy and calm, lots of negative space, no text, no people, no photos"),
+    "pinned_post": ("はじめまして、なつめです。\nFANZAの人気作が500〜1000円まで下がったタイミングを、夜にゆるく呟いてます。\n"
+                    "・セールで値下がりした人気作\n・レビュー多めのやつ、無料で立ち読みできるやつ\n"
+                    "リンクはリプに置いてます。気になるのがあればどうぞ。\n18歳未満の方は見ないでください【PR】"),
 }
 
 # 10 種類の構造テンプレート（文章ではなく構造。{} は DB の事実で埋める）
@@ -92,11 +97,11 @@ def build_launch_posts(db: Database, settings: Settings) -> list[dict]:
             p = _pick(products, "any", used)
         text, media = "", None
         if key == "intro":
-            text = ("はじめまして。FANZA動画の「今買うと得な1本」を毎日メモしていきます。\n"
-                    "セール・100円・新作の割引・レビューの多い掘り出し作品を、価格と期限つきで。\n18歳未満閲覧不可。投稿にはPRを含みます。【PR】")
+            text = ("はじめまして、なつめです。\nFANZAの人気作が500〜1000円まで下がったら、夜にゆるく呟いていきます。\n"
+                    "リンクはリプに置きます。18歳未満の方は見ないでください【PR】")
         elif key == "follow_reason":
-            text = ("このアカウントを見ると分かること\n・今日いちばん割引が大きい作品\n・100円/10円セールの開始と終了\n・レビューが多いのに安い作品\n"
-                    "買い逃しを減らしたい人向け。夜を中心に毎日更新します。【PR】")
+            text = ("ここで呟いてること\n・人気作が500〜1000円まで下がったタイミング\n・レビュー多めなのに安くなってるやつ\n・無料で立ち読みできるやつ\n"
+                    "買い逃しが減ったらうれしいです。だいたい夜に更新【PR】")
         elif p:
             g = "・".join([x for x in p["genres"] if x][:2]) or "動画"
             a = "・".join(p["actresses"][:2])
