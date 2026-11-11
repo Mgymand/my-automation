@@ -77,6 +77,9 @@ SEED_SKELETONS = [   # (骨格, 型, 観測アカウント数, メディア, 画
     # 運営者の観測（2026-11）: 購入前に無料で見られる立ち読み / サンプル画像を複数枚添えて購買を促す投稿が多い
     ("⟦TITLE⟧\n⟦CLAIM:無料で立ち読み⟧\n⟦PRICE⟧\n続きはリプ欄", "立ち読み画像型", 3, "image", 4, "observed:2026-11"),
     ("⟦TITLE⟧\n⟦ACTRESS⟧｜⟦GENRE⟧\n⟦PRICE⟧\n続きはリプ欄", "サンプル画像型", 3, "image", 4, "observed:2026-11"),
+    # 運営者が示した参考投稿（2026-11-06、いいね 1,563）: 作品の一言（…。）＋空行＋[PR]＋マンガのページ画像を多数。値段は書かない
+    # 元投稿は X 広告のカルーセルカード（画像 6 枚＋リンク）。通常投稿では画像 4 枚＋リプ欄リンクで再現する。文面そのものは使わない
+    ("⟦REQ:comic_pages⟧⟦HOOK⟧\n\n⟦PR⟧", "マンガ一言フック型", 1, "image", 4, "observed:ref-2026-11", 0.6, ["2118633668403216554"]),
 ]
 
 
@@ -294,9 +297,12 @@ def rebuild(db: Database, limit: int = 400) -> dict:
 def ensure_seeds(db: Database) -> int:
     ensure_schema(db)
     n = 0
-    for sk, cat, authors, media_type, images, src in SEED_SKELETONS:
+    for seed in SEED_SKELETONS:
+        sk, cat, authors, media_type, images, src = seed[:6]
+        perf = seed[6] if len(seed) > 6 else 0.35
+        examples = seed[7] if len(seed) > 7 else []
         if not db.one("SELECT 1 FROM skeletons WHERE skeleton=?", (sk,)):
-            _store(db, sk, cat, authors, authors, 0.35, min(1.0, authors / MIN_COMMON_AUTHORS), media_type, "reply", [21, 22, 20], 70, [], src,
+            _store(db, sk, cat, authors, authors, perf, min(1.0, authors / MIN_COMMON_AUTHORS), media_type, "reply", [21, 22, 20], 70, examples, src,
                    image_count=images)
             n += 1
     return n
@@ -349,6 +355,42 @@ def _campaign_end(p: dict) -> datetime | None:
     return min(ends) if ends else None
 
 
+def title_core(title: str) -> str:
+    """作品タイトルから括弧書き・巻数・ページ数などを除いた本体。"""
+    core = re.sub(r"[【\[（(〔][^】\]）)〕]*[】\]）)〕]", "", title or "")
+    core = re.sub(r"\s*(第?\d+\s*(巻|話|章)|vol\.?\s*\d+|上巻|下巻|前編|後編|完全版)\s*$", "", core.strip(), flags=re.I)
+    return core.strip(" 　-–—:：|｜")
+
+
+def title_hook(title: str) -> str | None:
+    """マンガ一言フック型の一言（LLM が無いときの既定）。タイトルの言葉だけを使い、新しい場面を作らない。"""
+    core = title_core(title)
+    if not core:
+        return None
+    core = core[:27]
+    return core if core.endswith(("…", "。", "！", "？", "!", "?")) else core + "…。"
+
+
+def story_hook_llm(llm: LLMRouter, p: dict) -> str | None:
+    """タイトルの言葉と意味だけを使って、主人公の心の声のような一言にする（25 字以内）。タイトルに無い出来事・設定は書かせない。"""
+    core = title_core(p.get("title") or "")
+    if not core:
+        return None
+    try:
+        res = llm.call("sonnet", "日本語 SNS の短文ライター。作品タイトルの言葉と意味だけを使い、主人公の心の声のような一言を 25 字以内で作る。"
+                       "末尾は「…。」。タイトルに無い出来事・場面・人物設定・感想は書かない。露骨な表現、未成年を想起させる語は使わない。JSON のみ。",
+                       f"作品タイトル: {core}\nジャンル: {'・'.join((p.get('genres') or [])[:3])}",
+                       schema={"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"], "additionalProperties": False},
+                       max_tokens=200, ref=f"hook:{p.get('content_id')}")
+        text = ((res.parsed or {}).get("text") or "").strip()
+    except LLMUnavailable:
+        return None
+    grounded = any(core[i:i + 2] in text for i in range(len(core) - 1))
+    if not text or len(text) > 30 or "⟦" in text or find_ng_words(text) or not grounded:
+        return None
+    return text
+
+
 def _facts(p: dict, now: datetime) -> dict:
     price, lst = p.get("price"), p.get("list_price")
     disc = float(p.get("discount_rate") or 0)
@@ -363,7 +405,10 @@ def _facts(p: dict, now: datetime) -> dict:
     imgs = loads(imgs, []) if isinstance(imgs, str) else imgs
     # 「立ち読み」と言えるのは、無料立ち読みがある商品（API の tachiyomi）か、同人・電子書籍でサンプルページが 2 枚以上ある商品だけ
     tachiyomi = bool(p.get("tachiyomi_url")) or (str(p.get("service") or "") in ("doujin", "ebook") and len(imgs) >= 2)
+    comic_pages = (bool(p.get("tachiyomi_url")) or str(p.get("service") or "") in ("doujin", "ebook")) and len(imgs) >= 4
     return {
+        "HOOK": p.get("_hook") or title_hook(p.get("title") or ""),
+        "_req": {"comic_pages": comic_pages},
         "PRICE": f"{int(price):,}円" if price else None,
         "LIST_PRICE": f"{int(lst):,}円" if (lst and price and lst > price) else None,
         "DISC": f"{int(round(disc * 100))}%OFF" if disc >= 0.05 else None,
@@ -403,6 +448,11 @@ def render(skeleton: str, p: dict, now: datetime | None = None, max_len: int = 1
             return "【PR】"
         if name == "FREE":
             return m.group(0)
+        if name == "REQ":
+            if f["_req"].get(arg or ""):
+                return ""
+            missing.append(f"条件「{arg}」を満たさない")
+            return ""
         if name == "CLAIM":
             if f["_claims"].get(CLAIMS.get(arg or "", "never")):
                 return arg
@@ -420,6 +470,10 @@ def render(skeleton: str, p: dict, now: datetime | None = None, max_len: int = 1
 
     out_lines, tmpl_lines = [], []
     for li, line in enumerate(skeleton.split("\n")):
+        if not line.strip():                         # 型の一部としての空行（一言と [PR] の間 など）は残す
+            out_lines.append("")
+            tmpl_lines.append("")
+            continue
         whole = re.fullmatch(r"\s*⟦(ACTRESS|GENRE)⟧\s*", line)
         filled = SLOT.sub(sub, line)
         if whole and "⟦DROP⟧" in filled:            # 1 行まるごとが出演者 / ジャンルの型（女優訴求など）で、その事実が無い
@@ -439,7 +493,7 @@ def render(skeleton: str, p: dict, now: datetime | None = None, max_len: int = 1
         tmpl_lines.append(filled)
     if missing:
         return Rendered(None, missing)
-    text = "\n".join(x for x in out_lines if x)
+    text = re.sub(r"\n{3,}", "\n\n", "\n".join(out_lines)).strip("\n")
     if "【PR】" not in text:
         text += "【PR】" if text.endswith(("。", "！", "!")) else "\n【PR】"
     if len(text) > max_len and f["TITLE"] and f["TITLE"] in text:
@@ -493,6 +547,10 @@ def candidates_for(db: Database, llm: LLMRouter | None, p: dict, recent_texts: l
 
 
 def _fill(db: Database, llm: LLMRouter | None, sk: dict, p: dict, now: datetime | None) -> dict | None:
+    if "⟦HOOK⟧" in sk["skeleton"] and llm is not None and getattr(llm, "enabled", False):
+        hook = story_hook_llm(llm, p)
+        if hook:
+            p = dict(p, _hook=hook)
     r = render(sk["skeleton"], p, now)
     if not r.text:
         return None
@@ -519,5 +577,5 @@ def describe(sk: dict) -> str:
     who = f"{sk['n_authors']} アカウント・{sk['n_posts']} 投稿" if sk["source"] == "research" else "2026-09 の公開調査で観測した型"
     link = "本文末" if sk["link_in"] == "body" else "リプ欄"
     media_s = "動画" if sk["media_type"] == "video" else (f"画像 {sk.get('image_count') or 1} 枚" if sk["media_type"] == "image" else "なし")
-    who = "運営者の観測（2026-11）" if sk["source"] == "observed:2026-11" else who
+    who = {"observed:2026-11": "運営者の観測（2026-11）", "observed:ref-2026-11": "運営者が示した参考投稿（2026-11-06・いいね 1,563）"}.get(sk["source"], who)
     return f"再現元の型: {sk['category']}（{who}、成果スコア {sk['score']:.2f}）。リンクの置き場所: {link}。メディア: {media_s}"

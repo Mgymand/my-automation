@@ -76,3 +76,35 @@ def test_type_defining_fact_missing_skips_the_type():
                                          "release_date", "review_count", "review_avg", "campaign")}
     assert R.render("⟦ACTRESS⟧\n⟦TITLE⟧\n⟦PRICE⟧｜⟦GENRE⟧\nリプ欄から", d, NOW).text is None      # 出演者のいない同人に女優訴求型は使わない
     assert R.render("⟦TITLE⟧\n⟦ACTRESS⟧｜⟦GENRE⟧\n⟦PRICE⟧", d, NOW).text is not None              # 行の一部なら省くだけ
+
+
+def _as_dict(prod, extra=()):
+    keys = ("content_id", "title", "price", "list_price", "genres", "actresses", "service", "sample_image_urls", "tachiyomi_url",
+            "release_date", "review_count", "review_avg", "campaign") + tuple(extra)
+    return {k: getattr(prod, k) for k in keys}
+
+
+def test_manga_one_line_hook_type():
+    sk = "⟦REQ:comic_pages⟧⟦HOOK⟧\n\n⟦PR⟧"
+    d = _as_dict(demo_doujin_products()[0])
+    assert R.render(sk, d, NOW).text == "サンプル同人H 放課後の図書室…。\n\n【PR】"       # タイトルの言葉だけ・値段は書かない
+    assert R.render(sk, _as_dict(demo_products()[0]), NOW).text is None                    # マンガのページ画像が無い動画には使わない
+    assert R.title_core("【期間限定】ある日の放課後 第3巻（全40ページ）") == "ある日の放課後"
+
+
+def test_llm_hook_must_stay_inside_the_title(db, settings):
+    from affiliate_bot.llm import FakeLLMClient, LLMRouter
+    import json
+    d = _as_dict(demo_doujin_products()[0])
+    settings.anthropic_api_key = "x"
+    ok = LLMRouter(settings, db, client=FakeLLMClient([json.dumps({"text": "放課後の図書室で、ひとり…。"})]))
+    assert R.story_hook_llm(ok, d) == "放課後の図書室で、ひとり…。"
+    made_up = LLMRouter(settings, db, client=FakeLLMClient([json.dumps({"text": "幼なじみに告白された…。"})]))
+    assert R.story_hook_llm(made_up, d) is None                                            # タイトルに無い出来事は使わない
+
+
+def test_reference_post_seed_is_registered(db):
+    R.ensure_seeds(db)
+    sk = db.one("SELECT * FROM skeletons WHERE category='マンガ一言フック型'")
+    assert sk and sk["image_count"] == 4 and "2118633668403216554" in sk["example_ids"]
+    assert "いいね 1,563" in R.describe(dict(sk))
