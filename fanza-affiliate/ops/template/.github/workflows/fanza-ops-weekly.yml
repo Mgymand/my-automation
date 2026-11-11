@@ -1,0 +1,49 @@
+name: FANZA 週次レビュー
+
+# 毎週月曜 07:20 JST（日曜 22:20 UTC）: 公開投稿の調査 → 規約ページ確認 → 週次レビュー Issue
+# private の運用リポジトリ専用。公開リポジトリでは動かない（データ保護のため job の if で拒否）。
+on:
+  schedule:
+    - cron: "20 22 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: fanza-ops-state
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.repository.private == true && vars.FANZA_OPS_ENABLED != 'false'
+    env:
+      FANZA_CODE_REPO: ${{ vars.FANZA_CODE_REPO || 'Mgymand/my-automation' }}
+      FANZA_CODE_REF: ${{ vars.FANZA_CODE_REF || 'main' }}
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+      OPS_MENTION: ${{ vars.OPS_MENTION || github.repository_owner }}
+      DMM_API_ID: ${{ secrets.DMM_API_ID }}
+      DMM_AFFILIATE_ID: ${{ secrets.DMM_AFFILIATE_ID }}
+      DMM_MEDIA_REGISTERED: ${{ vars.DMM_MEDIA_REGISTERED || 'false' }}
+      DMM_EXTRA_TARGETS: ${{ vars.DMM_EXTRA_TARGETS }}
+      REPLICATION_MODE: ${{ vars.REPLICATION_MODE || 'strict' }}
+      TARGET_PRICE_MIN: ${{ vars.TARGET_PRICE_MIN || '500' }}
+      TARGET_PRICE_MAX: ${{ vars.TARGET_PRICE_MAX || '1000' }}
+      TARGET_PRICE_SHARE: ${{ vars.TARGET_PRICE_SHARE || '0.7' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DAILY_AI_BUDGET_JPY: ${{ vars.DAILY_AI_BUDGET_JPY || '300' }}
+      X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+      X_USERNAME: ${{ vars.X_USERNAME }}
+      POSTS_PER_DAY: ${{ vars.POSTS_PER_DAY || '3' }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/fanza-run
+        with:
+          command: ops weekly
+          inbox: "false"
