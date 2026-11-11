@@ -23,9 +23,11 @@ ACCOUNT = {
     "bio": ("FANZAの人気作が500〜1000円まで下がったら、ゆるく呟いてます。セールで値下がりしたやつ、レビュー多めのやつ、"
             "無料で立ち読みできるやつが中心。リンクはリプに置いてます🔗 18歳未満は見ないでね／アフィリエイト（PR）含みます"),
     "brand": {"primary": "#1E293B（夜の紺）", "accent": "#FBBF24（月の黄）", "base": "#FFF7ED（生成り）",
-              "motif": "三日月とマグカップ（夜にくつろぐ人）", "text": "アイコン・ヘッダーとも文字なし", "character": "なつめ（性別・年齢を出さない一人称。業者感を出さない）"},
-    "icon_prompt": ("soft hand-drawn illustration, a small crescent moon resting on a warm coffee mug, deep navy background #1E293B, "
-                    "warm yellow #FBBF24 moon, cream #FFF7ED steam, cozy and calm, rounded square, no text, no people, 1024x1024"),
+              "motif": "三日月とマグカップ（夜にくつろぐ人）", "text": "アイコン・ヘッダーとも文字なし", "character": "なつめ（アニメ調のオリジナルのお姉さん。成人に見える絵柄・露出なし。業者感を出さない一人称）"},
+    # 2026-11-11: 運営者の希望でアニメ調の「かわいいお姉さん」に。オリジナルの絵柄で、成人に見えること・露出しないこと（X はプロフィール画像に成人向け・センシティブな内容を禁止）
+    "icon_prompt": ("original anime-style illustration of a cute, friendly adult woman in her mid-20s (older-sister type), smiling, "
+                    "head-and-shoulders avatar, wearing a high-neck knit sweater, no cleavage, no lingerie, non-sexual, cozy night tones "
+                    "with deep navy #1E293B background and a small warm yellow #FBBF24 crescent moon, no text, 1024x1024"),
     "header_prompt": ("wide banner 1500x500, soft hand-drawn night sky in deep navy #1E293B with a few small stars and a crescent moon in warm yellow "
                       "#FBBF24 at right, cozy and calm, lots of negative space, no text, no people, no photos"),
     "pinned_post": ("はじめまして、なつめです。\nFANZAの人気作が500〜1000円まで下がったタイミングを、夜にゆるく呟いてます。\n"
